@@ -1,21 +1,39 @@
 #ifndef DEBUG_H
 #define DEBUG_H
-#include "stdafx.h"
 using namespace std;
 class CDebug
 {
 public:
-	CDebug(string acFileName): pLogStream{ new ofstream(acFileName) }
+	CDebug(std::string acFileName) :m_fileName{ acFileName }, pLogStream { new ofstream(acFileName) }
 	{}
-	void printMsg(string msg) { if(pLogStream) *pLogStream << "Debug Message: "<< msg<<"\n"; }
-	void printError(string msg) { if (pLogStream) *pLogStream << "Debug Error: " << msg << "\n"; }
+	void printMsg(const string &msg) {
+		if (pLogStream) {
+			if(!pLogStream->is_open())
+				pLogStream->open(m_fileName, fstream::out | fstream::app);
+			*pLogStream << "Debug Message: " << msg << "\n";
+			OutputDebugString(msg.c_str());
+			pLogStream->close();
+		}
+	}
+	void printError(const string &msg) {
+		if (pLogStream) {
+			if (!pLogStream->is_open())
+				pLogStream->open(m_fileName, fstream::out | fstream::app);
+			*pLogStream << "Debug Error: " << msg << "\n"; 
+			pLogStream->close();
+		}
+		OutputDebugString(msg.c_str());
+		throw std::runtime_error(msg);
+	}
+
 	~CDebug()
 	{
-		if (pLogStream)
-			delete pLogStream;
+		delete pLogStream;
 	}
 private:
 	ofstream* pLogStream = nullptr;
+	string m_fileName{NULL};
 };
+extern CDebug* g_pDebug;
 #endif // !DEBUG_H
 

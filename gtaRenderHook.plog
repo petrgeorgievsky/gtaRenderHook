@@ -1,0 +1,2355 @@
+<?xml version="1.0" standalone="yes"?>
+<NewDataSet>
+  <xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:UseCurrentLocale="true">
+      <xs:complexType>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element name="Solution_Path">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="SolutionPath" type="xs:string" minOccurs="0" />
+                <xs:element name="SolutionVersion" type="xs:string" minOccurs="0" />
+                <xs:element name="PlogVersion" type="xs:unsignedInt" minOccurs="0" />
+                <xs:element name="ModificationDate" msdata:DateTimeMode="Utc" type="xs:dateTime" minOccurs="0" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="PVS-Studio_Analysis_Log">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="FavIcon" type="xs:boolean" minOccurs="0" />
+                <xs:element name="Level" type="xs:unsignedInt" minOccurs="0" />
+                <xs:element name="DefaultOrder" type="xs:int" minOccurs="0" />
+                <xs:element name="ErrorCode" type="xs:string" minOccurs="0" />
+                <xs:element name="Message" type="xs:string" />
+                <xs:element name="Project" type="xs:string" minOccurs="0" />
+                <xs:element name="ShortFile" type="xs:string" minOccurs="0" />
+                <xs:element name="Line" type="xs:int" />
+                <xs:element name="FalseAlarm" type="xs:boolean" minOccurs="0" />
+                <xs:element name="File" type="xs:string" />
+                <xs:element name="CodePrev" type="xs:unsignedInt" minOccurs="0" />
+                <xs:element name="CodeCurrent" type="xs:unsignedInt" minOccurs="0" />
+                <xs:element name="CodeNext" type="xs:unsignedInt" minOccurs="0" />
+                <xs:element name="TrialMessage" type="xs:boolean" minOccurs="0" />
+                <xs:element name="Analyzer" type="xs:int" minOccurs="0" />
+                <xs:element name="LineExtension" type="xs:string" minOccurs="0" />
+                <xs:element name="Retired" type="xs:boolean" default="false" minOccurs="0" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+      <xs:unique name="Constraint1" msdata:PrimaryKey="true">
+        <xs:selector xpath=".//PVS-Studio_Analysis_Log" />
+        <xs:field xpath="Line" />
+        <xs:field xpath="Message" />
+        <xs:field xpath="File" />
+      </xs:unique>
+    </xs:element>
+  </xs:schema>
+  <Solution_Path>
+    <SolutionPath>C:\Users\peter\Documents\Visual Studio 2015\Projects\gtaRenderHook\gtaRenderHook.sln</SolutionPath>
+    <SolutionVersion>14.0</SolutionVersion>
+    <PlogVersion>3</PlogVersion>
+    <ModificationDate>2016-08-12T23:34:38.9169739Z</ModificationDate>
+  </Solution_Path>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>1</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>12</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>2202459516</CodeCurrent>
+    <CodeNext>9888275</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>2</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>14</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>9888275</CodePrev>
+    <CodeCurrent>82957260</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>3</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>23</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>193</CodePrev>
+    <CodeCurrent>92263185</CodeCurrent>
+    <CodeNext>11530809</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>4</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>29</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>184496137</CodePrev>
+    <CodeCurrent>3259520168</CodeCurrent>
+    <CodeNext>1111366167</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>5</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>32</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>2224255</CodePrev>
+    <CodeCurrent>1892241700</CodeCurrent>
+    <CodeNext>61491</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>6</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>33</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>1892241700</CodePrev>
+    <CodeCurrent>61491</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>7</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>37</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>906689425</CodeCurrent>
+    <CodeNext>487884487</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>8</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>38</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>906689425</CodePrev>
+    <CodeCurrent>487884487</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>9</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>42</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>3934565468</CodeCurrent>
+    <CodeNext>92263185</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>10</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>43</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>3934565468</CodePrev>
+    <CodeCurrent>92263185</CodeCurrent>
+    <CodeNext>11530809</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>11</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>49</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>184496137</CodePrev>
+    <CodeCurrent>3230291091</CodeCurrent>
+    <CodeNext>1111366167</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>12</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>52</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>15569023</CodePrev>
+    <CodeCurrent>1924421931</CodeCurrent>
+    <CodeNext>61491</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>13</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>53</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>1924421931</CodePrev>
+    <CodeCurrent>61491</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>14</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>65</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>3629275536</CodeCurrent>
+    <CodeNext>92263185</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>15</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>66</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>3629275536</CodePrev>
+    <CodeCurrent>92263185</CodeCurrent>
+    <CodeNext>11530809</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>16</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>72</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>184496137</CodePrev>
+    <CodeCurrent>4033827989</CodeCurrent>
+    <CodeNext>1111366167</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>17</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>75</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>2007167</CodePrev>
+    <CodeCurrent>2100128043</CodeCurrent>
+    <CodeNext>61491</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>18</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>76</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>2100128043</CodePrev>
+    <CodeCurrent>61491</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>19</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>92</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>15307747</CodeCurrent>
+    <CodeNext>2841759552</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>20</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>93</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>15307747</CodePrev>
+    <CodeCurrent>2841759552</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>21</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>126</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>4669</CodePrev>
+    <CodeCurrent>3993855974</CodeCurrent>
+    <CodeNext>3090519584</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>22</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>127</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>3993855974</CodePrev>
+    <CodeCurrent>3090519584</CodeCurrent>
+    <CodeNext>2391478198</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>23</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>128</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>3090519584</CodePrev>
+    <CodeCurrent>2391478198</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>24</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>132</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>3993855974</CodeCurrent>
+    <CodeNext>13951811</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>25</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>133</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>3993855974</CodePrev>
+    <CodeCurrent>13951811</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>26</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>138</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>9441</CodePrev>
+    <CodeCurrent>3993855974</CodeCurrent>
+    <CodeNext>1796931</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>27</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>139</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>3993855974</CodePrev>
+    <CodeCurrent>1796931</CodeCurrent>
+    <CodeNext>1796287</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>28</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>140</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>1796931</CodePrev>
+    <CodeCurrent>1796287</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>29</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>144</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>37193</CodePrev>
+    <CodeCurrent>1797471</CodeCurrent>
+    <CodeNext>111617239</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>30</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>145</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>1797471</CodePrev>
+    <CodeCurrent>111617239</CodeCurrent>
+    <CodeNext>128580931</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>31</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>146</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>111617239</CodePrev>
+    <CodeCurrent>128580931</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>32</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>159</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>2718246151</CodeCurrent>
+    <CodeNext>2283108342</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>33</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>160</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>2718246151</CodePrev>
+    <CodeCurrent>2283108342</CodeCurrent>
+    <CodeNext>2740790367</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>34</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>161</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>2283108342</CodePrev>
+    <CodeCurrent>2740790367</CodeCurrent>
+    <CodeNext>2879179230</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>35</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>gta_sa_ptrs.h</ShortFile>
+    <Line>162</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\gta_sa_ptrs.h</File>
+    <CodePrev>2740790367</CodePrev>
+    <CodeCurrent>2879179230</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>36</DefaultOrder>
+    <ErrorCode>V126</ErrorCode>
+    <Message>Be advised that the size of the type 'long' varies between LLP64/LP64 data models.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>memoryfuncs.h</ShortFile>
+    <Line>4</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\memoryfuncs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>368925169</CodeCurrent>
+    <CodeNext>3386321866</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>37</DefaultOrder>
+    <ErrorCode>V126</ErrorCode>
+    <Message>Be advised that the size of the type 'long' varies between LLP64/LP64 data models.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>memoryfuncs.h</ShortFile>
+    <Line>33</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\memoryfuncs.h</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>368925169</CodeCurrent>
+    <CodeNext>1081423510</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>38</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>cdebug.h</ShortFile>
+    <Line>41</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\cdebug.h</File>
+    <CodePrev>11496</CodePrev>
+    <CodeCurrent>1492879501</CodeCurrent>
+    <CodeNext>386694209</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>39</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwrenderengine.h</ShortFile>
+    <Line>91</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwrenderengine.h</File>
+    <CodePrev>45270</CodePrev>
+    <CodeCurrent>3682913</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>40</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>23</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>11496</CodePrev>
+    <CodeCurrent>33027727</CodeCurrent>
+    <CodeNext>3550787484</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>41</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>26</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>679477809</CodePrev>
+    <CodeCurrent>2847526999</CodeCurrent>
+    <CodeNext>3212043245</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>42</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>27</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>2847526999</CodePrev>
+    <CodeCurrent>3212043245</CodeCurrent>
+    <CodeNext>946198481</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>43</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>28</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>3212043245</CodePrev>
+    <CodeCurrent>946198481</CodeCurrent>
+    <CodeNext>813636091</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>44</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>29</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>946198481</CodePrev>
+    <CodeCurrent>813636091</CodeCurrent>
+    <CodeNext>2723745050</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>45</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>30</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>813636091</CodePrev>
+    <CodeCurrent>2723745050</CodeCurrent>
+    <CodeNext>2419217113</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>46</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>31</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>2723745050</CodePrev>
+    <CodeCurrent>2419217113</CodeCurrent>
+    <CodeNext>104027326</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>47</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>32</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>2419217113</CodePrev>
+    <CodeCurrent>104027326</CodeCurrent>
+    <CodeNext>3948186757</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>48</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>33</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>104027326</CodePrev>
+    <CodeCurrent>3948186757</CodeCurrent>
+    <CodeNext>352090206</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>49</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3drenderer.h</ShortFile>
+    <Line>34</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.h</File>
+    <CodePrev>3948186757</CodePrev>
+    <CodeCurrent>352090206</CodeCurrent>
+    <CodeNext>3600120</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>50</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xshader.h</ShortFile>
+    <Line>25</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xshader.h</File>
+    <CodePrev>1028912537</CodePrev>
+    <CodeCurrent>6912835</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>51</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.h</ShortFile>
+    <Line>25</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.h</File>
+    <CodePrev>11496</CodePrev>
+    <CodeCurrent>2501947534</CodeCurrent>
+    <CodeNext>2501945486</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>52</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.h</ShortFile>
+    <Line>26</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.h</File>
+    <CodePrev>2501947534</CodePrev>
+    <CodeCurrent>2501945486</CodeCurrent>
+    <CodeNext>4134220410</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>53</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.h</ShortFile>
+    <Line>27</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.h</File>
+    <CodePrev>2501945486</CodePrev>
+    <CodeCurrent>4134220410</CodeCurrent>
+    <CodeNext>2188056648</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>54</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.h</ShortFile>
+    <Line>28</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.h</File>
+    <CodePrev>4134220410</CodePrev>
+    <CodeCurrent>2188056648</CodeCurrent>
+    <CodeNext>3252362732</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>55</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.h</ShortFile>
+    <Line>29</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.h</File>
+    <CodePrev>2188056648</CodePrev>
+    <CodeCurrent>3252362732</CodeCurrent>
+    <CodeNext>201590161</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>56</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.h</ShortFile>
+    <Line>30</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.h</File>
+    <CodePrev>3252362732</CodePrev>
+    <CodeCurrent>201590161</CodeCurrent>
+    <CodeNext>3635752815</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>57</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.h</ShortFile>
+    <Line>31</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.h</File>
+    <CodePrev>201590161</CodePrev>
+    <CodeCurrent>3635752815</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>58</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.h</ShortFile>
+    <Line>116</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.h</File>
+    <CodePrev>11496</CodePrev>
+    <CodeCurrent>1931947757</CodeCurrent>
+    <CodeNext>3853420497</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>59</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.h</ShortFile>
+    <Line>117</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.h</File>
+    <CodePrev>1931947757</CodePrev>
+    <CodeCurrent>3853420497</CodeCurrent>
+    <CodeNext>2374550999</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>60</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.h</ShortFile>
+    <Line>118</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.h</File>
+    <CodePrev>3853420497</CodePrev>
+    <CodeCurrent>2374550999</CodeCurrent>
+    <CodeNext>1376673942</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>61</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.h</ShortFile>
+    <Line>119</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.h</File>
+    <CodePrev>2374550999</CodePrev>
+    <CodeCurrent>1376673942</CodeCurrent>
+    <CodeNext>1376680086</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>62</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.h</ShortFile>
+    <Line>120</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.h</File>
+    <CodePrev>1376673942</CodePrev>
+    <CodeCurrent>1376680086</CodeCurrent>
+    <CodeNext>4124913519</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>63</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.h</ShortFile>
+    <Line>121</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.h</File>
+    <CodePrev>1376680086</CodePrev>
+    <CodeCurrent>4124913519</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>64</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xstatemanager.h</ShortFile>
+    <Line>42</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xstatemanager.h</File>
+    <CodePrev>11496</CodePrev>
+    <CodeCurrent>355848340</CodeCurrent>
+    <CodeNext>2026776106</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>65</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xstatemanager.h</ShortFile>
+    <Line>43</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xstatemanager.h</File>
+    <CodePrev>355848340</CodePrev>
+    <CodeCurrent>2026776106</CodeCurrent>
+    <CodeNext>205797276</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>66</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xstatemanager.h</ShortFile>
+    <Line>44</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xstatemanager.h</File>
+    <CodePrev>2026776106</CodePrev>
+    <CodeCurrent>205797276</CodeCurrent>
+    <CodeNext>2550262795</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>67</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xstatemanager.h</ShortFile>
+    <Line>45</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xstatemanager.h</File>
+    <CodePrev>205797276</CodePrev>
+    <CodeCurrent>2550262795</CodeCurrent>
+    <CodeNext>744390649</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>68</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xstatemanager.h</ShortFile>
+    <Line>46</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xstatemanager.h</File>
+    <CodePrev>2550262795</CodePrev>
+    <CodeCurrent>744390649</CodeCurrent>
+    <CodeNext>811637966</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>69</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xstatemanager.h</ShortFile>
+    <Line>47</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xstatemanager.h</File>
+    <CodePrev>744390649</CodePrev>
+    <CodeCurrent>811637966</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>2</Level>
+    <DefaultOrder>70</DefaultOrder>
+    <ErrorCode>V112</ErrorCode>
+    <Message>Dangerous magic number 32 used: mode.depth = 32;...</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>67</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>2604283</CodePrev>
+    <CodeCurrent>1142885193</CodeCurrent>
+    <CodeNext>3972647062</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>71</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>102</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>2758548381</CodeCurrent>
+    <CodeNext>3965814228</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>72</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>103</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>2758548381</CodePrev>
+    <CodeCurrent>3965814228</CodeCurrent>
+    <CodeNext>4112438678</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>73</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>106</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>3932984705</CodePrev>
+    <CodeCurrent>837443058</CodeCurrent>
+    <CodeNext>3546218807</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>74</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>107</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>837443058</CodePrev>
+    <CodeCurrent>3546218807</CodeCurrent>
+    <CodeNext>829306840</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>75</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>112</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>4087426748</CodePrev>
+    <CodeCurrent>2201860823</CodeCurrent>
+    <CodeNext>2463690277</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>76</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>117</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>4157989723</CodePrev>
+    <CodeCurrent>385579921</CodeCurrent>
+    <CodeNext>2503439665</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>77</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>118</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>385579921</CodePrev>
+    <CodeCurrent>2503439665</CodeCurrent>
+    <CodeNext>267572059</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>78</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>122</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>4278325233</CodePrev>
+    <CodeCurrent>1917925574</CodeCurrent>
+    <CodeNext>4150654388</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>79</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>123</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>1917925574</CodePrev>
+    <CodeCurrent>4150654388</CodeCurrent>
+    <CodeNext>611087283</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>80</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>124</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>4150654388</CodePrev>
+    <CodeCurrent>611087283</CodeCurrent>
+    <CodeNext>4083304600</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>81</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'function pointer' to 'void *'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>128</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>423887429</CodePrev>
+    <CodeCurrent>3298126512</CodeCurrent>
+    <CodeNext>107062433</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>82</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: static_cast&lt;intptr_t&gt; (data)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>189</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>2894898424</CodeCurrent>
+    <CodeNext>782448869</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>2</Level>
+    <DefaultOrder>83</DefaultOrder>
+    <ErrorCode>V112</ErrorCode>
+    <Message>Dangerous magic number 4 used: ...idth + 3) / 4)) * 8;...</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>554</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>3172680626</CodePrev>
+    <CodeCurrent>1774820292</CodeCurrent>
+    <CodeNext>1456514118</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>2</Level>
+    <DefaultOrder>84</DefaultOrder>
+    <ErrorCode>V112</ErrorCode>
+    <Message>Dangerous magic number 4 used: ...idth + 3) / 4)) * 16;...</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>556</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>1456514118</CodePrev>
+    <CodeCurrent>702857574</CodeCurrent>
+    <CodeNext>539</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>85</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: static_cast&lt;size_t&gt; (raster-&gt;stride)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>559</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>2805162525</CodePrev>
+    <CodeCurrent>1666552622</CodeCurrent>
+    <CodeNext>3199324693</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>86</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: static_cast&lt;size_t&gt; (raster-&gt;height)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>559</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>2805162525</CodePrev>
+    <CodeCurrent>1666552622</CodeCurrent>
+    <CodeNext>3199324693</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>87</DefaultOrder>
+    <ErrorCode>V202</ErrorCode>
+    <Message>Explicit conversion from memsize type to 32-bit integer type: static_cast&lt; UINT &gt; (currentIndexOffset)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>738</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>2569455941</CodePrev>
+    <CodeCurrent>3593661271</CodeCurrent>
+    <CodeNext>125</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>88</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>744</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>1775807</CodePrev>
+    <CodeCurrent>793026992</CodeCurrent>
+    <CodeNext>123</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>89</DefaultOrder>
+    <ErrorCode>V202</ErrorCode>
+    <Message>Explicit conversion from memsize type to 32-bit integer type.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>763</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>4180660051</CodePrev>
+    <CodeCurrent>159983133</CodeCurrent>
+    <CodeNext>92951601</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>90</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>769</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>793026992</CodeCurrent>
+    <CodeNext>1543496701</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>91</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>773</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>539</CodePrev>
+    <CodeCurrent>3171108361</CodeCurrent>
+    <CodeNext>1412413953</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>92</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: static_cast&lt;size_t&gt; (meshData-&gt;numIndex)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>776</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>323194386</CodePrev>
+    <CodeCurrent>3824454201</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>93</DefaultOrder>
+    <ErrorCode>V566</ErrorCode>
+    <Message>The integer constant is converted to pointer. Possibly an error or a bad coding style: (RwMatrix * (*)(RwFrame *)) 0x7F0990</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>819</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>125</CodePrev>
+    <CodeCurrent>3997058025</CodeCurrent>
+    <CodeNext>1469759147</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>4</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>94</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>867</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>1284963752</CodePrev>
+    <CodeCurrent>4136435332</CodeCurrent>
+    <CodeNext>123</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>95</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>924</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>3077136582</CodePrev>
+    <CodeCurrent>1493401185</CodeCurrent>
+    <CodeNext>1461834588</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>96</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwd3d1xengine.cpp</ShortFile>
+    <Line>925</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp</File>
+    <CodePrev>1493401185</CodePrev>
+    <CodeCurrent>1461834588</CodeCurrent>
+    <CodeNext>123</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>97</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwd3d1xengine.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>98</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xstatemanager.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>99</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xshader.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>100</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xpipeline.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>101</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: static_cast&lt;size_t&gt; (vertexCount)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.cpp</ShortFile>
+    <Line>85</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.cpp</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>3043105608</CodeCurrent>
+    <CodeNext>1848467928</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>102</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: static_cast&lt;size_t&gt; (vertexCount)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.cpp</ShortFile>
+    <Line>98</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.cpp</File>
+    <CodePrev>2007714918</CodePrev>
+    <CodeCurrent>1600259622</CodeCurrent>
+    <CodeNext>123</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>103</DefaultOrder>
+    <ErrorCode>V202</ErrorCode>
+    <Message>Explicit conversion from memsize type to 32-bit integer type: static_cast&lt; UINT &gt; (vertCount)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.cpp</ShortFile>
+    <Line>126</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.cpp</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>4165986278</CodeCurrent>
+    <CodeNext>125</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>104</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: static_cast&lt;size_t&gt; (numVertices)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.cpp</ShortFile>
+    <Line>131</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.cpp</File>
+    <CodePrev>123</CodePrev>
+    <CodeCurrent>3043175020</CodeCurrent>
+    <CodeNext>1848467928</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>105</DefaultOrder>
+    <ErrorCode>V201</ErrorCode>
+    <Message>Explicit conversion from 32-bit integer type to memsize type: size_t (numIndices)</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>d3d1xim2dpipeline.cpp</ShortFile>
+    <Line>146</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.cpp</File>
+    <CodePrev>2668246148</CodePrev>
+    <CodeCurrent>3513463355</CodeCurrent>
+    <CodeNext>207234613</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>106</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3d1xim2dpipeline.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>107</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\d3drenderer.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>108</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\stdafx.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>109</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwvulkanengine.h</ShortFile>
+    <Line>49</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwvulkanengine.h</File>
+    <CodePrev>11496</CodePrev>
+    <CodeCurrent>3778225928</CodeCurrent>
+    <CodeNext>3369634560</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>110</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwvulkanengine.h</ShortFile>
+    <Line>50</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwvulkanengine.h</File>
+    <CodePrev>3778225928</CodePrev>
+    <CodeCurrent>3369634560</CodeCurrent>
+    <CodeNext>593663309</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>111</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwvulkanengine.h</ShortFile>
+    <Line>52</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwvulkanengine.h</File>
+    <CodePrev>593663309</CodePrev>
+    <CodeCurrent>1278336648</CodeCurrent>
+    <CodeNext>193</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>112</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\dllmain.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>113</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'void *' to 'type **'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwrenderengine.cpp</ShortFile>
+    <Line>11</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwrenderengine.cpp</File>
+    <CodePrev>2349434262</CodePrev>
+    <CodeCurrent>2109591975</CodeCurrent>
+    <CodeNext>403901325</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>114</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'void *' to 'type **'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwrenderengine.cpp</ShortFile>
+    <Line>71</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwrenderengine.cpp</File>
+    <CodePrev>3551909285</CodePrev>
+    <CodeCurrent>1038949641</CodeCurrent>
+    <CodeNext>125</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>115</DefaultOrder>
+    <ErrorCode>V206</ErrorCode>
+    <Message>Explicit conversion from 'void *' to 'type **'.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>rwrenderengine.cpp</ShortFile>
+    <Line>75</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwrenderengine.cpp</File>
+    <CodePrev>2920787952</CodePrev>
+    <CodeCurrent>3342201839</CodeCurrent>
+    <CodeNext>125</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>116</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\rwrenderengine.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>117</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>vulkancommandbuffermgr.h</ShortFile>
+    <Line>19</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\vulkancommandbuffermgr.h</File>
+    <CodePrev>2035962633</CodePrev>
+    <CodeCurrent>3473142763</CodeCurrent>
+    <CodeNext>49399484</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>118</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>vulkancommandbuffermgr.h</ShortFile>
+    <Line>21</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\vulkancommandbuffermgr.h</File>
+    <CodePrev>49399484</CodePrev>
+    <CodeCurrent>53858481</CodeCurrent>
+    <CodeNext>154054499</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>119</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>vulkandevice.h</ShortFile>
+    <Line>15</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\vulkandevice.h</File>
+    <CodePrev>11496</CodePrev>
+    <CodeCurrent>2317570780</CodeCurrent>
+    <CodeNext>3917962582</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>120</DefaultOrder>
+    <ErrorCode>V122</ErrorCode>
+    <Message>Memsize type is used in the struct/class.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>vulkandevice.h</ShortFile>
+    <Line>16</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\vulkandevice.h</File>
+    <CodePrev>2317570780</CodePrev>
+    <CodeCurrent>3917962582</CodeCurrent>
+    <CodeNext>1171360191</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>1</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+  <PVS-Studio_Analysis_Log>
+    <FavIcon>false</FavIcon>
+    <Level>3</Level>
+    <DefaultOrder>121</DefaultOrder>
+    <ErrorCode>V001</ErrorCode>
+    <Message>A code fragment from 'c:\users\peter\documents\visual studio 2015\projects\gtarenderhook\gtarenderhook\vulkancommandbuffermgr.cpp' cannot be analyzed.</Message>
+    <Project>gtaRenderHook</Project>
+    <ShortFile>chrono</ShortFile>
+    <Line>1053</Line>
+    <FalseAlarm>false</FalseAlarm>
+    <File>c:\program files (x86)\microsoft visual studio 14.0\vc\include\chrono</File>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>0</CodeCurrent>
+    <CodeNext>0</CodeNext>
+    <TrialMessage>false</TrialMessage>
+    <Analyzer>0</Analyzer>
+    <LineExtension />
+    <Retired>false</Retired>
+  </PVS-Studio_Analysis_Log>
+</NewDataSet>

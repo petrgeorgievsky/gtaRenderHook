@@ -1,17 +1,40 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
+    <Filter Include="Source">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
+    <Filter Include="Source\RwRenderEngine">
+      <UniqueIdentifier>{d825bd0e-4e96-49fc-9ec6-05461b5a176d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine">
+      <UniqueIdentifier>{3509e7da-5322-4441-8bf3-d46f14dd81da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwVulkanRenderEngine">
+      <UniqueIdentifier>{975ba31d-719a-4309-a2a9-25da573cb587}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Headers">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Source\Headers\Utils">
+      <UniqueIdentifier>{156b086c-e99f-4640-9660-4562cbb8e9a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwVulkanRenderEngine\GTAPipelines">
+      <UniqueIdentifier>{9b9676ce-9780-4009-bf44-9d4ab68ea990}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\Managers">
+      <UniqueIdentifier>{d2107dee-4078-4b14-a7b0-c8ceedbfa923}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\Helpers">
+      <UniqueIdentifier>{e2d1b967-07d7-46e9-ae95-c78d85808533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses">
+      <UniqueIdentifier>{58b1a35f-5ba3-4f38-9f00-bf03ec7fa089}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines">
+      <UniqueIdentifier>{b9ee86dc-d171-4183-851f-7803a7656f56}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -19,36 +42,162 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source\Headers</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MemoryFuncs.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source\Headers</Filter>
     </ClInclude>
     <ClInclude Include="gta_sa_ptrs.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\..\Program Files (x86)\RW\Graphics\rwsdk\include\d3d9\rwplcore.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanDevice.h">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanSwapChain.h">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
     </ClInclude>
     <ClInclude Include="RwRenderEngine.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source\RwRenderEngine</Filter>
     </ClInclude>
     <ClInclude Include="CDebug.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source\Headers\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryFuncs.h">
+      <Filter>Source\Headers\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanPipeline.h">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanShader.h">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRenderer.h">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanCommandBufferMgr.h">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanIm2DPipeline.h">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine\GTAPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DRenderer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XIm2DPipeline.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="RwD3D1XEngine.h">
+      <Filter>Source\RwRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="RwVulkanEngine.h">
+      <Filter>Source\RwRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XIm3DPipeline.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XDefaultPipeline.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XSkinPipeline.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XStateManager.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XVertexDeclarationManager.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XEnumParser.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XPipeline.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XShader.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XTexture.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XVertexDeclaration.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gtaRenderHook.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanDevice.cpp">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanSwapChain.cpp">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
     </ClCompile>
     <ClCompile Include="RwRenderEngine.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source\RwRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanPipeline.cpp">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanShader.cpp">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanRenderer.cpp">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanCommandBufferMgr.cpp">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanIm2DPipeline.cpp">
+      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine\GTAPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DRenderer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XIm2DPipeline.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="RwD3D1XEngine.cpp">
+      <Filter>Source\RwRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="RwVulkanEngine.cpp">
+      <Filter>Source\RwRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XIm3DPipeline.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XDefaultPipeline.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XSkinPipeline.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XStateManager.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XVertexDeclarationManager.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XEnumParser.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XPipeline.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XShader.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XTexture.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XVertexDeclaration.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
