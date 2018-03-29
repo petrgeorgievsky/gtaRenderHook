@@ -36,9 +36,39 @@
     <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines">
       <UniqueIdentifier>{b9ee86dc-d171-4183-851f-7803a7656f56}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <Filter Include="Source\GTA_SA">
+      <UniqueIdentifier>{5e11a709-0c5d-46fc-95fc-31f2c5ba833b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\GTA_SA\GTAPipelines">
+      <UniqueIdentifier>{e8009381-1bd1-412f-abe3-1b79a10f60e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DeferredRendering">
+      <UniqueIdentifier>{ae836f44-aef6-4e29-93fe-3344aff9d17a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\GTA_SA\GTAClasses">
+      <UniqueIdentifier>{6e384abd-24fb-43d0-afd7-c8b6e0bae9cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DeferredRendering\Shadows">
+      <UniqueIdentifier>{6dcfac2d-b603-4abe-b238-f7826ee6ebad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DeferredRendering\VoxelGI">
+      <UniqueIdentifier>{69677b8a-e38e-4bbb-ad7b-a0c2c36a41ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\PostProcessing">
+      <UniqueIdentifier>{f9458c85-ceb3-4759-85d7-13b189e87810}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DebugUtility">
+      <UniqueIdentifier>{e2af3242-a2c3-4af8-ae06-72caebc660c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\External">
+      <UniqueIdentifier>{6dd2d506-16af-4a29-8d2f-70668e3e04bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RenderWareCPPWrappers">
+      <UniqueIdentifier>{4ff0fb53-0220-42f2-8b48-007bac2a0d37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders">
+      <UniqueIdentifier>{423d9031-fa34-4578-bd1d-6f4e79c6b9d3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -50,15 +80,6 @@
     <ClInclude Include="gta_sa_ptrs.h">
       <Filter>Source\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\..\Program Files (x86)\RW\Graphics\rwsdk\include\d3d9\rwplcore.h">
-      <Filter>Source\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanDevice.h">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanSwapChain.h">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClInclude>
     <ClInclude Include="RwRenderEngine.h">
       <Filter>Source\RwRenderEngine</Filter>
     </ClInclude>
@@ -68,21 +89,6 @@
     <ClInclude Include="MemoryFuncs.h">
       <Filter>Source\Headers\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanPipeline.h">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanShader.h">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanRenderer.h">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanCommandBufferMgr.h">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanIm2DPipeline.h">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine\GTAPipelines</Filter>
-    </ClInclude>
     <ClInclude Include="D3DRenderer.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
     </ClInclude>
@@ -90,9 +96,6 @@
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
     </ClInclude>
     <ClInclude Include="RwD3D1XEngine.h">
-      <Filter>Source\RwRenderEngine</Filter>
-    </ClInclude>
-    <ClInclude Include="RwVulkanEngine.h">
       <Filter>Source\RwRenderEngine</Filter>
     </ClInclude>
     <ClInclude Include="D3D1XIm3DPipeline.h">
@@ -125,6 +128,108 @@
     <ClInclude Include="D3D1XVertexDeclaration.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
     </ClInclude>
+    <ClInclude Include="SAIdleHook.h">
+      <Filter>Source\GTA_SA</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomBuildingPipeline.h">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomBuildingDNPipeline.h">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="DeferredPipeline.h">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="DeferredRenderer.h">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Source\GTA_SA\GTAClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelOctreeRenderer.h">
+      <Filter>Source\DeferredRendering\VoxelGI</Filter>
+    </ClInclude>
+    <ClInclude Include="VoxelPipeline.h">
+      <Filter>Source\DeferredRendering\VoxelGI</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowPipeline.h">
+      <Filter>Source\DeferredRendering\Shadows</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowRenderer.h">
+      <Filter>Source\DeferredRendering\Shadows</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomCarFXPipeline.h">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XRenderBuffersManager.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="LightManager.h">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="PBSMaterial.h">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XTextureMemoryManager.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessEffect.h">
+      <Filter>Source\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="HDRTonemapping.h">
+      <Filter>Source\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="FullscreenQuad.h">
+      <Filter>Source\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugRendering.h">
+      <Filter>Source\DebugUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugRenderObject.h">
+      <Filter>Source\DebugUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugLine.h">
+      <Filter>Source\DebugUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsHolder.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CWaterLevel.h">
+      <Filter>Source\GTA_SA\GTAClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomSeabedPipeline.h">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomWaterPipeline.h">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="CubemapReflectionRenderer.h">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="RwMethods.h">
+      <Filter>Source\RenderWareCPPWrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="RwVectorMath.h">
+      <Filter>Source\RenderWareCPPWrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XVertexBufferManager.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XVertexBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugBBox.h">
+      <Filter>Source\DebugUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XConstantBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XStructuredBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -133,29 +238,8 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanDevice.cpp">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanSwapChain.cpp">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClCompile>
     <ClCompile Include="RwRenderEngine.cpp">
       <Filter>Source\RwRenderEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanPipeline.cpp">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanShader.cpp">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanRenderer.cpp">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanCommandBufferMgr.cpp">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanIm2DPipeline.cpp">
-      <Filter>Source\RwRenderEngine\RwVulkanRenderEngine\GTAPipelines</Filter>
     </ClCompile>
     <ClCompile Include="D3DRenderer.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
@@ -164,9 +248,6 @@
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines</Filter>
     </ClCompile>
     <ClCompile Include="RwD3D1XEngine.cpp">
-      <Filter>Source\RwRenderEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="RwVulkanEngine.cpp">
       <Filter>Source\RwRenderEngine</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XIm3DPipeline.cpp">
@@ -199,5 +280,189 @@
     <ClCompile Include="D3D1XVertexDeclaration.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
     </ClCompile>
+    <ClCompile Include="SAIdleHook.cpp">
+      <Filter>Source\GTA_SA</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomBuildingPipeline.cpp">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomBuildingDNPipeline.cpp">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="DeferredPipeline.cpp">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="DeferredRenderer.cpp">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Source\GTA_SA\GTAClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="VoxelOctreeRenderer.cpp">
+      <Filter>Source\DeferredRendering\VoxelGI</Filter>
+    </ClCompile>
+    <ClCompile Include="VoxelPipeline.cpp">
+      <Filter>Source\DeferredRendering\VoxelGI</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowPipeline.cpp">
+      <Filter>Source\DeferredRendering\Shadows</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowRenderer.cpp">
+      <Filter>Source\DeferredRendering\Shadows</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomCarFXPipeline.cpp">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XRenderBuffersManager.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="LightManager.cpp">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="PBSMaterial.cpp">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XTextureMemoryManager.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessEffect.cpp">
+      <Filter>Source\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="HDRTonemapping.cpp">
+      <Filter>Source\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="FullscreenQuad.cpp">
+      <Filter>Source\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugRendering.cpp">
+      <Filter>Source\DebugUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugRenderObject.cpp">
+      <Filter>Source\DebugUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugLine.cpp">
+      <Filter>Source\DebugUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsHolder.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="CWaterLevel.cpp">
+      <Filter>Source\GTA_SA\GTAClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomSeabedPipeline.cpp">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomWaterPipeline.cpp">
+      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="CubemapReflectionRenderer.cpp">
+      <Filter>Source\DeferredRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="RwMethods.cpp">
+      <Filter>Source\RenderWareCPPWrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="RwVectorMath.cpp">
+      <Filter>Source\RenderWareCPPWrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XVertexBufferManager.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XVertexBuffer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugBBox.cpp">
+      <Filter>Source\DebugUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XBuffer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XConstantBuffer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XStructuredBuffer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt">
+      <Filter>Source</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\AtmosphericScattering.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\debug.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\Deferred.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\GameMath.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\GBuffer.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\Globals.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\HDRTonemapping.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\LightingFunctions.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\Quad.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\RwIm2D.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\RwIm3D.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\RwMain.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\RwMainTesselation.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\RwSkin.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\RwSkinTesselation.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\SACustomBuilding.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\SACustomBuildingDN.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\SACustomCarFX.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\SACustomSeabed.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\SACustomWater.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\ScreenSpaceReflections.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\Shadows.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\VoxelGI.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\VoxelizingHelper.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\VoxelStuffCS.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

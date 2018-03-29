@@ -20,7 +20,25 @@ void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
 	RwUInt32 rasterPixelFmt = flags & rwRASTERFORMATPIXELFORMATMASK;
 
-	if (flags&rwRASTERDONTALLOCATE)
+	if (raster->cType == rwRASTERTYPECAMERATEXTURE)
+	{
+		if (rasterPixelFmt == rwRASTERFORMATDEFAULT)
+			d3dRaster->format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		else if (rasterPixelFmt == rwRASTERFORMAT1555)//rgba16
+			d3dRaster->format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		else if (rasterPixelFmt == rwRASTERFORMAT565)//rgba32
+			d3dRaster->format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		else if (rasterPixelFmt == rwRASTERFORMAT16)//r16
+			d3dRaster->format = DXGI_FORMAT_R16_FLOAT;
+		else if (rasterPixelFmt == rwRASTERFORMAT555)//rg16
+			d3dRaster->format = DXGI_FORMAT_R16G16_FLOAT;
+		else if (rasterPixelFmt == rwRASTERFORMAT888)//3d texture 888
+		{
+			d3dRaster->format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+			d3dRaster->textureFlags = 64;
+		}
+	}
+	else if (flags&rwRASTERDONTALLOCATE)
 	{
 		if (rasterPixelFmt == rwRASTERFORMAT1555)//dxt1
 		{
@@ -71,7 +89,12 @@ void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 		case rwRASTERFORMAT32:
 			d3dRaster->format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 			break;
+		default: ;
 		}
 	}
-
+	if (raster->cType == rwRASTERTYPEZBUFFER)
+	{
+		if (rasterPixelFmt == rwRASTERFORMATDEFAULT)
+			d3dRaster->format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	}
 }

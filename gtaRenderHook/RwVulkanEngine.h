@@ -9,7 +9,7 @@ class CRwVulkanEngine :
 	public CIRwRenderEngine
 {
 public:
-	CRwVulkanEngine(CDebug* d);
+	CRwVulkanEngine(shared_ptr<CDebug> d);
 
 	virtual bool Open(HWND) override;
 	virtual bool Close() override;

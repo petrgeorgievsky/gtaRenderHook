@@ -6,66 +6,37 @@
 #include "D3D1XTexture.h"
 #include "D3D1XStateManager.h"
 #include "D3D1XEnumParser.h"
-#include "RwRenderEngine.h"
+#include "RwD3D1XEngine.h"
+#include "D3D1XRenderBuffersManager.h"
+#include "D3D1XVertexDeclarationManager.h"
+#include "D3D1XVertexDeclaration.h"
+#include "D3D1XVertexBufferManager.h"
+#include "RwVectorMath.h"
 
-CD3D1XDefaultPipeline::CD3D1XDefaultPipeline(CD3DRenderer* pRenderer) : 
-#ifndef DebuggingShaders
-	CD3D1XPipeline(pRenderer, "RwMainTesselation")
-#else
-	CD3D1XPipeline(pRenderer, L"RwMainTesselation")
-#endif // !DebuggingShaders
+CD3D1XDefaultPipeline::CD3D1XDefaultPipeline() : 
+	CD3D1XPipeline("RwMain")
 {
-#ifndef DebuggingShaders
-	m_pDS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::DS, "shaders/RwMainTesselation.fx", "DS");
-	m_pHS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::HS, "shaders/RwMainTesselation.fx", "HS");
-#else
-	m_pDS = new CD3D1XShader(m_pRenderer->getDevice(), RwD3D1XShaderType::DS, L"shaders/RwMainTesselation.fx", "DS");
-	m_pHS = new CD3D1XShader(m_pRenderer->getDevice(), RwD3D1XShaderType::HS, L"shaders/RwMainTesselation.fx", "HS");
-#endif // !DebuggingShaders
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(RwV4d);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	m_pRenderer->getDevice()->CreateBuffer(&bd, nullptr, &m_pMaterialDataBuffer);
 }
 
 
 CD3D1XDefaultPipeline::~CD3D1XDefaultPipeline()
 {
-	if (m_pMaterialDataBuffer) m_pMaterialDataBuffer->Release();
-	if (m_pDS) delete m_pDS;
-	if (m_pHS) delete m_pHS;
 }
 
-bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance) 
+bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance) const
 {
-	RpAtomic* atomic = (RpAtomic*)object;
+	RpAtomic* atomic = static_cast<RpAtomic*>(object);
 	RpGeometry* geom = atomic->geometry;
 	resEntryHeader->totalNumVertex = geom->numVertices;
 	// Create Vertex Declarations and Buffers
 	{
-		D3D11_INPUT_ELEMENT_DESC layout[] =
-		{
-			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 0,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0, 12,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0, 24,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,	0, 32,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
-		};
-		UINT numElements = ARRAYSIZE(layout);
-
-		// Create the input layout
-		if (FAILED(m_pRenderer->getDevice()->CreateInputLayout(layout, numElements, 
-			m_pVS->getBlob()->GetBufferPointer(), m_pVS->getBlob()->GetBufferSize(), (ID3D11InputLayout**)&resEntryHeader->vertexDeclaration)))
-		{
-			g_pDebug->printError("failed to create Input Layout");
-			return false;
-		}
+		auto vdeclPtr = CD3D1XVertexDeclarationManager::AddNew(m_pVS, geom->flags | rpGEOMETRYNORMALS | 
+											rpGEOMETRYPRELIT | rpGEOMETRYTEXTURED | rpGEOMETRYPOSITIONS);
+		resEntryHeader->vertexDeclaration = vdeclPtr->getInputLayout();
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
 		bd.Usage = D3D11_USAGE_IMMUTABLE;
-		bd.ByteWidth = static_cast<UINT>(sizeof(simpleVertex)) * resEntryHeader->totalNumVertex;
+		bd.ByteWidth = static_cast<UINT>(sizeof(SimpleVertex)) * resEntryHeader->totalNumVertex;
 		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		bd.CPUAccessFlags = 0;
 		bd.MiscFlags = 0;
@@ -78,7 +49,8 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 		{
 			D3D11_MAPPED_SUBRESOURCE mappedResource{};
 
-			simpleVertex* vertexData = new simpleVertex[static_cast<size_t>(resEntryHeader->totalNumVertex)];
+			SimpleVertex* vertexData = new SimpleVertex[static_cast<size_t>(resEntryHeader->totalNumVertex)];
+			
 			for (size_t i = 0; i < static_cast<size_t>(resEntryHeader->totalNumVertex); i++)
 			{
 				vertexData[i].pos = geom->morphTarget[0].verts[i];
@@ -95,6 +67,7 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 				else
 					vertexData[i].color = { 255,255,255,255 };
 			}
+
 			if (geom->morphTarget[0].normals == nullptr) {
 				for (int i = 0; i < geom->numTriangles; i++)
 				{
@@ -138,10 +111,15 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 					vertexData[i].normal = { vertexData[i].normal.x / length,vertexData[i].normal.y / length,vertexData[i].normal.z / length };
 				}
 			}
-			InitData.pSysMem = vertexData;
 
-			if (FAILED(m_pRenderer->getDevice()->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&resEntryHeader->vertexStream[0].vertexBuffer)))
+			InitData.pSysMem = vertexData;
+			
+			
+			if (FAILED(GET_D3D_DEVICE->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&resEntryHeader->vertexStream[0].vertexBuffer)))
 				g_pDebug->printError("Failed to create vertex buffer");
+			ID3D11Buffer* buffptr = static_cast<ID3D11Buffer*>(resEntryHeader->vertexStream[0].vertexBuffer);
+			CD3D1XVertexBufferManager::AddNew(buffptr);
+			//g_pDebug->SetD3DName((ID3D11DeviceChild*)resEntryHeader->vertexStream[0].vertexBuffer, "VertexBuffer::" + std::to_string(resEntryHeader->serialNumber));
 			delete[] vertexData;
 		}
 
@@ -151,47 +129,44 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 
 void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 type, RwUInt32 flags)
 {
-	RpAtomic* atomic = (RpAtomic*)object;
-	rxInstanceData* entryData = (rxInstanceData*)repEntry;
+	RpAtomic* atomic = static_cast<RpAtomic*>(object);
+	RxInstanceData* entryData = static_cast<RxInstanceData*>(repEntry);
 	if (entryData->header.totalNumIndex == 0)
 		return;
 	//if (entryData->header.primType != rwPRIMTYPETRISTRIP)
 	//	return;
-	ID3D11DeviceContext* devContext = m_pRenderer->getContext();
 	// Render shit
-	devContext->IASetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
+	g_pStateMgr->SetInputLayout(static_cast<ID3D11InputLayout*>(entryData->header.vertexDeclaration));
 
-	UINT stride = sizeof(simpleVertex);
+	UINT stride = sizeof(SimpleVertex);
 	UINT offset = 0;
-	devContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&entryData->header.vertexStream[0].vertexBuffer, &stride, &offset);
+
+	g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)entryData->header.vertexStream[0].vertexBuffer, stride, offset);
 	if (!entryData->header.indexBuffer)
-		g_pDebug->printMsg("no IB");
-	devContext->IASetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	devContext->IASetPrimitiveTopology(/*CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType)*/D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
+		g_pDebug->printMsg("CD3D1XDefaultPipeline: empty index buffer found", 2);
+	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
+	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	m_pVS->Set();
 	m_pPS->Set();
-	m_pDS->Set();
-	m_pHS->Set();
+	//m_pDS->Set();
+	//m_pHS->Set();
 	BOOL oldBlendState= g_pStateMgr->GetAlphaBlendEnable();
-	RwUInt8 bAlphaEnable = 0;
 	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
-		bAlphaEnable = 0;
-		RwV4d vec{ entryData->models[i].material->color.red / 255.0f,entryData->models[i].material->color.green / 255.0f,entryData->models[i].material->color.blue / 255.0f,entryData->models[i].material->color.alpha / 255.0f };
+		RwUInt8 bAlphaEnable = 0;
 		bAlphaEnable |= entryData->models[i].material->color.alpha!=255 || entryData->models[i].vertexAlpha;
 
-		devContext->UpdateSubresource(m_pMaterialDataBuffer, 0, nullptr, &vec, 0, 0);
-		devContext->PSSetConstantBuffers(2, 1, &m_pMaterialDataBuffer);
-
+		g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(entryData->models[i].material->color);
 		if (entryData->models[i].material->texture) {
 			bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
 			g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
 		}
 		g_pStateMgr->SetAlphaBlendEnable(bAlphaEnable>0);
-		devContext->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
+		g_pStateMgr->FlushStates();
+		GET_D3D_RENDERER->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
 	}
 	g_pStateMgr->SetAlphaBlendEnable(oldBlendState);
 	
-	m_pDS->ReSet();
-	m_pHS->ReSet();
+	//m_pDS->ReSet();
+	//m_pHS->ReSet();
 }

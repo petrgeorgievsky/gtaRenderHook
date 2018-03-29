@@ -1,7 +1,7 @@
 ========================================================================
     DYNAMIC LINK LIBRARY : gtaRenderHook Project Overview
 ========================================================================
-This is GTA SA render engine replacer.
+This is GTA SA render engine replacer and graphics enchancer.
 
 
 /////////////////////////////////////////////////////////////////////////////

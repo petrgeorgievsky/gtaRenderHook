@@ -6,35 +6,33 @@
 #include "CDebug.h"
 #include "RwRenderEngine.h"
 #include "D3D1XStateManager.h"
+#include "DeferredRenderer.h"
+#include "RwD3D1XEngine.h"
+#include "D3D1XVertexDeclarationManager.h"
+#include "D3D1XVertexBufferManager.h"
 
-CD3D1XSkinPipeline::CD3D1XSkinPipeline(CD3DRenderer* pRenderer): 
+CD3D1XSkinPipeline::CD3D1XSkinPipeline(): 
 #ifndef DebuggingShaders
-	CD3D1XPipeline(pRenderer, "RwSkinTesselation")
+	CDeferredPipeline("RwSkin",false)
 #else
-	CD3D1XPipeline(pRenderer, L"RwSkinTesselation")
+	CDeferredPipeline(L"RwSkinTesselation")
 #endif // !DebuggingShaders
 {
 #ifndef DebuggingShaders
-	m_pDS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::DS, "shaders/RwSkinTesselation.fx", "DS");
-	m_pHS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::HS, "shaders/RwSkinTesselation.fx", "HS");
+	//m_pDS = new CD3D1XDomainShader(m_pRenderer, "shaders/RwSkin.hlsl", "DS");
+	//m_pHS = new CD3D1XHullShader(m_pRenderer, "shaders/RwSkin.hlsl", "HS");
 #else
-	m_pDS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::DS, L"shaders/RwSkinTesselation.fx", "DS");
-	m_pHS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::HS, L"shaders/RwSkinTesselation.fx", "HS");
+	m_pDS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::DS, L"shaders/RwSkinTesselation.hlsl", "DS");
+	m_pHS = new CD3D1XShader(m_pRenderer, RwD3D1XShaderType::HS, L"shaders/RwSkinTesselation.hlsl", "HS");
 #endif // !DebuggingShaders
 
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(RwV4d);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	m_pRenderer->getDevice()->CreateBuffer(&bd, nullptr, &m_pMaterialDataBuffer);
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(RwV4d)*3*64;
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
-	m_pRenderer->getDevice()->CreateBuffer(&bd, nullptr, &m_pSkinningDataBuffer);
+	GET_D3D_DEVICE->CreateBuffer(&bd, nullptr, &m_pSkinningDataBuffer);
 }
 
 
@@ -42,7 +40,6 @@ CD3D1XSkinPipeline::~CD3D1XSkinPipeline()
 {
 	if (m_pDS) delete m_pDS;
 	if (m_pHS) delete m_pHS;
-	if (m_pMaterialDataBuffer) m_pMaterialDataBuffer->Release();
 	if (m_pSkinningDataBuffer) m_pSkinningDataBuffer->Release();
 }
 
@@ -65,7 +62,7 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 		UINT numElements = ARRAYSIZE(layout);
 
 		// Create the input layout
-		if (FAILED(m_pRenderer->getDevice()->CreateInputLayout(layout, numElements,
+		if (FAILED(GET_D3D_DEVICE->CreateInputLayout(layout, numElements,
 			m_pVS->getBlob()->GetBufferPointer(), m_pVS->getBlob()->GetBufferSize(), (ID3D11InputLayout**)&resEntryHeader->vertexDeclaration)))
 		{
 			g_pDebug->printError("failed to create Input Layout");
@@ -74,7 +71,7 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
 		bd.Usage = D3D11_USAGE_IMMUTABLE;
-		bd.ByteWidth = static_cast<UINT>(sizeof(simpleVertexSkin)) * resEntryHeader->totalNumVertex;
+		bd.ByteWidth = static_cast<UINT>(sizeof(SimpleVertexSkin)) * resEntryHeader->totalNumVertex;
 		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		bd.CPUAccessFlags = 0;
 		bd.MiscFlags = 0;
@@ -88,11 +85,11 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 			D3D11_MAPPED_SUBRESOURCE mappedResource{};
 			RpHAnimHierarchy* atomicHier = AtomicGetHAnimHier(atomic);
 			RpSkin* geomskin = GeometryGetSkin(geom);
-			simpleVertexSkin* vertexData = new simpleVertexSkin[static_cast<size_t>(resEntryHeader->totalNumVertex)];
+			SimpleVertexSkin* vertexData = new SimpleVertexSkin[static_cast<size_t>(resEntryHeader->totalNumVertex)];
 			RwUInt8	indexRemap[252];
 			memset(indexRemap, 0, sizeof(indexRemap));
 			if (geomskin->meshBoneRLECount > 0) {
-				g_pDebug->printMsg("Skin has run length encoding bones");
+				g_pDebug->printMsg("D3D1XSkinPipeline: skin data has run length encoding bones",2);
 			}
 			else {
 				if (atomicHier->numNodes > 0) {
@@ -100,7 +97,7 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 						indexRemap[i] = i;
 				}
 				else {
-					g_pDebug->printMsg("Skin has zero bone indices");
+					g_pDebug->printMsg("D3D1XSkinPipeline: skin data has zero bone indices",2);
 				}
 			}
 			for (size_t i = 0; i < static_cast<size_t>(resEntryHeader->totalNumVertex); i++)
@@ -176,9 +173,13 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 			}
 
 			InitData.pSysMem = vertexData;
+			
 
-			if (FAILED(m_pRenderer->getDevice()->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&resEntryHeader->vertexStream[0].vertexBuffer)))
+			if (FAILED(GET_D3D_DEVICE->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&resEntryHeader->vertexStream[0].vertexBuffer)))
 				g_pDebug->printError("Failed to create vertex buffer");
+			ID3D11Buffer* buffptr = static_cast<ID3D11Buffer*>(resEntryHeader->vertexStream[0].vertexBuffer);
+			g_pDebug->SetD3DName(buffptr, "SkinVertexBuffer::" + std::to_string(resEntryHeader->serialNumber));
+			CD3D1XVertexBufferManager::AddNew(buffptr);
 			delete[] vertexData;
 		}
 
@@ -188,32 +189,42 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 
 void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 type, RwUInt32 flags)
 {
+	if (m_uiDeferredStage == 3|| m_uiDeferredStage==5)
+		return;
 	RpAtomic* atomic = (RpAtomic*)object;
 
-	rxInstanceData* entryData = (rxInstanceData*)repEntry;
+	RxInstanceData* entryData = (RxInstanceData*)repEntry;
 	if (entryData->header.totalNumIndex == 0)
 		return;
-	ID3D11DeviceContext* devContext = m_pRenderer->getContext();
+	ID3D11DeviceContext* devContext = GET_D3D_CONTEXT;
 
 	// Render shit
-	devContext->IASetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
+	//if (CD3D1XVertexDeclarationManager::currentVDecl != entryData->header.vertexDeclaration) {
+	g_pStateMgr->SetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
+	//	CD3D1XVertexDeclarationManager::currentVDecl = entryData->header.vertexDeclaration;
+	//}
 
-	UINT stride = sizeof(simpleVertexSkin);
+	UINT stride = sizeof(SimpleVertexSkin);
 	UINT offset = 0;
-	devContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)&entryData->header.vertexStream[0].vertexBuffer, &stride, &offset);
+	g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)entryData->header.vertexStream[0].vertexBuffer, stride, offset);
 	if (!entryData->header.indexBuffer)
-		g_pDebug->printMsg("no IB");
+		g_pDebug->printMsg("D3D1XSkinPipeline: empty index buffer found", 2);
 	//g_pStateMgr->SetFillMode(D3D11_FILL_WIREFRAME);
-	devContext->IASetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	auto featureLevel = m_pRenderer->getFeatureLevel();
-	if (featureLevel >= D3D_FEATURE_LEVEL_11_0)
-		devContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
-	else
-		devContext->IASetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
+	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
+	auto featureLevel = GET_D3D_FEATURE_LVL;
+	//if (featureLevel >= D3D_FEATURE_LEVEL_11_0)
+	//	devContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
+	//else
+	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	m_pVS->Set();
-	m_pPS->Set();
-	m_pDS->Set();
-	m_pHS->Set();
+	if (m_uiDeferredStage == 1)
+		m_pDeferredPS->Set();
+	else if (m_uiDeferredStage == 2)
+		m_pShadowPS->Set();
+	else
+		m_pPS->Set();
+	//m_pDS->Set();
+	//m_pHS->Set();
 	RpSkin* geomSkin;
 	geomSkin = GeometryGetSkin(atomic->geometry);
 	RpHAnimHierarchy* hier = AtomicGetHAnimHier(atomic);
@@ -230,16 +241,17 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 		RwV4d vec{ entryData->models[i].material->color.red / 255.0f,entryData->models[i].material->color.green / 255.0f,entryData->models[i].material->color.blue / 255.0f,entryData->models[i].material->color.alpha / 255.0f };
 		bAlphaEnable |= entryData->models[i].material->color.alpha!=255 || entryData->models[i].vertexAlpha;
 
-		if (entryData->models[i].material->texture) 
+		if (entryData->models[i].material->texture&&entryData->models[i].material->texture->raster)
 		{
-			//bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
+			bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
 			g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
 		}
 		g_pStateMgr->SetAlphaBlendEnable(bAlphaEnable!=0);
+		g_pStateMgr->FlushStates();
 		devContext->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
 	}
 	g_pStateMgr->SetAlphaBlendEnable(oldBlendState);
-	m_pDS->ReSet();
-	m_pHS->ReSet();
+	//m_pDS->ReSet();
+	//m_pHS->ReSet();
 	//g_pStateMgr->SetFillMode(D3D11_FILL_SOLID);
 }

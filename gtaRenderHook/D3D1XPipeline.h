@@ -1,24 +1,19 @@
-#pragma once
-class CD3DRenderer;
+#ifndef D3D1XPipeline_h__
+#define D3D1XPipeline_h__
 class CD3D1XShader;
+// Direct3D Pipeline base class
 class CD3D1XPipeline
 {
 public:
-#ifndef DebuggingShaders
-	CD3D1XPipeline(CD3DRenderer* pRenderer, std::string pipeName);
-#else
-	CD3D1XPipeline(CD3DRenderer* pRenderer, std::wstring pipeName);
-#endif // !DebuggingShaders
+	CD3D1XPipeline(std::string pipeName);
 	~CD3D1XPipeline();
 protected:
-	CD3DRenderer*		m_pRenderer = nullptr;
+	void DrawIndexed(UINT, UINT, UINT);
+	// Base pixel shader ptr.
 	CD3D1XShader*		m_pVS		= nullptr;
+	// Base vertex shader ptr.
 	CD3D1XShader*		m_pPS		= nullptr;
-#ifndef DebuggingShaders
+	// Pipeline name.
 	std::string			m_sPipeName = "D3D1XPipeline";
-#else
-	std::wstring		m_sPipeName = L"D3D1XPipeline";
-#endif // !DebuggingShaders
-
 };
-
+#endif

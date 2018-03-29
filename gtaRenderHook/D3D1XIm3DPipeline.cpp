@@ -2,15 +2,18 @@
 #include "D3D1XIm3DPipeline.h"
 #include "CDebug.h"
 #include "D3DRenderer.h"
-
-CD3D1XIm3DPipeline::CD3D1XIm3DPipeline(CD3DRenderer* pRenderer):
+#include "D3D1XShader.h"
+#include "D3D1XStateManager.h"
+#include "RwD3D1XEngine.h"
+ 
+CD3D1XIm3DPipeline::CD3D1XIm3DPipeline():
 #ifndef DebuggingShaders
-	CD3D1XPipeline(pRenderer, "RwIm3D")
+	CD3D1XPipeline("RwIm3D")
 #else
-	CD3D1XPipeline(pRenderer, L"RwIm3D")
+	CD3D1XPipeline(L"RwIm3D")
 #endif // !DebuggingShaders
 {
-	ID3D11Device* pd3dDevice = m_pRenderer->getDevice();
+	ID3D11Device* pd3dDevice = GET_D3D_DEVICE;
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -60,7 +63,7 @@ CD3D1XIm3DPipeline::~CD3D1XIm3DPipeline()
 
 RwBool CD3D1XIm3DPipeline::SubmitNode()
 {
-	ID3D11DeviceContext* pImmediateContext = m_pRenderer->getContext();
+	ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
 	rwIm3DPool* pool = rwD3D9ImmPool;
 
 	if (pool->stash.primType!=rwPRIMTYPETRIFAN) 
@@ -85,23 +88,24 @@ RwBool CD3D1XIm3DPipeline::SubmitNode()
 				pImmediateContext->Unmap(m_pIndexBuffer, 0);
 			}
 
-			pImmediateContext->IASetInputLayout(m_pVertexLayout);
+			g_pStateMgr->SetInputLayout(m_pVertexLayout);
 
 			UINT stride = sizeof(RwIm3DVertex);
 			UINT offset = 0;
-			pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
-			pImmediateContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+			g_pStateMgr->SetVertexBuffer(m_pVertexBuffer, stride, offset);
+			g_pStateMgr->SetIndexBuffer(m_pIndexBuffer);
 			if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRILIST)
-				pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRISTRIP)
-				pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPELINELIST)
-				pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 			else
-				g_pDebug->printMsg("unk prim");
+				g_pDebug->printMsg("D3D1XIm3DPipeline: Unknown primitive type:"+to_string(rwD3D9ImmPool->stash.primType)+", could be poly line or point list.",2);
 			m_pVS->Set();
 			m_pPS->Set();
 
+			g_pStateMgr->FlushStates();
 			pImmediateContext->DrawIndexed(pool->stash.numIndices, 0, 0);
 		}
 		else {
@@ -116,29 +120,30 @@ RwBool CD3D1XIm3DPipeline::SubmitNode()
 				pImmediateContext->Unmap(m_pVertexBuffer, 0);
 			}
 
-			pImmediateContext->IASetInputLayout(m_pVertexLayout);
+			g_pStateMgr->SetInputLayout(m_pVertexLayout);
 
 			UINT stride = sizeof(RwIm3DVertex);
 			UINT offset = 0;
-			pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
-			//pImmediateContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+			g_pStateMgr->SetVertexBuffer(m_pVertexBuffer, stride, offset);
+
 			if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRILIST)
-				pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRISTRIP)
-				pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPELINELIST)
-				pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 			else
-				g_pDebug->printMsg("unk prim");
+				g_pDebug->printMsg("D3D1XIm3DPipeline: Unknown primitive type:" + to_string(rwD3D9ImmPool->stash.primType) + ", could be poly line or point list.", 2);
 			m_pVS->Set();
 			m_pPS->Set();
 
+			g_pStateMgr->FlushStates();
 			pImmediateContext->Draw(rwD3D9ImmPool->numElements, 0);
 		}
 	}
 	else
 	{
-		g_pDebug->printMsg("fan");
+		g_pDebug->printMsg("D3D1XIm3DPipeline: Triangle fan primitive is currently unsuported.", 2);
 	}
 	return true;
 }

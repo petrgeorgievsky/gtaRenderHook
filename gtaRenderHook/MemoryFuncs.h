@@ -1,12 +1,18 @@
 #pragma once
-inline static void Patch(void* address, void* data, SIZE_T size)
+static void Patch(void* address, void* data, SIZE_T size)
 {
 	unsigned long protect[2];
 	VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &protect[0]);
 	memcpy(address, data, size);
 	VirtualProtect(address, size, protect[0], &protect[1]);
 }
-inline static void SetPointer(INT_PTR address, void *value)
+
+/**
+ * \brief 
+ * \param address 
+ * \param value 
+ */
+static void SetPointer(INT_PTR address, void *value)
 {
 	Patch((void *)address, &value, sizeof(void*));
 }

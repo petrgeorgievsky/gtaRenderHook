@@ -1,6 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug_III|Win32">
+      <Configuration>Debug_III</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_III|x64">
+      <Configuration>Debug_III</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_vc|Win32">
+      <Configuration>Debug_vc</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_vc|x64">
+      <Configuration>Debug_vc</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -28,14 +44,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
@@ -43,16 +66,32 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">
+    <PlatformToolset>v141</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>Static</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug_III|x64'">
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -62,10 +101,16 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -76,11 +121,26 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.asi</TargetExt>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>C:\Program Files %28x86%29\RW\Graphics\rwsdk\include\d3d9;C:\VulkanSDK\1.0.21.1\Include;D:\Program Files %28x86%29\Microsoft DirectX SDK %28August 2009%29\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VulkanSDK\1.0.21.1\Bin32;D:\Program Files %28x86%29\Microsoft DirectX SDK %28August 2009%29\Lib\x86;$(LibraryPath)</LibraryPath>
-    <OutDir>D:\Program Files (x86)\Rockstar Games\GTA San Andreas\</OutDir>
+    <IncludePath>D:\AntTweakBar_116\AntTweakBar\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\tinyxml2-master\tinyxml2\Debug-Lib;D:\AntTweakBar_116\AntTweakBar\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>D:\Program Files %28x86%29\Rockstar Games\GTA San Andreas</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetExt>.asi</TargetExt>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\peter\Documents\GitHub\sa-render\Render\game;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\tinyxml2-master\tinyxml2\Release-Lib;$(LibraryPath)</LibraryPath>
+    <OutDir>D:\Program Files (x86)\Rockstar Games\Grand Theft Auto Vice City\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files %28x86%29\RW\Graphics\rwsdk\include\d3d9;C:\VulkanSDK\1.0.21.1\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VulkanSDK\1.0.21.1\Bin;$(LibraryPath)</LibraryPath>
+    <TargetExt>.asi</TargetExt>
+    <OutDir>D:\Program Files (x86)\Rockstar Games\GTA San Andreas\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Program Files %28x86%29\RW\Graphics\rwsdk\include\d3d9;C:\VulkanSDK\1.0.21.1\Include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\VulkanSDK\1.0.21.1\Bin;$(LibraryPath)</LibraryPath>
@@ -91,8 +151,12 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.asi</TargetExt>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>C:\Program Files %28x86%29\RW\Graphics\rwsdk\include\d3d9;C:\VulkanSDK\1.0.21.1\Include;D:\Program Files (x86)\Microsoft DirectX SDK (August 2009)\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VulkanSDK\1.0.21.1\Bin32;D:\Program Files (x86)\Microsoft DirectX SDK (August 2009)\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\AntTweakBar_116\AntTweakBar\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\tinyxml2-master\tinyxml2\Release-Lib;D:\AntTweakBar_116\AntTweakBar\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>D:\Program Files %28x86%29\Rockstar Games\GTA San Andreas</OutDir>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <EnableCppCoreCheck>false</EnableCppCoreCheck>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -100,13 +164,40 @@
     <LibraryPath>C:\VulkanSDK\1.0.21.1\Bin;$(LibraryPath)</LibraryPath>
     <TargetExt>.asi</TargetExt>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">
+    <OutDir>D:\Program Files (x86)\Rockstar Games\Grand Theft Auto III</OutDir>
+    <TargetExt>.asi</TargetExt>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Program Files %28x86%29\RW\Graphics\rwsdk\include\d3d9;C:\Users\peter\Documents\GitHub\sa-render\Render\game;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\tinyxml2-master\tinyxml2\Release-Lib;$(LibraryPath)</LibraryPath>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GTARENDERHOOK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GTARENDERHOOK_EXPORTS;GTA_SA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>StdAfx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>AntTweakBar.lib;user32.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;tinyxml2.lib;plugin_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(OutDir)$(TargetName).map</MapFileName>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GTARENDERHOOK_EXPORTS;GTA_VC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForcedIncludeFiles>StdAfx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,6 +219,20 @@
       <AdditionalDependencies>d3d9.lib;vulkan-1.lib;d3d11.lib;d3dcompiler.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;GTARENDERHOOK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForcedIncludeFiles>StdAfx.h</ForcedIncludeFiles>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d9.lib;vulkan-1.lib;d3d11.lib;d3dcompiler.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -135,17 +240,23 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GTARENDERHOOK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GTARENDERHOOK_EXPORTS;GTA_SA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>StdAfx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <LanguageStandard>
+      </LanguageStandard>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vulkan-1.lib;user32.lib;dxgi.lib;d3dx11.lib;d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AntTweakBar.lib;user32.lib;dxgi.lib;d3dcompiler.lib;d3d11.lib;tinyxml2.lib;plugin.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)shaders" "$(TargetDir)shaders" /y </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -165,58 +276,128 @@
       <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GTARENDERHOOK_EXPORTS;GTA_III;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <ForcedIncludeFiles>StdAfx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>user32.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\..\..\Program Files (x86)\RW\Graphics\rwsdk\include\d3d9\rwplcore.h" />
+    <ClInclude Include="D3D1XStructuredBuffer.h" />
+    <ClInclude Include="D3D1XConstantBuffer.h" />
+    <ClInclude Include="CubemapReflectionRenderer.h" />
+    <ClInclude Include="CustomSeabedPipeline.h" />
     <ClInclude Include="CDebug.h" />
+    <ClInclude Include="CustomBuildingDNPipeline.h" />
+    <ClInclude Include="CustomBuildingPipeline.h" />
+    <ClInclude Include="CustomCarFXPipeline.h" />
+    <ClInclude Include="CustomWaterPipeline.h" />
+    <ClInclude Include="CWaterLevel.h" />
+    <ClInclude Include="D3D1XBuffer.h" />
     <ClInclude Include="D3D1XDefaultPipeline.h" />
     <ClInclude Include="D3D1XEnumParser.h" />
     <ClInclude Include="D3D1XIm2DPipeline.h" />
     <ClInclude Include="D3D1XIm3DPipeline.h" />
     <ClInclude Include="D3D1XPipeline.h" />
+    <ClInclude Include="D3D1XRenderBuffersManager.h" />
     <ClInclude Include="D3D1XShader.h" />
     <ClInclude Include="D3D1XSkinPipeline.h" />
     <ClInclude Include="D3D1XStateManager.h" />
     <ClInclude Include="D3D1XTexture.h" />
+    <ClInclude Include="D3D1XTextureMemoryManager.h" />
+    <ClInclude Include="D3D1XVertexBuffer.h" />
+    <ClInclude Include="D3D1XVertexBufferManager.h" />
     <ClInclude Include="D3D1XVertexDeclaration.h" />
     <ClInclude Include="D3D1XVertexDeclarationManager.h" />
     <ClInclude Include="D3DRenderer.h" />
+    <ClInclude Include="DebugBBox.h" />
+    <ClInclude Include="DebugLine.h" />
+    <ClInclude Include="DebugRendering.h" />
+    <ClInclude Include="DebugRenderObject.h" />
+    <ClInclude Include="DeferredPipeline.h" />
+    <ClInclude Include="DeferredRenderer.h" />
+    <ClInclude Include="FullscreenQuad.h" />
     <ClInclude Include="gta_sa_ptrs.h" />
+    <ClInclude Include="HDRTonemapping.h" />
+    <ClInclude Include="LightManager.h" />
     <ClInclude Include="MemoryFuncs.h" />
+    <ClInclude Include="PBSMaterial.h" />
+    <ClInclude Include="PostProcessEffect.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="RwD3D1XEngine.h" />
+    <ClInclude Include="RwMethods.h" />
     <ClInclude Include="RwRenderEngine.h" />
-    <ClInclude Include="RwVulkanEngine.h" />
+    <ClInclude Include="RwVectorMath.h" />
+    <ClInclude Include="SAIdleHook.h" />
+    <ClInclude Include="SettingsHolder.h" />
+    <ClInclude Include="ShadowPipeline.h" />
+    <ClInclude Include="ShadowRenderer.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="VulkanCommandBufferMgr.h" />
-    <ClInclude Include="VulkanDevice.h" />
-    <ClInclude Include="VulkanIm2DPipeline.h" />
-    <ClInclude Include="VulkanPipeline.h" />
-    <ClInclude Include="VulkanRenderer.h" />
-    <ClInclude Include="VulkanShader.h" />
-    <ClInclude Include="VulkanSwapChain.h" />
+    <ClInclude Include="VoxelOctreeRenderer.h" />
+    <ClInclude Include="VoxelPipeline.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3D1XStructuredBuffer.cpp" />
+    <ClCompile Include="D3D1XConstantBuffer.cpp" />
+    <ClCompile Include="CubemapReflectionRenderer.cpp" />
+    <ClCompile Include="CustomSeabedPipeline.cpp" />
+    <ClCompile Include="CustomBuildingDNPipeline.cpp" />
+    <ClCompile Include="CustomBuildingPipeline.cpp" />
+    <ClCompile Include="CustomCarFXPipeline.cpp" />
+    <ClCompile Include="CustomWaterPipeline.cpp" />
+    <ClCompile Include="CWaterLevel.cpp" />
+    <ClCompile Include="D3D1XBuffer.cpp" />
     <ClCompile Include="D3D1XDefaultPipeline.cpp" />
     <ClCompile Include="D3D1XEnumParser.cpp" />
     <ClCompile Include="D3D1XIm2DPipeline.cpp" />
     <ClCompile Include="D3D1XIm3DPipeline.cpp" />
     <ClCompile Include="D3D1XPipeline.cpp" />
+    <ClCompile Include="D3D1XRenderBuffersManager.cpp" />
     <ClCompile Include="D3D1XShader.cpp" />
     <ClCompile Include="D3D1XSkinPipeline.cpp" />
     <ClCompile Include="D3D1XStateManager.cpp" />
     <ClCompile Include="D3D1XTexture.cpp" />
+    <ClCompile Include="D3D1XTextureMemoryManager.cpp" />
+    <ClCompile Include="D3D1XVertexBuffer.cpp" />
+    <ClCompile Include="D3D1XVertexBufferManager.cpp" />
     <ClCompile Include="D3D1XVertexDeclaration.cpp" />
     <ClCompile Include="D3D1XVertexDeclarationManager.cpp" />
     <ClCompile Include="D3DRenderer.cpp" />
+    <ClCompile Include="DebugBBox.cpp" />
+    <ClCompile Include="DebugLine.cpp" />
+    <ClCompile Include="DebugRendering.cpp" />
+    <ClCompile Include="DebugRenderObject.cpp" />
+    <ClCompile Include="DeferredPipeline.cpp" />
+    <ClCompile Include="DeferredRenderer.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">
+      </PrecompiledHeader>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug_vc|x64'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_vc|x64'">
       </PrecompiledHeader>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -225,22 +406,107 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="FullscreenQuad.cpp" />
+    <ClCompile Include="HDRTonemapping.cpp" />
+    <ClCompile Include="LightManager.cpp" />
+    <ClCompile Include="PBSMaterial.cpp" />
+    <ClCompile Include="PostProcessEffect.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RwD3D1XEngine.cpp" />
+    <ClCompile Include="RwMethods.cpp" />
     <ClCompile Include="RwRenderEngine.cpp" />
-    <ClCompile Include="RwVulkanEngine.cpp" />
+    <ClCompile Include="RwVectorMath.cpp" />
+    <ClCompile Include="SAIdleHook.cpp" />
+    <ClCompile Include="SettingsHolder.cpp" />
+    <ClCompile Include="ShadowPipeline.cpp" />
+    <ClCompile Include="ShadowRenderer.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_vc|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="VulkanCommandBufferMgr.cpp" />
-    <ClCompile Include="VulkanDevice.cpp" />
-    <ClCompile Include="VulkanIm2DPipeline.cpp" />
-    <ClCompile Include="VulkanPipeline.cpp" />
-    <ClCompile Include="VulkanRenderer.cpp" />
-    <ClCompile Include="VulkanShader.cpp" />
-    <ClCompile Include="VulkanSwapChain.cpp" />
+    <ClCompile Include="VoxelOctreeRenderer.cpp" />
+    <ClCompile Include="VoxelPipeline.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\AtmosphericScattering.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\debug.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\Deferred.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\GameMath.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\GBuffer.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\Globals.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\HDRTonemapping.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\LightingFunctions.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\Quad.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\RwIm2D.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\RwIm3D.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\RwMain.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\RwMainTesselation.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\RwSkin.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\RwSkinTesselation.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\SACustomBuilding.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\SACustomBuildingDN.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\SACustomCarFX.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\SACustomSeabed.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\SACustomWater.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\ScreenSpaceReflections.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\Shadows.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\VoxelGI.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\VoxelizingHelper.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaders\VoxelStuffCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

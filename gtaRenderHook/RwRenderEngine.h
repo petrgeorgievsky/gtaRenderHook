@@ -79,6 +79,7 @@ public:
 	virtual bool	CameraClear			(RwCamera *camera, RwRGBA *color, RwInt32 flags) = 0;
 	virtual bool	CameraBeginUpdate	(RwCamera *camera) = 0;
 	virtual bool	CameraEndUpdate		(RwCamera *camera) = 0;
+	virtual void	SetRenderTargets	(RwRaster **rasters, RwRaster *zBuffer, RwUInt32 rasterCount)=0;
 
 	// Immediate mode render methods.
 	virtual bool	Im2DRenderPrimitive			(RwPrimitiveType primType, RwIm2DVertex *vertices, RwUInt32 numVertices)												= 0;
@@ -94,8 +95,8 @@ public:
 	virtual void	DefaultRenderCallback	(RwResEntry *repEntry, void *object, RwUInt8 type, RwUInt32 flags)		= 0;
 	virtual RwBool	DefaultInstanceCallback	(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance) = 0;
 
-	CIRwRenderEngine(CDebug* d) : m_pDebug{ d } {};
-	virtual ~CIRwRenderEngine() { delete m_pDebug; };
+	CIRwRenderEngine(CDebug *d) { m_pDebug = d; };
+	virtual ~CIRwRenderEngine() {  };
 	
 	// Render engine event system.
 	bool EventHandlingSystem(RwRenderSystemState State, int* a2, void* a3, int a4);
@@ -103,5 +104,15 @@ protected:
 	CDebug* m_pDebug;
 };
 extern CIRwRenderEngine* g_pRwCustomEngine;
+#define GET_D3D_RENDERER \
+	static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer()
+#define GET_D3D_DEVICE \
+	GET_D3D_RENDERER->getDevice()
+#define GET_D3D_CONTEXT \
+	GET_D3D_RENDERER->getContext()
+#define GET_D3D_FEATURE_LVL \
+	GET_D3D_RENDERER->getFeatureLevel()
+#define GET_D3D_SWAP_CHAIN \
+	GET_D3D_RENDERER->getSwapChain()
 #endif 
 

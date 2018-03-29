@@ -5,7 +5,7 @@
 #include "VulkanCommandBufferMgr.h"
 #include "VulkanIm2DPipeline.h"
 #include "VulkanDevice.h"
-CRwVulkanEngine::CRwVulkanEngine(CDebug* d) :CIRwRenderEngine{ d }
+CRwVulkanEngine::CRwVulkanEngine(shared_ptr<CDebug> d) :CIRwRenderEngine{ d }
 {}
 
 bool CRwVulkanEngine::BaseEventHandler(int State, int* a2, void* a3, int a4)

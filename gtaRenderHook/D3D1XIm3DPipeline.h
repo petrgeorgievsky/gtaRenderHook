@@ -1,7 +1,6 @@
 
 #ifndef D3D1XIm3DPipeline_h__
 #define D3D1XIm3DPipeline_h__
-#include "D3D1XShader.h"
 #include "D3D1XPipeline.h"
 struct Im3DDef
 {
@@ -12,7 +11,7 @@ struct Im3DDef
 class CD3D1XIm3DPipeline: public CD3D1XPipeline
 {
 public:
-	CD3D1XIm3DPipeline(CD3DRenderer* pRenderer);
+	CD3D1XIm3DPipeline();
 	~CD3D1XIm3DPipeline();
 
 	RwBool SubmitNode();

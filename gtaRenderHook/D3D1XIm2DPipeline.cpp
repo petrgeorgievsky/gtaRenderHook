@@ -2,12 +2,15 @@
 #include "D3D1XIm2DPipeline.h"
 #include "CDebug.h"
 #include "D3DRenderer.h"
+#include "D3D1XShader.h"
+#include "D3D1XStateManager.h"
+#include "RwD3D1XEngine.h"
 
-CD3D1XIm2DPipeline::CD3D1XIm2DPipeline(CD3DRenderer* pRenderer):
+CD3D1XIm2DPipeline::CD3D1XIm2DPipeline():
 #ifndef DebuggingShaders
-	CD3D1XPipeline(pRenderer, "RwIm2D")
+	CD3D1XPipeline( "RwIm2D")
 #else
-	CD3D1XPipeline(pRenderer, L"RwIm2D")
+	CD3D1XPipeline( L"RwIm2D")
 #endif // !DebuggingShaders
 {
 	D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -19,7 +22,7 @@ CD3D1XIm2DPipeline::CD3D1XIm2DPipeline(CD3DRenderer* pRenderer):
 	UINT numElements = ARRAYSIZE(layout);
 
 	ID3DBlob* vsBlob = m_pVS->getBlob();
-	ID3D11Device* pd3dDevice = m_pRenderer->getDevice();
+	ID3D11Device* pd3dDevice = GET_D3D_DEVICE;
 	// Create the input layout
 	if (FAILED(pd3dDevice->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &m_pVertexLayout)))
 		g_pDebug->printError("Failed to create input layout");
@@ -44,21 +47,11 @@ CD3D1XIm2DPipeline::CD3D1XIm2DPipeline(CD3DRenderer* pRenderer):
 
 	if (FAILED(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pIndexBuffer)))
 		g_pDebug->printError("Failed to create index buffer");
-
-	// Create the constant buffer
-	bd = {};
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(ConstantBuffer);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	if (FAILED(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pConstantBuffer)))
-		g_pDebug->printError("Failed to create constant buffer");
 }
 
 
 CD3D1XIm2DPipeline::~CD3D1XIm2DPipeline()
 {
-	if (m_pConstantBuffer) m_pConstantBuffer->Release();
 	if (m_pIndexBuffer) m_pIndexBuffer->Release();
 	if (m_pVertexBuffer) m_pVertexBuffer->Release();
 	if (m_pVertexLayout) m_pVertexLayout->Release();
@@ -66,7 +59,7 @@ CD3D1XIm2DPipeline::~CD3D1XIm2DPipeline()
 
 void CD3D1XIm2DPipeline::Draw( RwPrimitiveType prim, RwIm2DVertex* verticles, RwUInt32 vertexCount)
 {
-	ID3D11DeviceContext* pImmediateContext = m_pRenderer->getContext();
+	ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
 	size_t vertCount = static_cast<size_t>(vertexCount);
 	if (prim != rwPRIMTYPETRIFAN) {
 		D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -97,22 +90,23 @@ void CD3D1XIm2DPipeline::Draw( RwPrimitiveType prim, RwIm2DVertex* verticles, Rw
 		pImmediateContext->Unmap(m_pVertexBuffer, 0);
 	}
 
-	pImmediateContext->IASetInputLayout(m_pVertexLayout);
+	g_pStateMgr->SetInputLayout(m_pVertexLayout);
 
 	UINT stride = sizeof(RwIm2DVertex);
 	UINT offset = 0;
-	pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
-	pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	g_pStateMgr->SetVertexBuffer( m_pVertexBuffer, stride, offset);
+	g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_pVS->Set();
 	m_pPS->Set();
 
+	g_pStateMgr->FlushStates();
 	pImmediateContext->Draw(static_cast<UINT>(vertCount), 0);
 }
 
 void CD3D1XIm2DPipeline::DrawIndexed(RwPrimitiveType prim, RwIm2DVertex *vertices, RwUInt32 numVertices, RwImVertexIndex *indices, RwUInt32 numIndices)
 {
-	ID3D11DeviceContext* pImmediateContext = m_pRenderer->getContext();
+	ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
 	size_t vertCount = static_cast<size_t>(numVertices);
 	if (prim != rwPRIMTYPETRIFAN) {
 		D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -136,34 +130,17 @@ void CD3D1XIm2DPipeline::DrawIndexed(RwPrimitiveType prim, RwIm2DVertex *vertice
 		g_pDebug->printError("unimplemented code");
 	}
 
-	pImmediateContext->IASetInputLayout(m_pVertexLayout);
+	g_pStateMgr->SetInputLayout(m_pVertexLayout);
 
 	UINT stride = sizeof(RwIm2DVertex);
 	UINT offset = 0;
-	pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
-	pImmediateContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	g_pStateMgr->SetVertexBuffer(m_pVertexBuffer, stride, offset);
+	g_pStateMgr->SetIndexBuffer(m_pIndexBuffer);
+	g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_pVS->Set();
 	m_pPS->Set();
 
-	pImmediateContext->DrawIndexed(numIndices, 0, 0);
-}
-
-void CD3D1XIm2DPipeline::UpdateMatricles(RwMatrix &view, RwMatrix &proj)
-{
-	ID3D11DeviceContext* pImmediateContext = m_pRenderer->getContext();
-	globalCBuffer.mView = view;
-	globalCBuffer.mProjection = proj;
-	pImmediateContext->UpdateSubresource(m_pConstantBuffer, 0, nullptr, &globalCBuffer, 0, 0);
-	pImmediateContext->VSSetConstantBuffers(0, 1, &m_pConstantBuffer);
-	pImmediateContext->DSSetConstantBuffers(0, 1, &m_pConstantBuffer);
-}
-
-void CD3D1XIm2DPipeline::UpdateMatricles()
-{
-	ID3D11DeviceContext* pImmediateContext = m_pRenderer->getContext();
-	pImmediateContext->UpdateSubresource(m_pConstantBuffer, 0, nullptr, &globalCBuffer, 0, 0);
-	pImmediateContext->VSSetConstantBuffers(0, 1, &m_pConstantBuffer);
-	pImmediateContext->DSSetConstantBuffers(0, 1, &m_pConstantBuffer);
+	g_pStateMgr->FlushStates();
+	GET_D3D_RENDERER->DrawIndexed(numIndices, 0, 0);
 }

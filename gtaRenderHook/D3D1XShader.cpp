@@ -2,220 +2,72 @@
 #include "D3D1XShader.h"
 #include "D3DRenderer.h"
 #include "CDebug.h"
+#include "D3D1XStateManager.h"
+#include "RwD3D1XEngine.h"
+#include <d3dcompiler.h>
 
-#ifndef DebuggingShaders
-CD3D1XShader::CD3D1XShader(CD3DRenderer* pRenderer, RwD3D1XShaderType type, LPCSTR fileName, LPCSTR entryPoint) : m_pRenderer{ pRenderer }
-#else
-CD3D1XShader::CD3D1XShader(CD3DRenderer* pRenderer, RwD3D1XShaderType type, LPCWSTR fileName, LPCSTR entryPoint) : m_pRenderer{ pRenderer }
-#endif
+#define USE_SHADER_CACHING
+
+#ifdef DEBUG
+int CD3D1XShader::m_ShaderCount = 0;
+#endif // DEBUG
+
+CD3D1XShader::CD3D1XShader()
 {
-	m_type = type;
-	// Compile the shader
-	std::string shaderModel;
-	std::string shaderVersion = "4_0_level_9_1";
-	auto featureLevel = m_pRenderer->getFeatureLevel();
-	if (featureLevel < D3D_FEATURE_LEVEL_10_0 && (m_type == RwD3D1XShaderType::GS))
-		return;
-	if (featureLevel < D3D_FEATURE_LEVEL_11_0 && (m_type == RwD3D1XShaderType::DS || m_type == RwD3D1XShaderType::HS))
-		return;
-	switch (featureLevel)
-	{
-	case D3D_FEATURE_LEVEL_9_1:
-		shaderVersion = "4_0_level_9_1";
-		break;
-	case D3D_FEATURE_LEVEL_9_2:
-		shaderVersion = "4_0_level_9_2";
-		break;
-	case D3D_FEATURE_LEVEL_9_3:
-		shaderVersion = "4_0_level_9_3";
-		break;
-	case D3D_FEATURE_LEVEL_10_0:
-		shaderVersion = "4_0";
-		break;
-	case D3D_FEATURE_LEVEL_10_1:
-		shaderVersion = "4_0";
-		break;
-	case D3D_FEATURE_LEVEL_11_0:
-		shaderVersion = "5_0";
-		break;
-	case D3D_FEATURE_LEVEL_11_1:
-		shaderVersion = "5_0";
-		break;
-	default:
-		break;
-	}
-	switch (type)
-	{
-	case RwD3D1XShaderType::VS:
-		shaderModel = ("vs_" + shaderVersion);
-		break;
-	case RwD3D1XShaderType::PS:
-		shaderModel = ("ps_" + shaderVersion);
-		break;
-	case RwD3D1XShaderType::GS:
-		shaderModel = ("gs_" + shaderVersion);
-		break;
-	case RwD3D1XShaderType::HS:
-		shaderModel = ("hs_" + shaderVersion);
-		break;
-	case RwD3D1XShaderType::DS:
-		shaderModel = ("ds_" + shaderVersion);
-		break;
-	}
-	
-	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel.c_str(), &m_pBlob)))
-		g_pDebug->printError("The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.");
-	
-	auto pd3dDevice= m_pRenderer->getDevice();
-	// Create the shader
-	HRESULT hr=S_OK;
-	switch (type)
-	{
-	case RwD3D1XShaderType::VS:
-		hr = pd3dDevice->CreateVertexShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, &m_pShader.VS);
-		break;
-	case RwD3D1XShaderType::PS:
-		hr = pd3dDevice->CreatePixelShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, &m_pShader.PS);
-		break;
-	case RwD3D1XShaderType::GS:
-		hr = pd3dDevice->CreateGeometryShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, &m_pShader.GS);
-		break;
-	case RwD3D1XShaderType::HS:
-		hr = pd3dDevice->CreateHullShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, &m_pShader.HS);
-		break;
-	case RwD3D1XShaderType::DS:
-		hr = pd3dDevice->CreateDomainShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, &m_pShader.DS);
-		break;
-	}
-	if (FAILED(hr))
-	{
-		m_pBlob->Release();
-		g_pDebug->printError("failed to create shader");
-	}
+#ifdef DEBUG
+	m_ShaderCount++;
+#endif // DEBUG
 }
-
 
 CD3D1XShader::~CD3D1XShader()
 {
-	auto featureLevel = m_pRenderer->getFeatureLevel();
-	if (featureLevel < D3D_FEATURE_LEVEL_10_0 && (m_type == RwD3D1XShaderType::GS))
-		return;
-	if (featureLevel < D3D_FEATURE_LEVEL_11_0 && (m_type == RwD3D1XShaderType::DS || m_type == RwD3D1XShaderType::HS))
-		return;
-	switch (m_type)
-	{
-	case RwD3D1XShaderType::VS:
-		if (m_pShader.VS)
-			m_pShader.VS->Release();
-		break;
-	case RwD3D1XShaderType::PS:
-		if (m_pShader.PS)
-			m_pShader.PS->Release();
-		break;
-	case RwD3D1XShaderType::HS:
-		if (m_pShader.HS)
-			m_pShader.HS->Release();
-		break;
-	case RwD3D1XShaderType::GS:
-		if (m_pShader.GS)
-			m_pShader.GS->Release();
-		break;
-	case RwD3D1XShaderType::DS:
-		if (m_pShader.DS)
-			m_pShader.DS->Release();
-		break;
+	if (m_pShaderDC) {
+		m_pShaderDC->Release();
+		m_pShaderDC = nullptr;
 	}
-	if (m_pBlob)
+	if (m_pBlob) {
 		m_pBlob->Release();
+		m_pBlob = nullptr;
+	}
 }
 
 void CD3D1XShader::Set()
 {
-	auto featureLevel = m_pRenderer->getFeatureLevel();
-	if (featureLevel < D3D_FEATURE_LEVEL_10_0 && (m_type == RwD3D1XShaderType::GS))
-		return;
-	if (featureLevel < D3D_FEATURE_LEVEL_11_0 && (m_type == RwD3D1XShaderType::DS || m_type == RwD3D1XShaderType::HS))
-		return;
-	auto pImmediateContext = m_pRenderer->getContext();
-	switch (m_type)
-	{
-	case RwD3D1XShaderType::VS:
-		pImmediateContext->VSSetShader(m_pShader.VS, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::PS:
-		pImmediateContext->PSSetShader(m_pShader.PS, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::DS:
-		pImmediateContext->DSSetShader(m_pShader.DS, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::HS:
-		pImmediateContext->HSSetShader(m_pShader.HS, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::GS:
-		pImmediateContext->GSSetShader(m_pShader.GS, nullptr, 0);
-		break;
-	}
+
 }
+
 void CD3D1XShader::ReSet()
 {
-	auto featureLevel = m_pRenderer->getFeatureLevel();
-	if (featureLevel < D3D_FEATURE_LEVEL_10_0 && (m_type == RwD3D1XShaderType::GS))
-		return;
-	if (featureLevel < D3D_FEATURE_LEVEL_11_0 && (m_type == RwD3D1XShaderType::DS || m_type == RwD3D1XShaderType::HS))
-		return;
-	auto pImmediateContext = m_pRenderer->getContext();
-	switch (m_type)
-	{
-	case RwD3D1XShaderType::VS:
-		pImmediateContext->VSSetShader(nullptr, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::PS:
-		pImmediateContext->PSSetShader(nullptr, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::DS:
-		pImmediateContext->DSSetShader(nullptr, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::HS:
-		pImmediateContext->HSSetShader(nullptr, nullptr, 0);
-		break;
-	case RwD3D1XShaderType::GS:
-		pImmediateContext->GSSetShader(nullptr, nullptr, 0);
-		break;
 }
-}
-#ifndef DebuggingShaders
-HRESULT CD3D1XShader::CompileShaderFromFile(LPCSTR szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
-#else
-HRESULT CD3D1XShader::CompileShaderFromFile(LPCWSTR szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
-#endif
+
+HRESULT CD3D1XShader::CompileShaderFromFile(std::string szFileName, std::string szEntryPoint, std::string szShaderModel, ID3DBlob** ppBlobOut) const
 {
-	HRESULT hr = S_OK;
+	auto hr = S_OK;
 
 	DWORD dwShaderFlags = (1 << 11);
 #ifdef _DEBUG
 	// Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
-	// Setting this flag improves the shader debugging experience, but still allows 
-	// the shaders to be optimized and to run exactly the way they will run in 
+	// Setting this flag improves the shader debugging experience, but still allows
+	// the shaders to be optimized and to run exactly the way they will run in
 	// the release configuration of this program.
 	dwShaderFlags |= (1 << 0);
 
 	// Disable optimizations to further improve shader debugging
 	dwShaderFlags |= (1 << 2);
 #endif
-	auto featureLevel = m_pRenderer->getFeatureLevel();
-	std::string featureLvl = to_string(featureLevel);
+	const auto featureLevel = GET_D3D_FEATURE_LVL;
+	auto featureLvl = to_string(featureLevel);
 	const D3D10_SHADER_MACRO defines[] = { {"FEATURE_LEVEL",featureLvl.c_str()}, {} };
 	ID3DBlob* pErrorBlob = nullptr;
-#ifndef DebuggingShaders
-	hr = D3DX11CompileFromFile(szFileName, defines,nullptr,szEntryPoint,szShaderModel, dwShaderFlags,0,nullptr,ppBlobOut,&pErrorBlob, &hr);
-#else
-	hr = D3DCompileFromFile(szFileName, defines, nullptr, szEntryPoint, szShaderModel,	dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
-#endif // !1
+
+	auto stemp = std::wstring(szFileName.begin(), szFileName.end());
+	hr = D3DCompileFromFile(stemp.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, szEntryPoint.c_str(), szShaderModel.c_str(), dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
+
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
 		{
-			g_pDebug->printMsg(reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer()));
+			g_pDebug->printMsg(reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer()),0);
 			pErrorBlob->Release();
 		}
 		return hr;
@@ -224,3 +76,264 @@ HRESULT CD3D1XShader::CompileShaderFromFile(LPCWSTR szFileName, LPCSTR szEntryPo
 
 	return S_OK;
 }
+
+CD3D1XVertexShader* CD3D1XVertexShader::m_pLastShader = nullptr;
+CD3D1XPixelShader* CD3D1XPixelShader::m_pLastShader = nullptr;
+CD3D1XComputeShader* CD3D1XComputeShader::m_pLastShader = nullptr;
+CD3D1XGeometryShader* CD3D1XGeometryShader::m_pLastShader = nullptr;
+CD3D1XHullShader* CD3D1XHullShader::m_pLastShader = nullptr;
+CD3D1XDomainShader* CD3D1XDomainShader::m_pLastShader = nullptr;
+
+#pragma region Vertex Shader
+
+CD3D1XVertexShader::CD3D1XVertexShader(std::string fileName, std::string entryPoint)
+{
+	// Compile shader
+	std::string shaderModel = "vs_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+
+	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel, &m_pBlob)))
+		g_pDebug->printError("The FX file cannot be compiled.");
+
+	auto pd3DDevice = GET_D3D_DEVICE;
+	// Create shader
+	if (FAILED(pd3DDevice->CreateVertexShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, (ID3D11VertexShader**)&m_pShaderDC)))
+	{
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+		g_pDebug->printError("Failed to create vertex shader");
+	}
+}
+
+void CD3D1XVertexShader::Set()
+{
+#ifdef USE_SHADER_CACHING
+	if (this == m_pLastShader)
+		return;
+#endif // USE_SHADER_CACHING
+
+	CD3D1XShader::Set();
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->VSSetShader(static_cast<ID3D11VertexShader*>(m_pShaderDC), nullptr, 0);
+
+#ifdef USE_SHADER_CACHING
+	m_pLastShader = this;
+#endif // USE_SHADER_CACHING
+	
+}
+
+void CD3D1XVertexShader::ReSet()
+{
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->VSSetShader(nullptr, nullptr, 0);
+	m_pLastShader = nullptr;
+}
+
+#pragma endregion
+
+#pragma region Pixel Shader
+
+CD3D1XPixelShader::CD3D1XPixelShader(std::string fileName, std::string entryPoint)
+{// Compile shader
+	auto shaderModel = "ps_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+
+	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel, &m_pBlob)))
+		g_pDebug->printError("The FX file cannot be compiled.");
+
+	auto pd3dDevice = GET_D3D_DEVICE;
+	// Create shader
+	if (FAILED(pd3dDevice->CreatePixelShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11PixelShader**>(&m_pShaderDC))))
+	{
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+		g_pDebug->printError("Failed to create vertex shader");
+	}
+}
+
+void CD3D1XPixelShader::Set()
+{
+#ifdef USE_SHADER_CACHING
+	if (this == m_pLastShader)
+		return;
+#endif // USE_SHADER_CACHING
+	CD3D1XShader::Set();
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->PSSetShader(static_cast<ID3D11PixelShader*>(m_pShaderDC), nullptr, 0); 
+#ifdef USE_SHADER_CACHING
+	m_pLastShader = this;
+#endif // USE_SHADER_CACHING
+}
+void CD3D1XPixelShader::ReSet()
+{
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->PSSetShader(nullptr, nullptr, 0);
+	m_pLastShader = nullptr;
+}
+
+#pragma endregion
+
+#pragma region Compute Shader
+
+CD3D1XComputeShader::CD3D1XComputeShader(std::string fileName, std::string entryPoint)
+{// Compile shader
+	std::string shaderModel = "cs_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+
+	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel, &m_pBlob)))
+		g_pDebug->printError("The FX file cannot be compiled.");
+
+	auto pd3dDevice = GET_D3D_DEVICE;
+	// Create shader
+	if (FAILED(pd3dDevice->CreateComputeShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11ComputeShader**>(&m_pShaderDC))))
+	{
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+		g_pDebug->printError("Failed to create vertex shader");
+	}
+}
+
+void CD3D1XComputeShader::Set()
+{
+#ifdef USE_SHADER_CACHING
+	if (this == m_pLastShader)
+		return;
+#endif // USE_SHADER_CACHING
+	CD3D1XShader::Set();
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->CSSetShader(static_cast<ID3D11ComputeShader*>(m_pShaderDC), nullptr, 0); 
+#ifdef USE_SHADER_CACHING
+		m_pLastShader = this;
+#endif // USE_SHADER_CACHING
+}
+void CD3D1XComputeShader::ReSet()
+{
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->CSSetShader(nullptr, nullptr, 0);
+	m_pLastShader = nullptr;
+}
+
+#pragma endregion
+
+#pragma region Geometry Shader
+
+CD3D1XGeometryShader::CD3D1XGeometryShader(std::string fileName, std::string entryPoint)
+{// Compile shader
+	std::string shaderModel = "gs_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+
+	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel, &m_pBlob)))
+		g_pDebug->printError("The FX file cannot be compiled.");
+
+	auto pd3dDevice = GET_D3D_DEVICE;
+	// Create shader
+	if (FAILED(pd3dDevice->CreateGeometryShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11GeometryShader**>(&m_pShaderDC))))
+	{
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+		g_pDebug->printError("Failed to create vertex shader");
+	}
+}
+
+void CD3D1XGeometryShader::Set()
+{
+#ifdef USE_SHADER_CACHING
+	if (this == m_pLastShader)
+		return;
+#endif // USE_SHADER_CACHING
+	CD3D1XShader::Set();
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->GSSetShader(static_cast<ID3D11GeometryShader*>(m_pShaderDC), nullptr, 0); 
+#ifdef USE_SHADER_CACHING
+	m_pLastShader = this;
+#endif // USE_SHADER_CACHING
+}
+void CD3D1XGeometryShader::ReSet()
+{
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->GSSetShader(nullptr, nullptr, 0);
+	m_pLastShader = nullptr;
+}
+
+#pragma endregion
+
+#pragma region Hull Shader
+
+CD3D1XHullShader::CD3D1XHullShader(std::string fileName, std::string entryPoint)
+{// Compile shader
+	std::string shaderModel = "hs_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+
+	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel, &m_pBlob)))
+		g_pDebug->printError("The FX file cannot be compiled.");
+
+	auto pd3dDevice = GET_D3D_DEVICE;
+	// Create shader
+	if (FAILED(pd3dDevice->CreateHullShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11HullShader**>(&m_pShaderDC))))
+	{
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+		g_pDebug->printError("Failed to create vertex shader");
+	}
+}
+
+void CD3D1XHullShader::Set()
+{
+#ifdef USE_SHADER_CACHING
+	if (this == m_pLastShader)
+		return;
+#endif // USE_SHADER_CACHING
+
+		CD3D1XShader::Set();
+		auto pImmediateContext = GET_D3D_CONTEXT;
+		pImmediateContext->HSSetShader(static_cast<ID3D11HullShader*>(m_pShaderDC), nullptr, 0);
+#ifdef USE_SHADER_CACHING
+		m_pLastShader = this;
+#endif // USE_SHADER_CACHING
+}
+
+void CD3D1XHullShader::ReSet()
+{
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->HSSetShader(nullptr, nullptr, 0); 
+	m_pLastShader = nullptr;
+}
+
+#pragma endregion
+
+#pragma region Domain Shader
+
+CD3D1XDomainShader::CD3D1XDomainShader(std::string fileName, std::string entryPoint)
+{// Compile shader
+	std::string shaderModel = "ds_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+
+	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel, &m_pBlob)))
+		g_pDebug->printError("The FX file cannot be compiled.");
+
+	auto pd3dDevice = GET_D3D_DEVICE;
+	// Create shader
+	if (FAILED(pd3dDevice->CreateDomainShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11DomainShader**>(&m_pShaderDC))))
+	{
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+		g_pDebug->printError("Failed to create vertex shader");
+	}
+}
+
+void CD3D1XDomainShader::Set()
+{
+#ifdef USE_SHADER_CACHING
+	if (this == m_pLastShader)
+		return;
+#endif // USE_SHADER_CACHING
+
+		CD3D1XShader::Set();
+		auto pImmediateContext = GET_D3D_CONTEXT;
+		pImmediateContext->DSSetShader(static_cast<ID3D11DomainShader*>(m_pShaderDC), nullptr, 0);
+#ifdef USE_SHADER_CACHING
+		m_pLastShader = this;
+#endif // USE_SHADER_CACHING
+}
+
+void CD3D1XDomainShader::ReSet()
+{
+	auto pImmediateContext = GET_D3D_CONTEXT;
+	pImmediateContext->DSSetShader(nullptr, nullptr, 0);
+	m_pLastShader = nullptr;
+}
+#pragma endregion
