@@ -131,7 +131,7 @@ bool CD3DRenderer::InitDevice()
 		{
 			
 			// try to find supported feature level by iterating over whole set and removing one feature level after another until success
-			for (int i = 1; i < numFeatureLevels-1; i++) {
+			for (UINT i = 1; i < numFeatureLevels-1; i++) {
 				hr = D3D11CreateDevice(currentAdapter, m_driverType, nullptr, createDeviceFlags, &featureLevels[i], numFeatureLevels - i,
 					D3D11_SDK_VERSION, &m_pd3dDevice, &m_featureLevel, &m_pImmediateContext);
 				if (SUCCEEDED(hr))
@@ -336,7 +336,8 @@ const char* CD3DRenderer::getAdapterInfo(UINT n)
 	char* info=new char[80];
 	DXGI_ADAPTER_DESC desc;
 
-	m_vAdapters[n]->GetDesc(&desc);
+	if(!CALL_D3D_API(m_vAdapters[n]->GetDesc(&desc),"Failed to retrieve adapter description."))
+		return "no info";
 	wcstombs(info, desc.Description, 80);
 
 	return info;
