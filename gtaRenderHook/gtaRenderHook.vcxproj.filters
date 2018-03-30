@@ -230,6 +230,9 @@
     <ClInclude Include="D3D1XStructuredBuffer.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
     </ClInclude>
+    <ClInclude Include="D3DSpecificHelpers.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

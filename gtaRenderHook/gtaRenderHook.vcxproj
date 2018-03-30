@@ -326,6 +326,7 @@
     <ClInclude Include="D3D1XVertexDeclaration.h" />
     <ClInclude Include="D3D1XVertexDeclarationManager.h" />
     <ClInclude Include="D3DRenderer.h" />
+    <ClInclude Include="D3DSpecificHelpers.h" />
     <ClInclude Include="DebugBBox.h" />
     <ClInclude Include="DebugLine.h" />
     <ClInclude Include="DebugRendering.h" />
