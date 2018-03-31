@@ -29,7 +29,7 @@ extern CCustomCarFXPipeline* g_pCustomCarFXPipe= nullptr;
 extern CDeferredRenderer* g_pDeferredRenderer = nullptr;
 extern CCustomSeabedPipeline* g_pCustomSeabedPipe = nullptr;
 extern CCustomWaterPipeline* g_pCustomWaterPipe = nullptr;
-ShaderRenderStateBuffer globalSRSBuffer;
+ShaderRenderStateBuffer g_shaderRenderStateBuffer;
 
 CRwD3D1XEngine::CRwD3D1XEngine(CDebug *d) : CIRwRenderEngine{ d }
 {

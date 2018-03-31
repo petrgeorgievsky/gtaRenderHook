@@ -140,31 +140,31 @@ void CSAIdleHook::RenderInGame()
 	}
 	g_pStateMgr->SetFogStart(CTimeCycle::m_CurrentColours.m_fFogStart);
 	g_pStateMgr->SetFogRange(CTimeCycle::m_CurrentColours.m_fFarClip - CTimeCycle::m_CurrentColours.m_fFogStart);
-	globalSRSBuffer.vSkyLightCol = {	CTimeCycle::m_CurrentColours.m_nSkyTopRed / 255.0f,
+	g_shaderRenderStateBuffer.vSkyLightCol = {	CTimeCycle::m_CurrentColours.m_nSkyTopRed / 255.0f,
 										CTimeCycle::m_CurrentColours.m_nSkyTopGreen / 255.0f,
 										CTimeCycle::m_CurrentColours.m_nSkyTopBlue / 255.0f,1.0f };
-	globalSRSBuffer.vHorizonCol = { CTimeCycle::m_CurrentColours.m_nSkyBottomRed / 255.0f,
+	g_shaderRenderStateBuffer.vHorizonCol = { CTimeCycle::m_CurrentColours.m_nSkyBottomRed / 255.0f,
 									CTimeCycle::m_CurrentColours.m_nSkyBottomGreen / 255.0f,
 									CTimeCycle::m_CurrentColours.m_nSkyBottomBlue / 255.0f,1.0f };
-	globalSRSBuffer.vSunColor = {	CTimeCycle::m_CurrentColours.m_nSunCoreRed / 255.0f,
+	g_shaderRenderStateBuffer.vSunColor = {	CTimeCycle::m_CurrentColours.m_nSunCoreRed / 255.0f,
 									CTimeCycle::m_CurrentColours.m_nSunCoreGreen / 255.0f,
 									CTimeCycle::m_CurrentColours.m_nSunCoreBlue / 255.0f, 4.5f/*Timecycle->m_fCurrentSpriteBrightness */};
-	globalSRSBuffer.vWaterColor = { CTimeCycle::m_CurrentColours.m_fWaterRed / 255.0f,
+	g_shaderRenderStateBuffer.vWaterColor = { CTimeCycle::m_CurrentColours.m_fWaterRed / 255.0f,
 									CTimeCycle::m_CurrentColours.m_fWaterGreen / 255.0f ,
 									CTimeCycle::m_CurrentColours.m_fWaterBlue / 255.0f,
 									CTimeCycle::m_CurrentColours.m_fWaterAlpha / 255.0f };
-	globalSRSBuffer.vGradingColor0 = {	CTimeCycle::m_CurrentColours.m_fPostFx1Red / 255.0f,
+	g_shaderRenderStateBuffer.vGradingColor0 = {	CTimeCycle::m_CurrentColours.m_fPostFx1Red / 255.0f,
 										CTimeCycle::m_CurrentColours.m_fPostFx1Green / 255.0f ,
 										CTimeCycle::m_CurrentColours.m_fPostFx1Blue / 255.0f,
 										CTimeCycle::m_CurrentColours.m_fPostFx1Alpha / 255.0f };
-	globalSRSBuffer.vGradingColor1 = {	CTimeCycle::m_CurrentColours.m_fPostFx2Red / 255.0f,
+	g_shaderRenderStateBuffer.vGradingColor1 = {	CTimeCycle::m_CurrentColours.m_fPostFx2Red / 255.0f,
 										CTimeCycle::m_CurrentColours.m_fPostFx2Green / 255.0f ,
 										CTimeCycle::m_CurrentColours.m_fPostFx2Blue / 255.0f,
 										CTimeCycle::m_CurrentColours.m_fPostFx2Alpha / 255.0f };
-	globalSRSBuffer.fFarClip = Scene.m_pRwCamera->farPlane;
-	globalSRSBuffer.fTimeStep += 0.08f * CTimer__ms_fTimeStep * 0.04f;
-	if (globalSRSBuffer.fTimeStep > 3.14f * 2)
-		globalSRSBuffer.fTimeStep -= 3.14f * 2;
+	g_shaderRenderStateBuffer.fFarClip = Scene.m_pRwCamera->farPlane;
+	g_shaderRenderStateBuffer.fTimeStep += 0.08f * CTimer__ms_fTimeStep * 0.04f;
+	if (g_shaderRenderStateBuffer.fTimeStep > 3.14f * 2)
+		g_shaderRenderStateBuffer.fTimeStep -= 3.14f * 2;
 
 	// First forward pass(clouds, sky etc.)
 	RenderForwardBeforeDeferred();

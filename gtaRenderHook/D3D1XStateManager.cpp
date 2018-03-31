@@ -4,14 +4,16 @@
 #include "CDebug.h"
 #include "D3D1XTexture.h"
 #include "RwD3D1XEngine.h"
+#include "D3DSpecificHelpers.h"
 
 CD3D1XStateManager::CD3D1XStateManager()
 {
 	auto dev = GET_D3D_DEVICE;
 	auto context = GET_D3D_CONTEXT;
-	for (int i = 0; i < 8; i++) {
+	// initialize render target list
+	for (int i = 0; i < 8; i++)
 		m_pCurrentRenderTargets[i] = nullptr;
-	}
+	// default blend description with blending disabled
 	m_blendDesc.RenderTarget[0].BlendEnable				= false;
 	m_blendDesc.RenderTarget[0].SrcBlend				= D3D11_BLEND_SRC_ALPHA;
 	m_blendDesc.RenderTarget[0].DestBlend				= D3D11_BLEND_INV_SRC_ALPHA;
@@ -20,39 +22,42 @@ CD3D1XStateManager::CD3D1XStateManager()
 	m_blendDesc.RenderTarget[0].DestBlendAlpha			= D3D11_BLEND_ZERO;
 	m_blendDesc.RenderTarget[0].BlendOpAlpha			= D3D11_BLEND_OP_ADD;
 	m_blendDesc.RenderTarget[0].RenderTargetWriteMask	= D3D11_COLOR_WRITE_ENABLE_ALL;
-	//m_blendDesc.IndependentBlendEnable = true;
-	//m_blendDesc.AlphaToCoverageEnable = TRUE;
 	m_blendDescOld = m_blendDesc;
-	if (FAILED(dev->CreateBlendState(&m_blendDesc, &m_pBlendState)))
-		g_pDebug->printError("Failed to create blend state");
+	// create blend state
+	if (!CALL_D3D_API(dev->CreateBlendState(&m_blendDesc, &m_pBlendState),
+		"Failed to create blend state with default blend description."))
+		return;
 
-	// Depth test parameters
+	// depth test parameters
 	m_depthStencilDesc.DepthEnable		= true;
 	m_depthStencilDesc.DepthWriteMask	= D3D11_DEPTH_WRITE_MASK_ALL;
 	m_depthStencilDesc.DepthFunc		= D3D11_COMPARISON_LESS_EQUAL;
 
-	// Stencil test parameters
+	// stencil test parameters
 	m_depthStencilDesc.StencilEnable	= true;
 	m_depthStencilDesc.StencilReadMask	= 0xFF;
 	m_depthStencilDesc.StencilWriteMask = 0xFF;
 
-	// Stencil operations if pixel is front-facing
+	// stencil operations if pixel is front-facing
 	m_depthStencilDesc.FrontFace.StencilFailOp		= D3D11_STENCIL_OP_KEEP;
 	m_depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
 	m_depthStencilDesc.FrontFace.StencilPassOp		= D3D11_STENCIL_OP_KEEP;
 	m_depthStencilDesc.FrontFace.StencilFunc		= D3D11_COMPARISON_ALWAYS;
 
-	// Stencil operations if pixel is back-facing
+	// stencil operations if pixel is back-facing
 	m_depthStencilDesc.BackFace.StencilFailOp		= D3D11_STENCIL_OP_KEEP;
 	m_depthStencilDesc.BackFace.StencilDepthFailOp	= D3D11_STENCIL_OP_DECR;
 	m_depthStencilDesc.BackFace.StencilPassOp		= D3D11_STENCIL_OP_KEEP;
 	m_depthStencilDesc.BackFace.StencilFunc			= D3D11_COMPARISON_ALWAYS;
 	m_depthStencilDescOld = m_depthStencilDesc;
 
-	// Create depth stencil state
-	if (FAILED(dev->CreateDepthStencilState(&m_depthStencilDesc, &m_pDepthStencilState)))
-		g_pDebug->printError("Failed to create depth stencil state");
+	// create depth stencil state
+	if (!CALL_D3D_API(dev->CreateDepthStencilState(&m_depthStencilDesc, &m_pDepthStencilState), 
+		"Failed to create depth stencil state"))
+		return;
 
+	// default rasterizer state description
+	// TODO: review parameters, maybe add some of them to setting file or set better values  
 	m_rasterDesc.AntialiasedLineEnable = false;
 	m_rasterDesc.CullMode = D3D11_CULL_BACK;
 	m_rasterDesc.DepthBias = 0;
@@ -63,13 +68,16 @@ CD3D1XStateManager::CD3D1XStateManager()
 	m_rasterDesc.MultisampleEnable = true;
 	m_rasterDesc.ScissorEnable = false;
 	m_rasterDesc.SlopeScaledDepthBias = 0.0f;
+
 	m_rasterDescOld = m_rasterDesc;
-	//m_rasterDesc.ConservativeRaster = D3D11_CONSERVATIVE_RASTERIZATION_MODE_ON;
 
-	// Create the rasterizer state from the description we just filled out.
-	if (FAILED(dev->CreateRasterizerState(&m_rasterDesc, &m_pRasterState)))
-		g_pDebug->printError("Failed to create rasterizer state");
+	// create the rasterizer state.
+	if (!CALL_D3D_API(dev->CreateRasterizerState(&m_rasterDesc, &m_pRasterState),
+		"Failed to create rasterizer state."))
+		return;
 
+	// default sampler state
+	// TODO: add control for anisotropy as well as lod quality
 	m_sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	m_sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	m_sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -78,36 +86,45 @@ CD3D1XStateManager::CD3D1XStateManager()
 	m_sampDesc.MinLOD = 0;
 	m_sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	m_sampDesc.MaxAnisotropy = 16;
-	m_sampDescOld = m_sampDesc;
-	if (FAILED(dev->CreateSamplerState(&m_sampDesc, &m_pSamplerState)))
-		g_pDebug->printError("Failed to create sampler state");
-	m_compSampDesc={ D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,// D3D11_FILTER Filter;
-		D3D11_TEXTURE_ADDRESS_BORDER, //D3D11_TEXTURE_ADDRESS_MODE AddressU;
-		D3D11_TEXTURE_ADDRESS_BORDER, //D3D11_TEXTURE_ADDRESS_MODE AddressV;
-		D3D11_TEXTURE_ADDRESS_BORDER, //D3D11_TEXTURE_ADDRESS_MODE AddressW;
-		0,//FLOAT MipLODBias;
-		0,//UINT MaxAnisotropy;
-		D3D11_COMPARISON_LESS , //D3D11_COMPARISON_FUNC ComparisonFunc;
-		1.0,1.0,1.0,1.0,//FLOAT BorderColor[ 4 ];
-		0,//FLOAT MinLOD;
-		0//FLOAT MaxLOD;
-	};
-	if (FAILED(dev->CreateSamplerState(&m_compSampDesc, &m_pCompSamplerState)))
-		g_pDebug->printError("Failed to create sampler state");
-	
 
-	globalSRSBuffer = {};
-	globalSRSBuffer.fAlphaTestRef = 0.5f;
-	globalSRSBuffer.uiAlphaTestType = 1;
+	m_sampDescOld = m_sampDesc;
+
+	// create default sampler state
+	if (!CALL_D3D_API(dev->CreateSamplerState(&m_sampDesc, &m_pSamplerState), "Failed to create sampler state"))
+		return;
+
+	// default shadow sampler state
+	// TODO: remove it from here, maybe add some sampler state array to handle different sampler states for different stuff. also decide on format of structure filling 
+	m_compSampDesc={ D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,// Filter;
+		D3D11_TEXTURE_ADDRESS_BORDER, //AddressU;
+		D3D11_TEXTURE_ADDRESS_BORDER, //AddressV;
+		D3D11_TEXTURE_ADDRESS_BORDER, //AddressW;
+		0,//MipLODBias;
+		0,//MaxAnisotropy;
+		D3D11_COMPARISON_LESS , //ComparisonFunc;
+		1.0,1.0,1.0,1.0,//BorderColor[ 4 ];
+		0,//MinLOD;
+		0//MaxLOD;
+	};
+	// create shadow sampler state
+	if (!CALL_D3D_API(dev->CreateSamplerState(&m_compSampDesc, &m_pCompSamplerState), "Failed to create shadow sampler state"))
+		return;
+	
+	// initialize global shader render state buffer
+	// TODO: convert it to existing buffer template
+	g_shaderRenderStateBuffer = {};
+	g_shaderRenderStateBuffer.fAlphaTestRef = 0.5f;
+	g_shaderRenderStateBuffer.uiAlphaTestType = 1;
 
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(ShaderRenderStateBuffer);
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
-	if (FAILED(dev->CreateBuffer(&bd, nullptr, &m_pGlobalValuesBuffer)))
-		g_pDebug->printError("Failed to create constant buffer");
-
+	if (!CALL_D3D_API(dev->CreateBuffer(&bd, nullptr, &m_pGlobalValuesBuffer), 
+		"Failed to create constant buffer"))
+		return;
+	// set render states
 	context->OMSetBlendState(m_pBlendState, 0, UINT_MAX);
 	context->OMSetDepthStencilState(m_pDepthStencilState, m_currentStencilRef);
 	context->RSSetState(m_pRasterState);
@@ -115,48 +132,44 @@ CD3D1XStateManager::CD3D1XStateManager()
 	context->PSSetSamplers(0, 1, &m_pSamplerState);
 	context->PSSetSamplers(1, 1, &m_pCompSamplerState);
 
+	// set constant buffers
+	// TODO: set buffers only for required shaders and with dynamic alignment perhaps
 	context->PSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
 	context->VSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
 	context->HSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
 	context->DSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
 	context->CSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
+
 	m_pBlendState_Default = m_pBlendState;
 
-	m_pBlendStateDescCache = {};
-	m_pBlendStateDescCache.push_back(m_blendDesc);
-
+	// default alpha blending state
 	m_blendDesc.RenderTarget[0].BlendEnable=true;
-	if (FAILED(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_NoBlend)))
-		g_pDebug->printError("Failed to create blend state");
-
+	if (!CALL_D3D_API(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_AlphaBlend), 
+		"Failed to create alpha blending state."))
+		return;
+	// blend source*alpha over destination
 	m_blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND::D3D11_BLEND_ONE;
-	if (FAILED(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_BlendDestOne)))
-		g_pDebug->printError("Failed to create blend state");
-
+	if (!CALL_D3D_API(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_BlendDestOne),
+		"Failed to create blend state"))
+		return;
+	// some other blending used in gta sa, probably should remove this
 	m_blendDesc.RenderTarget[0].BlendEnable = false;
-	if (FAILED(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_NoBlendDestOne)))
-		g_pDebug->printError("Failed to create blend state");
-
+	if (!CALL_D3D_API(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_NoBlendDestOne), 
+		"Failed to create blend state"))
+		return;
+	// additive blending(alpha is additive as well)
 	m_blendDesc.RenderTarget[0].BlendEnable = true;
 	m_blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND::D3D11_BLEND_ONE;
 	m_blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND::D3D11_BLEND_ONE;
 	m_blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND::D3D11_BLEND_ONE;
-	if (FAILED(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_BlendAdditive)))
-		g_pDebug->printError("Failed to create blend state");
-	
-	m_pBlendStateCache = {};
-	m_pBlendStateCache.insert({ 0,m_pBlendState });
+	if (!CALL_D3D_API(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_BlendAdditive), 
+		"Failed to create blend state"))
+		return;	
 }
 
 CD3D1XStateManager::~CD3D1XStateManager()
 { 
 	if (m_pGlobalValuesBuffer)	m_pGlobalValuesBuffer->Release();
-
-	for (auto pair : m_pBlendStateCache)
-	{
-		if (pair.second)
-			pair.second->Release();
-	}
 	if (m_pDepthStencilState)	m_pDepthStencilState->Release();
 	if (m_pRasterState)			m_pRasterState->Release();
 	if (m_pSamplerState)		m_pSamplerState->Release();
@@ -187,16 +200,16 @@ void CD3D1XStateManager::SetAlphaTestEnable(bool bEnable)
 {
 	auto context = GET_D3D_CONTEXT;
 	if (!bEnable)
-		m_currentAlphaTestType = globalSRSBuffer.uiAlphaTestType;
+		m_currentAlphaTestType = g_shaderRenderStateBuffer.uiAlphaTestType;
 
 	if (bEnable) {
-		globalSRSBuffer.uiAlphaTestType = m_currentAlphaTestType;
-		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &globalSRSBuffer, 0, 0);
+		g_shaderRenderStateBuffer.uiAlphaTestType = m_currentAlphaTestType;
+		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 	}
 	else
 	{
-		globalSRSBuffer.uiAlphaTestType = 0;
-		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &globalSRSBuffer, 0, 0);
+		g_shaderRenderStateBuffer.uiAlphaTestType = 0;
+		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 	}
 }
 
@@ -206,22 +219,14 @@ D3D11_STENCIL_OP CD3D1XStateManager::ConvertStencilOp(RwStencilOperation op)
 {
 	switch (op)
 	{
-	case rwSTENCILOPERATIONZERO:
-		return D3D11_STENCIL_OP_ZERO;
-	case rwSTENCILOPERATIONREPLACE:
-		return D3D11_STENCIL_OP_REPLACE;
-	case rwSTENCILOPERATIONINCRSAT:
-		return D3D11_STENCIL_OP_INCR_SAT;
-	case rwSTENCILOPERATIONDECRSAT:
-		return D3D11_STENCIL_OP_DECR_SAT;
-	case rwSTENCILOPERATIONINVERT:
-		return D3D11_STENCIL_OP_INVERT;
-	case rwSTENCILOPERATIONINCR:
-		return D3D11_STENCIL_OP_INCR;
-	case rwSTENCILOPERATIONDECR:
-		return D3D11_STENCIL_OP_DECR;
-	default:
-		return D3D11_STENCIL_OP_KEEP;
+	case rwSTENCILOPERATIONZERO:		return D3D11_STENCIL_OP_ZERO;
+	case rwSTENCILOPERATIONREPLACE:		return D3D11_STENCIL_OP_REPLACE;
+	case rwSTENCILOPERATIONINCRSAT:		return D3D11_STENCIL_OP_INCR_SAT;
+	case rwSTENCILOPERATIONDECRSAT:		return D3D11_STENCIL_OP_DECR_SAT;
+	case rwSTENCILOPERATIONINVERT:		return D3D11_STENCIL_OP_INVERT;
+	case rwSTENCILOPERATIONINCR:		return D3D11_STENCIL_OP_INCR;
+	case rwSTENCILOPERATIONDECR:		return D3D11_STENCIL_OP_DECR;
+	default:							return D3D11_STENCIL_OP_KEEP;
 	}
 }
 
@@ -229,22 +234,14 @@ D3D11_COMPARISON_FUNC CD3D1XStateManager::ConvertStencilFunc(RwStencilFunction f
 {
 	switch (func)
 	{
-	case rwSTENCILFUNCTIONNEVER:
-		return D3D11_COMPARISON_NEVER;
-	case rwSTENCILFUNCTIONLESS:
-		return D3D11_COMPARISON_LESS;
-	case rwSTENCILFUNCTIONEQUAL:
-		return D3D11_COMPARISON_EQUAL;
-	case rwSTENCILFUNCTIONLESSEQUAL:
-		return D3D11_COMPARISON_LESS_EQUAL;
-	case rwSTENCILFUNCTIONGREATER:
-		return D3D11_COMPARISON_GREATER;
-	case rwSTENCILFUNCTIONNOTEQUAL:
-		return D3D11_COMPARISON_NOT_EQUAL;
-	case rwSTENCILFUNCTIONGREATEREQUAL:
-		return D3D11_COMPARISON_GREATER_EQUAL;
-	default:
-		return D3D11_COMPARISON_ALWAYS;
+	case rwSTENCILFUNCTIONNEVER:		return D3D11_COMPARISON_NEVER;
+	case rwSTENCILFUNCTIONLESS:			return D3D11_COMPARISON_LESS;
+	case rwSTENCILFUNCTIONEQUAL:		return D3D11_COMPARISON_EQUAL;
+	case rwSTENCILFUNCTIONLESSEQUAL:	return D3D11_COMPARISON_LESS_EQUAL;
+	case rwSTENCILFUNCTIONGREATER:		return D3D11_COMPARISON_GREATER;
+	case rwSTENCILFUNCTIONNOTEQUAL:		return D3D11_COMPARISON_NOT_EQUAL;
+	case rwSTENCILFUNCTIONGREATEREQUAL:	return D3D11_COMPARISON_GREATER_EQUAL;
+	default:							return D3D11_COMPARISON_ALWAYS;
 	}
 }
 
@@ -252,14 +249,10 @@ D3D11_TEXTURE_ADDRESS_MODE CD3D1XStateManager::ConvertTextureAddressMode(RwTextu
 {
 	switch (mode)
 	{
-	case rwTEXTUREADDRESSMIRROR:
-		return D3D11_TEXTURE_ADDRESS_MIRROR;
-	case rwTEXTUREADDRESSCLAMP:
-		return D3D11_TEXTURE_ADDRESS_CLAMP;
-	case rwTEXTUREADDRESSBORDER:
-		return D3D11_TEXTURE_ADDRESS_BORDER;
-	default:
-		return D3D11_TEXTURE_ADDRESS_WRAP;
+	case rwTEXTUREADDRESSMIRROR:	return D3D11_TEXTURE_ADDRESS_MIRROR;
+	case rwTEXTUREADDRESSCLAMP:		return D3D11_TEXTURE_ADDRESS_CLAMP;
+	case rwTEXTUREADDRESSBORDER:	return D3D11_TEXTURE_ADDRESS_BORDER;
+	default:						return D3D11_TEXTURE_ADDRESS_WRAP;
 	}
 }
 
@@ -267,14 +260,10 @@ RwTextureAddressMode CD3D1XStateManager::ConvertTextureAddressMode(D3D11_TEXTURE
 {
 	switch (mode)
 	{
-	case D3D11_TEXTURE_ADDRESS_MIRROR:
-		return rwTEXTUREADDRESSMIRROR;
-	case D3D11_TEXTURE_ADDRESS_CLAMP:
-		return rwTEXTUREADDRESSCLAMP;
-	case D3D11_TEXTURE_ADDRESS_BORDER:
-		return rwTEXTUREADDRESSBORDER;
-	default:
-		return rwTEXTUREADDRESSWRAP;
+	case D3D11_TEXTURE_ADDRESS_MIRROR:	return rwTEXTUREADDRESSMIRROR;
+	case D3D11_TEXTURE_ADDRESS_CLAMP:	return rwTEXTUREADDRESSCLAMP;
+	case D3D11_TEXTURE_ADDRESS_BORDER:	return rwTEXTUREADDRESSBORDER;
+	default:							return rwTEXTUREADDRESSWRAP;
 	}
 }
 
@@ -282,12 +271,10 @@ D3D11_FILTER CD3D1XStateManager::ConvertTextureFilterMode(RwTextureFilterMode mo
 {
 	switch (mode)
 	{
-	case rwFILTERNEAREST: case rwFILTERMIPNEAREST:
-		return D3D11_FILTER_MIN_MAG_MIP_POINT;
-	case rwFILTERLINEARMIPNEAREST:
-		return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-	default:
-		return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	case rwFILTERNEAREST: 
+	case rwFILTERMIPNEAREST:		return D3D11_FILTER_MIN_MAG_MIP_POINT;
+	case rwFILTERLINEARMIPNEAREST:	return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	default:						return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	}
 }
 
@@ -295,12 +282,9 @@ RwTextureFilterMode CD3D1XStateManager::ConvertTextureFilterMode(D3D11_FILTER mo
 {
 	switch (mode)
 	{
-	case D3D11_FILTER_MIN_MAG_MIP_POINT: 
-		return rwFILTERMIPNEAREST;
-	case D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT :
-		return rwFILTERLINEARMIPNEAREST;
-	default:
-		return rwFILTERLINEARMIPLINEAR;
+	case D3D11_FILTER_MIN_MAG_MIP_POINT: 		return rwFILTERMIPNEAREST;
+	case D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT:	return rwFILTERLINEARMIPNEAREST;
+	default:									return rwFILTERLINEARMIPLINEAR;
 	}
 }
 void CD3D1XStateManager::SetDepthEnable(BOOL bEnable)
@@ -483,8 +467,8 @@ void CD3D1XStateManager::SetTextureBorderColor(RwRGBA color)
 
 void CD3D1XStateManager::SetTextureEnable(UINT enable)
 {
-	if (globalSRSBuffer.bHasTexture != enable) {
-		globalSRSBuffer.bHasTexture = enable;
+	if (g_shaderRenderStateBuffer.bHasTexture != enable) {
+		g_shaderRenderStateBuffer.bHasTexture = enable;
 		m_bGlobalValuesReqUpdate = true;
 	}
 }
@@ -518,8 +502,8 @@ void CD3D1XStateManager::SetAlphaTestFunc(RwAlphaTestFunction func)
 	default:
 		break;
 	}
-	if (globalSRSBuffer.uiAlphaTestType != atType) {
-		globalSRSBuffer.uiAlphaTestType = atType;
+	if (g_shaderRenderStateBuffer.uiAlphaTestType != atType) {
+		g_shaderRenderStateBuffer.uiAlphaTestType = atType;
 		m_currentAlphaTestType = atType;
 		m_bGlobalValuesReqUpdate = true;
 	}
@@ -527,8 +511,8 @@ void CD3D1XStateManager::SetAlphaTestFunc(RwAlphaTestFunction func)
 
 void CD3D1XStateManager::SetAlphaTestRef(float ref)
 {
-	if (globalSRSBuffer.fAlphaTestRef != ref) {
-		globalSRSBuffer.fAlphaTestRef = ref;
+	if (g_shaderRenderStateBuffer.fAlphaTestRef != ref) {
+		g_shaderRenderStateBuffer.fAlphaTestRef = ref;
 		m_bGlobalValuesReqUpdate = true;
 	}
 }
@@ -573,9 +557,9 @@ void CD3D1XStateManager::SetIndexBuffer(ID3D11Buffer * buffer)
 
 void CD3D1XStateManager::SetScreenSize(float w, float h)
 {
-	if (globalSRSBuffer.fScreenWidth != w || globalSRSBuffer.fScreenHeight != h) {
-		globalSRSBuffer.fScreenWidth = w;
-		globalSRSBuffer.fScreenHeight = h;
+	if (g_shaderRenderStateBuffer.fScreenWidth != w || g_shaderRenderStateBuffer.fScreenHeight != h) {
+		g_shaderRenderStateBuffer.fScreenWidth = w;
+		g_shaderRenderStateBuffer.fScreenHeight = h;
 		m_bGlobalValuesReqUpdate = true;
 	}
 }
@@ -583,6 +567,7 @@ void CD3D1XStateManager::SetScreenSize(float w, float h)
 void CD3D1XStateManager::SetRaster(RwRaster * raster, int Stage)
 {
 	auto context = GET_D3D_CONTEXT;
+	// todo: add lazy set
 	if (raster != nullptr) {
 		auto res = GetD3D1XRaster(raster)->resourse->GetSRV();
 		context->PSSetShaderResources(Stage, 1, &res);
@@ -596,6 +581,7 @@ void CD3D1XStateManager::SetRaster(RwRaster * raster, int Stage)
 void CD3D1XStateManager::SetRasterCS(RwRaster * raster, int Stage)
 {
 	auto context = GET_D3D_CONTEXT;
+	// todo: add lazy set
 	if (raster != nullptr) {
 		auto res = GetD3D1XRaster(raster)->resourse->GetSRV();
 		context->CSSetShaderResources(Stage, 1, &res);
@@ -609,32 +595,33 @@ void CD3D1XStateManager::SetRasterCS(RwRaster * raster, int Stage)
 void CD3D1XStateManager::SetSunDir(RwV3d * vec)
 {
 	auto context = GET_D3D_CONTEXT;
+	// todo: move out of this, remove hardcoded constants 
 	int currArea = *(int*)0xB72914;
 	float dnBalance = *(float*)(0x8D12C0);
 	float isDay = (vec->z>0.0&& currArea==0)?1.0f:0.0f;
-	globalSRSBuffer.vSunDir = { vec->x,vec->y,vec->z, 1.0f-dnBalance };
-	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &globalSRSBuffer, 0, 0);
+	g_shaderRenderStateBuffer.vSunDir = { vec->x,vec->y,vec->z, 1.0f-dnBalance };
+	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 }
 
 void CD3D1XStateManager::SetLightCount(int count)
 {
 	auto context = GET_D3D_CONTEXT;
-	globalSRSBuffer.uiLightCount=count;
-	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &globalSRSBuffer, 0, 0);
+	g_shaderRenderStateBuffer.uiLightCount=count;
+	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 }
 
 void CD3D1XStateManager::SetFogStart(float start)
 {
 	auto context = GET_D3D_CONTEXT;
-	globalSRSBuffer.fFogStart = start;
-	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &globalSRSBuffer, 0, 0);
+	g_shaderRenderStateBuffer.fFogStart = start;
+	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 }
 
 void CD3D1XStateManager::SetFogRange(float range)
 {
 	auto context = GET_D3D_CONTEXT;
-	globalSRSBuffer.fFogRange = range;
-	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &globalSRSBuffer, 0, 0);
+	g_shaderRenderStateBuffer.fFogRange = range;
+	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 }
 
 void CD3D1XStateManager::SetRenderTargets(unsigned int count, ID3D11RenderTargetView * const * ppRenderTargets, ID3D11DepthStencilView * pDepthTarget)
@@ -673,14 +660,16 @@ void CD3D1XStateManager::SetViewport(D3D11_VIEWPORT vp)
 	m_viewport = vp;
 }
 
-// Flushes any state changes.
+
 void CD3D1XStateManager::FlushStates()
 {
+	// TODO: split state manager into different parts, that manage different states, so it would be easier to understand and to refactor
 	// If we have any state changed we should update it.
 	auto context = GET_D3D_CONTEXT;
 	auto dev = GET_D3D_DEVICE;
 	// Render targets
 	FlushRenderTargets();
+
 	if (IsViewportRequiresUpdate()) {
 		context->RSSetViewports(1, &m_viewport);
 		m_viewportOld = m_viewport;
@@ -689,8 +678,8 @@ void CD3D1XStateManager::FlushStates()
 	if (IsDepthDescRequiresUpdate()) {
 		if (m_pDepthStencilState) m_pDepthStencilState->Release();
 
-		if (FAILED(dev->CreateDepthStencilState(&m_depthStencilDesc, &m_pDepthStencilState)))
-			g_pDebug->printError("Failed to create depth stencil state");
+		CALL_D3D_API(dev->CreateDepthStencilState(&m_depthStencilDesc, &m_pDepthStencilState), 
+			"Failed to create depth stencil state");
 
 		context->OMSetDepthStencilState(m_pDepthStencilState, m_currentStencilRef);
 		m_depthStencilDescOld = m_depthStencilDesc;
@@ -698,28 +687,7 @@ void CD3D1XStateManager::FlushStates()
 	// Blend state.
 	if (IsBlendDescRequiresUpdate()) {
 		
-		/*int found = -1,i=-1;
-		for (auto desc: m_pBlendStateDescCache)
-		{
-			i++;
-			if (desc.RenderTarget[0].SrcBlend == m_blendDesc.RenderTarget[0].SrcBlend ||
-				desc.RenderTarget[0].DestBlend == m_blendDesc.RenderTarget[0].DestBlend ||
-				desc.RenderTarget[0].BlendEnable == m_blendDesc.RenderTarget[0].BlendEnable) {
-				found = i;
-				break;
-			}
-		}
-		if (found < 0) {
-			if (m_pBlendState) m_pBlendState->Release();
-			if (FAILED(m_pDevice->CreateBlendState(&m_blendDesc, &m_pBlendState)))
-				g_pDebug->printError("Failed to create blend state");
-			found = m_pBlendStateDescCache.size();
-			m_pBlendStateDescCache.push_back(m_blendDesc);
-			m_pBlendStateCache.insert({ found,m_pBlendState });
-		}*/
-		//D3D11_BLEND_SRC_ALPHA;
-		//D3D11_BLEND_INV_SRC_ALPHA;
-		if(m_pBlendState != m_pBlendState_Default  && m_pBlendState != m_pBlendState_NoBlend && m_pBlendState != m_pBlendState_BlendDestOne&&
+		if(m_pBlendState != m_pBlendState_Default  && m_pBlendState != m_pBlendState_AlphaBlend && m_pBlendState != m_pBlendState_BlendDestOne&&
 			m_pBlendState != m_pBlendState_BlendAdditive && m_pBlendState != m_pBlendState_NoBlendDestOne)
 			if (m_pBlendState) m_pBlendState->Release();
 
@@ -729,7 +697,7 @@ void CD3D1XStateManager::FlushStates()
 				m_pBlendState = m_pBlendState_Default;
 			}
 			else {
-				m_pBlendState = m_pBlendState_NoBlend;
+				m_pBlendState = m_pBlendState_AlphaBlend;
 			}
 			context->OMSetBlendState(m_pBlendState, 0, UINT_MAX);
 		}
@@ -755,9 +723,9 @@ void CD3D1XStateManager::FlushStates()
 		}
 		else {
 			
-			if (FAILED(dev->CreateBlendState(&m_blendDesc, &m_pBlendState)))
-				g_pDebug->printError("Failed to create blend state");
-			g_pDebug->printMsg("Blend state realtime create event: SRC:" + to_string(m_blendDesc.RenderTarget[0].SrcBlend) + " DST: " +
+			CALL_D3D_API(dev->CreateBlendState(&m_blendDesc, &m_pBlendState), "Failed to create blend state");
+			g_pDebug->printMsg("Blend state realtime create event: SRC:" + 
+				to_string(m_blendDesc.RenderTarget[0].SrcBlend) + " DST: " +
 				to_string(m_blendDesc.RenderTarget[0].DestBlend) + " Blend: " +
 				to_string(m_blendDesc.RenderTarget[0].BlendEnable),2);
 			//m_pBlendState;m_pBlendStateCache[found];
@@ -769,8 +737,7 @@ void CD3D1XStateManager::FlushStates()
 	if (IsRasterDescRequiresUpdate()) {
 		if (m_pRasterState) m_pRasterState->Release();
 
-		if (FAILED(dev->CreateRasterizerState(&m_rasterDesc, &m_pRasterState)))
-			g_pDebug->printError("Failed to create rasterizer state");
+		CALL_D3D_API(dev->CreateRasterizerState(&m_rasterDesc, &m_pRasterState), "Failed to create rasterizer state");
 
 		context->RSSetState(m_pRasterState);
 		m_rasterDescOld = m_rasterDesc;
@@ -779,8 +746,7 @@ void CD3D1XStateManager::FlushStates()
 	if (IsSamplerDescRequiresUpdate()) {
 		if (m_pSamplerState) m_pSamplerState->Release();
 
-		if (FAILED(dev->CreateSamplerState(&m_sampDesc, &m_pSamplerState)))
-			g_pDebug->printError("Failed to create sampler state");
+		CALL_D3D_API(dev->CreateSamplerState(&m_sampDesc, &m_pSamplerState), "Failed to create sampler state");
 
 		context->DSSetSamplers(0, 1, &m_pSamplerState);
 		context->PSSetSamplers(0, 1, &m_pSamplerState);
@@ -794,7 +760,7 @@ void CD3D1XStateManager::FlushStates()
 	}
 	// Global values CB.
 	if (m_bGlobalValuesReqUpdate) {
-		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &globalSRSBuffer, 0, 0);
+		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 		
 		m_bGlobalValuesReqUpdate = false;
 	}
@@ -805,6 +771,7 @@ void CD3D1XStateManager::FlushStates()
 	}
 	// First texture.
 	if (m_pOldRaster!= m_pCurrentRaster) {
+
 		if (m_pCurrentRaster != nullptr) {
 			RwD3D1XRaster* d3dRaster = GetD3D1XRaster(m_pCurrentRaster);
 			if (d3dRaster->resourse) {
@@ -903,86 +870,38 @@ bool CD3D1XStateManager::IsViewportRequiresUpdate()
 
 D3D11_BLEND CD3D1XStateManager::ConvertBlendFunc(RwBlendFunction func)
 {
-	D3D11_BLEND blendFunc = D3D11_BLEND_INV_SRC_ALPHA;
 	switch (func)
 	{
-	case rwBLENDZERO:
-		blendFunc = D3D11_BLEND_ZERO;
-		break;
-	case rwBLENDONE:
-		blendFunc = D3D11_BLEND_ONE;
-		break;
-	case rwBLENDSRCCOLOR:
-		blendFunc = D3D11_BLEND_SRC_COLOR;
-		break;
-	case rwBLENDINVSRCCOLOR:
-		blendFunc = D3D11_BLEND_INV_SRC_COLOR;
-		break;
-	case rwBLENDSRCALPHA:
-		blendFunc = D3D11_BLEND_SRC_ALPHA;
-		break;
-	case rwBLENDINVSRCALPHA:
-		break;
-	case rwBLENDDESTALPHA:
-		blendFunc = D3D11_BLEND_DEST_ALPHA;
-		break;
-	case rwBLENDINVDESTALPHA:
-		blendFunc = D3D11_BLEND_INV_DEST_ALPHA;
-		break;
-	case rwBLENDDESTCOLOR:
-		blendFunc = D3D11_BLEND_DEST_COLOR;
-		break;
-	case rwBLENDINVDESTCOLOR:
-		blendFunc = D3D11_BLEND_INV_DEST_COLOR;
-		break;
-	case rwBLENDSRCALPHASAT:
-		blendFunc = D3D11_BLEND_SRC_ALPHA_SAT;
-		break;
-	default:
-		break;
+	case rwBLENDZERO:			return D3D11_BLEND_ZERO;
+	case rwBLENDONE:			return D3D11_BLEND_ONE;
+	case rwBLENDSRCCOLOR:		return D3D11_BLEND_SRC_COLOR;
+	case rwBLENDINVSRCCOLOR:	return D3D11_BLEND_INV_SRC_COLOR;
+	case rwBLENDSRCALPHA:		return D3D11_BLEND_SRC_ALPHA;
+	case rwBLENDINVSRCALPHA:	return D3D11_BLEND_INV_SRC_ALPHA;
+	case rwBLENDDESTALPHA:		return D3D11_BLEND_DEST_ALPHA;
+	case rwBLENDINVDESTALPHA:	return D3D11_BLEND_INV_DEST_ALPHA;
+	case rwBLENDDESTCOLOR:		return D3D11_BLEND_DEST_COLOR;
+	case rwBLENDINVDESTCOLOR:	return D3D11_BLEND_INV_DEST_COLOR;
+	case rwBLENDSRCALPHASAT:	return D3D11_BLEND_SRC_ALPHA_SAT;
+	default:					return D3D11_BLEND_INV_SRC_ALPHA;
 	}
-	return blendFunc;
 }
 
 RwBlendFunction CD3D1XStateManager::ConvertBlendFunc(D3D11_BLEND func)
 {
-	RwBlendFunction blendFunc = rwBLENDSRCALPHA;
 	switch (func)
 	{
-	case D3D11_BLEND_ZERO:
-		blendFunc = rwBLENDZERO;
-		break;
-	case D3D11_BLEND_ONE:
-		blendFunc = rwBLENDONE;
-		break;
-	case D3D11_BLEND_SRC_COLOR:
-		blendFunc = rwBLENDSRCCOLOR;
-		break;
-	case D3D11_BLEND_INV_SRC_COLOR:
-		blendFunc = rwBLENDINVSRCCOLOR;
-		break;
-	case D3D11_BLEND_SRC_ALPHA:
-		blendFunc = rwBLENDSRCALPHA;
-		break;
-	case D3D11_BLEND_INV_SRC_ALPHA:
-		break;
-	case D3D11_BLEND_DEST_ALPHA :
-		blendFunc = rwBLENDDESTALPHA;
-		break;
-	case D3D11_BLEND_INV_DEST_ALPHA:
-		blendFunc = rwBLENDINVDESTALPHA;
-		break;
-	case D3D11_BLEND_DEST_COLOR:
-		blendFunc = rwBLENDDESTCOLOR;
-		break;
-	case D3D11_BLEND_INV_DEST_COLOR:
-		blendFunc = rwBLENDINVDESTCOLOR;
-		break;
-	case D3D11_BLEND_SRC_ALPHA_SAT:
-		blendFunc = rwBLENDSRCALPHASAT;
-		break;
-	default:
-		break;
+	case D3D11_BLEND_ZERO:				return rwBLENDZERO;
+	case D3D11_BLEND_ONE:				return rwBLENDONE;
+	case D3D11_BLEND_SRC_COLOR:			return rwBLENDSRCCOLOR;
+	case D3D11_BLEND_INV_SRC_COLOR:		return rwBLENDINVSRCCOLOR;
+	case D3D11_BLEND_SRC_ALPHA:			return rwBLENDSRCALPHA;
+	case D3D11_BLEND_INV_SRC_ALPHA:		return rwBLENDINVSRCALPHA;
+	case D3D11_BLEND_DEST_ALPHA:		return rwBLENDDESTALPHA;
+	case D3D11_BLEND_INV_DEST_ALPHA:	return rwBLENDINVDESTALPHA;
+	case D3D11_BLEND_DEST_COLOR:		return rwBLENDDESTCOLOR;
+	case D3D11_BLEND_INV_DEST_COLOR:	return rwBLENDINVDESTCOLOR;
+	case D3D11_BLEND_SRC_ALPHA_SAT:		return rwBLENDSRCALPHASAT;
+	default:							return rwBLENDINVSRCALPHA;
 	}
-	return blendFunc;
 }
