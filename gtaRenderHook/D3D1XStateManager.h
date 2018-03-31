@@ -36,7 +36,7 @@ extern ShaderRenderStateBuffer g_shaderRenderStateBuffer;
 /*! \class CD3D1XStateManager
 	\brief Render state manager class.
 	
-	This class manages render states for current frame. It responsible for caching of render states and such stuff.
+	This class manages render states for current frame. Responsible for caching of render states and such stuff.
 */
 class CD3D1XStateManager
 {
@@ -179,10 +179,20 @@ public:
 	*/
 	void SetRasterCS(RwRaster * raster, int Stage);
 	/*!
+		Changes current constant buffer in vertex shader.
+	*/
+	template <class T>
+	void SetConstantBufferVS(CD3D1XConstantBuffer<T> * buffer, int Stage);
+	/*!
 		Changes current constant buffer in pixel shader.
 	*/
 	template <class T>
 	void SetConstantBufferPS(CD3D1XConstantBuffer<T> * buffer, int Stage);
+	/*!
+		Changes current constant buffer in domain shader.
+	*/
+	template <class T>
+	void SetConstantBufferDS(CD3D1XConstantBuffer<T> * buffer, int Stage);
 	/*!
 		Changes current constant buffer in compute shader.
 	*/
@@ -342,7 +352,7 @@ private:
 	ID3D11DepthStencilState*	m_pDepthStencilState	= nullptr;
 	ID3D11SamplerState*			m_pSamplerState			= nullptr;
 	ID3D11SamplerState*			m_pCompSamplerState		= nullptr;
-	ID3D11Buffer*				m_pGlobalValuesBuffer	= nullptr;
+	ID3D11Buffer*				m_pGlobalValuesBuffer = nullptr;
 	RwRaster*					m_pCurrentRaster		= nullptr;
 	RwRaster*					m_pOldRaster			= nullptr;
 	ID3D11InputLayout*			m_pCurrentInputLayout	= nullptr;
@@ -384,6 +394,20 @@ private:
 };
 extern CD3D1XStateManager* g_pStateMgr;
 #endif // D3D1XStateManager_h__
+
+template<class T>
+inline void CD3D1XStateManager::SetConstantBufferVS(CD3D1XConstantBuffer<T>* buffer, int Stage)
+{
+	auto buf = buffer->getBuffer();
+	GET_D3D_CONTEXT->VSSetConstantBuffers(Stage, 1, &buf);
+}
+
+template<class T>
+inline void CD3D1XStateManager::SetConstantBufferDS(CD3D1XConstantBuffer<T>* buffer, int Stage)
+{
+	auto buf = buffer->getBuffer();
+	GET_D3D_CONTEXT->DSSetConstantBuffers(Stage, 1, &buf);
+}
 
 template<class T>
 inline void CD3D1XStateManager::SetConstantBufferPS(CD3D1XConstantBuffer<T>* buffer, int Stage)

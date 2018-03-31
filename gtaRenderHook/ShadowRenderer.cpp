@@ -9,6 +9,7 @@
 #include "D3D1XBuffer.h"
 #include <game_sa\CScene.h>
 #include "DeferredRenderer.h"
+#include "D3D1XRenderBuffersManager.h"
 RW::BBox	CShadowRenderer::m_LightBBox[4];
 RwV3d	CShadowRenderer::m_LightPos[4];
 RW::Matrix	CShadowRenderer::m_LightSpaceMatrix[4];
@@ -245,8 +246,8 @@ void CShadowRenderer::SetShadowBuffer() const
 	for (auto i = 0; i < 4; i++)
 		m_pLightCB->data.ShadowBias[i] = gShadowSettings.BiasCoefficients[i];
 	m_pLightCB->Update();
-	g_pStateMgr->SetConstantBufferPS(m_pLightCB, 3);
-	g_pStateMgr->SetConstantBufferCS(m_pLightCB, 3);
+	g_pStateMgr->SetConstantBufferPS(m_pLightCB, 4);
+	g_pStateMgr->SetConstantBufferCS(m_pLightCB, 4);
 	// If shadow rendering has not ended we don't need to set shadow buffer
 	if (!m_bShadowsRendered)
 		return;

@@ -1,5 +1,6 @@
 #pragma once
 #include "game_sa/CFileLoader.h"
+#include <unordered_map>
 class CPBSMaterial
 {
 public:
@@ -13,5 +14,5 @@ class CPBSMaterialMgr
 public:
 	static void LoadMaterials();
 	static RwTexDictionary* materialsTXD;
-	static std::list<CPBSMaterial*> materials;
+	static std::unordered_map<std::string, CPBSMaterial*> materials;
 };

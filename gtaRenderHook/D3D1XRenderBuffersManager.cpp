@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "D3D1XRenderBuffersManager.h"
+#include "D3D1XStateManager.h"
 #include "D3DRenderer.h"
 #include "RwD3D1XEngine.h"
 #include "CDebug.h"
@@ -7,177 +8,223 @@
 
 CD3D1XRenderBuffersManager::CD3D1XRenderBuffersManager()
 {
-	m_MaterialBuffer = {};
-	auto pd3dDevice = GET_D3D_DEVICE;
-	D3D11_BUFFER_DESC bd = {};
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(MatrixBuffer);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	if (FAILED(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pMatrixCB)))
-		g_pDebug->printError("Failed to create matrix constant buffer.");
-	bd = {};
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(MaterialBuffer);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	if (FAILED(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pMaterialCB)))
-		g_pDebug->printError("Failed to create material constant buffer");
-	ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-	//matr
-	pImmediateContext->VSSetConstantBuffers(0, 1, &m_pMatrixCB);
-	pImmediateContext->DSSetConstantBuffers(0, 1, &m_pMatrixCB);
-	pImmediateContext->GSSetConstantBuffers(0, 1, &m_pMatrixCB);
-	pImmediateContext->PSSetConstantBuffers(0, 1, &m_pMatrixCB);
-	pImmediateContext->CSSetConstantBuffers(0, 1, &m_pMatrixCB);
-	//mat
-	pImmediateContext->PSSetConstantBuffers(2, 1, &m_pMaterialCB);
+	m_pPerFrameMatrixBuffer = new CD3D1XConstantBuffer<PerFrameMatrixBuffer>();
+	m_pPerObjectMatrixBuffer = new CD3D1XConstantBuffer<PerObjectMatrixBuffer>();
+	m_pPerMaterialBuffer = new CD3D1XConstantBuffer<MaterialBuffer>();
+
+	g_pStateMgr->SetConstantBufferVS(m_pPerFrameMatrixBuffer, 1);
+	g_pStateMgr->SetConstantBufferPS(m_pPerFrameMatrixBuffer, 1);
+	g_pStateMgr->SetConstantBufferCS(m_pPerFrameMatrixBuffer, 1);
+	g_pStateMgr->SetConstantBufferDS(m_pPerFrameMatrixBuffer, 1);
+	g_pStateMgr->SetConstantBufferVS(m_pPerObjectMatrixBuffer, 2);
+	g_pStateMgr->SetConstantBufferPS(m_pPerMaterialBuffer, 3);
 }
 
 
 CD3D1XRenderBuffersManager::~CD3D1XRenderBuffersManager()
 {
-	if (m_pMatrixCB) {
-		m_pMatrixCB->Release();
-		m_pMatrixCB = nullptr;
-	}
-	if (m_pMaterialCB) {
-		m_pMaterialCB->Release();
-		m_pMaterialCB = nullptr;
-	}
+	delete m_pPerFrameMatrixBuffer;
+	delete m_pPerObjectMatrixBuffer;
+	delete m_pPerMaterialBuffer;
 }
 
 void CD3D1XRenderBuffersManager::UpdateViewProjMatricles(RwMatrix & view, RwMatrix & proj)
 {
-	m_MatrixBuffer.mView = view;
-	m_MatrixBuffer.mProjection = proj;
-	RwMatrixInvert(&m_MatrixBuffer.mInvView, &view);
-	RwMatrix ViewProj = {};
-	/*DirectX::XMMATRIX viewMat = {	view.right.x,view.right.y,view.right.z,static_cast<RwReal>(view.flags),
-									view.up.x ,view.up.y ,view.up.z,static_cast<RwReal>(view.pad1),
-									view.at.x ,view.at.y ,view.at.z,static_cast<RwReal>(view.pad2),
-									view.pos.x ,view.pos.y ,view.pos.z, static_cast<RwReal>(view.pad3) };
-	//viewMat=DirectX::XMMatrixTranspose(viewMat);
-	DirectX::XMMATRIX projMat = { proj.right.x,proj.right.y,proj.right.z,static_cast<RwReal>(proj.flags),
-		proj.up.x ,proj.up.y ,proj.up.z,static_cast<RwReal>(proj.pad1),
-		proj.at.x ,proj.at.y ,proj.at.z,static_cast<RwReal>(proj.pad2),
-		proj.pos.x ,proj.pos.y ,proj.pos.z, static_cast<RwReal>(proj.pad3) };
-	//projMat = DirectX::XMMatrixTranspose(projMat);
-	auto vp = DirectX::XMMatrixMultiply(viewMat, projMat);
-	m_MatrixBuffer.mInvViewProj =*(RwMatrix*)&DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(nullptr, vp));*/
-	
-	_RwMatrixMultiply(&ViewProj, &view, &proj);
-	RwMatrixInvert(&m_MatrixBuffer.mInvViewProj, &ViewProj);
+	m_pPerFrameMatrixBuffer->data.mView = view;
+	m_pPerFrameMatrixBuffer->data.mProjection = proj;
+
+	RwMatrixInvert(&m_pPerFrameMatrixBuffer->data.mInvView, &view);	
+	_RwMatrixMultiply(&m_pPerFrameMatrixBuffer->data.mViewProjection, &m_pPerFrameMatrixBuffer->data.mView, &m_pPerFrameMatrixBuffer->data.mProjection);
+	RwMatrixInvert(&m_pPerFrameMatrixBuffer->data.mInvViewProj, &m_pPerFrameMatrixBuffer->data.mViewProjection);
+	m_pPerFrameMatrixBuffer->Update();
 	
 }
 
 void CD3D1XRenderBuffersManager::UpdateViewMatrix(RwMatrix & view)
 {
-	m_MatrixBuffer.mView = view;
-	RwMatrixInvert(&m_MatrixBuffer.mInvView, &view);
-	RwMatrix ViewProj = {};
-	_RwMatrixMultiply(&ViewProj, &view, &m_MatrixBuffer.mProjection);
-	RwMatrixInvert(&m_MatrixBuffer.mInvViewProj, &ViewProj);
-}
+	m_pPerFrameMatrixBuffer->data.mView = view;
 
-void CD3D1XRenderBuffersManager::UpdateViewMatrixLookAtDX(DirectX::XMMATRIX * view)
-{
-	m_MatrixBuffer.mView = *(RwMatrix*)((void*)view);
-	RwMatrixInvert(&m_MatrixBuffer.mInvView, (RwMatrix*)view);
-	RwMatrix ViewProj = {};
-	_RwMatrixMultiply(&ViewProj, (RwMatrix*)view, &m_MatrixBuffer.mProjection);
-	RwMatrixInvert(&m_MatrixBuffer.mInvViewProj, &ViewProj);
-}
-
-void CD3D1XRenderBuffersManager::UpdateViewMatrixLookAtProjDX(DirectX::XMMATRIX * view, DirectX::XMMATRIX * proj)
-{
-	m_MatrixBuffer.mView = *(RwMatrix*)((void*)view);
-	m_MatrixBuffer.mProjection = *(RwMatrix*)((void*)proj);
-	RwMatrixInvert(&m_MatrixBuffer.mInvView, (RwMatrix*)view);
-	RwMatrix ViewProj = {};
-	_RwMatrixMultiply(&ViewProj, (RwMatrix*)view, (RwMatrix*)proj);
-	RwMatrixInvert(&m_MatrixBuffer.mInvViewProj, &ViewProj);
+	RwMatrixInvert(&m_pPerFrameMatrixBuffer->data.mInvView, &view);
+	_RwMatrixMultiply(&m_pPerFrameMatrixBuffer->data.mViewProjection, &view, &m_pPerFrameMatrixBuffer->data.mProjection);
+	RwMatrixInvert(&m_pPerFrameMatrixBuffer->data.mInvViewProj, &m_pPerFrameMatrixBuffer->data.mViewProjection);
+	m_pPerFrameMatrixBuffer->Update();
 }
 
 void CD3D1XRenderBuffersManager::UpdateWorldMatrix(RwMatrix *ltm)
 {
 	m_pCurrentWorldMatrix = ltm;
-	m_MatrixBuffer.mWorld.right.x = ltm->right.x;
-	m_MatrixBuffer.mWorld.right.y = ltm->right.y;
-	m_MatrixBuffer.mWorld.right.z = ltm->right.z;
-	m_MatrixBuffer.mWorld.up.x = ltm->up.x;
-	m_MatrixBuffer.mWorld.up.y = ltm->up.y;
-	m_MatrixBuffer.mWorld.up.z = ltm->up.z;
-	m_MatrixBuffer.mWorld.at.x = ltm->at.x;
-	m_MatrixBuffer.mWorld.at.y = ltm->at.y;
-	m_MatrixBuffer.mWorld.at.z = ltm->at.z;
-	m_MatrixBuffer.mWorld.pos.x = ltm->pos.x;
-	m_MatrixBuffer.mWorld.pos.y = ltm->pos.y;
-	m_MatrixBuffer.mWorld.pos.z = ltm->pos.z;
-	m_MatrixBuffer.mWorld.flags = 0;
-	m_MatrixBuffer.mWorld.pad1 = 0;
-	m_MatrixBuffer.mWorld.pad2 = 0;
-	m_MatrixBuffer.mWorld.pad3 = 0x3F800000;
+	m_pPerObjectMatrixBuffer->data.mWorld.right.x = ltm->right.x;
+	m_pPerObjectMatrixBuffer->data.mWorld.right.y = ltm->right.y;
+	m_pPerObjectMatrixBuffer->data.mWorld.right.z = ltm->right.z;
+	m_pPerObjectMatrixBuffer->data.mWorld.up.x = ltm->up.x;
+	m_pPerObjectMatrixBuffer->data.mWorld.up.y = ltm->up.y;
+	m_pPerObjectMatrixBuffer->data.mWorld.up.z = ltm->up.z;
+	m_pPerObjectMatrixBuffer->data.mWorld.at.x = ltm->at.x;
+	m_pPerObjectMatrixBuffer->data.mWorld.at.y = ltm->at.y;
+	m_pPerObjectMatrixBuffer->data.mWorld.at.z = ltm->at.z;
+	m_pPerObjectMatrixBuffer->data.mWorld.pos.x = ltm->pos.x;
+	m_pPerObjectMatrixBuffer->data.mWorld.pos.y = ltm->pos.y;
+	m_pPerObjectMatrixBuffer->data.mWorld.pos.z = ltm->pos.z;
+	m_pPerObjectMatrixBuffer->data.mWorld.flags = 0;
+	m_pPerObjectMatrixBuffer->data.mWorld.pad1 = 0;
+	m_pPerObjectMatrixBuffer->data.mWorld.pad2 = 0;
+	m_pPerObjectMatrixBuffer->data.mWorld.pad3 = 0x3F800000;
+}
+
+void CD3D1XRenderBuffersManager::Multipy4x4Matrices(RwMatrix * res, RwMatrix * a, RwMatrix * b)
+{
+	// renderware bullshit prevents from normal multiplication of homogenous matrices, so here is implementation to do that
+	auto matrix = DirectX::XMMatrixMultiplyTranspose((*(DirectX::XMMATRIX*)a), *((DirectX::XMMATRIX*)b));
+	*res = (*(RwMatrix*)&matrix);
+	return;
+
+	res->right.x =	a->right.x * b->right.x + 
+					a->right.y * b->up.x 	+
+					a->right.z * b->at.x	+
+					(static_cast<float>(a->flags)*b->pos.x);
+
+	res->up.x = a->right.x * b->right.y +
+				a->right.y * b->up.y	+
+				a->right.z * b->at.y	+
+				(static_cast<float>(a->flags)*b->pos.y);
+
+	res->at.x = a->right.x * b->right.z +
+				a->right.y * b->up.z +
+				a->right.z * b->at.z +
+				(static_cast<float>(a->flags)*b->pos.z);
+
+	res->pos.x = a->right.x * static_cast<float>(b->flags) +
+				 a->right.y * static_cast<float>(b->pad1) +
+				 a->right.z * static_cast<float>(b->pad2) +
+				 (static_cast<float>(a->flags)*static_cast<float>(b->pad3));
+	// 2nd column
+	res->right.y =	a->up.x * b->right.x +
+					a->up.y * b->up.x +
+					a->up.z * b->at.x +
+					(static_cast<float>(a->pad1)*b->pos.x);
+
+	res->up.y = a->up.x * b->right.y +
+				a->up.y * b->up.y +
+				a->up.z * b->at.y +
+				(static_cast<float>(a->pad1)*b->pos.y);
+
+	res->at.y = a->up.x * b->right.z +
+				a->up.y * b->up.z +
+				a->up.z * b->at.z +
+				(static_cast<float>(a->pad1)*b->pos.z);
+
+	res->pos.y =	a->up.x * static_cast<float>(b->flags) +
+					a->up.y * static_cast<float>(b->pad1) +
+					a->up.z * static_cast<float>(b->pad2) +
+					(static_cast<float>(a->pad1)*static_cast<float>(b->pad3));
+	// 3rd column
+	res->right.z =	a->at.x * b->right.x +
+					a->at.y * b->up.x +
+					a->at.z * b->at.x +
+					(static_cast<float>(a->pad2)*b->pos.x);
+
+	res->up.z = a->at.x * b->right.y +
+				a->at.y * b->up.y +
+				a->at.z * b->at.y +
+				(static_cast<float>(a->pad2)*b->pos.y);
+
+	res->at.z = a->at.x * b->right.z +
+				a->at.y * b->up.z +
+				a->at.z * b->at.z +
+				(static_cast<float>(a->pad2)*b->pos.z);
+
+	res->pos.z =	a->at.x * static_cast<float>(b->flags) +
+					a->at.y * static_cast<float>(b->pad1) +
+					a->at.z * static_cast<float>(b->pad2) +
+					(static_cast<float>(a->pad2)*static_cast<float>(b->pad3));
+	// 4th column
+	res->flags = static_cast<RwUInt32>(a->pos.x * b->right.x +
+					a->pos.y * b->up.x +
+					a->pos.z * b->at.x +
+					(static_cast<float>(a->pad3)*b->pos.x));
+
+	res->pad1 = static_cast<RwUInt32>(a->pos.x * b->right.y +
+				a->pos.y * b->up.y +
+				a->pos.z * b->at.y +
+				(static_cast<float>(a->pad3)*b->pos.y));
+
+	res->pad2 = static_cast<RwUInt32>(a->pos.x * b->right.z +
+				a->pos.y * b->up.z +
+				a->pos.z * b->at.z +
+				(static_cast<float>(a->pad3)*b->pos.z));
+
+	res->pad3 = static_cast<RwUInt32>(a->pos.x * static_cast<float>(b->flags) +
+					a->pos.y * static_cast<float>(b->pad1) +
+					a->pos.z * static_cast<float>(b->pad2) +
+					(static_cast<float>(a->pad3)*static_cast<float>(b->pad3)));
 }
 
 void CD3D1XRenderBuffersManager::SetMatrixBuffer()
 {
 	if (m_pCurrentWorldMatrix != m_pOldWorldMatrix) {
-		ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-		pImmediateContext->UpdateSubresource(m_pMatrixCB, 0, nullptr, &m_MatrixBuffer, 0, 0);
+		m_pPerObjectMatrixBuffer->Update();
 		m_pOldWorldMatrix = m_pCurrentWorldMatrix;
 	}
 }
 
 void CD3D1XRenderBuffersManager::UpdateMaterialDiffuseColor(RwRGBA &color)
 {
-	if (RWRGBALONG(	(byte)(m_MaterialBuffer.diffuseColor.red*255), (byte)(m_MaterialBuffer.diffuseColor.green * 255), 
-					(byte)(m_MaterialBuffer.diffuseColor.blue * 255), (byte)(m_MaterialBuffer.diffuseColor.alpha * 255))
+	auto currentColor= m_pPerMaterialBuffer->data.diffuseColor;
+
+	if (RWRGBALONG(	(byte)(currentColor.red*255), (byte)(currentColor.green * 255),
+					(byte)(currentColor.blue * 255), (byte)(currentColor.alpha * 255))
 		!= RWRGBALONG(color.red, color.green, color.blue, color.alpha))
 	{
-		m_MaterialBuffer.diffuseColor = RwRGBAReal{ (float)color.red/255.0f, (float)color.green / 255.0f, (float)color.blue / 255.0f, (float)color.alpha / 255.0f };
-		ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-		pImmediateContext->UpdateSubresource(m_pMaterialCB, 0, nullptr, &m_MaterialBuffer, 0, 0);
-		
+		m_pPerMaterialBuffer->data.diffuseColor = RwRGBAReal{ (float)color.red/255.0f, (float)color.green / 255.0f, (float)color.blue / 255.0f, (float)color.alpha / 255.0f };
+		m_bMaterialBufferRequiresUpdate = true;
 	}
 }
 
 void CD3D1XRenderBuffersManager::UpdateMaterialEmmissiveColor(RwRGBA & color)
 {
-	if (RWRGBALONG((byte)(m_MaterialBuffer.diffuseColor.red * 255), (byte)(m_MaterialBuffer.diffuseColor.green * 255),
-		(byte)(m_MaterialBuffer.diffuseColor.blue * 255), (byte)(m_MaterialBuffer.diffuseColor.alpha * 255))
+	auto currentColor = m_pPerMaterialBuffer->data.diffuseColor;
+	if (RWRGBALONG((byte)(currentColor.red / 16.0f * 255),
+		(byte)(currentColor.green / 16.0f * 255),
+		(byte)(currentColor.blue / 16.0f * 255), 
+		(byte)(currentColor.alpha / 16.0f * 255))
 		!= RWRGBALONG(color.red, color.green, color.blue, color.alpha))
 	{
-		m_MaterialBuffer.diffuseColor = RwRGBAReal{ (float)color.red / 255.0f*16.0f, (float)color.green / 255.0f*16.0f, (float)color.blue / 255.0f*16.0f, (float)color.alpha / 255.0f };
-		ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-		pImmediateContext->UpdateSubresource(m_pMaterialCB, 0, nullptr, &m_MaterialBuffer, 0, 0);
-
+		m_pPerMaterialBuffer->data.diffuseColor = RwRGBAReal{ (float)color.red / 255.0f*16.0f, 
+			(float)color.green / 255.0f*16.0f,
+			(float)color.blue / 255.0f*16.0f,
+			(float)color.alpha / 255.0f };
+		m_bMaterialBufferRequiresUpdate = true;
 	}
 }
 
 void CD3D1XRenderBuffersManager::UpdateMaterialSpecularInt(float & intensity)
 {
-	if (abs(m_MaterialBuffer.specularIntensity - intensity)> 0.001) {
-		m_MaterialBuffer.specularIntensity = intensity;
-		ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-		pImmediateContext->UpdateSubresource(m_pMaterialCB, 0, nullptr, &m_MaterialBuffer, 0, 0);
+	if (abs(m_pPerMaterialBuffer->data.specularIntensity - intensity)> 0.001) {
+		m_pPerMaterialBuffer->data.specularIntensity = intensity;
+		m_bMaterialBufferRequiresUpdate = true;
 	}
 }
 
 void CD3D1XRenderBuffersManager::UpdateMaterialGlossiness(float & intensity)
 {
-	if (abs(m_MaterialBuffer.glossiness - intensity)> 0.001) {
-		m_MaterialBuffer.glossiness = intensity;
-		ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-		pImmediateContext->UpdateSubresource(m_pMaterialCB, 0, nullptr, &m_MaterialBuffer, 0, 0);
+	if (abs(m_pPerMaterialBuffer->data.glossiness - intensity)> 0.001) {
+		m_pPerMaterialBuffer->data.glossiness = intensity;
+		m_bMaterialBufferRequiresUpdate = true;
 	}
 }
 
 void CD3D1XRenderBuffersManager::UpdateHasSpecTex(const int & hastex)
 {
-	if (m_MaterialBuffer.hasSpecTex!= hastex) {
-		m_MaterialBuffer.hasSpecTex = hastex;
-		ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-		pImmediateContext->UpdateSubresource(m_pMaterialCB, 0, nullptr, &m_MaterialBuffer, 0, 0);
+	if (m_pPerMaterialBuffer->data.hasSpecTex!= hastex) {
+		m_pPerMaterialBuffer->data.hasSpecTex = hastex;
+		m_bMaterialBufferRequiresUpdate = true;
+	}
+}
+
+void CD3D1XRenderBuffersManager::FlushMaterialBuffer()
+{
+	if (m_bMaterialBufferRequiresUpdate) {
+		m_pPerMaterialBuffer->Update();
+		m_bMaterialBufferRequiresUpdate = false;
 	}
 }

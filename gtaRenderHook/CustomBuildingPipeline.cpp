@@ -90,6 +90,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 				g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
 			}
 		}
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(curmesh.numIndex, curmesh.startIndex, curmesh.minVert);
 	}
@@ -150,14 +151,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 		if (entryData->models[i].material->texture) {
 			bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
 			g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
-			CPBSMaterial* mat = nullptr;
-			for (auto m : CPBSMaterialMgr::materials)
-			{
-				if (m->m_sName == entryData->models[i].material->texture->name) {
-					mat = m;
-					break;
-				}
-			}
+			CPBSMaterial* mat = CPBSMaterialMgr::materials[entryData->models[i].material->texture->name];
 			if (mat != nullptr) {
 				g_pStateMgr->SetRaster(mat->m_tSpecRoughness->raster, 1);
 				g_pRenderBuffersMgr->UpdateHasSpecTex(1);
@@ -173,6 +167,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 			}
 		}
 		drawCallCount++;
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
 		g_pRenderBuffersMgr->UpdateHasSpecTex(0);

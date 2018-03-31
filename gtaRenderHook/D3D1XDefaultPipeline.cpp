@@ -162,6 +162,7 @@ void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8
 			g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
 		}
 		g_pStateMgr->SetAlphaBlendEnable(bAlphaEnable>0);
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
 	}

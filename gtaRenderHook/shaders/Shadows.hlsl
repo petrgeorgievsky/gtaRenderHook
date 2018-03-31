@@ -1,7 +1,7 @@
 #include "Globals.hlsl"
 #ifndef SHADOWS_HLSL
 #define SHADOWS_HLSL
-cbuffer ShadowBuffer : register(b3)
+cbuffer ShadowBuffer : register(b4)
 {
 	row_major matrix DirLightViewProj[4];
 	float4 FadeDistances;

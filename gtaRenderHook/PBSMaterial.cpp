@@ -4,7 +4,7 @@
 #include <experimental\filesystem>
 
 RwTexDictionary* CPBSMaterialMgr::materialsTXD;
-std::list<CPBSMaterial*> CPBSMaterialMgr::materials;
+std::unordered_map<std::string, CPBSMaterial*> CPBSMaterialMgr::materials;
 bool has_suffix(const std::string& s, const std::string& suffix)
 {
 	return (s.size() >= suffix.size()) && std::equal(suffix.rbegin(), suffix.rend(), s.rbegin());
@@ -27,7 +27,9 @@ void CPBSMaterialMgr::LoadMaterials()
 	std::string ext(".mat");
 	for (auto& p : std::experimental::filesystem::recursive_directory_iterator(path))
 	{
-		if (p.path().extension() == ext)
-			materials.push_back(new CPBSMaterial(p.path().stem().string()));
+		if (p.path().extension() == ext) {
+			auto materialptr = new CPBSMaterial(p.path().stem().string());
+			materials[materialptr->m_sName] = materialptr;
+		}
 	}
 }

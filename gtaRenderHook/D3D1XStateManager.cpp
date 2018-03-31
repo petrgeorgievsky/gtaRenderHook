@@ -134,11 +134,11 @@ CD3D1XStateManager::CD3D1XStateManager()
 
 	// set constant buffers
 	// TODO: set buffers only for required shaders and with dynamic alignment perhaps
-	context->PSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
-	context->VSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
-	context->HSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
-	context->DSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
-	context->CSSetConstantBuffers(1, 1, &m_pGlobalValuesBuffer);
+	context->PSSetConstantBuffers(0, 1, &m_pGlobalValuesBuffer);
+	context->VSSetConstantBuffers(0, 1, &m_pGlobalValuesBuffer);
+	context->HSSetConstantBuffers(0, 1, &m_pGlobalValuesBuffer);
+	context->DSSetConstantBuffers(0, 1, &m_pGlobalValuesBuffer);
+	context->CSSetConstantBuffers(0, 1, &m_pGlobalValuesBuffer);
 
 	m_pBlendState_Default = m_pBlendState;
 

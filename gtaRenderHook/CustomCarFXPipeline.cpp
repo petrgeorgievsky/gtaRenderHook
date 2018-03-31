@@ -103,6 +103,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 				g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
 			}
 		}
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(curmesh.numIndex, curmesh.startIndex, curmesh.minVert);
 	}
@@ -212,6 +213,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 			}
 		}
 		// Draw mesh
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
 	}

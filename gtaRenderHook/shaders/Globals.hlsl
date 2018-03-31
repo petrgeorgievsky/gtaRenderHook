@@ -1,14 +1,7 @@
 #ifndef GLOBALS
 #define GLOBALS
-cbuffer MatrixBuffer : register( b0 )
-{
-	row_major matrix World;
-	row_major matrix View;
-	row_major matrix Projection;
-	row_major matrix ViewInv;
-	row_major matrix ViewProjectionInv;
-}
-cbuffer RenderStateBuffer : register( b1 )
+
+cbuffer RenderStateBuffer : register( b0 )
 {
 	uint	bHasTexture;
 	float	fScreenWidth;
@@ -33,7 +26,23 @@ cbuffer RenderStateBuffer : register( b1 )
     float fTimeStep;
     float3 __pad;
 }
-cbuffer MaterialInfoBuffer : register(b2)
+
+cbuffer PerFrameMatrixBuffer : register(b1)
+{
+	//row_major matrix World;
+    row_major matrix View;
+    row_major matrix Projection;
+    row_major matrix ViewProjection;
+    row_major matrix ViewInv;
+    row_major matrix ViewProjectionInv;
+}
+
+cbuffer PerObjectBuffer : register(b2)
+{
+    row_major matrix World;
+}
+
+cbuffer PerMaterialBuffer : register(b3)
 {
 	float4	DiffuseColor;
 	float	DiffuseIntensity;

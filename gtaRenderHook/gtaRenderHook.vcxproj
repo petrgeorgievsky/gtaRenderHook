@@ -121,7 +121,7 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.asi</TargetExt>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>D:\AntTweakBar_116\AntTweakBar\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(IncludePath)</IncludePath>
+    <IncludePath>D:\AntTweakBar_116\AntTweakBar\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(IncludePath)</IncludePath>
     <LibraryPath>D:\tinyxml2-master\tinyxml2\Debug-Lib;D:\AntTweakBar_116\AntTweakBar\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
     <OutDir>D:\Program Files %28x86%29\Rockstar Games\GTA San Andreas</OutDir>
   </PropertyGroup>
@@ -189,6 +189,9 @@
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>$(OutDir)$(TargetName).map</MapFileName>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)shaders" "$(TargetDir)shaders" /y </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">
     <ClCompile>

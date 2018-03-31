@@ -103,14 +103,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 			bAlphaEnable |= GetD3D1XRaster(mesh.material->texture->raster)->alpha;
 			
 			g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
-			CPBSMaterial* mat = nullptr;
-			for (auto m : CPBSMaterialMgr::materials)
-			{
-				if (m->m_sName == mesh.material->texture->name) {
-					mat = m;
-					break;
-				}
-			}
+			CPBSMaterial* mat = CPBSMaterialMgr::materials[mesh.material->texture->name];
 			if (mat != nullptr) {
 				g_pStateMgr->SetRaster(mat->m_tSpecRoughness->raster, 1);
 				g_pRenderBuffersMgr->UpdateHasSpecTex(1);
@@ -121,6 +114,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 		else
 			g_pStateMgr->SetAlphaBlendEnable(FALSE);
 		drawCallCount++;
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(mesh.numIndex, mesh.startIndex, mesh.minVert);
 		g_pRenderBuffersMgr->UpdateHasSpecTex(0);
