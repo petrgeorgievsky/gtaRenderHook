@@ -69,6 +69,9 @@
     <Filter Include="Source\Shaders">
       <UniqueIdentifier>{423d9031-fa34-4578-bd1d-6f4e79c6b9d3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers">
+      <UniqueIdentifier>{e15ccfef-e34a-43f1-9067-64b7aad415f2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -215,23 +218,29 @@
     <ClInclude Include="D3D1XVertexBufferManager.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
     </ClInclude>
-    <ClInclude Include="D3D1XVertexBuffer.h">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
-    </ClInclude>
     <ClInclude Include="DebugBBox.h">
       <Filter>Source\DebugUtility</Filter>
     </ClInclude>
-    <ClInclude Include="D3D1XBuffer.h">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
-    </ClInclude>
-    <ClInclude Include="D3D1XConstantBuffer.h">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
-    </ClInclude>
-    <ClInclude Include="D3D1XStructuredBuffer.h">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
-    </ClInclude>
     <ClInclude Include="D3DSpecificHelpers.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XConstantBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XStructuredBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XVertexBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XDynamicVertexBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XDynamicIndexBuffer.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -370,20 +379,26 @@
     <ClCompile Include="D3D1XVertexBufferManager.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
     </ClCompile>
-    <ClCompile Include="D3D1XVertexBuffer.cpp">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
-    </ClCompile>
     <ClCompile Include="DebugBBox.cpp">
       <Filter>Source\DebugUtility</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XBuffer.cpp">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XConstantBuffer.cpp">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XStructuredBuffer.cpp">
-      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XVertexBuffer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XDynamicVertexBuffer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XDynamicIndexBuffer.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

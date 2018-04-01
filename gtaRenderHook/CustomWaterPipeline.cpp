@@ -107,7 +107,8 @@ void CCustomWaterPipeline::RenderWater(RwIm3DVertex * verticles, UINT vertexCoun
 	m_pVS->Set();
 	m_pPS->Set();
 	m_pDS->Set();
-	m_pHS->Set();
+	m_pHS->Set(); 
+	g_pStateMgr->FlushStates();
 	GET_D3D_RENDERER->DrawIndexed(indexCount, 0, 0);
 	m_pDS->ReSet();
 	m_pHS->ReSet();

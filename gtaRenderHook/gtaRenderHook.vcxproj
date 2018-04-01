@@ -302,6 +302,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D3D1XDynamicIndexBuffer.h" />
+    <ClInclude Include="D3D1XDynamicVertexBuffer.h" />
     <ClInclude Include="D3D1XStructuredBuffer.h" />
     <ClInclude Include="D3D1XConstantBuffer.h" />
     <ClInclude Include="CubemapReflectionRenderer.h" />
@@ -358,6 +360,8 @@
     <ClInclude Include="VoxelPipeline.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3D1XDynamicIndexBuffer.cpp" />
+    <ClCompile Include="D3D1XDynamicVertexBuffer.cpp" />
     <ClCompile Include="D3D1XStructuredBuffer.cpp" />
     <ClCompile Include="D3D1XConstantBuffer.cpp" />
     <ClCompile Include="CubemapReflectionRenderer.cpp" />

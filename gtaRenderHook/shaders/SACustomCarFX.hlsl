@@ -98,13 +98,14 @@ float4 PS(DEFERRED_INPUT i) : SV_Target
     //float4 FullScattering = float4(RayleighScattering + MieScattering + SunContribution,1);
     float DiffuseTerm, SpecularTerm;
     CalculateDiffuseTerm_ViewDependent(Normals.xyz, LightDir, ViewDir, DiffuseTerm, 1-Glossiness);
-    CalculateSpecularTerm(Normals.xyz, LightDir, -ViewDir, 1-Glossiness, SpecularTerm);
+    CalculateSpecularTerm(Normals.xyz, LightDir, ViewDir, 1-Glossiness, SpecularTerm);
     DiffuseTerm *= vSunLightDir.w;
+    DiffuseTerm += vSkyLightCol*0.4f;
     //float3 rayleighRefl = CalculateRayleighScattering(LightPos, vWorldPos, reflect(ViewDir, normalize(i.vNormalDepth.xyz)), ViewPos.z, i.vNormalDepth.w) * vSkyLightCol.rgb;
     float4 albedoSample = txDiffuse.Sample(samLinear, i.vTexCoord.xy) * DiffuseColor;
     float4 outColor;
     outColor.rgb = albedoSample.rgb * DiffuseTerm * vSunColor.rgb + SpecularTerm * vSunColor.rgb;
-    outColor.a = albedoSample.a;
+    outColor.a = lerp(albedoSample.a, 1, SpecularTerm);
     /*lerp(txDiffuse.Sample(samLinear, i.vTexCoord.xy) * DiffuseColor * ((diff + (float4(rayleighRefl, 0)) * max((1 - diff) * 0.25, 0.15)))
                     + float4(rayleighRefl, 0) * SpecularIntensity,
                 FullScattering, saturate(max(i.vNormalDepth.w - fFogStart, 0) / abs(fFogRange)))*/

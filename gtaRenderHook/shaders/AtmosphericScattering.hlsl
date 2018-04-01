@@ -272,8 +272,8 @@ float4 AtmosphericScatteringPS(PSInput_Quad input) : SV_Target
     float4 OutLighting;
 
     float4 AlbedoColor = txScreen.Sample(samLinear, input.texCoordOut.xy);
-    
     float4 NormalSpec = txGB1.Sample(samLinear, input.texCoordOut.xy);
+
     float ViewZ = DecodeFloatRG(NormalSpec.zw);
     float skyMask = ViewZ <= 0;
     ViewZ = ViewZ <= 0 ? fFarClip : ViewZ;

@@ -6,7 +6,8 @@ class CD3D1XShader;
 class CD3D1XVertexDeclaration
 {
 public:
-	CD3D1XVertexDeclaration(CD3D1XShader* pVS,UINT flags);
+	CD3D1XVertexDeclaration(CD3D1XShader* pVS, UINT flags);
+	CD3D1XVertexDeclaration(std::vector<D3D11_INPUT_ELEMENT_DESC> elements, UINT stride, CD3D1XShader* pVS);
 	~CD3D1XVertexDeclaration();
 	std::vector<D3D11_INPUT_ELEMENT_DESC>	&getElementInfo()	{ return m_elements; }
 	UINT									&getStride()		{ return m_stride; }

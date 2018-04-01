@@ -240,12 +240,12 @@ void CSAIdleHook::RenderInGame()
 
 	DebugRendering::Render();
 
-	//DefinedState();
+	DefinedState();
 	// Render effects and 2d stuff
-	//_RenderEffects();
+	_RenderEffects();
 	/*int Render2dStuffAddress = *(DWORD *)0x53EB13 + 0x53EB12 + 5;
 	((int (__cdecl *)())Render2dStuffAddress)();*/
-	//Render2dStuff();
+	Render2dStuff();
 	// Render preformance counters if required.
 	if (gDebugSettings.ShowPreformanceCounters) {
 		CFont::SetFontStyle(eFontStyle::FONT_SUBTITLES);

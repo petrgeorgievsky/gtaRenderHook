@@ -4,6 +4,7 @@
 #include "D3DRenderer.h"
 #include "RwD3D1XEngine.h"
 #include "CDebug.h"
+#include "D3DSpecificHelpers.h"
 
 CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(CD3D1XShader* pVS,UINT flags)
 {
@@ -29,6 +30,16 @@ CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(CD3D1XShader* pVS,UINT flags)
 	auto device = GET_D3D_DEVICE;
 	if (FAILED(device->CreateInputLayout(m_elements.data(), m_elements.size(), m_pShader->getBlob()->GetBufferPointer(), m_pShader->getBlob()->GetBufferSize(), &m_inputLayout)))
 		g_pDebug->printError("Failed to create Input Layout");
+}
+
+CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(std::vector<D3D11_INPUT_ELEMENT_DESC> elements, UINT stride, CD3D1XShader * pVS)
+{
+	m_pShader = pVS;
+	m_stride = stride;
+	m_elements = elements;
+	auto blob = m_pShader->getBlob();
+	CALL_D3D_API(GET_D3D_DEVICE->CreateInputLayout(m_elements.data(), m_elements.size(), blob->GetBufferPointer(), blob->GetBufferSize(), &m_inputLayout),
+		"Failed to create input layout for vertex shader");
 }
 
 
