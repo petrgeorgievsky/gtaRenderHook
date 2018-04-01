@@ -13,137 +13,72 @@ CD3D1XIm3DPipeline::CD3D1XIm3DPipeline():
 	CD3D1XPipeline(L"RwIm3D")
 #endif // !DebuggingShaders
 {
-	ID3D11Device* pd3dDevice = GET_D3D_DEVICE;
-	D3D11_INPUT_ELEMENT_DESC layout[] =
+	std::vector<D3D11_INPUT_ELEMENT_DESC> layout =
 	{
 		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 12,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, 24,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, 28,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
-	UINT numElements = ARRAYSIZE(layout);
-	ID3DBlob* vsBlob = m_pVS->getBlob();
-	// Create the input layout
-	if (FAILED(pd3dDevice->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &m_pVertexLayout)))
-		g_pDebug->printError("Failed to create input layout");
-	
-
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = 0x40000;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bd.MiscFlags = 0;
-	bd.StructureByteStride = 0;
-
-	if (FAILED(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pVertexBuffer)))
-		g_pDebug->printError("Failed to create vertex buffer");
-
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = 20000;
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bd.MiscFlags = 0;
-	bd.StructureByteStride = 0;
-
-	if (FAILED(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pIndexBuffer)))
-		g_pDebug->printError("Failed to create index buffer");
+	m_pVertexDeclaration = new CD3D1XVertexDeclaration(layout, sizeof(RwIm3DVertex), m_pVS);
+	m_pVertexBuffer = new CD3D1XDynamicVertexBuffer(sizeof(RwIm3DVertex), 10000);	
+	m_pIndexBuffer = new CD3D1XDynamicIndexBuffer(10000);
 
 }
 
 
 CD3D1XIm3DPipeline::~CD3D1XIm3DPipeline()
 {
-	if (m_pIndexBuffer) m_pIndexBuffer->Release();
-	if (m_pVertexBuffer) m_pVertexBuffer->Release();
-	if (m_pVertexLayout) m_pVertexLayout->Release();
+	if (m_pVertexDeclaration) delete m_pVertexDeclaration;
+	if (m_pIndexBuffer) delete m_pIndexBuffer;
+	if (m_pVertexBuffer) delete m_pVertexBuffer;
 }
 
 RwBool CD3D1XIm3DPipeline::SubmitNode()
 {
 	ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
 	rwIm3DPool* pool = rwD3D9ImmPool;
+	auto im3dPoolStash = rwD3D9ImmPool->stash;
 
-	if (pool->stash.primType!=rwPRIMTYPETRIFAN) 
+	if (im3dPoolStash.primType!=rwPRIMTYPETRIFAN)
 	{
-		if (pool->stash.indices&&pool->stash.numIndices>0) {
-			{
-				D3D11_MAPPED_SUBRESOURCE mappedResource;
-				ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-				//	Disable GPU access to the vertex buffer data.
-				pImmediateContext->Map(m_pVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-				//	Update the vertex buffer here.
-				memcpy(mappedResource.pData, rwD3D9ImmPool->elements, sizeof(RwIm3DVertex)*rwD3D9ImmPool->numElements);
-				//	Reenable GPU access to the vertex buffer data.
-				pImmediateContext->Unmap(m_pVertexBuffer, 0);
-
-				ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-				//	Disable GPU access to the index buffer data.
-				pImmediateContext->Map(m_pIndexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-				//	Update the index buffer here.
-				memcpy(mappedResource.pData, &rwD3D9ImmPool->stash.indices[0], sizeof(RwImVertexIndex)*size_t(rwD3D9ImmPool->stash.numIndices));
-				//	Reenable GPU access to the index buffer data.
-				pImmediateContext->Unmap(m_pIndexBuffer, 0);
-			}
-
-			g_pStateMgr->SetInputLayout(m_pVertexLayout);
-
-			UINT stride = sizeof(RwIm3DVertex);
-			UINT offset = 0;
-			g_pStateMgr->SetVertexBuffer(m_pVertexBuffer, stride, offset);
-			g_pStateMgr->SetIndexBuffer(m_pIndexBuffer);
-			if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRILIST)
-				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRISTRIP)
-				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPELINELIST)
-				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-			else
-				g_pDebug->printMsg("D3D1XIm3DPipeline: Unknown primitive type:"+to_string(rwD3D9ImmPool->stash.primType)+", could be poly line or point list.",2);
-			m_pVS->Set();
-			m_pPS->Set();
+		// update verticles
+		m_pVertexBuffer->Update(&((RwIm3DVertex*)rwD3D9ImmPool->elements)[0], sizeof(RwIm3DVertex)*rwD3D9ImmPool->numElements);
+		// initialize vertex declaration and buffer
+		g_pStateMgr->SetInputLayout(m_pVertexDeclaration->getInputLayout());
+		g_pStateMgr->SetVertexBuffer(m_pVertexBuffer->getBuffer(), sizeof(RwIm3DVertex), 0);
+		// initialize primitive topology
+		// TODO: replace if-else block with EnumParser function
+		if (im3dPoolStash.primType == rwPRIMTYPETRILIST)
+			g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		else if (im3dPoolStash.primType == rwPRIMTYPETRISTRIP)
+			g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		else if (im3dPoolStash.primType == rwPRIMTYPELINELIST)
+			g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+		else
+			g_pDebug->printMsg("D3D1XIm3DPipeline: Unknown primitive type:" + to_string(im3dPoolStash.primType) + ", could be poly line or point list.", 2);
+		// initialize shaders
+		m_pVS->Set();
+		m_pPS->Set();
+		// draw mesh
+		if (im3dPoolStash.indices && im3dPoolStash.numIndices>0) {
+			// update index buffer
+			m_pIndexBuffer->Update(&im3dPoolStash.indices[0], sizeof(RwImVertexIndex)*im3dPoolStash.numIndices);
+			// initialize vertex buffer
+			g_pStateMgr->SetIndexBuffer(m_pIndexBuffer->getBuffer());
 
 			g_pStateMgr->FlushStates();
-			pImmediateContext->DrawIndexed(pool->stash.numIndices, 0, 0);
+			pImmediateContext->DrawIndexed(im3dPoolStash.numIndices, 0, 0);
 		}
 		else {
-			{
-				D3D11_MAPPED_SUBRESOURCE mappedResource;
-				ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-				//	Disable GPU access to the vertex buffer data.
-				pImmediateContext->Map(m_pVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-				//	Update the vertex buffer here.
-				memcpy(mappedResource.pData, rwD3D9ImmPool->elements, sizeof(RwIm3DVertex)*rwD3D9ImmPool->numElements);
-				//	Reenable GPU access to the vertex buffer data.
-				pImmediateContext->Unmap(m_pVertexBuffer, 0);
-			}
-
-			g_pStateMgr->SetInputLayout(m_pVertexLayout);
-
-			UINT stride = sizeof(RwIm3DVertex);
-			UINT offset = 0;
-			g_pStateMgr->SetVertexBuffer(m_pVertexBuffer, stride, offset);
-
-			if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRILIST)
-				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPETRISTRIP)
-				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-			else if (rwD3D9ImmPool->stash.primType == rwPRIMTYPELINELIST)
-				g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-			else
-				g_pDebug->printMsg("D3D1XIm3DPipeline: Unknown primitive type:" + to_string(rwD3D9ImmPool->stash.primType) + ", could be poly line or point list.", 2);
-			m_pVS->Set();
-			m_pPS->Set();
-
 			g_pStateMgr->FlushStates();
 			pImmediateContext->Draw(rwD3D9ImmPool->numElements, 0);
 		}
 	}
 	else
 	{
-		g_pDebug->printMsg("D3D1XIm3DPipeline: Triangle fan primitive is currently unsuported.", 2);
+		// TODO: perhaps add triangle fan rendering
+		g_pDebug->printMsg("D3D1XIm3DPipeline: Triangle fan primitive is currently unsuported.", 0);
 	}
 	return true;
 }

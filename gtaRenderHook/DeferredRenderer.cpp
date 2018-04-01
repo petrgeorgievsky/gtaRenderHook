@@ -107,7 +107,7 @@ void CDeferredRenderer::RenderOutput()
 	m_pShadowRenderer->SetShadowBuffer();
 
 	// Render sun directional light if required
-	if (g_shaderRenderStateBuffer.vSunDir.w > 0) 
+	if (g_shaderRenderStateBuffer.vSunDir.w > 0&&CGame__currArea==0) 
 	{
 		m_pSunLightingPS->Set();
 		g_pDebug->printMsg("Sun light rendering.", 1);

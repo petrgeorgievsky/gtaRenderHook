@@ -17,6 +17,7 @@
 #include <mutex>
 #include "AntTweakBar.h"
 #include "DebugRendering.h"
+#include "D3DRenderer.h"
 #include "DebugBBox.h"
 #include <game_sa\CPointLights.h>
 #include <game_sa\CFont.h>
@@ -43,6 +44,8 @@
 #define CRenderer__ProcessLodRenderLists() ((void (__cdecl *)())0x553770)()
 // B7CB49     ; CTimer::m_UserPause
 #define CTimer__m_UserPause (*(bool *)0xB7CB49)	
+#define CPostEffects__m_bDisableAllPostEffect (*(bool *)0xC402CF)	
+
 int drawCallCount=0;
 void RenderEntity2dfx(CEntity* e);
 void *CreateEntity2dfx(void* e);
@@ -227,7 +230,10 @@ void CSAIdleHook::RenderInGame()
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 0);
 
 	// Render deferred shading
+	CD3DRenderer* renderer = static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer();
+	renderer->BeginDebugEvent(L"Deferred composition pass");
 	g_pDeferredRenderer->RenderOutput();
+	renderer->EndDebugEvent();
 	deferredTimer.Stop();
 
 	// Enable Z-Test and render alpha entities
@@ -236,13 +242,12 @@ void CSAIdleHook::RenderInGame()
 	RenderForwardAfterDeferred();
 	
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 0);
+	renderer->BeginDebugEvent(L"Tonemapping pass");
 	g_pDeferredRenderer->RenderTonemappedOutput(); //TODO fix
-
+	renderer->EndDebugEvent();
 	DebugRendering::Render();
 
-	DefinedState();
-	// Render effects and 2d stuff
-	_RenderEffects();
+	
 	/*int Render2dStuffAddress = *(DWORD *)0x53EB13 + 0x53EB12 + 5;
 	((int (__cdecl *)())Render2dStuffAddress)();*/
 	Render2dStuff();
@@ -296,6 +301,11 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	g_pDeferredRenderer->SetPreviousNonTonemappedFinalRaster();
 	g_pDeferredRenderer->m_pShadowRenderer->SetShadowBuffer();
 	CWaterLevel::RenderWater();
+	DefinedState();
+	CPostEffects__m_bDisableAllPostEffect = true;
+	// Render effects and 2d stuff
+	_RenderEffects();
+	DefinedState();
 	//RenderGrass();
 }
 

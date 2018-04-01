@@ -63,7 +63,6 @@ void CHDRTonemapping::Render(RwRaster * input)
 	g_pRwCustomEngine->SetRenderTargets(&m_pToneMapRaster[NUM_TONEMAP_TEXTURES-1], nullptr, 1);
 	g_pRwCustomEngine->RenderStateSet(RwRenderState::rwRENDERSTATETEXTURERASTER, reinterpret_cast<UINT>(input));
 	g_pStateMgr->FlushRenderTargets();
-
 	m_pDownScale2x2_Lum->Set();
 	CFullscreenQuad::Draw();
 	m_pDownScale2x2_Lum->ReSet();
@@ -74,7 +73,6 @@ void CHDRTonemapping::Render(RwRaster * input)
 		g_pRwCustomEngine->SetRenderTargets(&m_pToneMapRaster[i - 1], nullptr, 1);
 		g_pRwCustomEngine->RenderStateSet(RwRenderState::rwRENDERSTATETEXTURERASTER, reinterpret_cast<UINT>(m_pToneMapRaster[i]));
 		g_pStateMgr->FlushRenderTargets();
-		
 		m_pDownScale3x3->Set();
 		CFullscreenQuad::Draw();
 		m_pDownScale3x3->ReSet();

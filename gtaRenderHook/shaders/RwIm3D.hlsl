@@ -1,25 +1,9 @@
+#include "Globals.hlsl"
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 Texture2D txDiffuse : register( t0 );
 SamplerState samLinear : register( s0 );
-cbuffer ConstantBuffer : register( b0 )
-{
-	row_major matrix World;
-	row_major matrix View;
-	row_major matrix Projection;
-}
-cbuffer Globals : register( b1 )
-{
-	uint	bHasTexture;
-	float	fScreenWidth;
-	float	fScreenHeight;
-	uint	uiAlphaTestType;
-	float	fAlphaTestRef;
-	uint	bFogEnable;
-	uint	uiFogType;
-	uint	cFogColor;
-}
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
