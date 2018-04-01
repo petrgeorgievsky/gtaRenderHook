@@ -13,7 +13,7 @@ public:
 	UINT									&getStride()		{ return m_stride; }
 	UINT									&getInputInfo()		{ return m_inputInfo; }
 	CD3D1XShader*							getShader()			{ return m_pShader;	}
-	ID3D11InputLayout*						&getInputLayout()	{ return m_inputLayout; }
+	ID3D11InputLayout*						getInputLayout()	{ return m_inputLayout; }
 private:
 	ID3D11InputLayout*						m_inputLayout	= nullptr;
 	CD3D1XShader*							m_pShader = nullptr;

@@ -46,7 +46,8 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 	RpSkin* geomskin = GeometryGetSkin(geom);
 
 	resEntryHeader->totalNumVertex = geom->numVertices;
-	resEntryHeader->vertexDeclaration = m_pVertexDeclaration->getInputLayout();
+	// for some reason cutscene crashes with kernel error if we set vertex declaration
+	resEntryHeader->vertexDeclaration = nullptr;//m_pVertexDeclaration->getInputLayout();
 	
 	SimpleVertexSkin* vertexData = new SimpleVertexSkin[resEntryHeader->totalNumVertex];
 
@@ -115,7 +116,7 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 	if (entryData->header.totalNumIndex == 0)
 		return;
 	// initialize mesh states
-	g_pStateMgr->SetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
+	g_pStateMgr->SetInputLayout(m_pVertexDeclaration->getInputLayout());
 	g_pStateMgr->SetVertexBuffer(((CD3D1XVertexBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertexSkin), 0);
 	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
