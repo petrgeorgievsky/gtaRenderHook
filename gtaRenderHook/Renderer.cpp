@@ -1070,16 +1070,16 @@ void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart
 			CRenderer::ScanSectorList(camera, camera->frustumBoundBox, 0, CRenderer__ms_fFarClipPlane,x, y);*/
 	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanSectorList);
 
-	sector[0].x = points[0].x * 0.005 + 15.0;
-	sector[0].y = points[0].y * 0.005 + 15.0;
-	sector[1].x = points[1].x * 0.005 + 15.0;
-	sector[1].y = points[1].y * 0.005 + 15.0;
-	sector[2].x = points[2].x * 0.005 + 15.0;
-	sector[2].y = points[2].y * 0.005 + 15.0;
-	sector[3].x = points[3].x * 0.005 + 15.0;
-	sector[3].y = points[3].y * 0.005 + 15.0;
-	sector[4].x = points[4].x * 0.005 + 15.0;
-	sector[4].y = points[4].y * 0.005 + 15.0;
+	sector[0].x = points[0].x * 0.005f + 15.0f;
+	sector[0].y = points[0].y * 0.005f + 15.0f;
+	sector[1].x = points[1].x * 0.005f + 15.0f;
+	sector[1].y = points[1].y * 0.005f + 15.0f;
+	sector[2].x = points[2].x * 0.005f + 15.0f;
+	sector[2].y = points[2].y * 0.005f + 15.0f;
+	sector[3].x = points[3].x * 0.005f + 15.0f;
+	sector[3].y = points[3].y * 0.005f + 15.0f;
+	sector[4].x = points[4].x * 0.005f + 15.0f;
+	sector[4].y = points[4].y * 0.005f + 15.0f;
 	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanBigBuildingList);
 	// Resets scan codes if it exceeds 2^16
 	if (CWorld__ms_nCurrentScanCode >= 0xFFFF)

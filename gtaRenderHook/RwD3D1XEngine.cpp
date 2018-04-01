@@ -838,8 +838,9 @@ void destroyNotify(RwResEntry * resEntry) {
 	}
 	if (resEntryHeader.vertexStream[0].vertexBuffer)
 	{
-		ID3D11Buffer* buffptr = static_cast<ID3D11Buffer*>(resEntryHeader.vertexStream[0].vertexBuffer);
+		CD3D1XVertexBuffer* buffptr = static_cast<CD3D1XVertexBuffer*>(resEntryHeader.vertexStream[0].vertexBuffer);
 		CD3D1XVertexBufferManager::Remove(buffptr);
+		resEntryHeader.vertexStream[0].vertexBuffer = nullptr;
 	}
 	if (resEntryHeader.vertexDeclaration)
 	{
@@ -857,8 +858,9 @@ void destroyNotifySkin(RwResEntry * resEntry) {
 	}
 	if (resEntryHeader.vertexStream[0].vertexBuffer)
 	{
-		ID3D11Buffer* buffptr = static_cast<ID3D11Buffer*>(resEntryHeader.vertexStream[0].vertexBuffer);
+		CD3D1XVertexBuffer* buffptr = static_cast<CD3D1XVertexBuffer*>(resEntryHeader.vertexStream[0].vertexBuffer);
 		CD3D1XVertexBufferManager::Remove(buffptr);
+		resEntryHeader.vertexStream[0].vertexBuffer = nullptr;
 	}
 	if (resEntryHeader.vertexDeclaration)
 	{

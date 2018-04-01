@@ -43,7 +43,7 @@ void CD3D1XIm2DPipeline::Draw(RwPrimitiveType prim, RwIm2DVertex* verticles, RwU
 	else {
 		std::vector<RwIm2DVertex> vertexArr;
 		// d3d11 doesn't have triangle fan so we need to convert it to triangle list
-		for (auto i = 1; i < vertexCount-1; i++)
+		for (RwUInt32 i = 1; i < vertexCount-1; i++)
 		{
 			vertexArr.push_back(verticles[0]);
 			vertexArr.push_back(verticles[i]);

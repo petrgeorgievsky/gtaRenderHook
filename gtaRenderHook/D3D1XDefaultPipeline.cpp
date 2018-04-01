@@ -11,6 +11,7 @@
 #include "D3D1XVertexDeclarationManager.h"
 #include "D3D1XVertexDeclaration.h"
 #include "D3D1XVertexBufferManager.h"
+#include "D3D1XVertexBuffer.h"
 #include "RwVectorMath.h"
 
 CD3D1XDefaultPipeline::CD3D1XDefaultPipeline() : 
@@ -28,102 +29,44 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 	RpAtomic* atomic = static_cast<RpAtomic*>(object);
 	RpGeometry* geom = atomic->geometry;
 	resEntryHeader->totalNumVertex = geom->numVertices;
-	// Create Vertex Declarations and Buffers
+	// create vertex declaration
+	// TODO: add more robust vertex declaration generation
+	auto vdeclPtr = CD3D1XVertexDeclarationManager::AddNew(m_pVS, geom->flags | rpGEOMETRYNORMALS | 
+										rpGEOMETRYPRELIT | rpGEOMETRYTEXTURED | rpGEOMETRYPOSITIONS);
+	resEntryHeader->vertexDeclaration = vdeclPtr->getInputLayout();
+
+	// copy vertex data to data structure that represents vertex in shader
+	// TODO: add ability to create custom verticle types on fly,
+	// currently even if mesh doesn't have colors/textures they are still filled, that could be potentional performance hit.
+	SimpleVertex* vertexData = new SimpleVertex[resEntryHeader->totalNumVertex];
+	
+	bool	hasNormals = geom->morphTarget[0].normals != nullptr,
+			hasTexCoords = geom->texCoords[0] != nullptr,
+			hasColors = geom->preLitLum&&geom->flags&rpGEOMETRYPRELIT;
+
+	for (RwUInt32 i = 0; i < resEntryHeader->totalNumVertex; i++)
 	{
-		auto vdeclPtr = CD3D1XVertexDeclarationManager::AddNew(m_pVS, geom->flags | rpGEOMETRYNORMALS | 
-											rpGEOMETRYPRELIT | rpGEOMETRYTEXTURED | rpGEOMETRYPOSITIONS);
-		resEntryHeader->vertexDeclaration = vdeclPtr->getInputLayout();
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-		bd.Usage = D3D11_USAGE_IMMUTABLE;
-		bd.ByteWidth = static_cast<UINT>(sizeof(SimpleVertex)) * resEntryHeader->totalNumVertex;
-		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-		bd.MiscFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA InitData;
-
-		InitData.SysMemPitch = 0;
-		InitData.SysMemSlicePitch = 0;
-		
-		{
-			D3D11_MAPPED_SUBRESOURCE mappedResource{};
-
-			SimpleVertex* vertexData = new SimpleVertex[static_cast<size_t>(resEntryHeader->totalNumVertex)];
-			
-			for (size_t i = 0; i < static_cast<size_t>(resEntryHeader->totalNumVertex); i++)
-			{
-				vertexData[i].pos = geom->morphTarget[0].verts[i];
-				if (geom->morphTarget[0].normals)
-					vertexData[i].normal = geom->morphTarget[0].normals[i];
-				else
-					vertexData[i].normal = { 0,0,0 };
-				if (geom->texCoords[0])
-					vertexData[i].uv = geom->texCoords[0][i];
-				else
-					vertexData[i].uv = { 0,0 };
-				if (geom->preLitLum&&geom->flags&rpGEOMETRYPRELIT)
-					vertexData[i].color = geom->preLitLum[i];
-				else
-					vertexData[i].color = { 255,255,255,255 };
-			}
-
-			if (geom->morphTarget[0].normals == nullptr) {
-				for (int i = 0; i < geom->numTriangles; i++)
-				{
-					RwV3d firstvec = {	
-						vertexData[geom->triangles[i].vertIndex[1]].pos.x - vertexData[geom->triangles[i].vertIndex[0]].pos.x,
-						vertexData[geom->triangles[i].vertIndex[1]].pos.y - vertexData[geom->triangles[i].vertIndex[0]].pos.y,
-						vertexData[geom->triangles[i].vertIndex[1]].pos.z - vertexData[geom->triangles[i].vertIndex[0]].pos.z 
-					};
-					RwV3d secondvec = {
-						vertexData[geom->triangles[i].vertIndex[0]].pos.x - vertexData[geom->triangles[i].vertIndex[2]].pos.x,
-						vertexData[geom->triangles[i].vertIndex[0]].pos.y - vertexData[geom->triangles[i].vertIndex[2]].pos.y,
-						vertexData[geom->triangles[i].vertIndex[0]].pos.z - vertexData[geom->triangles[i].vertIndex[2]].pos.z
-					};
-					RwV3d normal = {
-						firstvec.y*secondvec.z - firstvec.z*secondvec.y,
-						firstvec.z*secondvec.x - firstvec.x*secondvec.z,
-						firstvec.x*secondvec.y - firstvec.y*secondvec.x
-					};// (firstvec, secondvec);
-					RwReal length = sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
-					normal = { normal.x / length,normal.y / length,normal.z / length };
-					
-					vertexData[geom->triangles[i].vertIndex[0]].normal = {
-						vertexData[geom->triangles[i].vertIndex[0]].normal.x + normal.x,
-						vertexData[geom->triangles[i].vertIndex[0]].normal.y + normal.y,
-						vertexData[geom->triangles[i].vertIndex[0]].normal.z + normal.z
-					};
-					vertexData[geom->triangles[i].vertIndex[1]].normal = {
-						vertexData[geom->triangles[i].vertIndex[1]].normal.x + normal.x,
-						vertexData[geom->triangles[i].vertIndex[1]].normal.y + normal.y,
-						vertexData[geom->triangles[i].vertIndex[1]].normal.z + normal.z
-					};
-					vertexData[geom->triangles[i].vertIndex[2]].normal = {
-						vertexData[geom->triangles[i].vertIndex[2]].normal.x + normal.x,
-						vertexData[geom->triangles[i].vertIndex[2]].normal.y + normal.y,
-						vertexData[geom->triangles[i].vertIndex[2]].normal.z + normal.z
-					};
-				}
-				for (size_t i = 0; i < static_cast<size_t>(resEntryHeader->totalNumVertex); i++)
-				{
-					RwReal length = sqrt(vertexData[i].normal.x*vertexData[i].normal.x + vertexData[i].normal.y*vertexData[i].normal.y + vertexData[i].normal.z*vertexData[i].normal.z);
-					vertexData[i].normal = { vertexData[i].normal.x / length,vertexData[i].normal.y / length,vertexData[i].normal.z / length };
-				}
-			}
-
-			InitData.pSysMem = vertexData;
-			
-			
-			if (FAILED(GET_D3D_DEVICE->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&resEntryHeader->vertexStream[0].vertexBuffer)))
-				g_pDebug->printError("Failed to create vertex buffer");
-			ID3D11Buffer* buffptr = static_cast<ID3D11Buffer*>(resEntryHeader->vertexStream[0].vertexBuffer);
-			CD3D1XVertexBufferManager::AddNew(buffptr);
-			//g_pDebug->SetD3DName((ID3D11DeviceChild*)resEntryHeader->vertexStream[0].vertexBuffer, "VertexBuffer::" + std::to_string(resEntryHeader->serialNumber));
-			delete[] vertexData;
-		}
-
+		vertexData[i].pos = geom->morphTarget[0].verts[i];
+		vertexData[i].normal = hasNormals ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
+		vertexData[i].uv = hasTexCoords? geom->texCoords[0][i] : RwTexCoords{ 0, 0 };
+		vertexData[i].color = hasColors? geom->preLitLum[i]: RwRGBA{ 255, 255, 255, 255 };
 	}
+	// if mesh doesn't have normals generate them on the fly
+	if (!hasNormals)
+		GenerateNormals(vertexData, resEntryHeader->totalNumVertex, geom->triangles, geom->numTriangles);
+	
+	D3D11_SUBRESOURCE_DATA InitData;
+
+	InitData.SysMemPitch = 0;
+	InitData.SysMemSlicePitch = 0;
+	InitData.pSysMem = vertexData;
+
+	auto buffer = new CD3D1XVertexBuffer(sizeof(SimpleVertex) * resEntryHeader->totalNumVertex, &InitData);
+	resEntryHeader->vertexStream[0].vertexBuffer = buffer;
+	CD3D1XVertexBufferManager::AddNew(buffer);
+
+	delete[] vertexData;
+	
 	return true;
 }
 
@@ -131,43 +74,93 @@ void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8
 {
 	RpAtomic* atomic = static_cast<RpAtomic*>(object);
 	RxInstanceData* entryData = static_cast<RxInstanceData*>(repEntry);
+	// early return
 	if (entryData->header.totalNumIndex == 0)
 		return;
-	//if (entryData->header.primType != rwPRIMTYPETRISTRIP)
-	//	return;
-	// Render shit
+	// initialize mesh states
+	// TODO: reduce casts
 	g_pStateMgr->SetInputLayout(static_cast<ID3D11InputLayout*>(entryData->header.vertexDeclaration));
-
-	UINT stride = sizeof(SimpleVertex);
-	UINT offset = 0;
-
-	g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)entryData->header.vertexStream[0].vertexBuffer, stride, offset);
-	if (!entryData->header.indexBuffer)
-		g_pDebug->printMsg("CD3D1XDefaultPipeline: empty index buffer found", 2);
+	g_pStateMgr->SetVertexBuffer(((CD3D1XVertexBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertex), 0);
 	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	m_pVS->Set();
 	m_pPS->Set();
-	//m_pDS->Set();
-	//m_pHS->Set();
-	BOOL oldBlendState= g_pStateMgr->GetAlphaBlendEnable();
-	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
-	{
-		RwUInt8 bAlphaEnable = 0;
-		bAlphaEnable |= entryData->models[i].material->color.alpha!=255 || entryData->models[i].vertexAlpha;
 
-		g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(entryData->models[i].material->color);
-		if (entryData->models[i].material->texture) {
-			bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
-			g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
+	// iterate over materials and draw them
+	RwUInt8 alphaBlend;
+	RxD3D9InstanceData* model;
+	RpMaterial* material;
+	for (RwUInt32 i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
+	{
+		model = &entryData->models[i];
+		material = model->material;
+		alphaBlend = material->color.alpha!=255 || model->vertexAlpha;
+
+		// set albedo(diffuse) color
+		g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(material->color);
+		// set texture
+		if (material->texture) {
+			alphaBlend |= GetD3D1XRaster(material->texture->raster)->alpha;
+			g_pRwCustomEngine->SetTexture(material->texture, 0);
 		}
-		g_pStateMgr->SetAlphaBlendEnable(bAlphaEnable>0);
-		g_pRenderBuffersMgr->FlushMaterialBuffer();
+		// set alpha blending
+		g_pStateMgr->SetAlphaBlendEnable(alphaBlend>0);
+		// flush and draw
 		g_pStateMgr->FlushStates();
-		GET_D3D_RENDERER->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
+		GET_D3D_RENDERER->DrawIndexed(model->numIndex, model->startIndex, model->minVert);
 	}
-	g_pStateMgr->SetAlphaBlendEnable(oldBlendState);
-	
-	//m_pDS->ReSet();
-	//m_pHS->ReSet();
+}
+
+void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned int vertexCount, RpTriangle* triangles, unsigned int triangleCount)
+{
+	// generate normal for each triangle and vertex in mesh
+	for (RwUInt32 i = 0; i < triangleCount; i++)
+	{
+		auto triangle = triangles[i];
+		auto iA = triangle.vertIndex[0], iB = triangle.vertIndex[1], iC = triangle.vertIndex[2];
+		auto vA = verticles[iA],
+			 vB = verticles[iB],
+			 vC = verticles[iC];
+		// tangent vector
+		RwV3d tangent = {
+			vB.pos.x - vA.pos.x,
+			vB.pos.y - vA.pos.y,
+			vB.pos.z - vA.pos.z
+		};
+		// bitangent vector
+		RwV3d bitangent = {
+			vA.pos.x - vC.pos.x,
+			vA.pos.y - vC.pos.y,
+			vA.pos.z - vC.pos.z
+		};
+		// normal vector as cross product of (tangent X bitangent)
+		RwV3d normal = {
+			tangent.y*bitangent.z - tangent.z*bitangent.y,
+			tangent.z*bitangent.x - tangent.x*bitangent.z,
+			tangent.x*bitangent.y - tangent.y*bitangent.x
+		};
+		// increase normals of each vertex in triangle 
+		verticles[iA].normal = {
+			verticles[iA].normal.x + normal.x,
+			verticles[iA].normal.y + normal.y,
+			verticles[iA].normal.z + normal.z
+		};
+		verticles[iB].normal = {
+			verticles[iB].normal.x + normal.x,
+			verticles[iB].normal.y + normal.y,
+			verticles[iB].normal.z + normal.z
+		};
+		verticles[iC].normal = {
+			verticles[iC].normal.x + normal.x,
+			verticles[iC].normal.y + normal.y,
+			verticles[iC].normal.z + normal.z
+		};
+	}
+	// normalize normals
+	for (RwUInt32 i = 0; i < vertexCount; i++)
+	{
+		RwReal length = sqrt(verticles[i].normal.x*verticles[i].normal.x + verticles[i].normal.y*verticles[i].normal.y + verticles[i].normal.z*verticles[i].normal.z);
+		verticles[i].normal = { verticles[i].normal.x / length, verticles[i].normal.y / length, verticles[i].normal.z / length };
+	}
 }

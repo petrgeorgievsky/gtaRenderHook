@@ -55,7 +55,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 	{
 		auto curmesh = mesh->entryptr->models[mesh->meshID];
 		g_pStateMgr->SetInputLayout((ID3D11InputLayout*)mesh->entryptr->header.vertexDeclaration);
-		g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)mesh->entryptr->header.vertexStream[0].vertexBuffer, stride, offset);
+		g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)mesh->entryptr->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 
 		if (!mesh->entryptr->header.indexBuffer)
 			g_pDebug->printMsg("CCustomCarFXPipeline: empty index buffer found", 2);
@@ -126,7 +126,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 
 	// Init model states 
 	g_pStateMgr->SetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
-	g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)entryData->header.vertexStream[0].vertexBuffer, stride, offset);
+	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	

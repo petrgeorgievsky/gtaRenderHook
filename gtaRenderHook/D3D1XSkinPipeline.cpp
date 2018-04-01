@@ -76,10 +76,7 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 		bd.CPUAccessFlags = 0;
 		bd.MiscFlags = 0;
 
-		D3D11_SUBRESOURCE_DATA InitData;
-
-		InitData.SysMemPitch = 0;
-		InitData.SysMemSlicePitch = 0;
+		
 
 		{
 			D3D11_MAPPED_SUBRESOURCE mappedResource{};
@@ -171,15 +168,15 @@ bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHe
 					vertexData[i].normal = { vertexData[i].normal.x / length,vertexData[i].normal.y / length,vertexData[i].normal.z / length };
 				}
 			}
+			D3D11_SUBRESOURCE_DATA InitData;
 
+			InitData.SysMemPitch = 0;
+			InitData.SysMemSlicePitch = 0;
 			InitData.pSysMem = vertexData;
 			
-
-			if (FAILED(GET_D3D_DEVICE->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&resEntryHeader->vertexStream[0].vertexBuffer)))
-				g_pDebug->printError("Failed to create vertex buffer");
-			ID3D11Buffer* buffptr = static_cast<ID3D11Buffer*>(resEntryHeader->vertexStream[0].vertexBuffer);
-			g_pDebug->SetD3DName(buffptr, "SkinVertexBuffer::" + std::to_string(resEntryHeader->serialNumber));
-			CD3D1XVertexBufferManager::AddNew(buffptr);
+			auto buffer = new CD3D1XVertexBuffer(sizeof(SimpleVertexSkin) * resEntryHeader->totalNumVertex,&InitData);
+			resEntryHeader->vertexStream[0].vertexBuffer = buffer;
+			CD3D1XVertexBufferManager::AddNew(buffer);
 			delete[] vertexData;
 		}
 
@@ -206,7 +203,7 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 
 	UINT stride = sizeof(SimpleVertexSkin);
 	UINT offset = 0;
-	g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)entryData->header.vertexStream[0].vertexBuffer, stride, offset);
+	g_pStateMgr->SetVertexBuffer(((CD3D1XVertexBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 	if (!entryData->header.indexBuffer)
 		g_pDebug->printMsg("D3D1XSkinPipeline: empty index buffer found", 2);
 	//g_pStateMgr->SetFillMode(D3D11_FILL_WIREFRAME);

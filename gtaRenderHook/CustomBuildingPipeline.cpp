@@ -65,7 +65,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 	{
 		auto curmesh = mesh->entryptr->models[mesh->meshID];
 		g_pStateMgr->SetInputLayout((ID3D11InputLayout*)mesh->entryptr->header.vertexDeclaration);
-		g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)mesh->entryptr->header.vertexStream[0].vertexBuffer, stride, offset);
+		g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)mesh->entryptr->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 
 		if (!mesh->entryptr->header.indexBuffer)
 			g_pDebug->printMsg("CCustomBuildingPipeline: empty index buffer found", 2);
@@ -110,7 +110,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 	//}
 	UINT stride = sizeof(SimpleVertex);
 	UINT offset = 0;
-	g_pStateMgr->SetVertexBuffer((ID3D11Buffer*)entryData->header.vertexStream[0].vertexBuffer, stride, offset);
+	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 	if (!entryData->header.indexBuffer)
 		g_pDebug->printMsg("CCustomBuildingPipeline: empty index buffer found", 2);
 	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);

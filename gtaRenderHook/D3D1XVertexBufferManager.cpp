@@ -2,25 +2,25 @@
 #include "D3D1XVertexBufferManager.h"
 
 
-std::list<ID3D11Buffer*> CD3D1XVertexBufferManager::bufferList = {};
+std::list<CD3D1XVertexBuffer*> CD3D1XVertexBufferManager::bufferList = {};
 
-void CD3D1XVertexBufferManager::AddNew(ID3D11Buffer*& tex)
+void CD3D1XVertexBufferManager::AddNew(CD3D1XVertexBuffer*& buf)
 {
-	bufferList.push_back(tex);
+	bufferList.push_back(buf);
 }
 
-void CD3D1XVertexBufferManager::Remove(ID3D11Buffer*& tex)
+void CD3D1XVertexBufferManager::Remove(CD3D1XVertexBuffer*& buf)
 {
-	bufferList.remove(tex);
-	tex->Release();
-	tex = nullptr;
+	bufferList.remove(buf);
+	delete buf;
+	buf = nullptr;
 }
 
 void CD3D1XVertexBufferManager::Shutdown()
 {
-	for (auto &tex : bufferList)
+	for (auto &buf : bufferList)
 	{
-		tex->Release();
-		tex = nullptr;
+		delete buf;
+		buf = nullptr;
 	}
 }

@@ -4,8 +4,8 @@
 #include "D3DRenderer.h"
 #include "D3DSpecificHelpers.h"
 
-CD3D1XBuffer::CD3D1XBuffer(unsigned int size, D3D11_USAGE usage, D3D11_BIND_FLAG bindingFlags, D3D11_CPU_ACCESS_FLAG cpuAccessFlags, 
-	unsigned int miscFlags, unsigned int elementSize)
+CD3D1XBuffer::CD3D1XBuffer(unsigned int size, D3D11_USAGE usage, D3D11_BIND_FLAG bindingFlags, unsigned int cpuAccessFlags,
+	unsigned int miscFlags, unsigned int elementSize, const D3D11_SUBRESOURCE_DATA* initialData)
 {
 	m_uiSize = size;
 	D3D11_BUFFER_DESC bd;
@@ -17,7 +17,7 @@ CD3D1XBuffer::CD3D1XBuffer(unsigned int size, D3D11_USAGE usage, D3D11_BIND_FLAG
 	bd.CPUAccessFlags = cpuAccessFlags;
 	bd.MiscFlags = miscFlags;
 
-	CALL_D3D_API(GET_D3D_DEVICE->CreateBuffer(&bd, nullptr, &m_pBuffer), "Failed to create d3d11 hardware buffer");
+	CALL_D3D_API(GET_D3D_DEVICE->CreateBuffer(&bd, initialData, &m_pBuffer), "Failed to create d3d11 hardware buffer");
 }
 
 

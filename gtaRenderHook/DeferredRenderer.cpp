@@ -245,16 +245,16 @@ void DeferredSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 	// Debug
 	SSRMaxIterations = (unsigned int)deferredSettingsNode->IntAttribute("MaxReflectionIterations", 64);
 	SSRStep = deferredSettingsNode->FloatAttribute("ReflectionStep", 0.0025f);
-	MaxShadowBlur = deferredSettingsNode->FloatAttribute("MaxShadowBlur", 4);
-	MinShadowBlur = deferredSettingsNode->FloatAttribute("MinShadowBlur", 0.3);
+	MaxShadowBlur = deferredSettingsNode->FloatAttribute("MaxShadowBlur", 4.0f);
+	MinShadowBlur = deferredSettingsNode->FloatAttribute("MinShadowBlur", 0.3f);
 }
 
 void DeferredSettingsBlock::Reset()
 {
 	SSRMaxIterations = 64;
-	SSRStep = 0.0025;
-	MaxShadowBlur = 4;
-	MinShadowBlur = 0.3;
+	SSRStep = 0.0025f;
+	MaxShadowBlur = 4.0f;
+	MinShadowBlur = 0.3f;
 }
 
 void DeferredSettingsBlock::InitGUI(TwBar * bar)
