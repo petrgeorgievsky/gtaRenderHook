@@ -99,7 +99,7 @@ HS_CONSTANT_DATA_OUTPUT ConstantsHS(InputPatch<VS_OUTPUT_HS_INPUT, 4> p)
 {
     HS_CONSTANT_DATA_OUTPUT output = (HS_CONSTANT_DATA_OUTPUT) 0;
     float4 vEdgeTessellationFactors;
-    float tess = 16;
+    float tess = 2;
     // Tessellation level fixed by variable
     vEdgeTessellationFactors = float4(tess, tess, tess, tess);
 	
@@ -125,7 +125,7 @@ HS_CONSTANT_DATA_OUTPUT ConstantsHS(InputPatch<VS_OUTPUT_HS_INPUT, 4> p)
 [outputtopology("triangle_cw")]
 [outputcontrolpoints(4)]
 [patchconstantfunc("ConstantsHS")]
-[maxtessfactor(64.0)]
+[maxtessfactor(2.0)]
 HS_CONTROL_POINT_OUTPUT HS(InputPatch<VS_OUTPUT_HS_INPUT, 4> inputPatch,
                             uint uCPID : SV_OutputControlPointID)
 {

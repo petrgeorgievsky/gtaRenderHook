@@ -23,6 +23,7 @@
 #include <game_sa\CFont.h>
 #include <game_sa\CWorld.h>
 #include <game_sa\CScene.h>
+#include <game_sa\CClock.h>
 
 //#include <plugin.h>
 //#include <plugin_sa\game_sa\CFont.h>
@@ -50,6 +51,7 @@ int drawCallCount=0;
 void RenderEntity2dfx(CEntity* e);
 void *CreateEntity2dfx(void* e);
 TwBar* CSAIdleHook::m_MainTWBAR;
+float CSAIdleHook::m_fShadowDNBalance = 1.0;
 void CSAIdleHook::Patch()
 {
 
@@ -94,6 +96,7 @@ void CSAIdleHook::Idle(void *Data)
 	InitPerFrame2D();
 	// Update game processes
 	GameUpdate();
+	UpdateShadowDNBalance();
 	// Update lighting
 	LightUpdate();
 
@@ -115,6 +118,30 @@ void CSAIdleHook::Idle(void *Data)
 			TwDraw();
 	}
 	RenderHUD();
+}
+
+void CSAIdleHook::UpdateShadowDNBalance()
+{
+	float currentMinutes = (CClock::ms_nGameClockMinutes + 60 * CClock::ms_nGameClockHours) + CClock::ms_nGameClockSeconds * 0.016666668;
+	if (currentMinutes < 360.0) {
+		m_fShadowDNBalance = 1.0;
+		return;
+	}
+	if (currentMinutes < 420.0)
+	{
+		m_fShadowDNBalance = (420.0 - currentMinutes) / 60.0;
+		return;
+	}
+	// 
+	if (currentMinutes < 1140.0)
+	{
+		m_fShadowDNBalance = 0.0;
+		return;
+	}
+	if (currentMinutes >= 1200.0)
+		m_fShadowDNBalance = 1.0;
+	else
+		m_fShadowDNBalance = 1.0 - (1200.0 - currentMinutes) / 60.0;
 }
 
 // Render one game frame
@@ -139,7 +166,7 @@ void CSAIdleHook::RenderInGame()
 	const auto curr_sun_dir = *reinterpret_cast<int*>(0xB79FD0); // Current sun direction id
 	if (sunDirs) {
 		const auto sundir = &sunDirs[curr_sun_dir];
-		g_pStateMgr->SetSunDir(sundir);
+		g_pStateMgr->SetSunDir(sundir, m_fShadowDNBalance);
 	}
 	g_pStateMgr->SetFogStart(CTimeCycle::m_CurrentColours.m_fFogStart);
 	g_pStateMgr->SetFogRange(CTimeCycle::m_CurrentColours.m_fFarClip - CTimeCycle::m_CurrentColours.m_fFogStart);
@@ -173,8 +200,7 @@ void CSAIdleHook::RenderInGame()
 	RenderForwardBeforeDeferred();
 
 	g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered = false;
-	float dnBalance = *(float*)(0x8D12C0);
-	if (sunDirs && !CGame__currArea&&dnBalance < 1.0)
+	if (sunDirs && !CGame__currArea&&(m_fShadowDNBalance < 1.0))
 		PrepareRealTimeShadows(sunDirs[curr_sun_dir]);
 	scanTimer.Start();
 	DebugRendering::ResetList();
@@ -200,7 +226,7 @@ void CSAIdleHook::RenderInGame()
 
 	//CRenderer::ConstructShadowList();
 
-	if (sunDirs && !CGame__currArea&&dnBalance < 1.0) // Render shadows only if we are not inside interiors
+	if (sunDirs && !CGame__currArea&&m_fShadowDNBalance < 1.0) // Render shadows only if we are not inside interiors
 		RenderRealTimeShadows(sunDirs[curr_sun_dir]);
 
 	shadowTimer.Stop();

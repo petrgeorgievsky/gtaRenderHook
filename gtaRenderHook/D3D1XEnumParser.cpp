@@ -98,3 +98,15 @@ void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 			d3dRaster->format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	}
 }
+
+D3D11_CULL_MODE CD3D1XEnumParser::ConvertCullMode(RwCullMode mode)
+{
+	switch (mode)
+	{
+	case rwCULLMODECULLNONE: return D3D11_CULL_NONE;
+	case rwCULLMODECULLBACK: return D3D11_CULL_BACK;
+	case rwCULLMODECULLFRONT: return D3D11_CULL_FRONT;
+	default:
+		return D3D11_CULL_NONE;
+	}
+}

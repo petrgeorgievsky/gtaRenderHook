@@ -21,7 +21,6 @@ public:
 	ID3D11RenderTargetView*		GetRTRV() const { return m_renderTargetRV.p; }
 	ID3D11DepthStencilView*		GetDSRV() const { return m_depthStencilRV.p; }
 	CComPtr<ID3D11UnorderedAccessView>	GetUAV() const { return m_unorderedAV; }
-	bool						&isRendering()  { return m_isRendering; }
 	bool						&hasPalette()  { return m_hasPalette; }
 	void						BeginRendering() { m_isRendering = true; }
 	void						EndRendering() { m_isRendering = false; }

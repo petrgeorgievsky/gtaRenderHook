@@ -202,29 +202,54 @@ bool CRwD3D1XEngine::SetSubSystem(int n)
 
 bool CRwD3D1XEngine::GetTexMemSize(int& memSize)
 {
-	g_pDebug->printError("The method or operation is not implemented.");
+	memSize = m_pRenderer->getAvaliableTextureMemory();
 	return true;
 }
 
-bool CRwD3D1XEngine::GetMaxTextureSize(int&)
+bool CRwD3D1XEngine::GetMaxTextureSize(int& texSize)
 {
-	g_pDebug->printError("The method or operation is not implemented.");
+	auto featureLevel=m_pRenderer->getFeatureLevel();
+	// DX11 has concrete maximum texture dimensions that depends on hardware feature level
+	switch (featureLevel)
+	{
+	case D3D_FEATURE_LEVEL_9_1:
+	case D3D_FEATURE_LEVEL_9_2:
+		texSize = 2048;
+		break;
+	case D3D_FEATURE_LEVEL_9_3:
+		texSize = 4096;
+		break;
+	case D3D_FEATURE_LEVEL_10_0:
+	case D3D_FEATURE_LEVEL_10_1:
+		texSize = 8192;
+		break;
+	case D3D_FEATURE_LEVEL_11_0:
+	case D3D_FEATURE_LEVEL_11_1:
+	case D3D_FEATURE_LEVEL_12_0:
+	case D3D_FEATURE_LEVEL_12_1:
+		texSize = 16384;
+		break;
+	default:
+		texSize = 0;
+		break;
+	}
+	
 	return true;
 }
 
 int  CRwD3D1XEngine::GetMaxMultiSamplingLevels()
 {
+	// currently no multisampling, will be added later 
 	g_pDebug->printError("The method or operation is not implemented.");
 	return 0;
 }
 
 void CRwD3D1XEngine::SetMultiSamplingLevels(int)
 {
+	// currently no multisampling, will be added later
 	g_pDebug->printError("The method or operation is not implemented.");
 }
 
-
-// Standard video system function
 bool CRwD3D1XEngine::BaseEventHandler(int State, int* a2, void* a3, int a4)
 {
 	return RwD3DSystem(State, a2, a3, a4);
@@ -236,22 +261,8 @@ bool CRwD3D1XEngine::RenderStateSet(RwRenderState rs, UINT data)
 {
 	switch (rs)
 	{
-	case rwRENDERSTATETEXTURERASTER:												// Sets texture raster renderstate, try to avoid using it 
-		if (data)
-		{
-			RwD3D1XRaster* d3dRaster = GetD3D1XRaster(static_cast<intptr_t>(data));
-			if (d3dRaster->resourse) {
-				if (!d3dRaster->resourse->isRendering()) {
-					g_pStateMgr->SetTextureEnable(true);
-				}
-			}
-			g_pStateMgr->SetRaster((RwRaster*)data);
-		}
-		else 
-		{
-			g_pStateMgr->SetTextureEnable(false);
-			g_pStateMgr->SetRaster(nullptr);
-		}
+	case rwRENDERSTATETEXTURERASTER:	// Sets texture raster renderstate, try to avoid using it 
+		g_pStateMgr->SetRaster((RwRaster*)data);
 		break;
 	case rwRENDERSTATETEXTUREADDRESS:
 		g_pStateMgr->SetTextureAdressUV(static_cast<RwTextureAddressMode>((int)data));
@@ -295,38 +306,23 @@ bool CRwD3D1XEngine::RenderStateSet(RwRenderState rs, UINT data)
 		break;
 	case rwRENDERSTATEFOGDENSITY:
 		break;
-	case rwRENDERSTATECULLMODE:
-	{
-		D3D11_CULL_MODE cm = D3D11_CULL_NONE;
-		RwCullMode rwCM = static_cast<RwCullMode>((int)data);
-		switch (rwCM)
-		{
-		case rwCULLMODECULLBACK:
-			cm = D3D11_CULL_BACK;
-			break;
-		case rwCULLMODECULLFRONT:
-			cm = D3D11_CULL_FRONT;
-			break;
-		default:
-			break;
-		}
-		g_pStateMgr->SetCullMode(cm);
-	}
+	case rwRENDERSTATECULLMODE:	
+		g_pStateMgr->SetCullMode(static_cast<RwCullMode>(data));
 		break;
 	case rwRENDERSTATESTENCILENABLE:
 		g_pStateMgr->SetStencilEnable(data != 0);
 		break;
 	case rwRENDERSTATESTENCILFAIL:
-		g_pStateMgr->SetStencilFail(static_cast<RwStencilOperation>((int)data));
+		g_pStateMgr->SetStencilFail(static_cast<RwStencilOperation>(data));
 		break;
 	case rwRENDERSTATESTENCILZFAIL:
-		g_pStateMgr->SetStencilZFail(static_cast<RwStencilOperation>((int)data));
+		g_pStateMgr->SetStencilZFail(static_cast<RwStencilOperation>(data));
 		break;
 	case rwRENDERSTATESTENCILPASS:
-		g_pStateMgr->SetStencilPass(static_cast<RwStencilOperation>((int)data));
+		g_pStateMgr->SetStencilPass(static_cast<RwStencilOperation>(data));
 		break;
 	case rwRENDERSTATESTENCILFUNCTION:
-		g_pStateMgr->SetStencilFunc(static_cast<RwStencilFunction>((int)data));
+		g_pStateMgr->SetStencilFunc(static_cast<RwStencilFunction>(data));
 		break;
 	case rwRENDERSTATESTENCILFUNCTIONREF:
 		g_pStateMgr->SetStencilFuncRef((int)data);
@@ -341,9 +337,6 @@ bool CRwD3D1XEngine::RenderStateSet(RwRenderState rs, UINT data)
 		g_pStateMgr->SetAlphaTestFunc((RwAlphaTestFunction)data);
 		break;
 	case rwRENDERSTATEALPHATESTFUNCTIONREF:
-		//if (data == 0)
-		//	g_pStateMgr->SetAlphaTestEnable(false);
-		//else
 		g_pStateMgr->SetAlphaTestRef(data / 255.0f);
 		break;
 	default:
@@ -471,8 +464,11 @@ bool CRwD3D1XEngine::RasterCreate(RwRaster *raster, UINT flags)
 
 	CD3D1XEnumParser::ConvertRasterFormat(raster, flags);
 
+	int maxTextureSize;
+	GetMaxTextureSize(maxTextureSize);
+
 	// If raster size exceeds resonable limit(2^14 for dx11) we shouldn't create it.
-	if (raster->width > 8192*2 || raster->height > 8192*2)
+	if (raster->width >  maxTextureSize || raster->height > maxTextureSize)
 		return false;
 	// If somehow after format conversion, raster format is still unknown, and it isn't camera raster we shouldn't create it.
 	if (d3dRaster->format == DXGI_FORMAT_UNKNOWN && raster->cType != rwRASTERTYPECAMERA)
@@ -714,10 +710,11 @@ bool CRwD3D1XEngine::RasterUnlock(RwRaster *raster)
 		return false;
 	if ((raster->width > 4) && (raster->height > 4))
 	{
-		if (!d3dRaster->resourse->IsLockedToRead())
-			m_pRenderer->getContext()->UpdateSubresource(d3dRaster->resourse->GetTexture(), d3dRaster->lockFlags, nullptr, raster->cpPixels, raster->stride, 0);
+		auto d3dtexture = d3dRaster->resourse;
+		if (!d3dtexture->IsLockedToRead())
+			m_pRenderer->getContext()->UpdateSubresource(d3dtexture->GetTexture(), d3dRaster->lockFlags, nullptr, raster->cpPixels, raster->stride, 0);
 		else
-			d3dRaster->resourse->UnlockFromRead();
+			d3dtexture->UnlockFromRead();
 	}
 	free(raster->cpPixels);
 	raster->cpPixels = nullptr;
@@ -806,9 +803,9 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
 	if (camera->frameBuffer&&camera->frameBuffer->cType == rwRASTERTYPECAMERATEXTURE)
 		d3dRaster->resourse->BeginRendering();
-	if (m_bScreenSizeChanged) {
+	if (m_bScreenSizeChanged)
 		ReloadTextures();
-	}
+	
 	m_pRenderer->BeginUpdate(camera);
 	return true;
 }
@@ -1294,22 +1291,7 @@ void CRwD3D1XEngine::SetTexture(RwTexture * tex, int Stage)
 	//RenderStateSet(rwRENDERSTATETEXTUREADDRESSU, RwTextureGetAddressingU(tex));
 	//RenderStateSet(rwRENDERSTATETEXTUREADDRESSV, RwTextureGetAddressingV(tex));
 	auto raster = RwTextureGetRaster(tex);
-	if (raster) {
-		RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
-		if (d3dRaster) {
-			if (d3dRaster->resourse && !d3dRaster->resourse->isRendering()) {
-				/*auto srv = d3dRaster->resourse->GetSRV().p;
-				m_pRenderer->getContext()->PSSetShaderResources(Stage, 1, &srv);*/
-				g_pStateMgr->SetRaster(raster);
-				g_pStateMgr->SetTextureEnable(true);
-			}
-		}
-		else
-		{
-			g_pStateMgr->SetRaster(nullptr);
-			g_pStateMgr->SetTextureEnable(false);
-		}
-	}
+	g_pStateMgr->SetRaster(raster);
 }
 
 bool CRwD3D1XEngine::SkinAllInOneNode(RxPipelineNode * self, const RxPipelineNodeParam * params)

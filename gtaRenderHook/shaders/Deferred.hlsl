@@ -59,7 +59,7 @@ PSInput_Quad VS(VSInput_Quad input)
 float4 SunLightingPS(PSInput_Quad input) : SV_Target
 {
 	float4 OutLighting;
-	if (vSunLightDir.w < 1)
+	if (vSunLightDir.w <= 0.0f)
 		return float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float4 AlbedoColor		= txGB0.Sample(samLinear, input.texCoordOut.xy);
 	clip(length(AlbedoColor) <= 0);
@@ -82,7 +82,7 @@ float4 SunLightingPS(PSInput_Quad input) : SV_Target
 	CalculateDiffuseTerm_ViewDependent(Normals, vSunLightDir.xyz, ViewDir, DiffuseTerm, Roughness);
 	CalculateSpecularTerm(Normals, vSunLightDir.xyz, -ViewDir, Roughness, SpecularTerm);
 
-	float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, Distance);
+    float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, Distance) * vSunLightDir.w;
 
     float2 Lighting = float2(DiffuseTerm, SpecularTerm * SpecIntensity) * ShadowTerm;
 	OutLighting.xyzw = Lighting.xxxy;

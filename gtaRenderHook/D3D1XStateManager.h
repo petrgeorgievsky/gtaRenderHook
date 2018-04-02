@@ -53,7 +53,7 @@ public:
 	/*!
 		Changes current culling mode.
 	*/
-	void SetCullMode				(D3D11_CULL_MODE mode);
+	void SetCullMode				(RwCullMode mode);
 	/*!
 		Enables or disables depth test.
 	*/
@@ -209,9 +209,9 @@ public:
 	template <class T>
 	void SetStructuredBufferCS(CD3D1XStructuredBuffer<T> * buffer, int Stage);
 	/*!
-		Changes current sun direction.
+		Changes current sun direction and day-night balance.
 	*/
-	void SetSunDir(RwV3d* vec);
+	void SetSunDir(RwV3d* vec, float dnBalance);
 	/*!
 		Changes current light count.
 	*/

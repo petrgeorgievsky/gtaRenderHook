@@ -133,8 +133,9 @@ public:
 	static void RenderForwardBeforeDeferred();
 	static void RenderForwardAfterDeferred();
 	static void RenderEmissiveObjects();
-
+	static void UpdateShadowDNBalance();
 	static void RenderInGame();
+	static float m_fShadowDNBalance;
 private:
 	static std::thread renderThread;
 	static std::thread updateThread;

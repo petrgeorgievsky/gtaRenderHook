@@ -47,9 +47,13 @@ public:
 	 */
 	void DrawIndexed(UINT indexCount, UINT startIndex, UINT baseVertex);
 	/*!
+	   Returns avaliable video memory.
+	 */
+	unsigned int			getAvaliableTextureMemory();
+	/*!
 	   Returns d3d device pointer.
 	 */
-	ID3D11Device*           getDevice()						{ return m_pd3dDevice; }
+	ID3D11Device*			getDevice()						{ return m_pd3dDevice; }
 	/*!
 	   Returns d3d context pointer.
 	 */

@@ -30,7 +30,7 @@
 enum RendererVisibility {
 	INVISIBLE,
 	VISIBLE,
-	UNKNOWN_0,
+	OFFSCREEN,
 	NOT_LOADED,
 };
 struct sLodListEntry {

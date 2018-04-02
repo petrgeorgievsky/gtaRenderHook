@@ -329,6 +329,14 @@ void CD3DRenderer::DrawIndexed(UINT indexCount, UINT startIndex, UINT baseVertex
 	m_pImmediateContext->DrawIndexed(indexCount, startIndex, baseVertex);
 }
 
+unsigned int CD3DRenderer::getAvaliableTextureMemory()
+{
+	DXGI_ADAPTER_DESC desc;
+	if (!CALL_D3D_API(m_vAdapters[m_uiCurrentAdapter]->GetDesc(&desc), "Failed to retrieve adapter description."))
+		return 0;
+	return desc.DedicatedVideoMemory;
+}
+
 const char* CD3DRenderer::getAdapterInfo(UINT n)
 {
 	if (n>getAdapterCount())

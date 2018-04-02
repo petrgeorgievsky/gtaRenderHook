@@ -376,7 +376,7 @@ bool CRenderer::CheckInsideFrustum(RwCamera * camera, const RwBBox& b)
 
 RendererVisibility CRenderer::SetupEntityVisibility(CEntity * entity, float * renderDistance)
 {
-	//return CRenderer__SetupEntityVisibility(entity, renderDistance);
+	return (RendererVisibility)CRenderer__SetupEntityVisibility(entity, renderDistance);
 
 	int modelID = entity->m_nModelIndex;
 	CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
@@ -616,7 +616,7 @@ RendererVisibility CRenderer::SetupMapEntityVisibility(CEntity * entity, CBaseMo
 	if (!(mapInfo->m_nFlags & 1))
 		mapInfo->m_nAlpha = 0xFF;
 	mapInfo->m_nFlags = mapInfo->m_nFlags & 0xFFFE;
-	return RendererVisibility::UNKNOWN_0;
+	return RendererVisibility::OFFSCREEN;
 }
 
 void CRenderer::RenderOneRoad(CEntity * entity)
@@ -653,7 +653,7 @@ void CRenderer::ScanSectorList(int x, int y)
 	// Currently standard version is used, to many bugs so far
 	CRenderer__ScanSectorList(x, y);
 	return;
-
+	
 	bool loadIfRequired = false;
 	bool dontRenderSectorEntities = false;
 	// If sector id is wrong than quit scanning.
@@ -671,7 +671,7 @@ void CRenderer::ScanSectorList(int x, int y)
 	float camDistY = sectorPosY - ms_vecCameraPosition.y;
 	float distanceToSector = sqrt(camDistY * camDistY + camDistX * camDistX);
 	if (distanceToSector < 100.0
-		|| (fabs(CGeneral__LimitRadianAngle(atan2(sectorPosY, -sectorPosX) - CRenderer::ms_fCameraHeading)) < 0.36000001))
+		|| (fabs(CGeneral__LimitRadianAngle(atan2(sectorPosY, -sectorPosX) - CRenderer::ms_fCameraHeading)) < 0.36))
 	{
 		loadIfRequired = true;
 	}
@@ -710,82 +710,73 @@ void CRenderer::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 
 		entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
 			
-		// R* disable prerender effects before scaning for some reason, why tough?
-		//entity->entity.m_Flags.m_dwFlags &= ~0x20000u;
-		//entity->entity.m_Flags.m_bHasPreRenderEffects = false;
+		// entity is on screen by default
+		entity->m_bOffscreen = false;
 			
 		RendererVisibility visibility = SetupEntityVisibility(entity, &renderDistance);//CRenderer__SetupEntityVisibility(entity, &renderDistance);  
 
 		int modelID = entity->m_nModelIndex;
 		
-						
-		// Entity bbox culling tests, failed so far.
-		/*RwV3d		entityPos		= entity->entity.placeable.m_pCoords ? entity->entity.placeable.m_pCoords->matrix.pos : entity->entity.placeable.placement.pos;
-		RwBBox		entityBBox		= modelInfo->m_pColModel->m_BBox.m_BBox;
-		RwSphere	entityBSphere	= modelInfo->m_pColModel->m_BBox.m_BSphere;
-		entityBBox.inf = { entityPos.x + entityBSphere.center.x + entityBBox.inf.x,
-			entityPos.y + entityBSphere.center.y + entityBBox.inf.y,
-			entityPos.z + entityBSphere.center.z + entityBBox.inf.z };
-		entityBBox.sup = { entityPos.x + entityBSphere.center.x + entityBBox.sup.x,
-			entityPos.y + entityBSphere.center.y + entityBBox.sup.y,
-			entityPos.z + entityBSphere.center.z + entityBBox.sup.z };
-		*/
 		// Depending on visibility value, request model, add to render list or invisible render list
 		// TODO: Extract as method
 		switch (visibility)
 		{
 		case RendererVisibility::NOT_LOADED:
-			if (CStreaming__ms_disableStreaming || CRenderer__ms_bInTheSky)
+			if (CStreaming::ms_disableStreaming || entity->GetIsOnScreen() || CRenderer::ms_bInTheSky)
 				break;
-			if (CStreaming__ms_aInfoForModel[modelID].m_nLoadState != 1)
+			if (CStreaming::ms_aInfoForModel[modelID].m_nLoadState != eStreamingLoadState::LOADSTATE_LOADED)
 				m_loadingPriority = 1;
-			if (loadIfRequired || !m_loadingPriority || CStreaming__ms_numPriorityRequests < 1)
-				CStreaming__RequestModel(modelID, 0);
+			if (loadIfRequired || m_loadingPriority == 0 || CStreaming::ms_numPriorityRequests < 1)
+				CStreaming::RequestModel(modelID, 0);
 			break;
 		case RendererVisibility::VISIBLE:
-			//CRenderer__AddEntityToRenderList(entity, renderDistance);
 			AddEntityToRenderList(entity, renderDistance);
 			break;
 		case RendererVisibility::INVISIBLE:
-			/*if ((entity->entity.m_bTypeState & 7) == 4)
+			if (entity->m_nType == eEntityType::ENTITY_TYPE_OBJECT)
 			{
-				CBaseModelInfo* modelInfo = CModelInfo__ms_modelInfoPtrs[modelID];
-				CBaseModelInfo* atomicModelInfo = (modelInfo->vmt->AsAtomicModelInfoPtr)(modelInfo);
+				CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
+				CBaseModelInfo* atomicModelInfo = modelInfo->AsAtomicModelInfoPtr();
 				if (atomicModelInfo)
 				{
-					int atomicFlags = atomicModelInfo->m_wFlags & 0x7800;
-					if (atomicFlags == 0x2000 || atomicFlags == 10240)
-						goto LABEL_26;
-				}
-			}*/
-			break;
-		case RendererVisibility::UNKNOWN_0:
-			/*LABEL_26:
-			entity->entity.m_Flags.m_dwFlags |= 0x20000;
-			if (entity->entity.m_Flags.m_dwFlags & 0x200000)
-			{
-				float xEntityPos = entity->entity.placeable.m_pCoords ? entity->entity.placeable.m_pCoords->matrix.pos.x : 
-																		entity->entity.placeable.placement.pos.x;
-				float xa = 30.0;
-				float cameraDistanceX = CRenderer::ms_vecCameraPosition.x - xEntityPos;
-				//if ((entity->entity.m_bTypeState & 7) == 2 && BYTE1(v8[19].__parent.placement.pos.x) & 1)
-				//	xa = 200.0;
-				//v21 = -xa;
-				if (cameraDistanceX > -xa && cameraDistanceX < xa)
-				{
-					float yEntityPos = entity->entity.placeable.m_pCoords ? entity->entity.placeable.m_pCoords->matrix.pos.y :
-						entity->entity.placeable.placement.pos.y;
-					float cameraDistanceY = CRenderer::ms_vecCameraPosition.y - yEntityPos;
-					if (cameraDistanceY > -xa && cameraDistanceY < xa)
+					auto modelInfoFlags = atomicModelInfo->m_nFlags & 0x7800;
+					if (modelInfoFlags&0x2000 || modelInfoFlags & 0x2800)
 					{
-						if (ms_nNoOfInVisibleEntities < 149)
-						{
-							ms_aInVisibleEntityPtrs[ms_nNoOfInVisibleEntities] = entity;
-							ms_nNoOfInVisibleEntities++;
+						entity->m_bOffscreen = true;
+						if (entity->m_bHasPreRenderEffects) {
+
+							auto pos = entity->GetPosition();
+							auto maxDist = 30.0f;
+
+							if (abs(pos.x - ms_vecCameraPosition.x) < maxDist && abs(pos.y - ms_vecCameraPosition.y) < maxDist) {
+								if (ms_nNoOfInVisibleEntities < 149)
+								{
+									ms_aInVisibleEntityPtrs[ms_nNoOfInVisibleEntities] = entity;
+									ms_nNoOfInVisibleEntities++;
+								}
+							}
+
 						}
 					}
 				}
-			}*/
+			}
+			break;
+		case RendererVisibility::OFFSCREEN:
+			entity->m_bOffscreen = true;
+			if (entity->m_bHasPreRenderEffects) {
+				auto pos = entity->GetPosition();
+				auto maxDist = 30.0;
+				if ((entity->m_nType == eEntityType::ENTITY_TYPE_VEHICLE &&
+					((CVehicle*)entity)->m_nFlags.bAlwaysSkidMarks))
+					maxDist = 200.0f;
+				if (abs(pos.x - ms_vecCameraPosition.x) < maxDist&&abs(pos.y - ms_vecCameraPosition.y) < maxDist) {
+					if (ms_nNoOfInVisibleEntities < 149)
+					{
+						ms_aInVisibleEntityPtrs[ms_nNoOfInVisibleEntities] = entity;
+						ms_nNoOfInVisibleEntities++;
+					}
+				}
+			}
 			break;
 		default:
 			break;
@@ -839,7 +830,7 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 			break;
 		case RendererVisibility::INVISIBLE:
 			break;
-		case RendererVisibility::UNKNOWN_0:
+		case RendererVisibility::OFFSCREEN:
 			break;
 		default:
 			break;
@@ -1199,16 +1190,16 @@ void CRenderer::ScanWorld()
 
 	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanSectorList);
 
-	sector[0].x = points[0].x * 0.005 + 15.0;
-	sector[0].y = points[0].y * 0.005 + 15.0;
-	sector[1].x = points[1].x * 0.005 + 15.0;
-	sector[1].y = points[1].y * 0.005 + 15.0;
-	sector[2].x = points[2].x * 0.005 + 15.0;
-	sector[2].y = points[2].y * 0.005 + 15.0;
-	sector[3].x = points[3].x * 0.005 + 15.0;
-	sector[3].y = points[3].y * 0.005 + 15.0;
-	sector[4].x = points[4].x * 0.005 + 15.0;
-	sector[4].y = points[4].y * 0.005 + 15.0;
+	sector[0].x = points[0].x * 0.005f + 15.0f;
+	sector[0].y = points[0].y * 0.005f + 15.0f;
+	sector[1].x = points[1].x * 0.005f + 15.0f;
+	sector[1].y = points[1].y * 0.005f + 15.0f;
+	sector[2].x = points[2].x * 0.005f + 15.0f;
+	sector[2].y = points[2].y * 0.005f + 15.0f;
+	sector[3].x = points[3].x * 0.005f + 15.0f;
+	sector[3].y = points[3].y * 0.005f + 15.0f;
+	sector[4].x = points[4].x * 0.005f + 15.0f;
+	sector[4].y = points[4].y * 0.005f + 15.0f;
 
 	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanBigBuildingList);
 	//m_loadingPriority = 0;

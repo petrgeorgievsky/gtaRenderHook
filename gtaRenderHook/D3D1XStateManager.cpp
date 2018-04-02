@@ -5,6 +5,7 @@
 #include "D3D1XTexture.h"
 #include "RwD3D1XEngine.h"
 #include "D3DSpecificHelpers.h"
+#include "D3D1XEnumParser.h"
 
 CD3D1XStateManager::CD3D1XStateManager()
 {
@@ -176,10 +177,11 @@ CD3D1XStateManager::~CD3D1XStateManager()
 	if (m_pCompSamplerState)	m_pCompSamplerState->Release();
 }
 
-void CD3D1XStateManager::SetCullMode(D3D11_CULL_MODE mode)
+void CD3D1XStateManager::SetCullMode(RwCullMode mode)
 {
-	if (m_rasterDesc.CullMode != mode) {
-		m_rasterDesc.CullMode = mode;
+	auto cullmode = CD3D1XEnumParser::ConvertCullMode(mode);
+	if (m_rasterDesc.CullMode != cullmode) {
+		m_rasterDesc.CullMode = cullmode;
 		m_bRasterDescReqUpdate = true;
 	}
 }
@@ -592,13 +594,10 @@ void CD3D1XStateManager::SetRasterCS(RwRaster * raster, int Stage)
 	}
 }
 
-void CD3D1XStateManager::SetSunDir(RwV3d * vec)
+void CD3D1XStateManager::SetSunDir(RwV3d * vec, float dnBalance)
 {
 	auto context = GET_D3D_CONTEXT;
-	// todo: move out of this, remove hardcoded constants 
-	int currArea = *(int*)0xB72914;
-	float dnBalance = *(float*)(0x8D12C0);
-	float isDay = (vec->z>0.0&& currArea==0)?1.0f:0.0f;
+	// todo: move out of this, remove hardcoded constants
 	g_shaderRenderStateBuffer.vSunDir = { vec->x,vec->y,vec->z, 1.0f-dnBalance };
 	context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 }
@@ -758,12 +757,7 @@ void CD3D1XStateManager::FlushStates()
 		context->IASetPrimitiveTopology(m_currentPrimitiveTopology);
 		m_bTopologyReqUpdate = false;
 	}
-	// Global values CB.
-	if (m_bGlobalValuesReqUpdate) {
-		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
-		
-		m_bGlobalValuesReqUpdate = false;
-	}
+	
 	// Input layout.
 	if (m_bInputLayoutReqUpdate) {
 		context->IASetInputLayout(m_pCurrentInputLayout);
@@ -774,19 +768,21 @@ void CD3D1XStateManager::FlushStates()
 
 		if (m_pCurrentRaster != nullptr) {
 			RwD3D1XRaster* d3dRaster = GetD3D1XRaster(m_pCurrentRaster);
-			if (d3dRaster->resourse) {
-				if (!d3dRaster->resourse->isRendering()) {
-					auto srv = d3dRaster->resourse->GetSRV();
-					context->PSSetShaderResources(0, 1, &srv);
-					context->DSSetShaderResources(0, 1, &srv);
-				}
-			}
+			if (d3dRaster->resourse!=nullptr) {
+				SetTextureEnable(true);
+				auto srv = d3dRaster->resourse->GetSRV();
+				// TODO: add ability to set raster-to-shader binding inside pipeline, to allow setting textures to different shaders
+				context->PSSetShaderResources(0, 1, &srv);
+				//context->DSSetShaderResources(0, 1, &srv);
+			}else
+				SetTextureEnable(false);
 		}
 		else
 		{
+			SetTextureEnable(false);
 			ID3D11ShaderResourceView* srv[] = { nullptr };
 			context->PSSetShaderResources(0, 1, srv);
-			context->DSSetShaderResources(0, 1, srv);
+			//context->DSSetShaderResources(0, 1, srv);
 		}
 		m_pOldRaster = m_pCurrentRaster;
 	}
@@ -800,7 +796,12 @@ void CD3D1XStateManager::FlushStates()
 		context->IASetIndexBuffer(m_pCurrentIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 		m_bIndexBufferReqUpdate = false;
 	}
+	// Global values CB.
+	if (m_bGlobalValuesReqUpdate) {
+		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 
+		m_bGlobalValuesReqUpdate = false;
+	}
 }
 
 void CD3D1XStateManager::FlushRenderTargets()
