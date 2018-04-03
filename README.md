@@ -1,6 +1,7 @@
 # GTA rendering hook
 GTA SA rendering hook
 Implements DirectX11 rendering API to GTA San Andreas(possible to GTA VC and GTA 3 someday) as well as totally new rendering pipeline.
+We have discord server(https://discord.gg/rsZEUNW), come and help to improve it!
 ## Current requirements to build development source code
 1) Windows 7+
 2) Latest DirectX SDK
