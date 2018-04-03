@@ -5,7 +5,7 @@
 #include "D3D1XTexture.h"
 #include "RwD3D1XEngine.h"
 #include "D3DSpecificHelpers.h"
-#include "D3D1XEnumParser.h"
+
 
 CD3D1XStateManager::CD3D1XStateManager()
 {
@@ -215,80 +215,6 @@ void CD3D1XStateManager::SetAlphaTestEnable(bool bEnable)
 	}
 }
 
-
-
-D3D11_STENCIL_OP CD3D1XStateManager::ConvertStencilOp(RwStencilOperation op)
-{
-	switch (op)
-	{
-	case rwSTENCILOPERATIONZERO:		return D3D11_STENCIL_OP_ZERO;
-	case rwSTENCILOPERATIONREPLACE:		return D3D11_STENCIL_OP_REPLACE;
-	case rwSTENCILOPERATIONINCRSAT:		return D3D11_STENCIL_OP_INCR_SAT;
-	case rwSTENCILOPERATIONDECRSAT:		return D3D11_STENCIL_OP_DECR_SAT;
-	case rwSTENCILOPERATIONINVERT:		return D3D11_STENCIL_OP_INVERT;
-	case rwSTENCILOPERATIONINCR:		return D3D11_STENCIL_OP_INCR;
-	case rwSTENCILOPERATIONDECR:		return D3D11_STENCIL_OP_DECR;
-	default:							return D3D11_STENCIL_OP_KEEP;
-	}
-}
-
-D3D11_COMPARISON_FUNC CD3D1XStateManager::ConvertStencilFunc(RwStencilFunction func)
-{
-	switch (func)
-	{
-	case rwSTENCILFUNCTIONNEVER:		return D3D11_COMPARISON_NEVER;
-	case rwSTENCILFUNCTIONLESS:			return D3D11_COMPARISON_LESS;
-	case rwSTENCILFUNCTIONEQUAL:		return D3D11_COMPARISON_EQUAL;
-	case rwSTENCILFUNCTIONLESSEQUAL:	return D3D11_COMPARISON_LESS_EQUAL;
-	case rwSTENCILFUNCTIONGREATER:		return D3D11_COMPARISON_GREATER;
-	case rwSTENCILFUNCTIONNOTEQUAL:		return D3D11_COMPARISON_NOT_EQUAL;
-	case rwSTENCILFUNCTIONGREATEREQUAL:	return D3D11_COMPARISON_GREATER_EQUAL;
-	default:							return D3D11_COMPARISON_ALWAYS;
-	}
-}
-
-D3D11_TEXTURE_ADDRESS_MODE CD3D1XStateManager::ConvertTextureAddressMode(RwTextureAddressMode mode)
-{
-	switch (mode)
-	{
-	case rwTEXTUREADDRESSMIRROR:	return D3D11_TEXTURE_ADDRESS_MIRROR;
-	case rwTEXTUREADDRESSCLAMP:		return D3D11_TEXTURE_ADDRESS_CLAMP;
-	case rwTEXTUREADDRESSBORDER:	return D3D11_TEXTURE_ADDRESS_BORDER;
-	default:						return D3D11_TEXTURE_ADDRESS_WRAP;
-	}
-}
-
-RwTextureAddressMode CD3D1XStateManager::ConvertTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE mode)
-{
-	switch (mode)
-	{
-	case D3D11_TEXTURE_ADDRESS_MIRROR:	return rwTEXTUREADDRESSMIRROR;
-	case D3D11_TEXTURE_ADDRESS_CLAMP:	return rwTEXTUREADDRESSCLAMP;
-	case D3D11_TEXTURE_ADDRESS_BORDER:	return rwTEXTUREADDRESSBORDER;
-	default:							return rwTEXTUREADDRESSWRAP;
-	}
-}
-
-D3D11_FILTER CD3D1XStateManager::ConvertTextureFilterMode(RwTextureFilterMode mode)
-{
-	switch (mode)
-	{
-	case rwFILTERNEAREST: 
-	case rwFILTERMIPNEAREST:		return D3D11_FILTER_MIN_MAG_MIP_POINT;
-	case rwFILTERLINEARMIPNEAREST:	return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-	default:						return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	}
-}
-
-RwTextureFilterMode CD3D1XStateManager::ConvertTextureFilterMode(D3D11_FILTER mode)
-{
-	switch (mode)
-	{
-	case D3D11_FILTER_MIN_MAG_MIP_POINT: 		return rwFILTERMIPNEAREST;
-	case D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT:	return rwFILTERLINEARMIPNEAREST;
-	default:									return rwFILTERLINEARMIPLINEAR;
-	}
-}
 void CD3D1XStateManager::SetDepthEnable(BOOL bEnable)
 {
 	if (m_depthStencilDesc.DepthEnable != bEnable) {
@@ -314,7 +240,7 @@ void CD3D1XStateManager::SetStencilEnable(BOOL bEnable)
 
 void CD3D1XStateManager::SetStencilFail(RwStencilOperation op)
 {
-	D3D11_STENCIL_OP d3dOp = ConvertStencilOp(op);
+	D3D11_STENCIL_OP d3dOp = CD3D1XEnumParser::ConvertStencilOp(op);
 
 	if (m_depthStencilDesc.FrontFace.StencilFailOp != d3dOp) {
 		m_depthStencilDesc.FrontFace.StencilFailOp = d3dOp;
@@ -325,7 +251,7 @@ void CD3D1XStateManager::SetStencilFail(RwStencilOperation op)
 
 void CD3D1XStateManager::SetStencilZFail(RwStencilOperation op)
 {
-	D3D11_STENCIL_OP d3dOp = ConvertStencilOp(op);
+	D3D11_STENCIL_OP d3dOp = CD3D1XEnumParser::ConvertStencilOp(op);
 
 	if (m_depthStencilDesc.FrontFace.StencilDepthFailOp != d3dOp) {
 		m_depthStencilDesc.FrontFace.StencilDepthFailOp = d3dOp;
@@ -336,7 +262,7 @@ void CD3D1XStateManager::SetStencilZFail(RwStencilOperation op)
 
 void CD3D1XStateManager::SetStencilPass(RwStencilOperation op)
 {
-	D3D11_STENCIL_OP d3dOp = ConvertStencilOp(op);
+	D3D11_STENCIL_OP d3dOp = CD3D1XEnumParser::ConvertStencilOp(op);
 
 	if (m_depthStencilDesc.FrontFace.StencilPassOp != d3dOp) {
 		m_depthStencilDesc.FrontFace.StencilPassOp = d3dOp;
@@ -347,7 +273,7 @@ void CD3D1XStateManager::SetStencilPass(RwStencilOperation op)
 
 void CD3D1XStateManager::SetStencilFunc(RwStencilFunction fn)
 {
-	D3D11_COMPARISON_FUNC d3dFn = ConvertStencilFunc(fn);
+	D3D11_COMPARISON_FUNC d3dFn = CD3D1XEnumParser::ConvertStencilFunc(fn);
 
 	if (m_depthStencilDesc.FrontFace.StencilFunc != d3dFn) {
 		m_depthStencilDesc.FrontFace.StencilFunc = d3dFn;
@@ -391,7 +317,7 @@ void CD3D1XStateManager::SetAlphaBlendEnable(BOOL bEnable)
 }
 void CD3D1XStateManager::SetDestAlphaBlend(RwBlendFunction func)
 {
-	D3D11_BLEND blendFunc = ConvertBlendFunc(func);
+	D3D11_BLEND blendFunc = CD3D1XEnumParser::ConvertBlendFunc(func);
 
 	if (m_blendDesc.RenderTarget[0].DestBlend != blendFunc) {
 		m_blendDesc.RenderTarget[0].DestBlend = blendFunc;
@@ -401,7 +327,7 @@ void CD3D1XStateManager::SetDestAlphaBlend(RwBlendFunction func)
 
 void CD3D1XStateManager::SetSrcAlphaBlend(RwBlendFunction func)
 {
-	D3D11_BLEND blendFunc = ConvertBlendFunc(func);
+	D3D11_BLEND blendFunc = CD3D1XEnumParser::ConvertBlendFunc(func);
 
 	if (m_blendDesc.RenderTarget[0].SrcBlend != blendFunc) {
 		m_blendDesc.RenderTarget[0].SrcBlend = blendFunc;
@@ -411,7 +337,7 @@ void CD3D1XStateManager::SetSrcAlphaBlend(RwBlendFunction func)
 
 void CD3D1XStateManager::SetTextureAdressUV(RwTextureAddressMode mode)
 {
-	D3D11_TEXTURE_ADDRESS_MODE d3dMode = ConvertTextureAddressMode(mode);
+	D3D11_TEXTURE_ADDRESS_MODE d3dMode = CD3D1XEnumParser::ConvertTextureAddressMode(mode);
 
 	if (m_sampDesc.AddressU != d3dMode || m_sampDesc.AddressV != d3dMode) {
 		m_sampDesc.AddressU = d3dMode;
@@ -424,7 +350,7 @@ void CD3D1XStateManager::SetTextureAdressUV(RwTextureAddressMode mode)
 
 void CD3D1XStateManager::SetTextureAdressU(RwTextureAddressMode mode)
 {
-	D3D11_TEXTURE_ADDRESS_MODE d3dMode = ConvertTextureAddressMode(mode);
+	D3D11_TEXTURE_ADDRESS_MODE d3dMode = CD3D1XEnumParser::ConvertTextureAddressMode(mode);
 
 	if (m_sampDesc.AddressU != d3dMode) {
 		m_sampDesc.AddressU = d3dMode;
@@ -434,7 +360,7 @@ void CD3D1XStateManager::SetTextureAdressU(RwTextureAddressMode mode)
 
 void CD3D1XStateManager::SetTextureAdressV(RwTextureAddressMode mode)
 {
-	D3D11_TEXTURE_ADDRESS_MODE d3dMode = ConvertTextureAddressMode(mode);
+	D3D11_TEXTURE_ADDRESS_MODE d3dMode = CD3D1XEnumParser::ConvertTextureAddressMode(mode);
 
 	if (m_sampDesc.AddressV != d3dMode) {
 		m_sampDesc.AddressV = d3dMode;
@@ -444,7 +370,7 @@ void CD3D1XStateManager::SetTextureAdressV(RwTextureAddressMode mode)
 
 void CD3D1XStateManager::SetTextureFilterMode(RwTextureFilterMode mode)
 {
-	D3D11_FILTER d3dMode = ConvertTextureFilterMode(mode);
+	D3D11_FILTER d3dMode = CD3D1XEnumParser::ConvertTextureFilterMode(mode);
 
 	if (m_sampDesc.Filter != d3dMode) {
 		m_sampDesc.Filter = d3dMode;
@@ -867,42 +793,4 @@ bool CD3D1XStateManager::IsViewportRequiresUpdate()
 		m_viewport.TopLeftY != m_viewportOld.TopLeftY ||
 		m_viewport.MaxDepth != m_viewportOld.MaxDepth ||
 		m_viewport.MinDepth != m_viewportOld.MinDepth;
-}
-
-D3D11_BLEND CD3D1XStateManager::ConvertBlendFunc(RwBlendFunction func)
-{
-	switch (func)
-	{
-	case rwBLENDZERO:			return D3D11_BLEND_ZERO;
-	case rwBLENDONE:			return D3D11_BLEND_ONE;
-	case rwBLENDSRCCOLOR:		return D3D11_BLEND_SRC_COLOR;
-	case rwBLENDINVSRCCOLOR:	return D3D11_BLEND_INV_SRC_COLOR;
-	case rwBLENDSRCALPHA:		return D3D11_BLEND_SRC_ALPHA;
-	case rwBLENDINVSRCALPHA:	return D3D11_BLEND_INV_SRC_ALPHA;
-	case rwBLENDDESTALPHA:		return D3D11_BLEND_DEST_ALPHA;
-	case rwBLENDINVDESTALPHA:	return D3D11_BLEND_INV_DEST_ALPHA;
-	case rwBLENDDESTCOLOR:		return D3D11_BLEND_DEST_COLOR;
-	case rwBLENDINVDESTCOLOR:	return D3D11_BLEND_INV_DEST_COLOR;
-	case rwBLENDSRCALPHASAT:	return D3D11_BLEND_SRC_ALPHA_SAT;
-	default:					return D3D11_BLEND_INV_SRC_ALPHA;
-	}
-}
-
-RwBlendFunction CD3D1XStateManager::ConvertBlendFunc(D3D11_BLEND func)
-{
-	switch (func)
-	{
-	case D3D11_BLEND_ZERO:				return rwBLENDZERO;
-	case D3D11_BLEND_ONE:				return rwBLENDONE;
-	case D3D11_BLEND_SRC_COLOR:			return rwBLENDSRCCOLOR;
-	case D3D11_BLEND_INV_SRC_COLOR:		return rwBLENDINVSRCCOLOR;
-	case D3D11_BLEND_SRC_ALPHA:			return rwBLENDSRCALPHA;
-	case D3D11_BLEND_INV_SRC_ALPHA:		return rwBLENDINVSRCALPHA;
-	case D3D11_BLEND_DEST_ALPHA:		return rwBLENDDESTALPHA;
-	case D3D11_BLEND_INV_DEST_ALPHA:	return rwBLENDINVDESTALPHA;
-	case D3D11_BLEND_DEST_COLOR:		return rwBLENDDESTCOLOR;
-	case D3D11_BLEND_INV_DEST_COLOR:	return rwBLENDINVDESTCOLOR;
-	case D3D11_BLEND_SRC_ALPHA_SAT:		return rwBLENDSRCALPHASAT;
-	default:							return rwBLENDINVSRCALPHA;
-	}
 }

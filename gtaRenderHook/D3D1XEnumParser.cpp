@@ -15,6 +15,117 @@ D3D11_PRIMITIVE_TOPOLOGY CD3D1XEnumParser::ConvertPrimTopology(int prim)
 	return m_primConvertTable[prim];
 }
 
+D3D11_BLEND CD3D1XEnumParser::ConvertBlendFunc(RwBlendFunction func)
+{
+	switch (func)
+	{
+	case rwBLENDZERO:			return D3D11_BLEND_ZERO;
+	case rwBLENDONE:			return D3D11_BLEND_ONE;
+	case rwBLENDSRCCOLOR:		return D3D11_BLEND_SRC_COLOR;
+	case rwBLENDINVSRCCOLOR:	return D3D11_BLEND_INV_SRC_COLOR;
+	case rwBLENDSRCALPHA:		return D3D11_BLEND_SRC_ALPHA;
+	case rwBLENDINVSRCALPHA:	return D3D11_BLEND_INV_SRC_ALPHA;
+	case rwBLENDDESTALPHA:		return D3D11_BLEND_DEST_ALPHA;
+	case rwBLENDINVDESTALPHA:	return D3D11_BLEND_INV_DEST_ALPHA;
+	case rwBLENDDESTCOLOR:		return D3D11_BLEND_DEST_COLOR;
+	case rwBLENDINVDESTCOLOR:	return D3D11_BLEND_INV_DEST_COLOR;
+	case rwBLENDSRCALPHASAT:	return D3D11_BLEND_SRC_ALPHA_SAT;
+	default:					return D3D11_BLEND_INV_SRC_ALPHA;
+	}
+}
+
+RwBlendFunction CD3D1XEnumParser::ConvertBlendFunc(D3D11_BLEND func)
+{
+	switch (func)
+	{
+	case D3D11_BLEND_ZERO:				return rwBLENDZERO;
+	case D3D11_BLEND_ONE:				return rwBLENDONE;
+	case D3D11_BLEND_SRC_COLOR:			return rwBLENDSRCCOLOR;
+	case D3D11_BLEND_INV_SRC_COLOR:		return rwBLENDINVSRCCOLOR;
+	case D3D11_BLEND_SRC_ALPHA:			return rwBLENDSRCALPHA;
+	case D3D11_BLEND_INV_SRC_ALPHA:		return rwBLENDINVSRCALPHA;
+	case D3D11_BLEND_DEST_ALPHA:		return rwBLENDDESTALPHA;
+	case D3D11_BLEND_INV_DEST_ALPHA:	return rwBLENDINVDESTALPHA;
+	case D3D11_BLEND_DEST_COLOR:		return rwBLENDDESTCOLOR;
+	case D3D11_BLEND_INV_DEST_COLOR:	return rwBLENDINVDESTCOLOR;
+	case D3D11_BLEND_SRC_ALPHA_SAT:		return rwBLENDSRCALPHASAT;
+	default:							return rwBLENDINVSRCALPHA;
+	}
+}
+
+D3D11_STENCIL_OP CD3D1XEnumParser::ConvertStencilOp(RwStencilOperation op)
+{
+	switch (op)
+	{
+	case rwSTENCILOPERATIONZERO:		return D3D11_STENCIL_OP_ZERO;
+	case rwSTENCILOPERATIONREPLACE:		return D3D11_STENCIL_OP_REPLACE;
+	case rwSTENCILOPERATIONINCRSAT:		return D3D11_STENCIL_OP_INCR_SAT;
+	case rwSTENCILOPERATIONDECRSAT:		return D3D11_STENCIL_OP_DECR_SAT;
+	case rwSTENCILOPERATIONINVERT:		return D3D11_STENCIL_OP_INVERT;
+	case rwSTENCILOPERATIONINCR:		return D3D11_STENCIL_OP_INCR;
+	case rwSTENCILOPERATIONDECR:		return D3D11_STENCIL_OP_DECR;
+	default:							return D3D11_STENCIL_OP_KEEP;
+	}
+}
+
+D3D11_COMPARISON_FUNC CD3D1XEnumParser::ConvertStencilFunc(RwStencilFunction func)
+{
+	switch (func)
+	{
+	case rwSTENCILFUNCTIONNEVER:		return D3D11_COMPARISON_NEVER;
+	case rwSTENCILFUNCTIONLESS:			return D3D11_COMPARISON_LESS;
+	case rwSTENCILFUNCTIONEQUAL:		return D3D11_COMPARISON_EQUAL;
+	case rwSTENCILFUNCTIONLESSEQUAL:	return D3D11_COMPARISON_LESS_EQUAL;
+	case rwSTENCILFUNCTIONGREATER:		return D3D11_COMPARISON_GREATER;
+	case rwSTENCILFUNCTIONNOTEQUAL:		return D3D11_COMPARISON_NOT_EQUAL;
+	case rwSTENCILFUNCTIONGREATEREQUAL:	return D3D11_COMPARISON_GREATER_EQUAL;
+	default:							return D3D11_COMPARISON_ALWAYS;
+	}
+}
+
+D3D11_TEXTURE_ADDRESS_MODE CD3D1XEnumParser::ConvertTextureAddressMode(RwTextureAddressMode mode)
+{
+	switch (mode)
+	{
+	case rwTEXTUREADDRESSMIRROR:	return D3D11_TEXTURE_ADDRESS_MIRROR;
+	case rwTEXTUREADDRESSCLAMP:		return D3D11_TEXTURE_ADDRESS_CLAMP;
+	case rwTEXTUREADDRESSBORDER:	return D3D11_TEXTURE_ADDRESS_BORDER;
+	default:						return D3D11_TEXTURE_ADDRESS_WRAP;
+	}
+}
+
+RwTextureAddressMode CD3D1XEnumParser::ConvertTextureAddressMode(D3D11_TEXTURE_ADDRESS_MODE mode)
+{
+	switch (mode)
+	{
+	case D3D11_TEXTURE_ADDRESS_MIRROR:	return rwTEXTUREADDRESSMIRROR;
+	case D3D11_TEXTURE_ADDRESS_CLAMP:	return rwTEXTUREADDRESSCLAMP;
+	case D3D11_TEXTURE_ADDRESS_BORDER:	return rwTEXTUREADDRESSBORDER;
+	default:							return rwTEXTUREADDRESSWRAP;
+	}
+}
+
+D3D11_FILTER CD3D1XEnumParser::ConvertTextureFilterMode(RwTextureFilterMode mode)
+{
+	switch (mode)
+	{
+	case rwFILTERNEAREST:
+	case rwFILTERMIPNEAREST:		return D3D11_FILTER_MIN_MAG_MIP_POINT;
+	case rwFILTERLINEARMIPNEAREST:	return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	default:						return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	}
+}
+
+RwTextureFilterMode CD3D1XEnumParser::ConvertTextureFilterMode(D3D11_FILTER mode)
+{
+	switch (mode)
+	{
+	case D3D11_FILTER_MIN_MAG_MIP_POINT: 		return rwFILTERMIPNEAREST;
+	case D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT:	return rwFILTERLINEARMIPNEAREST;
+	default:									return rwFILTERLINEARMIPLINEAR;
+	}
+}
+
 void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 {
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
@@ -109,4 +220,9 @@ D3D11_CULL_MODE CD3D1XEnumParser::ConvertCullMode(RwCullMode mode)
 	default:
 		return D3D11_CULL_NONE;
 	}
+}
+
+RwCullMode CD3D1XEnumParser::ConvertCullMode(D3D11_CULL_MODE mode)
+{
+	return RwCullMode();
 }

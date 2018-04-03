@@ -5,6 +5,7 @@
 #include "D3D1XShader.h"
 #include "D3D1XStateManager.h"
 #include "RwD3D1XEngine.h"
+#include "D3D1XEnumParser.h"
  
 CD3D1XIm3DPipeline::CD3D1XIm3DPipeline():
 #ifndef DebuggingShaders
@@ -48,15 +49,7 @@ RwBool CD3D1XIm3DPipeline::SubmitNode()
 		g_pStateMgr->SetInputLayout(m_pVertexDeclaration->getInputLayout());
 		g_pStateMgr->SetVertexBuffer(m_pVertexBuffer->getBuffer(), sizeof(RwIm3DVertex), 0);
 		// initialize primitive topology
-		// TODO: replace if-else block with EnumParser function
-		if (im3dPoolStash.primType == rwPRIMTYPETRILIST)
-			g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		else if (im3dPoolStash.primType == rwPRIMTYPETRISTRIP)
-			g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-		else if (im3dPoolStash.primType == rwPRIMTYPELINELIST)
-			g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-		else
-			g_pDebug->printMsg("D3D1XIm3DPipeline: Unknown primitive type:" + to_string(im3dPoolStash.primType) + ", could be poly line or point list.", 2);
+		g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(im3dPoolStash.primType));
 		// initialize shaders
 		m_pVS->Set();
 		m_pPS->Set();

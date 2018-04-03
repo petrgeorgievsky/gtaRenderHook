@@ -14,11 +14,9 @@ void CD3D1XTextureMemoryManager::Remove(CD3D1XTexture * &tex)
 	delete tex;
 }
 
-
 void CD3D1XTextureMemoryManager::Shutdown()
 {
 	for (auto &tex : textureList)
-	{
 		delete tex;
-	}
+	
 }

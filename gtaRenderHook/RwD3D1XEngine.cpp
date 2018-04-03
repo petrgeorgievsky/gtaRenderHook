@@ -735,52 +735,60 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 {
 	RwProcessorForceSinglePrecision();
 	dgGGlobals = camera;
-	RwMatrix viewTransform = {};
-	RwMatrix projTransform = {};
+	// View and projection transform computing
+	RwGraphicsMatrix viewTransform = {};
+	RwGraphicsMatrix projTransform = {};
 #if (GTA_SA)
-	RwMatrix *viewTransformRef = &RwD3D9D3D9ViewTransform;
-	RwMatrix *projTransformRef = &RwD3D9D3D9ProjTransform;
+	RwGraphicsMatrix *viewTransformRef = (RwGraphicsMatrix*)&RwD3D9D3D9ViewTransform;
+	RwGraphicsMatrix *projTransformRef = (RwGraphicsMatrix*)&RwD3D9D3D9ProjTransform;
 #else
 	RwMatrix *viewTransformRef = &viewTransform;
 	RwMatrix *projTransformRef = &projTransform;
 #endif
-	RwMatrixInvert(viewTransformRef, RwFrameGetLTM(static_cast<RwFrame*>(camera->object.object.parent)));
-	viewTransformRef->right.x = -viewTransformRef->right.x;
-	viewTransformRef->up.x = -viewTransformRef->up.x; 
-	viewTransformRef->at.x = -viewTransformRef->at.x;
-	viewTransformRef->pos.x = -viewTransformRef->pos.x;
-	viewTransformRef->flags = 0;
-	viewTransformRef->pad1 = 0;
-	viewTransformRef->pad2 = 0;
-	viewTransformRef->pad3 = 0x3F800000;
+	// rw used inverse of camera frame matrix with negative column-vector
+	RwMatrixInvert((RwMatrix*)viewTransformRef, RwFrameGetLTM(static_cast<RwFrame*>(camera->object.object.parent)));
+	viewTransformRef->m[0].x = -viewTransformRef->m[0].x;
+	viewTransformRef->m[1].x = -viewTransformRef->m[1].x;
+	viewTransformRef->m[2].x = -viewTransformRef->m[2].x;
+	viewTransformRef->m[3].x = -viewTransformRef->m[3].x;
+	
+	viewTransformRef->m[0].w = 0.0f;
+	viewTransformRef->m[1].w = 0.0f;
+	viewTransformRef->m[2].w = 0.0f;
+	viewTransformRef->m[3].w = 1.0f;
 
-	projTransformRef->right.x = camera->recipViewWindow.x;
-	projTransformRef->up.y = camera->recipViewWindow.y;
-	projTransformRef->at.x = camera->viewOffset.x * camera->recipViewWindow.x;
-	projTransformRef->at.y = camera->viewOffset.y * camera->recipViewWindow.y;
-	projTransformRef->pos.x = -(camera->viewOffset.x * camera->recipViewWindow.x);
-	projTransformRef->pos.y = -(camera->viewOffset.y * camera->recipViewWindow.y);
+	// construct projection matrix, transforms into clip-space
+	projTransformRef->m[0].x = camera->recipViewWindow.x;
+	projTransformRef->m[1].y = camera->recipViewWindow.y;
+
+	projTransformRef->m[2].x = camera->viewOffset.x * camera->recipViewWindow.x;
+	projTransformRef->m[2].y = camera->viewOffset.y * camera->recipViewWindow.y;
+
+	projTransformRef->m[3].x = -(camera->viewOffset.x * camera->recipViewWindow.x);
+	projTransformRef->m[3].y = -(camera->viewOffset.y * camera->recipViewWindow.y);
+
 	if (camera->projectionType == rwPARALLEL)
 	{
-		projTransformRef->at.z = 1.0f / (camera->farPlane - camera->nearPlane);
-		projTransformRef->pad2 = 0;
-		projTransformRef->pad3 = 0x3F800000;
+		projTransformRef->m[2].z = 1.0f / (camera->farPlane - camera->nearPlane);
+		projTransformRef->m[2].w = 0;
+		projTransformRef->m[3].w = 1.0f;
 	}
 	else
 	{
-		projTransformRef->at.z = camera->farPlane / (camera->farPlane - camera->nearPlane);
-		projTransformRef->pad2 = 0x3F800000;
-		projTransformRef->pad3 = 0;
+		projTransformRef->m[2].z = camera->farPlane / (camera->farPlane - camera->nearPlane);
+		projTransformRef->m[2].w = 1.0;
+		projTransformRef->m[3].w = 0;
 	}
-	projTransformRef->pos.z = -(projTransformRef->at.z * camera->nearPlane);
+	projTransformRef->m[3].z = -(projTransformRef->m[2].z * camera->nearPlane);
+	// compute view-projection transform
 #if (GTA_SA)
 	RwD3D9ActiveViewProjTransform = nullptr;
 #endif
-	g_pRenderBuffersMgr->UpdateViewProjMatricles(*viewTransformRef, *projTransformRef);
-	
+	g_pRenderBuffersMgr->UpdateViewProjMatricles(* (RwMatrix*)viewTransformRef, *(RwMatrix*)projTransformRef);
+
+	// resize main framebuffer if adapter mode changed
 	RECT rc;
 	GetClientRect(m_pRenderer->getHWND(), &rc);
-
 	DXGI_MODE_DESC currModeDesc = m_pRenderer->getCurrentAdapterModeDesc();
 	if (camera->frameBuffer && RwRasterGetType(camera->frameBuffer) != rwRASTERTYPECAMERATEXTURE) {
 		// If we have different client window sizes we must resize it.
@@ -788,7 +796,6 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 		{
 			auto swapChain = m_pRenderer->getSwapChain();
 			g_pStateMgr->SetScreenSize(static_cast<float>(currModeDesc.Width), static_cast<float>(currModeDesc.Height));
-			/*m_pRastersToReload.push_back(camera->frameBuffer);*/
 			m_pRastersToReload.push_back(camera->zBuffer);
 			if (camera->frameBuffer)
 				RwRasterDestroy(camera->frameBuffer);
@@ -799,13 +806,13 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 
 			SetWindowPos(m_pRenderer->getHWND(), nullptr, 0, 0, currModeDesc.Width, currModeDesc.Height, SWP_NOMOVE | SWP_NOZORDER);
 		}
+		if (m_bScreenSizeChanged)
+			ReloadTextures();
 	}
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
-	if (camera->frameBuffer&&camera->frameBuffer->cType == rwRASTERTYPECAMERATEXTURE)
+	if (camera->frameBuffer && camera->frameBuffer->cType == rwRASTERTYPECAMERATEXTURE)
 		d3dRaster->resourse->BeginRendering();
-	if (m_bScreenSizeChanged)
-		ReloadTextures();
-	
+
 	m_pRenderer->BeginUpdate(camera);
 	return true;
 }
@@ -813,7 +820,7 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 bool CRwD3D1XEngine::CameraEndUpdate(RwCamera *camera)
 {
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
-	if(camera->frameBuffer&&camera->frameBuffer->cType==rwRASTERTYPECAMERATEXTURE)
+	if(camera->frameBuffer && camera->frameBuffer->cType==rwRASTERTYPECAMERATEXTURE)
 		d3dRaster->resourse->EndRendering();
 	m_pRenderer->EndUpdate(camera);
 	dgGGlobals = nullptr;

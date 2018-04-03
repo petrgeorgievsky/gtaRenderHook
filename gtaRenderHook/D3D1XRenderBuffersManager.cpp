@@ -34,8 +34,10 @@ void CD3D1XRenderBuffersManager::UpdateViewProjMatricles(RwMatrix & view, RwMatr
 	m_pPerFrameMatrixBuffer->data.mProjection = proj;
 
 	RwMatrixInvert(&m_pPerFrameMatrixBuffer->data.mInvView, &view);	
-	_RwMatrixMultiply(&m_pPerFrameMatrixBuffer->data.mViewProjection, &m_pPerFrameMatrixBuffer->data.mView, &m_pPerFrameMatrixBuffer->data.mProjection);
-	RwMatrixInvert(&m_pPerFrameMatrixBuffer->data.mInvViewProj, &m_pPerFrameMatrixBuffer->data.mViewProjection);
+	Multipy4x4Matrices((RwGraphicsMatrix*)&m_pPerFrameMatrixBuffer->data.mViewProjection,
+		(RwGraphicsMatrix*)&m_pPerFrameMatrixBuffer->data.mView, (RwGraphicsMatrix*)&m_pPerFrameMatrixBuffer->data.mProjection);
+	Inverse4x4Matrix((RwGraphicsMatrix*)&m_pPerFrameMatrixBuffer->data.mInvViewProj, 
+		(RwGraphicsMatrix*)&m_pPerFrameMatrixBuffer->data.mViewProjection);
 	m_pPerFrameMatrixBuffer->Update();
 	
 }
@@ -71,92 +73,227 @@ void CD3D1XRenderBuffersManager::UpdateWorldMatrix(RwMatrix *ltm)
 	m_pPerObjectMatrixBuffer->data.mWorld.pad3 = 0x3F800000;
 }
 
-void CD3D1XRenderBuffersManager::Multipy4x4Matrices(RwMatrix * res, RwMatrix * a, RwMatrix * b)
+void CD3D1XRenderBuffersManager::Multipy4x4Matrices(RwGraphicsMatrix * res, RwGraphicsMatrix * a, RwGraphicsMatrix * b)
 {
 	// renderware bullshit prevents from normal multiplication of homogenous matrices, so here is implementation to do that
-	auto matrix = DirectX::XMMatrixMultiplyTranspose((*(DirectX::XMMATRIX*)a), *((DirectX::XMMATRIX*)b));
-	*res = (*(RwMatrix*)&matrix);
-	return;
+	res->m[0].x =	a->m[0].x * b->m[0].x +
+					a->m[0].y * b->m[1].x 	+
+					a->m[0].z * b->m[2].x	+
+					a->m[0].w * b->m[3].x;
 
-	res->right.x =	a->right.x * b->right.x + 
-					a->right.y * b->up.x 	+
-					a->right.z * b->at.x	+
-					(static_cast<float>(a->flags)*b->pos.x);
+	res->m[0].y = a->m[0].x * b->m[0].y +
+				a->m[0].y * b->m[1].y	+
+				a->m[0].z * b->m[2].y	+
+				a->m[0].w * b->m[3].y;
 
-	res->up.x = a->right.x * b->right.y +
-				a->right.y * b->up.y	+
-				a->right.z * b->at.y	+
-				(static_cast<float>(a->flags)*b->pos.y);
+	res->m[0].z = a->m[0].x * b->m[0].z +
+				a->m[0].y * b->m[1].z +
+				a->m[0].z * b->m[2].z +
+				a->m[0].w * b->m[3].z;
 
-	res->at.x = a->right.x * b->right.z +
-				a->right.y * b->up.z +
-				a->right.z * b->at.z +
-				(static_cast<float>(a->flags)*b->pos.z);
-
-	res->pos.x = a->right.x * static_cast<float>(b->flags) +
-				 a->right.y * static_cast<float>(b->pad1) +
-				 a->right.z * static_cast<float>(b->pad2) +
-				 (static_cast<float>(a->flags)*static_cast<float>(b->pad3));
+	res->m[0].w = a->m[0].x * b->m[0].w +
+				 a->m[0].y * b->m[1].w +
+				 a->m[0].z * b->m[2].w +
+				 a->m[0].w * b->m[3].w;
 	// 2nd column
-	res->right.y =	a->up.x * b->right.x +
-					a->up.y * b->up.x +
-					a->up.z * b->at.x +
-					(static_cast<float>(a->pad1)*b->pos.x);
+	res->m[1].x =	a->m[1].x * b->m[0].x +
+					a->m[1].y * b->m[1].x +
+					a->m[1].z * b->m[2].x +
+					a->m[1].w * b->m[3].x;
 
-	res->up.y = a->up.x * b->right.y +
-				a->up.y * b->up.y +
-				a->up.z * b->at.y +
-				(static_cast<float>(a->pad1)*b->pos.y);
+	res->m[1].y = a->m[1].x * b->m[0].y +
+				a->m[1].y * b->m[1].y +
+				a->m[1].z * b->m[2].y +
+				a->m[1].w * b->m[3].y;
 
-	res->at.y = a->up.x * b->right.z +
-				a->up.y * b->up.z +
-				a->up.z * b->at.z +
-				(static_cast<float>(a->pad1)*b->pos.z);
+	res->m[1].z = a->m[1].x * b->m[0].z +
+				a->m[1].y * b->m[1].z +
+				a->m[1].z * b->m[2].z +
+				(a->m[1].w*b->m[3].z);
 
-	res->pos.y =	a->up.x * static_cast<float>(b->flags) +
-					a->up.y * static_cast<float>(b->pad1) +
-					a->up.z * static_cast<float>(b->pad2) +
-					(static_cast<float>(a->pad1)*static_cast<float>(b->pad3));
+	res->m[1].w =	a->m[1].x * b->m[0].w +
+					a->m[1].y * b->m[1].w +
+					a->m[1].z * b->m[2].w +
+					a->m[1].w * b->m[3].w;
 	// 3rd column
-	res->right.z =	a->at.x * b->right.x +
-					a->at.y * b->up.x +
-					a->at.z * b->at.x +
-					(static_cast<float>(a->pad2)*b->pos.x);
+	res->m[2].x =	a->m[2].x * b->m[0].x +
+					a->m[2].y * b->m[1].x +
+					a->m[2].z * b->m[2].x +
+					a->m[2].w * b->m[3].x;
 
-	res->up.z = a->at.x * b->right.y +
-				a->at.y * b->up.y +
-				a->at.z * b->at.y +
-				(static_cast<float>(a->pad2)*b->pos.y);
+	res->m[2].y = a->m[2].x * b->m[0].y +
+				a->m[2].y * b->m[1].y +
+				a->m[2].z * b->m[2].y +
+				a->m[2].w * b->m[3].y;
 
-	res->at.z = a->at.x * b->right.z +
-				a->at.y * b->up.z +
-				a->at.z * b->at.z +
-				(static_cast<float>(a->pad2)*b->pos.z);
+	res->m[2].z = a->m[2].x * b->m[0].z +
+				a->m[2].y * b->m[1].z +
+				a->m[2].z * b->m[2].z +
+				a->m[2].w * b->m[3].z;
 
-	res->pos.z =	a->at.x * static_cast<float>(b->flags) +
-					a->at.y * static_cast<float>(b->pad1) +
-					a->at.z * static_cast<float>(b->pad2) +
-					(static_cast<float>(a->pad2)*static_cast<float>(b->pad3));
+	res->m[2].w =	a->m[2].x * b->m[0].w +
+					a->m[2].y * b->m[1].w +
+					a->m[2].z * b->m[2].w +
+					a->m[2].w*b->m[3].w;
 	// 4th column
-	res->flags = static_cast<RwUInt32>(a->pos.x * b->right.x +
-					a->pos.y * b->up.x +
-					a->pos.z * b->at.x +
-					(static_cast<float>(a->pad3)*b->pos.x));
+	res->m[3].x = a->m[3].x * b->m[0].x +
+					a->m[3].y * b->m[1].x +
+					a->m[3].z * b->m[2].x +
+					a->m[3].w*b->m[3].x;
 
-	res->pad1 = static_cast<RwUInt32>(a->pos.x * b->right.y +
-				a->pos.y * b->up.y +
-				a->pos.z * b->at.y +
-				(static_cast<float>(a->pad3)*b->pos.y));
+	res->m[3].y = a->m[3].x * b->m[0].y +
+					a->m[3].y * b->m[1].y +
+					a->m[3].z * b->m[2].y +
+					a->m[3].w * b->m[3].y;
 
-	res->pad2 = static_cast<RwUInt32>(a->pos.x * b->right.z +
-				a->pos.y * b->up.z +
-				a->pos.z * b->at.z +
-				(static_cast<float>(a->pad3)*b->pos.z));
+	res->m[3].z = a->m[3].x * b->m[0].z +
+				a->m[3].y * b->m[1].z +
+				a->m[3].z * b->m[2].z +
+				a->m[3].w*b->m[3].z;
 
-	res->pad3 = static_cast<RwUInt32>(a->pos.x * static_cast<float>(b->flags) +
-					a->pos.y * static_cast<float>(b->pad1) +
-					a->pos.z * static_cast<float>(b->pad2) +
-					(static_cast<float>(a->pad3)*static_cast<float>(b->pad3)));
+	res->m[3].w = a->m[3].x * b->m[0].w +
+					a->m[3].y * b->m[1].w +
+					a->m[3].z * b->m[2].w +
+					a->m[3].w*b->m[3].w;
+}
+
+void CD3D1XRenderBuffersManager::Inverse4x4Matrix(RwGraphicsMatrix * a, RwGraphicsMatrix * b)
+{
+	// adapted code from here(https://stackoverflow.com/questions/1148309/inverting-a-4x4-matrix)
+	float det;
+	int i;
+
+	a->m[0].x = b->m[1].y * b->m[2].z * b->m[3].w -
+		b->m[1].y * b->m[2].w * b->m[3].z -
+		b->m[2].y * b->m[1].z * b->m[3].w +
+		b->m[2].y * b->m[1].w * b->m[3].z +
+		b->m[3].y * b->m[1].z * b->m[2].w -
+		b->m[3].y * b->m[1].w * b->m[2].z;
+
+	a->m[1].x = -b->m[1].x * b->m[2].z * b->m[3].w +
+		b->m[1].x * b->m[2].w * b->m[3].z +
+		b->m[2].x * b->m[1].z * b->m[3].w -
+		b->m[2].x * b->m[1].w * b->m[3].z -
+		b->m[3].x * b->m[1].z * b->m[2].w +
+		b->m[3].x * b->m[1].w * b->m[2].z;
+
+	a->m[2].x = b->m[1].x * b->m[2].y * b->m[3].w -
+		b->m[1].x * b->m[2].w * b->m[3].y -
+		b->m[2].x * b->m[1].y * b->m[3].w +
+		b->m[2].x * b->m[1].w * b->m[3].y +
+		b->m[3].x * b->m[1].y * b->m[2].w -
+		b->m[3].x * b->m[1].w * b->m[2].y;
+
+	a->m[3].x = -b->m[1].x * b->m[2].y * b->m[3].z +
+		b->m[1].x * b->m[2].z * b->m[3].y +
+		b->m[2].x * b->m[1].y * b->m[3].z -
+		b->m[2].x * b->m[1].z * b->m[3].y -
+		b->m[3].x * b->m[1].y * b->m[2].z +
+		b->m[3].x * b->m[1].z * b->m[2].y;
+
+	a->m[0].y = -b->m[0].y * b->m[2].z * b->m[3].w +
+		b->m[0].y * b->m[2].w * b->m[3].z +
+		b->m[2].y * b->m[0].z * b->m[3].w -
+		b->m[2].y * b->m[0].w * b->m[3].z -
+		b->m[3].y * b->m[0].z * b->m[2].w +
+		b->m[3].y * b->m[0].w * b->m[2].z;
+
+	a->m[1].y = b->m[0].x * b->m[2].z * b->m[3].w -
+		b->m[0].x * b->m[2].w * b->m[3].z -
+		b->m[2].x * b->m[0].z * b->m[3].w +
+		b->m[2].x * b->m[0].w * b->m[3].z +
+		b->m[3].x * b->m[0].z * b->m[2].w -
+		b->m[3].x * b->m[0].w * b->m[2].z;
+
+	a->m[2].y = -b->m[0].x * b->m[2].y * b->m[3].w +
+		b->m[0].x * b->m[2].w * b->m[3].y +
+		b->m[2].x * b->m[0].y * b->m[3].w -
+		b->m[2].x * b->m[0].w * b->m[3].y -
+		b->m[3].x * b->m[0].y * b->m[2].w +
+		b->m[3].x * b->m[0].w * b->m[2].y;
+
+	a->m[3].y = b->m[0].x * b->m[2].y * b->m[3].z -
+		b->m[0].x * b->m[2].z * b->m[3].y -
+		b->m[2].x * b->m[0].y * b->m[3].z +
+		b->m[2].x * b->m[0].z * b->m[3].y +
+		b->m[3].x * b->m[0].y * b->m[2].z -
+		b->m[3].x * b->m[0].z * b->m[2].y;
+
+	a->m[0].z = b->m[0].y * b->m[1].z * b->m[3].w -
+		b->m[0].y * b->m[1].w * b->m[3].z -
+		b->m[1].y * b->m[0].z * b->m[3].w +
+		b->m[1].y * b->m[0].w * b->m[3].z +
+		b->m[3].y * b->m[0].z * b->m[1].w -
+		b->m[3].y * b->m[0].w * b->m[1].z;
+
+	a->m[1].z = -b->m[0].x * b->m[1].z * b->m[3].w +
+		b->m[0].x * b->m[1].w * b->m[3].z +
+		b->m[1].x * b->m[0].z * b->m[3].w -
+		b->m[1].x * b->m[0].w * b->m[3].z -
+		b->m[3].x * b->m[0].z * b->m[1].w +
+		b->m[3].x * b->m[0].w * b->m[1].z;
+
+	a->m[2].z = b->m[0].x * b->m[1].y * b->m[3].w -
+		b->m[0].x * b->m[1].w * b->m[3].y -
+		b->m[1].x * b->m[0].y * b->m[3].w +
+		b->m[1].x * b->m[0].w * b->m[3].y +
+		b->m[3].x * b->m[0].y * b->m[1].w -
+		b->m[3].x * b->m[0].w * b->m[1].y;
+
+	a->m[3].z = -b->m[0].x * b->m[1].y * b->m[3].z +
+		b->m[0].x * b->m[1].z * b->m[3].y +
+		b->m[1].x * b->m[0].y * b->m[3].z -
+		b->m[1].x * b->m[0].z * b->m[3].y -
+		b->m[3].x * b->m[0].y * b->m[1].z +
+		b->m[3].x * b->m[0].z * b->m[1].y;
+
+	a->m[0].w = -b->m[0].y * b->m[1].z * b->m[2].w +
+		b->m[0].y * b->m[1].w * b->m[2].z +
+		b->m[1].y * b->m[0].z * b->m[2].w -
+		b->m[1].y * b->m[0].w * b->m[2].z -
+		b->m[2].y * b->m[0].z * b->m[1].w +
+		b->m[2].y * b->m[0].w * b->m[1].z;
+
+	a->m[1].w = b->m[0].x * b->m[1].z * b->m[2].w -
+		b->m[0].x * b->m[1].w * b->m[2].z -
+		b->m[1].x * b->m[0].z * b->m[2].w +
+		b->m[1].x * b->m[0].w * b->m[2].z +
+		b->m[2].x * b->m[0].z * b->m[1].w -
+		b->m[2].x * b->m[0].w * b->m[1].z;
+
+	a->m[2].w = -b->m[0].x * b->m[1].y * b->m[2].w +
+		b->m[0].x * b->m[1].w * b->m[2].y +
+		b->m[1].x * b->m[0].y * b->m[2].w -
+		b->m[1].x * b->m[0].w * b->m[2].y -
+		b->m[2].x * b->m[0].y * b->m[1].w +
+		b->m[2].x * b->m[0].w * b->m[1].y;
+
+	a->m[3].w = b->m[0].x * b->m[1].y * b->m[2].z -
+		b->m[0].x * b->m[1].z * b->m[2].y -
+		b->m[1].x * b->m[0].y * b->m[2].z +
+		b->m[1].x * b->m[0].z * b->m[2].y +
+		b->m[2].x * b->m[0].y * b->m[1].z -
+		b->m[2].x * b->m[0].z * b->m[1].y;
+
+	det = b->m[0].x * a->m[0].x + b->m[0].y * a->m[1].x + b->m[0].z * a->m[2].x + b->m[0].w * a->m[3].x;
+
+	det = 1.0 / det;
+
+	for (i = 0; i < 4; i++) {
+		a->m[i].x = a->m[i].x  * det;
+		a->m[i].y = a->m[i].y  * det;
+		a->m[i].z = a->m[i].z  * det;
+		a->m[i].w = a->m[i].w  * det;
+	}
+
+}
+
+void CD3D1XRenderBuffersManager::Transpose4x4Matrix(RwGraphicsMatrix * a, RwGraphicsMatrix * b)
+{
+	a->m[0] = { b->m[0].x,b->m[1].x,b->m[2].x,b->m[3].x };
+	a->m[1] = { b->m[0].y,b->m[1].y,b->m[2].y,b->m[3].y };
+	a->m[2] = { b->m[0].z,b->m[1].z,b->m[2].z,b->m[3].z };
+	a->m[3] = { b->m[0].w,b->m[1].w,b->m[2].w,b->m[3].w };
 }
 
 void CD3D1XRenderBuffersManager::SetMatrixBuffer()

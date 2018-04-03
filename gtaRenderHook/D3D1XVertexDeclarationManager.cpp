@@ -3,7 +3,6 @@
 #include "D3D1XVertexDeclaration.h"
 
 std::list<CD3D1XVertexDeclaration*> CD3D1XVertexDeclarationManager::vdeclList = {};
-void* CD3D1XVertexDeclarationManager::currentVDecl = nullptr;
 
 CD3D1XVertexDeclaration * CD3D1XVertexDeclarationManager::AddNew(CD3D1XShader* pVS, UINT flags)
 {

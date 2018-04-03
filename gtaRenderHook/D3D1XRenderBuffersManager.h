@@ -26,6 +26,7 @@ struct MaterialBuffer
 	float		glossiness;
 	int			hasSpecTex;
 };
+struct RwGraphicsMatrix;
 class CD3DRenderer;
 /*! \class CD3D1XRenderBuffersManager
 	\brief Render buffers manager class.
@@ -65,7 +66,15 @@ public:
 	/*!
 		Multiplies 2 matrices in homogenous space(using 4th vector in matrix)
 	*/
-	void Multipy4x4Matrices(RwMatrix* res, RwMatrix* a, RwMatrix* b);
+	void Multipy4x4Matrices(RwGraphicsMatrix* res, RwGraphicsMatrix* a, RwGraphicsMatrix* b);
+	/*!
+		Inverts 4x4 matrix
+	*/
+	void Inverse4x4Matrix(RwGraphicsMatrix* a, RwGraphicsMatrix* b);
+	/*!
+		Transposes 4x4 matrix
+	*/
+	void Transpose4x4Matrix(RwGraphicsMatrix* a, RwGraphicsMatrix* b);
 	/*!
 		Updates current world space matrix buffer
 	*/

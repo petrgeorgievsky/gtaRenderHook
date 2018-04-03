@@ -27,9 +27,8 @@ CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(CD3D1XShader* pVS,UINT flags)
 		m_stride += 4;
 	}
 	m_inputInfo = flags;
-	auto device = GET_D3D_DEVICE;
-	if (FAILED(device->CreateInputLayout(m_elements.data(), m_elements.size(), m_pShader->getBlob()->GetBufferPointer(), m_pShader->getBlob()->GetBufferSize(), &m_inputLayout)))
-		g_pDebug->printError("Failed to create Input Layout");
+	CALL_D3D_API(GET_D3D_DEVICE->CreateInputLayout(m_elements.data(), m_elements.size(), m_pShader->getBlob()->GetBufferPointer(), m_pShader->getBlob()->GetBufferSize(), &m_inputLayout),
+		"Failed to create Input Layout");
 }
 
 CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(std::vector<D3D11_INPUT_ELEMENT_DESC> elements, UINT stride, CD3D1XShader * pVS)

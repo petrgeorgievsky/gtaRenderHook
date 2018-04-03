@@ -8,6 +8,5 @@ class CD3D1XVertexDeclarationManager
 public:
 	static CD3D1XVertexDeclaration* AddNew(CD3D1XShader* pVS, UINT flags);
 	static void Shutdown();
-	static void* currentVDecl;
 };
 

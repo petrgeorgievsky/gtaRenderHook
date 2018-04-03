@@ -233,9 +233,9 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	vp.TopLeftY = gShadowSettings.Size*(cascade / 2);
 	g_pStateMgr->SetViewport(vp);
 
-	RwMatrix* view = &RwD3D9D3D9ViewTransform;
-	RwMatrix* proj = &RwD3D9D3D9ProjTransform;
-	_RwMatrixMultiply(&m_pLightCB->data.ViewProj[cascade], &RwD3D9D3D9ViewTransform, &RwD3D9D3D9ProjTransform);
+	RwGraphicsMatrix* view = (RwGraphicsMatrix *)&RwD3D9D3D9ViewTransform;
+	RwGraphicsMatrix* proj = (RwGraphicsMatrix *)&RwD3D9D3D9ProjTransform;
+	g_pRenderBuffersMgr->Multipy4x4Matrices((RwGraphicsMatrix *)&m_pLightCB->data.ViewProj[cascade], view, proj);
 	render(cascade);
 	RwCameraEndUpdate(m_pShadowCamera);
 	renderer->EndDebugEvent();

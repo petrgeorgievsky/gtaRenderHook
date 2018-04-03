@@ -3,6 +3,7 @@
 #include <map>
 #include "D3D1XConstantBuffer.h"
 #include "D3D1XStructuredBuffer.h"
+#include "D3D1XEnumParser.h"
 
 class CD3DRenderer;
 // TODO: because some renderstates are game-specific, they should be moved out of this structure
@@ -291,27 +292,27 @@ public:
 	/*!
 		Returns current alpha blending destination function.
 	*/
-	RwBlendFunction GetDestAlphaBlend() { return ConvertBlendFunc(m_blendDesc.RenderTarget[0].DestBlend); };
+	RwBlendFunction GetDestAlphaBlend() { return CD3D1XEnumParser::ConvertBlendFunc(m_blendDesc.RenderTarget[0].DestBlend); };
 	/*!
 		Returns current alpha blending source function.
 	*/
-	RwBlendFunction GetSrcAlphaBlend() { return ConvertBlendFunc(m_blendDesc.RenderTarget[0].SrcBlend); };
+	RwBlendFunction GetSrcAlphaBlend() { return CD3D1XEnumParser::ConvertBlendFunc(m_blendDesc.RenderTarget[0].SrcBlend); };
 	/*!
 		Returns current UV texture address mode.
 	*/
-	RwTextureAddressMode GetTextureAdressUV() { return ConvertTextureAddressMode(m_sampDesc.AddressU); };
+	RwTextureAddressMode GetTextureAdressUV() { return CD3D1XEnumParser::ConvertTextureAddressMode(m_sampDesc.AddressU); };
 	/*!
 		Returns current U texture address mode.
 	*/
-	RwTextureAddressMode GetTextureAdressU() { return ConvertTextureAddressMode(m_sampDesc.AddressU); };
+	RwTextureAddressMode GetTextureAdressU() { return CD3D1XEnumParser::ConvertTextureAddressMode(m_sampDesc.AddressU); };
 	/*!
 		Returns current V texture address mode.
 	*/
-	RwTextureAddressMode GetTextureAdressV() { return ConvertTextureAddressMode(m_sampDesc.AddressV); };
+	RwTextureAddressMode GetTextureAdressV() { return CD3D1XEnumParser::ConvertTextureAddressMode(m_sampDesc.AddressV); };
 	/*!
 		Returns current texture filtering mode.
 	*/
-	RwTextureFilterMode  GetTextureFilterMode() { return ConvertTextureFilterMode(m_sampDesc.Filter); };
+	RwTextureFilterMode  GetTextureFilterMode() { return CD3D1XEnumParser::ConvertTextureFilterMode(m_sampDesc.Filter); };
 	/*!
 		Returns current raster in slot #0.
 	*/
@@ -332,15 +333,6 @@ public:
 		shaderVersionMap[D3D_FEATURE_LEVEL_12_1] = "5_0";
 		return shaderVersionMap[featureLevel];
 	}
-private://Convert functions. TODO: move to EnumParser
-	D3D11_BLEND					ConvertBlendFunc	(RwBlendFunction func);
-	RwBlendFunction				ConvertBlendFunc	(D3D11_BLEND func);
-	D3D11_STENCIL_OP			ConvertStencilOp	(RwStencilOperation op);
-	D3D11_COMPARISON_FUNC		ConvertStencilFunc	(RwStencilFunction func);
-	D3D11_TEXTURE_ADDRESS_MODE	ConvertTextureAddressMode(RwTextureAddressMode mode);
-	RwTextureAddressMode		ConvertTextureAddressMode( D3D11_TEXTURE_ADDRESS_MODE mode);
-	D3D11_FILTER				ConvertTextureFilterMode(RwTextureFilterMode mode);
-	RwTextureFilterMode			ConvertTextureFilterMode(D3D11_FILTER mode);
 private:
 	ID3D11BlendState*			m_pBlendState			= nullptr;
 	CComPtr<ID3D11BlendState>	m_pBlendState_Default;

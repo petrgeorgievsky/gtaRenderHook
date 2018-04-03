@@ -6,6 +6,16 @@ class CD3D1XIm3DPipeline;
 class CD3D1XDefaultPipeline;
 class CD3D1XSkinPipeline;
 class CD3D1XVertexDeclarationManager;
+/*! 
+	\brief Graphics matrix(in homogenous space)
+
+	RenderWare treated all matrices the same, but often in graphics
+	we need to use 4th column-vector so this structure is needed to 
+	remap renderware matrices to 4x4 matrices.
+*/
+struct RwGraphicsMatrix  {
+	RwV4d m[4];
+};
 class CRwD3D1XEngine :
 	public CIRwRenderEngine
 {
@@ -18,7 +28,7 @@ private:// D3D11 Instance methods.
 
 protected:
 	RxInstanceData* m_D3DSkinInstance	(void* object, void* instanceObject, RwResEntry ** repEntry, RpD3DMeshHeader* mesh);
-
+	 
 private:// D3D11 API objects
 	CD3DRenderer*			m_pRenderer				= nullptr;
 	CD3D1XIm2DPipeline*		m_pIm2DPipe				= nullptr;
