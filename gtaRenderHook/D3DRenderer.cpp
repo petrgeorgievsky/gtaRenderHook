@@ -268,7 +268,7 @@ void CD3DRenderer::BeginUpdate(RwCamera *camera)
 		CComPtr<ID3D11DepthStencilView> depthStencil;
 		m_pImmediateContext->OMGetRenderTargets(1, &renderTargets, &depthStencil);
 		
-		auto uav = pd3dRTRaster->resourse->GetUAV().p;
+		auto uav = pd3dRTRaster->resourse->GetUAV();
 		m_pImmediateContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &renderTargets.p, nullptr, 2, 1, &uav, nullptr);
 	}
 	else {

@@ -187,36 +187,43 @@ CD3D1XTexture::~CD3D1XTexture()
 {
 	m_pParent = nullptr;
 	if (m_shaderRV) {
-		m_shaderRV.Release();
+		m_shaderRV->Release();
+		m_shaderRV = nullptr;
 	}
 	switch (m_type)
 	{
 	case eD3D1XTextureType::TT_RenderTarget:
 		if (m_renderTargetRV) {
-			m_renderTargetRV.Release();
+			m_renderTargetRV->Release();
+			m_renderTargetRV = nullptr;
 		}
 		break;
 	case eD3D1XTextureType::TT_DepthStencil:
 		if (m_depthStencilRV) {
-			m_depthStencilRV.Release();
+			m_depthStencilRV->Release();
+			m_depthStencilRV = nullptr;
 		}
 		break;
 	case eD3D1XTextureType::TT_3DTexture:
 		if (m_unorderedAV) {
-			m_unorderedAV.Release();
+			m_unorderedAV->Release();
+			m_unorderedAV = nullptr;
 		}
 		if (m_p3DTexture) {
-			m_p3DTexture.Release();
+			m_p3DTexture->Release();
+			m_p3DTexture = nullptr;
 		}
 		break;
 	default:
 		break;
 	}
 	if (m_pStagingTexture) {
-		m_pStagingTexture.Release();
+		m_pStagingTexture->Release();
+		m_pStagingTexture = nullptr;
 	}
 	if (m_pTexture) {
-		m_pTexture.Release();
+		m_pTexture->Release();
+		m_pTexture = nullptr;
 	}
 }
 
@@ -274,16 +281,16 @@ void CD3D1XTexture::Resize(UINT newWidth, UINT newHeight)
 	desc.Format = d3dRaster->format;
 	desc.ArraySize = 1;
 	if (m_shaderRV) {
-		m_shaderRV.Release();
+		m_shaderRV->Release();
 	}
 	if (m_depthStencilRV) {
-		m_depthStencilRV.Release();
+		m_depthStencilRV->Release();
 	}
 	if (m_pStagingTexture) {
-		m_pStagingTexture.Release();
+		m_pStagingTexture->Release();
 	}
 	if (m_pTexture) {
-		m_pTexture.Release();
+		m_pTexture->Release();
 	}
 	m_pTexture = nullptr;
 	m_shaderRV = nullptr;
@@ -347,16 +354,16 @@ void CD3D1XTexture::Reload()
 	desc.Format = d3dRaster->format;
 	desc.ArraySize = 1;
 	if (m_shaderRV) {
-		m_shaderRV.Release();
+		m_shaderRV->Release();
 	}
 	if (m_depthStencilRV) {
-		m_depthStencilRV.Release();
+		m_depthStencilRV->Release();
 	}
 	if (m_pStagingTexture) {
-		m_pStagingTexture.Release();
+		m_pStagingTexture->Release();
 	}
 	if (m_pTexture) {
-		m_pTexture.Release();
+		m_pTexture->Release();
 	}
 	m_pTexture = nullptr;
 	m_shaderRV = nullptr;

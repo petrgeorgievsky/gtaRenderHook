@@ -12,6 +12,7 @@
 #include "D3D1XRenderBuffersManager.h"
 #include "PBSMaterial.h"
 #include "Renderer.h"
+#include "D3D1XIndexBuffer.h"
 extern int drawCallCount;
 
 std::list<AlphaMesh*> CCustomBuildingPipeline::m_aAlphaMeshList{};
@@ -69,7 +70,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 
 		if (!mesh->entryptr->header.indexBuffer)
 			g_pDebug->printMsg("CCustomBuildingPipeline: empty index buffer found", 2);
-		g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)mesh->entryptr->header.indexBuffer);
+		g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)mesh->entryptr->header.indexBuffer)->getBuffer());
 		g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(mesh->entryptr->header.primType));
 		m_pVS->Set();
 		m_pPS->Set();
@@ -96,7 +97,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 	}
 }
 void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 type, RwUInt32 flags)
-{
+{ 
 	RpAtomic* atomic = (RpAtomic*)object;
 	RxInstanceData* entryData = (RxInstanceData*)repEntry;
 	if (entryData->header.totalNumIndex == 0)
@@ -113,7 +114,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 	if (!entryData->header.indexBuffer)
 		g_pDebug->printMsg("CCustomBuildingPipeline: empty index buffer found", 2);
-	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
+	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	if (m_uiDeferredStage == 3|| m_uiDeferredStage == 4) {
 		m_pVoxelVS->Set();

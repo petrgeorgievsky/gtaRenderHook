@@ -15,12 +15,12 @@ public:
 	CD3D1XTexture(RwRaster* pParent, bool mipMaps, bool hasPalette=false);
 	~CD3D1XTexture();
 
-	CComPtr<ID3D11Texture2D>			GetTexture() const { return m_pTexture; }
-	CComPtr<ID3D11Texture3D>			Get3DTexture() const { return m_p3DTexture; }
-	ID3D11ShaderResourceView*	GetSRV() const { return m_shaderRV.p; }
-	ID3D11RenderTargetView*		GetRTRV() const { return m_renderTargetRV.p; }
-	ID3D11DepthStencilView*		GetDSRV() const { return m_depthStencilRV.p; }
-	CComPtr<ID3D11UnorderedAccessView>	GetUAV() const { return m_unorderedAV; }
+	ID3D11Texture2D*					GetTexture() const { return m_pTexture; }
+	ID3D11Texture3D*					Get3DTexture() const { return m_p3DTexture; }
+	ID3D11ShaderResourceView*			GetSRV() const { return m_shaderRV; }
+	ID3D11RenderTargetView*				GetRTRV() const { return m_renderTargetRV; }
+	ID3D11DepthStencilView*				GetDSRV() const { return m_depthStencilRV; }
+	ID3D11UnorderedAccessView*			GetUAV() const { return m_unorderedAV; }
 	bool						&hasPalette()  { return m_hasPalette; }
 	void						BeginRendering() { m_isRendering = true; }
 	void						EndRendering() { m_isRendering = false; }
@@ -38,15 +38,15 @@ public:
 private:
 	D3D11_MAPPED_SUBRESOURCE			m_mappedSubRes;
 	eD3D1XTextureType					m_type;
-	RwRaster*							m_pParent			= nullptr;
-	CComPtr<ID3D11Texture2D>			m_pTexture = nullptr;
-	CComPtr<ID3D11Texture3D>			m_p3DTexture = nullptr;
-	CComPtr<ID3D11Texture2D>			m_pStagingTexture = nullptr;
-	CComPtr<ID3D11ShaderResourceView>           m_shaderRV = nullptr;
+	RwRaster*							m_pParent	= nullptr;
+	ID3D11Texture2D	*					m_pTexture = nullptr;
+	ID3D11Texture3D*					m_p3DTexture = nullptr;
+	ID3D11Texture2D*					m_pStagingTexture = nullptr;
+	ID3D11ShaderResourceView*           m_shaderRV = nullptr;
 	union {
-		CComPtr<ID3D11RenderTargetView>				m_renderTargetRV = nullptr;
-		CComPtr<ID3D11DepthStencilView> 			m_depthStencilRV;
-		CComPtr<ID3D11UnorderedAccessView>			m_unorderedAV;
+		ID3D11RenderTargetView*				m_renderTargetRV = nullptr;
+		ID3D11DepthStencilView* 			m_depthStencilRV;
+		ID3D11UnorderedAccessView*			m_unorderedAV;
 	};
 	RwRGBA  m_palette[256];
 	byte* m_dataPtr;

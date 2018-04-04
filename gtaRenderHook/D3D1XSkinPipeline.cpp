@@ -10,6 +10,7 @@
 #include "RwD3D1XEngine.h"
 #include "D3D1XVertexDeclarationManager.h"
 #include "D3D1XVertexBufferManager.h"
+#include "D3D1XIndexBuffer.h"
 
 CD3D1XSkinPipeline::CD3D1XSkinPipeline(): 
 #ifndef DebuggingShaders
@@ -29,6 +30,7 @@ CD3D1XSkinPipeline::CD3D1XSkinPipeline():
 	};
 	m_pVertexDeclaration = new CD3D1XVertexDeclaration(layout, sizeof(SimpleVertexSkin), m_pVS);
 	m_pSkinningDataBuffer = new CD3D1XConstantBuffer<PerSkinMatrixBuffer>();
+	m_pSkinningDataBuffer->SetDebugName("SkinningCB");
 }
 
 
@@ -118,7 +120,7 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 	// initialize mesh states
 	g_pStateMgr->SetInputLayout(m_pVertexDeclaration->getInputLayout());
 	g_pStateMgr->SetVertexBuffer(((CD3D1XVertexBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertexSkin), 0);
-	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
+	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	m_pVS->Set();
 	// TODO: replace checks with different pipelines or pipeline variants or something like that

@@ -13,7 +13,7 @@ CameraRotate(RwCamera *camera, const RwV3d *pos, RwReal angle)
 	cameraMatrix = RwFrameGetMatrix(cameraFrame);
 
 	camPos = (pos) ? *pos : *RwMatrixGetPos(cameraMatrix);
-
+	 
 	RwV3dScale(&invCamPos, &camPos, -1.0f);
 
 	/*

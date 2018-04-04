@@ -12,6 +12,7 @@
 #include "D3D1XVertexDeclaration.h"
 #include "D3D1XVertexBufferManager.h"
 #include "D3D1XVertexBuffer.h"
+#include "D3D1XIndexBuffer.h"
 #include "RwVectorMath.h"
 
 CD3D1XDefaultPipeline::CD3D1XDefaultPipeline() : 
@@ -81,7 +82,7 @@ void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8
 	// TODO: reduce casts
 	g_pStateMgr->SetInputLayout(static_cast<ID3D11InputLayout*>(entryData->header.vertexDeclaration));
 	g_pStateMgr->SetVertexBuffer(((CD3D1XVertexBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertex), 0);
-	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
+	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	m_pVS->Set();
 	m_pPS->Set();

@@ -186,8 +186,6 @@ void CD3D1XStateManager::SetCullMode(RwCullMode mode)
 	}
 }
 
-
-
 void CD3D1XStateManager::SetFillMode(D3D11_FILL_MODE mode)
 {
 	if (m_rasterDesc.FillMode != mode) {
@@ -464,11 +462,7 @@ void CD3D1XStateManager::SetInputLayout(ID3D11InputLayout * layout)
 void CD3D1XStateManager::SetVertexBuffer(ID3D11Buffer * buffer, UINT stride, UINT offset)
 {
 	if (m_pCurrentVertexBuffer != buffer || m_currentVBufferStride != stride || m_currentVBufferOffset != offset) {
-		if(m_pCurrentVertexBuffer)
-			m_pCurrentVertexBuffer->Release();
 		m_pCurrentVertexBuffer = buffer;
-		if(buffer)
-			buffer->AddRef();
 		m_currentVBufferStride = stride;
 		m_currentVBufferOffset = offset;
 		m_bVertexBufferReqUpdate = true;
@@ -614,7 +608,10 @@ void CD3D1XStateManager::FlushStates()
 		
 		if(m_pBlendState != m_pBlendState_Default  && m_pBlendState != m_pBlendState_AlphaBlend && m_pBlendState != m_pBlendState_BlendDestOne&&
 			m_pBlendState != m_pBlendState_BlendAdditive && m_pBlendState != m_pBlendState_NoBlendDestOne)
-			if (m_pBlendState) m_pBlendState->Release();
+			if (m_pBlendState) { 
+				m_pBlendState->Release();
+				m_pBlendState = nullptr;
+			}
 
 		if (m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_SRC_ALPHA &&
 			m_blendDesc.RenderTarget[0].DestBlend == D3D11_BLEND::D3D11_BLEND_INV_SRC_ALPHA) {

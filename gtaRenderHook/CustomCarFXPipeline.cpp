@@ -10,6 +10,7 @@
 #include "DeferredRenderer.h"
 #include "D3D1XVertexDeclarationManager.h"
 #include "D3D1XRenderBuffersManager.h"
+#include "D3D1XIndexBuffer.h"
 #include <game_sa\CVehicleModelInfo.h>
 
 std::list<AlphaMesh*> CCustomCarFXPipeline::m_aAlphaMeshList{};
@@ -59,7 +60,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 
 		if (!mesh->entryptr->header.indexBuffer)
 			g_pDebug->printMsg("CCustomCarFXPipeline: empty index buffer found", 2);
-		g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)mesh->entryptr->header.indexBuffer);
+		g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)mesh->entryptr->header.indexBuffer)->getBuffer());
 		g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(mesh->entryptr->header.primType));
 		m_pVS->Set();
 		m_pPS->Set();
@@ -127,7 +128,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 	// Init model states 
 	g_pStateMgr->SetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
 	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
-	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
+	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	
 	// Set apropriate shaders

@@ -23,14 +23,25 @@ CD3D1XIm2DPipeline::CD3D1XIm2DPipeline():
 	m_pVertexDecl = new CD3D1XVertexDeclaration(layout, sizeof(RwIm2DVertex), m_pVS);
 	m_pVertexBuffer = new CD3D1XDynamicVertexBuffer(sizeof(RwIm2DVertex), 10000);
 	m_pIndexBuffer = new CD3D1XDynamicIndexBuffer(10000);
+	m_pVertexBuffer->SetDebugName("Im2D_DynamicVB");
+	m_pIndexBuffer->SetDebugName("Im2D_DynamicIB");
 }
 
 
 CD3D1XIm2DPipeline::~CD3D1XIm2DPipeline()
 {
-	if (m_pIndexBuffer) delete m_pIndexBuffer;
-	if (m_pVertexBuffer) delete m_pVertexBuffer;
-	if (m_pVertexDecl) delete m_pVertexDecl;
+	if (m_pVertexBuffer) { 
+		delete m_pVertexBuffer; 
+		m_pVertexBuffer = nullptr;
+	}
+	if (m_pIndexBuffer) {
+		delete m_pIndexBuffer;
+		m_pIndexBuffer = nullptr;
+	}
+	if (m_pVertexDecl) { 
+		delete m_pVertexDecl; 
+		m_pVertexDecl = nullptr;
+	}
 }
 
 void CD3D1XIm2DPipeline::Draw(RwPrimitiveType prim, RwIm2DVertex* verticles, RwUInt32 vertexCount)

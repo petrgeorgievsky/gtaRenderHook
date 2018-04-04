@@ -8,8 +8,7 @@ CD3D1XBuffer::CD3D1XBuffer(unsigned int size, D3D11_USAGE usage, D3D11_BIND_FLAG
 	unsigned int miscFlags, unsigned int elementSize, const D3D11_SUBRESOURCE_DATA* initialData)
 {
 	m_uiSize = size;
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
+	D3D11_BUFFER_DESC bd{};
 	bd.Usage = usage;
 	bd.ByteWidth = m_uiSize;
 	bd.BindFlags = bindingFlags;
@@ -36,4 +35,9 @@ void CD3D1XBuffer::Update(void * data, int size)
 	context->Map(m_pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	memcpy(mappedResource.pData, data, size < 0 ? m_uiSize : size);
 	context->Unmap(m_pBuffer, 0);
+}
+
+void CD3D1XBuffer::SetDebugName(std::string name)
+{
+	g_pDebug->SetD3DName(m_pBuffer, name + "(D3D1XBuffer)");
 }

@@ -65,7 +65,7 @@ void CVoxelOctreeRenderer::CleanVoxelOctree()
 	auto context = GET_D3D_CONTEXT;
 	for (size_t i = 0; i < 3; i++)
 	{
-		auto uav = GetD3D1XRaster(voxelClipMap[i])->resourse->GetUAV().p;
+		auto uav = GetD3D1XRaster(voxelClipMap[i])->resourse->GetUAV();
 		context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
 		context->Dispatch(voxelTreeSize / 4, voxelTreeSize / 4, voxelTreeSize / 4);
 	}
@@ -85,7 +85,7 @@ void CVoxelOctreeRenderer::InjectRadiance(RwRaster * shadow, void(*emmissiveObjR
 	g_pStateMgr->SetRasterCS(shadow, 1);
 	g_pStateMgr->SetStructuredBufferCS(CLightManager::GetBuffer(), 2);
 
-	auto uav = GetD3D1XRaster(voxelRadiance[voxelTextureID])->resourse->GetUAV().p;
+	auto uav = GetD3D1XRaster(voxelRadiance[voxelTextureID])->resourse->GetUAV();
 	context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
 	context->Dispatch(voxelTreeSize / 4, voxelTreeSize / 4, voxelTreeSize / 4);
 

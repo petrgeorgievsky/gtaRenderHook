@@ -19,7 +19,7 @@ float poissonShadowSampling(Texture2D txShadow, SamplerComparisonState samShadow
 	// Simple box 7x7 blur-dependent kernel. 
 	// TODO: Implement ability to change kernel minimum and maximum size and more kernels for ex. gaussian or
 	//		 user defined with custom matrix or ability to choose blur-independent kernel.
-	int kernelSize = ceil(poissonScale*3);	// Here kernelSize is half the actual kernel size
+	int kernelSize = ceil(poissonScale*2);	// Here kernelSize is half the actual kernel size
 	int count		 = (kernelSize*2+1)*(kernelSize*2+1);
 	
 	for (int x = -kernelSize;x<=kernelSize; x++) // (kernelSize*2+1)^2 comparisons and 3*(kernelSize*2+1)^2 ALU per cycle ~ o(kernelSize^2) complexity

@@ -30,6 +30,7 @@ CHDRTonemapping::CHDRTonemapping():CPostProcessEffect("HDRTonemapping")
 		nSampleLen *= 3;
 	}
 	m_pPostFXBuffer = new CD3D1XConstantBuffer<CBPostProcess>();
+	m_pPostFXBuffer->SetDebugName("PostProcessCB");
 }
 
 

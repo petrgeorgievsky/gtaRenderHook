@@ -13,6 +13,7 @@
 #include "Renderer.h"
 #include "RwD3D1XEngine.h"
 #include "PBSMaterial.h"
+#include "D3D1XIndexBuffer.h"
 #include <game_sa\CWeather.h>
 extern int drawCallCount;
 CCustomBuildingDNPipeline::CCustomBuildingDNPipeline() :
@@ -53,7 +54,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 	if (!entryData->header.indexBuffer)
 		g_pDebug->printMsg("CustomBuildingDNPipeline: empty index buffer found", 2);
-	g_pStateMgr->SetIndexBuffer((ID3D11Buffer*)entryData->header.indexBuffer);
+	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
 	if (m_uiDeferredStage == 3|| m_uiDeferredStage == 4) {
 		m_pVoxelVS->Set();

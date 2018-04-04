@@ -32,6 +32,7 @@ CShadowRenderer::CShadowRenderer()
 	m_pLightViewProj = nullptr;
 
 	m_pLightCB = new CD3D1XConstantBuffer<CBShadows>();
+	m_pLightCB->SetDebugName("ShadowsCB");
 	m_aShadowObjectCacheList = {};
 }
 
@@ -127,8 +128,8 @@ RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & l
 	vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[shadowCascade].getSizeZ()*0.5f;//faLightDim[1];
-	RwCameraSetNearClipPlane(m_pShadowCamera, min(-fLightZFar,-150.0f));
-	RwCameraSetFarClipPlane(m_pShadowCamera, fLightZFar);
+	RwCameraSetNearClipPlane(m_pShadowCamera, min(-fLightZFar,-250.0f));
+	RwCameraSetFarClipPlane(m_pShadowCamera, max(fLightZFar,250.0f));
 	RwCameraSync(m_pShadowCamera);
 	//RwCameraEndUpdate(mainCam);
 	RwCameraSetNearClipPlane(mainCam, oldNP);

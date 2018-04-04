@@ -1116,7 +1116,7 @@ void CRenderer::ScanWorld()
 	float farPlane = TheCamera.m_pRwCamera->farPlane;
 	points[0].x = 0;
 	points[0].y = 0;
-	points[0].z = 0;//-TheCamera.m_pRwCamera->farPlane/4;
+	points[0].z = 0;// -TheCamera.m_pRwCamera->farPlane/4;
 	// first 4 frustum points in camera space
 	points[1].x = -(farPlane * viewWindow.x);
 	points[1].y = farPlane * viewWindow.y;

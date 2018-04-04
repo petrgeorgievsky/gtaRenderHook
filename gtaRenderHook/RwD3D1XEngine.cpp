@@ -18,6 +18,7 @@
 #include "CustomSeabedPipeline.h"
 #include "CustomWaterPipeline.h"
 #include "D3D1XVertexBufferManager.h"
+#include "D3D1XIndexBuffer.h"
 #ifdef USE_ANTTWEAKBAR
 #include "AntTweakBar.h"
 #endif
@@ -503,24 +504,29 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 {
 	TextureFormat textureInfo; RasterFormat rasterInfo;
 	unsigned int lengthOut, versionOut; unsigned char savedFormat;
-	RwRaster *raster=nullptr; RwTexture *texture;
+	RwRaster *raster=nullptr;
+	RwTexture *texture;
+	
 	if (!RwStreamFindChunk(stream, rwID_STRUCT, &lengthOut, &versionOut))
 		return false;
+	// Currently we read textures differently depending on the renderware version
+	// TODO: reduce repeated code, improve to support more formats
 	if (versionOut >= 0x34000 && versionOut <= rwLIBRARYVERSION36003) // GTA SA
 	{
 		if (RwStreamRead(stream, &textureInfo, sizeof(TextureFormat)) != sizeof(TextureFormat) || textureInfo.platformId != rwID_PCD3D9 ||
-			RwStreamRead(stream, &rasterInfo, sizeof(RasterFormat)) != sizeof(RasterFormat))
+			RwStreamRead(stream, &rasterInfo, sizeof(RasterFormat)) != sizeof(RasterFormat)) {
+			g_pDebug->printError("Error while reading native texture");
 			return false;
+		}
+
 		if (rasterInfo.compressed)
 		{
-			//if (rasterInfo.rasterFormat == rwRASTERFORMAT8888) {
-				if (rasterInfo.d3dFormat == D3DFORMAT::D3DFMT_DXT5) {
-					rasterInfo.rasterFormat = rwRASTERFORMAT8888;
-				}
-			//}
+			if (rasterInfo.d3dFormat == D3DFORMAT::D3DFMT_DXT5) {
+				rasterInfo.rasterFormat = rwRASTERFORMAT8888;
+			}
 
 			raster = RwRasterCreate(rasterInfo.width, rasterInfo.height, rasterInfo.depth, rasterInfo.rasterFormat | rasterInfo.rasterType | rwRASTERDONTALLOCATE | (rasterInfo.numLevels>1 ? rwRASTERFORMATMIPMAP : 0));
-			if (!raster)
+			if (raster == nullptr)
 				return false;
 		}
 		else
@@ -531,13 +537,14 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 					rasterInfo.rasterFormat = rwRASTERFORMAT8888;
 				}
 				raster = RwRasterCreate(rasterInfo.width, rasterInfo.height, rasterInfo.depth, rasterInfo.rasterFormat | rasterInfo.rasterType | (rasterInfo.numLevels>1 ? rwRASTERFORMATMIPMAP : 0));
-				if (!raster)
+				if (raster == nullptr)
 					return false;
 			}
 			else
-				g_pDebug->printError("The method or operation is not implemented.");
+				g_pDebug->printError("Cubemap textures is unsupported in this version of RenderHook");
 		}
 
+		// TODO: Add support for palette formats in GTA SA
 		/*
 		if (rasterInfo.rasterFormat & rwRASTERFORMATPAL4)
 		{
@@ -837,7 +844,8 @@ void destroyNotify(RwResEntry * resEntry) {
 	RxD3D9ResEntryHeader resEntryHeader = static_cast<RxInstanceData*>(resEntry)->header;
 	if (resEntryHeader.indexBuffer)
 	{
-		static_cast<ID3D11Buffer*>(resEntryHeader.indexBuffer)->Release();
+		CD3D1XIndexBuffer* buffptr = static_cast<CD3D1XIndexBuffer*>(resEntryHeader.indexBuffer);
+		delete buffptr;
 		resEntryHeader.indexBuffer = nullptr;
 	}
 	if (resEntryHeader.vertexStream[0].vertexBuffer)
@@ -857,7 +865,8 @@ void destroyNotifySkin(RwResEntry * resEntry) {
 	RxD3D9ResEntryHeader resEntryHeader = ((RxInstanceData*)resEntry)->header;
 	if (resEntryHeader.indexBuffer)
 	{
-		((ID3D11Buffer*)(resEntryHeader.indexBuffer))->Release();
+		CD3D1XIndexBuffer* buffptr = static_cast<CD3D1XIndexBuffer*>(resEntryHeader.indexBuffer);
+		delete buffptr;
 		resEntryHeader.indexBuffer = nullptr;
 	}
 	if (resEntryHeader.vertexStream[0].vertexBuffer)
@@ -868,7 +877,7 @@ void destroyNotifySkin(RwResEntry * resEntry) {
 	}
 	if (resEntryHeader.vertexDeclaration)
 	{
-		((ID3D11Buffer*)(resEntryHeader.vertexDeclaration))->Release();
+		//((ID3D11Buffer*)(resEntryHeader.vertexDeclaration))->Release();
 		resEntryHeader.vertexDeclaration = nullptr;
 	}
 }
@@ -1122,11 +1131,7 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * instanceObj
 	if (createIndexBuffer) {
 		D3D11_SUBRESOURCE_DATA	InitData			= {};
 								InitData.pSysMem	= indexBufferData.data();
-		if (FAILED(m_pRenderer->getDevice()->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&entry->header.indexBuffer))) {
-			g_pDebug->printError("failed to create IB");
-			return nullptr;
-		}
-		g_pDebug->SetD3DName((ID3D11DeviceChild*)entry->header.indexBuffer, "IndexBuffer::" + std::to_string( entry->header.serialNumber ));
+		entry->header.indexBuffer = new CD3D1XIndexBuffer((unsigned int)indexBufferData.size(), &InitData);
 	}
 	else
 		entry->header.indexBuffer = nullptr;
@@ -1262,11 +1267,7 @@ RxInstanceData * CRwD3D1XEngine::m_D3DSkinInstance(void * object, void * instanc
 	if (createIndexBuffer) {
 		D3D11_SUBRESOURCE_DATA	InitData = {};
 		InitData.pSysMem = indexBufferData.data();
-		//	Reenable GPU access to the index buffer data.
-		if (FAILED(m_pRenderer->getDevice()->CreateBuffer(&bd, &InitData, (ID3D11Buffer**)&entry->header.indexBuffer))) {
-			g_pDebug->printError("failed to create IB");
-			return nullptr;
-		}
+		entry->header.indexBuffer = new CD3D1XIndexBuffer((unsigned int)indexBufferData.size(), &InitData);
 	}
 	RpHAnimHierarchy* atomicHier	= AtomicGetHAnimHier(atomic);
 	RpSkin* geomSkin	= GeometryGetSkin(atomic->geometry);

@@ -302,6 +302,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D3D1XIndexBuffer.h" />
     <ClInclude Include="D3D1XDynamicIndexBuffer.h" />
     <ClInclude Include="D3D1XDynamicVertexBuffer.h" />
     <ClInclude Include="D3D1XStructuredBuffer.h" />
@@ -360,6 +361,7 @@
     <ClInclude Include="VoxelPipeline.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3D1XIndexBuffer.cpp" />
     <ClCompile Include="D3D1XDynamicIndexBuffer.cpp" />
     <ClCompile Include="D3D1XDynamicVertexBuffer.cpp" />
     <ClCompile Include="D3D1XStructuredBuffer.cpp" />
@@ -500,12 +502,12 @@
     <None Include="shaders\SACustomWater.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="shaders\ScreenSpaceReflections.hlsl">
+    <Text Include="shaders\ScreenSpaceReflections.hlsl">
       <FileType>Document</FileType>
-    </None>
-    <None Include="shaders\Shadows.hlsl">
+    </Text>
+    <Text Include="shaders\Shadows.hlsl">
       <FileType>Document</FileType>
-    </None>
+    </Text>
     <None Include="shaders\VoxelGI.hlsl">
       <FileType>Document</FileType>
     </None>

@@ -24,7 +24,8 @@ CD3D1XIm3DPipeline::CD3D1XIm3DPipeline():
 	m_pVertexDeclaration = new CD3D1XVertexDeclaration(layout, sizeof(RwIm3DVertex), m_pVS);
 	m_pVertexBuffer = new CD3D1XDynamicVertexBuffer(sizeof(RwIm3DVertex), 10000);	
 	m_pIndexBuffer = new CD3D1XDynamicIndexBuffer(10000);
-
+	m_pVertexBuffer->SetDebugName("Im3D_DynamicVB");
+	m_pIndexBuffer->SetDebugName("Im3D_DynamicIB");
 }
 
 

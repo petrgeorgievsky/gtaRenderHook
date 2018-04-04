@@ -9,7 +9,7 @@ class CD3D1XTexture;
 class CD3D1XTextureMemoryManager
 {
 public:
-	// todo: replace with faster structure pool for example
+	// todo: replace with faster structure, pool for example
 	static std::list<CD3D1XTexture*> textureList;
 	/*!
 		Adds texture reference to texture list. 

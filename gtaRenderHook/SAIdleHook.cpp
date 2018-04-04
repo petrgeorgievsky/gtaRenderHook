@@ -77,6 +77,11 @@ void TW_CALL SaveDataCallBack(void *value)
 	SettingsHolder::Instance.SaveSettings();
 }
 
+void TW_CALL ReloadDataCallBack(void *value)
+{
+	SettingsHolder::Instance.ReloadFile();
+}
+
 bool g_bDrawTweakBar = false;
 
 void CSAIdleHook::Idle(void *Data)
@@ -89,6 +94,7 @@ void CSAIdleHook::Idle(void *Data)
 		gDeferredSettings.InitGUI(m_MainTWBAR);
 
 		TwAddButton(m_MainTWBAR, "Save", SaveDataCallBack, nullptr, "");
+		TwAddButton(m_MainTWBAR, "Reload", ReloadDataCallBack, nullptr, "");
 	}
 	// Update timers
 	TimeUpdate();
@@ -202,10 +208,10 @@ void CSAIdleHook::RenderInGame()
 	g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered = false;
 	if (sunDirs && !CGame__currArea&&(m_fShadowDNBalance < 1.0))
 		PrepareRealTimeShadows(sunDirs[curr_sun_dir]);
-	scanTimer.Start();
+	
 	DebugRendering::ResetList();
 	//ConstructCustomRenderList(Scene.m_pRwCamera, Scene.m_pRwCamera->nearPlane, Scene.m_pRwCamera->farPlane);
-	scanTimer.Stop();
+	
 	//CRenderer::PreRender();
 	
 
@@ -216,7 +222,9 @@ void CSAIdleHook::RenderInGame()
 
 	m_uiDeferredStage = 5;
 	//
+	scanTimer.Start();
 	CRenderer::ConstructRenderList();
+	scanTimer.Stop();
 	//CRenderer__ConstructRenderList();
 	CRenderer__PreRender();
 	CWorld::ProcessPedsAfterPreRender();

@@ -44,6 +44,7 @@ CDeferredRenderer::CDeferredRenderer()
 	m_pShadowRenderer	= new CShadowRenderer();
 	m_pTonemapping		= new CHDRTonemapping();
 	m_pDeferredBuffer = new CD3D1XConstantBuffer<CBDeferredRendering>();
+	m_pDeferredBuffer->SetDebugName("DeferredCB");
 }
 
 
@@ -132,7 +133,7 @@ void CDeferredRenderer::RenderOutput()
 	// Render reflection pass
 	g_pRwCustomEngine->SetRenderTargets(&m_pReflectionRaster, Scene.m_pRwCamera->zBuffer, 1);
 	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(m_pFinalRasters[1 - m_uiCurrentFinalRaster], 3);
+	g_pStateMgr->SetRaster(m_pFinalRasters[2], 3);
 	m_pReflectionPassPS->Set();
 	CFullscreenQuad::Draw();
 
