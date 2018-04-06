@@ -81,9 +81,11 @@ float4 SunLightingPS(PSInput_Quad input) : SV_Target
 	float DiffuseTerm, SpecularTerm;
 	CalculateDiffuseTerm_ViewDependent(Normals, vSunLightDir.xyz, ViewDir, DiffuseTerm, Roughness);
 	CalculateSpecularTerm(Normals, vSunLightDir.xyz, -ViewDir, Roughness, SpecularTerm);
-
+#if SAMPLE_SHADOWS==1
     float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, Distance) * vSunLightDir.w;
-
+#else
+    float ShadowTerm = 1.0;
+#endif
     float2 Lighting = float2(DiffuseTerm, SpecularTerm * SpecIntensity) * ShadowTerm;
 	OutLighting.xyzw = Lighting.xxxy;
 	

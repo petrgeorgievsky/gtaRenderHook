@@ -1,5 +1,5 @@
 #include "SettingsHolder.h"
-
+#include "D3D1XShader.h"
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -82,6 +82,14 @@ void SettingsHolder::ReloadFile()
 	}
 }
 
+void SettingsHolder::ReloadShadersIfRequired()
+{
+	for (auto block : m_aSettingsBlocks) {
+		if (block->m_bShaderReloadRequired)
+			block->ReloadShaders();
+	}
+}
+
 tinyxml2::XMLElement * DebugSettingsBlock::Save(tinyxml2::XMLDocument *doc)
 {
 	// Debug settings node.
@@ -120,7 +128,6 @@ tinyxml2::XMLElement * ShaderDefinesSettingsBlock::Save(tinyxml2::XMLDocument * 
 	auto shaderSettingsNode = doc->NewElement(m_sName.c_str());
 
 	shaderSettingsNode->SetAttribute("UsePhysicallyBasedRendering", UsePBR);
-	shaderSettingsNode->SetAttribute("ScreenSpaceReflectionSampleCount", SSRSampleCount);
 
 	return shaderSettingsNode;
 }
@@ -129,15 +136,20 @@ void ShaderDefinesSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
 	auto shaderSettingsNode = doc.FirstChildElement(m_sName.c_str());
 	UsePBR = shaderSettingsNode->BoolAttribute("UsePhysicallyBasedRendering", true);
-	SSRSampleCount = shaderSettingsNode->IntAttribute("ScreenSpaceReflectionSampleCount", 24);
 }
 
 void ShaderDefinesSettingsBlock::Reset()
 {
 	UsePBR = true;
-	SSRSampleCount = 24;
 }
 
 void ShaderDefinesSettingsBlock::InitGUI(TwBar * guiholder)
 {
+}
+
+void SettingsBlock::ReloadShaders()
+{
+	for (auto shader : m_aShaderPointers)
+		shader->Reload(m_pShaderDefineList);
+	m_bShaderReloadRequired = false;
 }

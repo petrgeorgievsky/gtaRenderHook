@@ -19,7 +19,7 @@
 #include "CustomWaterPipeline.h"
 #include "D3D1XVertexBufferManager.h"
 #include "D3D1XIndexBuffer.h"
-#include "D3D1XGlobalShaderDefines.h"
+#include "D3D1XShaderDefines.h"
 #ifdef USE_ANTTWEAKBAR
 #include "AntTweakBar.h"
 #endif
@@ -55,12 +55,11 @@ bool CRwD3D1XEngine::Close()
 bool CRwD3D1XEngine::Start()
 {
 	m_pRenderer->InitDevice();
-	g_pGlobalShaderDefines = new CD3D1XGlobalShaderDefines();
+	g_pGlobalShaderDefines = new CD3D1XShaderDefineList();
 	const auto featureLevel = GET_D3D_FEATURE_LVL;
 	auto featureLvl = to_string(featureLevel);
 	g_pGlobalShaderDefines->AddDefine("FEATURE_LEVEL", featureLvl);
 	g_pGlobalShaderDefines->AddDefine("USE_PBR", to_string((int)gShaderDefineSettings.UsePBR));
-	g_pGlobalShaderDefines->AddDefine("SSR_SAMPLE_COUNT", to_string(gShaderDefineSettings.SSRSampleCount));
 	g_pStateMgr				= new CD3D1XStateManager();
 	g_pRenderBuffersMgr		= new CD3D1XRenderBuffersManager();
 	m_pIm2DPipe				= new CD3D1XIm2DPipeline();

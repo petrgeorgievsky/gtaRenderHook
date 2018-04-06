@@ -1,6 +1,7 @@
 #ifndef D3D1XShader_h__
 #define D3D1XShader_h__
 class CD3DRenderer;
+class CD3D1XShaderDefineList;
 // TODO: Divide this into separate files perhaps
 /*!
 	\class CD3D1XShader
@@ -27,15 +28,31 @@ public:
 		Removes shader from a D3D context.
 	*/
 	virtual void ReSet();
-	// Returns shader byte-code blob.
+	/*!
+		Releases resources, and reloads shader from file.
+	*/
+	virtual void Reload(CD3D1XShaderDefineList* localShaderDefineList = nullptr);
+	/*!
+		Returns shader byte-code blob.
+	*/
 	ID3DBlob* getBlob() { return m_pBlob; }
 public:
-	HRESULT CompileShaderFromFile(std::string szFileName, std::string szEntryPoint, std::string szShaderModel, ID3DBlob** ppBlobOut) const;
+	/*!
+		Compiles shader with custom entry point and shader model
+	*/
+	HRESULT CompileShaderFromFile(std::string szFileName, std::string szEntryPoint,
+		std::string szShaderModel, ID3DBlob** ppBlobOut, CD3D1XShaderDefineList* localShaderDefineList=nullptr) const;
 protected:
 	// Shader pointer.
 	ID3D11DeviceChild*	m_pShaderDC	= nullptr;
 	// Blob pointer.
 	ID3DBlob*			m_pBlob		= nullptr;
+	// Shader file path
+	std::string			m_sFilePath;
+	// Shader entry point
+	std::string			m_sEntryPoint;
+	// Shader model
+	std::string			m_sShaderModel;
 #ifdef DEBUG
 	// Shader counter(for debug info)
 	static int			 m_ShaderCount;
@@ -55,9 +72,10 @@ public:
 // Pixel Shader
 class CD3D1XPixelShader : public CD3D1XShader {
 public:
-	CD3D1XPixelShader(std::string fileName, std::string entryPoint);
+	CD3D1XPixelShader(std::string fileName, std::string entryPoint, CD3D1XShaderDefineList* localShaderDefineList=nullptr);
 	void Set();
 	void ReSet();
+	void Reload(CD3D1XShaderDefineList* localShaderDefineList=nullptr);
 	// Last shader pointer.
 	static CD3D1XPixelShader* m_pLastShader;
 };

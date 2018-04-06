@@ -2,13 +2,15 @@
 #include "tinyxml2.h"
 #include "AntTweakBar.h"
 class SettingsBlock;
-
+class CD3D1XShader;
+class CD3D1XShaderDefineList;
 // Render Hook settings holder singleton
 class SettingsHolder
 {
 	std::list<SettingsBlock*>	m_aSettingsBlocks;
 	tinyxml2::XMLDocument			mSettingsFile;
 	bool m_bInitialized=false;
+	
 public:
 	static SettingsHolder Instance;
 	SettingsHolder();
@@ -19,17 +21,22 @@ public:
 	void LoadSettings(const tinyxml2::XMLDocument &file);
 	void SaveSettings();
 	void ReloadFile();
+	void ReloadShadersIfRequired();
 };
 
 // Settings block base class, used to hold various settings
 class SettingsBlock {
 public:
 	std::string m_sName;
+	std::vector<CD3D1XShader*> m_aShaderPointers;
+	CD3D1XShaderDefineList* m_pShaderDefineList;
+	bool m_bShaderReloadRequired=false;
 	SettingsBlock() { }
 	virtual tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc) = 0;
 	virtual void Load(const tinyxml2::XMLDocument &doc) = 0;
 	virtual void Reset() = 0;
 	virtual void InitGUI(TwBar* guiholder) = 0;
+	virtual void ReloadShaders();
 };
 // Global shader settings block class, used to hold shader defenitions
 class ShaderDefinesSettingsBlock : public SettingsBlock {
@@ -43,7 +50,6 @@ public:
 	void InitGUI(TwBar* guiholder);
 public:
 	bool UsePBR;
-	int SSRSampleCount;
 };
 // Debug settings block class, used to hold debugging settings
 class DebugSettingsBlock: public SettingsBlock {

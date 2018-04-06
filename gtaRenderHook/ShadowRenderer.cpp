@@ -368,9 +368,11 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 	TwAddVarRW(bar, "Distance multipier 1", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[0],
 		" min=0.001 max=1.0 step=0.0001 group=Cascade_1 ");
+
 	TwAddVarRW(bar, "Distance multipier 2", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[1],
 		" min=0.001 max=1.0 step=0.0001  group=Cascade_2 ");
+
 	TwAddVarRW(bar, "Distance multipier 3", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[2],
 		" min=0.001 max=1.0 step=0.0001  group=Cascade_3 ");
@@ -396,6 +398,6 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 
 	TwDefine(" Settings/Cascade_0   group=Shadows label='1st Cascade'");
 	TwDefine(" Settings/Cascade_1   group=Shadows label='2nd Cascade'");
-	TwDefine(" Settings/Cascade_3   group=Shadows label='3rd Cascade'");
-	TwDefine(" Settings/Cascade_2   group=Shadows label='4th Cascade'");
+	TwDefine(" Settings/Cascade_2   group=Shadows label='3rd Cascade'");
+	TwDefine(" Settings/Cascade_3   group=Shadows label='4th Cascade'");
 }

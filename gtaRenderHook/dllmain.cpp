@@ -300,7 +300,9 @@ LRESULT CALLBACK MessageProc(int code, WPARAM wParam, LPARAM lParam) {
 void InitD3DResourseSystem() {
 
 }
-
+void ShowCursor_fix(UINT show) {
+	
+}
 void TidyUpTextures(int n) {
 	CD3D1XTextureMemoryManager::Shutdown();
 }
@@ -332,6 +334,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		RedirectCall(envMapSupportPtr, envMapSupport);
 		RedirectCall(SetRRPtr, SetRR);
 		RedirectCall(SetVMPtr, SetVM);
+		
+		
 		SetPointer(Im2DRenderPrimPtr, im2DRenderPrim);
 		SetPointer(Im2DRenderIndexedPrimPtr, im2DRenderIndexedPrim);
 		SetPointer(Im2DRenderLinePtr, im2DRenderLine);
@@ -340,7 +344,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SetWindowsHookEx(WH_GETMESSAGE, MessageProc, NULL, GetCurrentThreadId());
 #endif
 #if GTA_SA
-		
+		//RedirectCall(0x7481CF, ShowCursor_fix);
 		RedirectCall(0x5BD60B, InitD3DResourseSystem);
 		RedirectCall(0x53CAEC, InitD3DResourseSystem);// Shutdown
 		//RedirectCall(0x53C812, TidyUpTextures);

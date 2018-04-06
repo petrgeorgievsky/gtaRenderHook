@@ -24,7 +24,7 @@
 #include <game_sa\CWorld.h>
 #include <game_sa\CScene.h>
 #include <game_sa\CClock.h>
-
+#include "SettingsHolder.h"
 //#include <plugin.h>
 //#include <plugin_sa\game_sa\CFont.h>
 
@@ -96,6 +96,7 @@ void CSAIdleHook::Idle(void *Data)
 		TwAddButton(m_MainTWBAR, "Save", SaveDataCallBack, nullptr, "");
 		TwAddButton(m_MainTWBAR, "Reload", ReloadDataCallBack, nullptr, "");
 	}
+	SettingsHolder::Instance.ReloadShadersIfRequired(); 
 	// Update timers
 	TimeUpdate();
 	// Init 2D stuff per frame.

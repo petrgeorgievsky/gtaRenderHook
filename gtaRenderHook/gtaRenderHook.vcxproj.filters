@@ -72,6 +72,9 @@
     <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers">
       <UniqueIdentifier>{d7c0a8be-0c83-4f39-af8b-d1dac68a9084}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Shaders">
+      <UniqueIdentifier>{f01e738b-b037-4361-8bd8-ac740990051f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -245,7 +248,7 @@
     <ClInclude Include="D3D1XIndexBuffer.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClInclude>
-    <ClInclude Include="D3D1XGlobalShaderDefines.h">
+    <ClInclude Include="D3D1XShaderDefines.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
     </ClInclude>
   </ItemGroup>
@@ -409,7 +412,7 @@
     <ClCompile Include="D3D1XIndexBuffer.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClCompile>
-    <ClCompile Include="D3D1XGlobalShaderDefines.cpp">
+    <ClCompile Include="D3D1XShaderDefines.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -417,8 +420,10 @@
     <Text Include="ReadMe.txt">
       <Filter>Source</Filter>
     </Text>
-    <Text Include="shaders\Shadows.hlsl" />
     <Text Include="shaders\ScreenSpaceReflections.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </Text>
+    <Text Include="shaders\Shadows.hlsl">
       <Filter>Source\Shaders</Filter>
     </Text>
   </ItemGroup>

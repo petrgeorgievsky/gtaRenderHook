@@ -4,7 +4,8 @@
 #include "CDebug.h"
 #include "D3D1XStateManager.h"
 #include "RwD3D1XEngine.h"
-#include "D3D1XGlobalShaderDefines.h"
+#include "D3D1XShaderDefines.h"
+#include "D3DSpecificHelpers.h"
 #include <d3dcompiler.h>
 
 #define USE_SHADER_CACHING
@@ -41,7 +42,12 @@ void CD3D1XShader::ReSet()
 {
 }
 
-HRESULT CD3D1XShader::CompileShaderFromFile(std::string szFileName, std::string szEntryPoint, std::string szShaderModel, ID3DBlob** ppBlobOut) const
+void CD3D1XShader::Reload(CD3D1XShaderDefineList* localShaderDefineList)
+{
+}
+
+HRESULT CD3D1XShader::CompileShaderFromFile(std::string szFileName, std::string szEntryPoint,
+	std::string szShaderModel, ID3DBlob** ppBlobOut, CD3D1XShaderDefineList* localShaderDefineList) const
 {
 	auto hr = S_OK;
 
@@ -56,18 +62,18 @@ HRESULT CD3D1XShader::CompileShaderFromFile(std::string szFileName, std::string 
 	// Disable optimizations to further improve shader debugging
 	dwShaderFlags |= (1 << 2);
 #endif
-	// Currently shader defines is hardcoded
-	// TODO: Add local per-shader defines.
-	const auto featureLevel = GET_D3D_FEATURE_LVL;
-	auto featureLvl = to_string(featureLevel);
-	//const D3D_SHADER_MACRO defines[] = { {"FEATURE_LEVEL", featureLvl.c_str()}, {} };
 	std::vector<D3D_SHADER_MACRO> defines;
-	auto globalDefineList = g_pGlobalShaderDefines->GetDefineList();
-	for (const auto &define : globalDefineList) {
+	auto defineList		 = g_pGlobalShaderDefines->GetDefineList();
+	// concat local defines at the end if they are provided
+	if (localShaderDefineList != nullptr) {
+		auto localDefineList = localShaderDefineList->GetDefineList();
+		defineList.insert(defineList.end(), localDefineList.begin(), localDefineList.end());
+	}
+	// convet list to required form
+	for (const auto &define : defineList) {
 		defines.push_back({define.m_sName.c_str(), define.m_sDefinition.c_str() });
 	}
-	defines.push_back({});
-	//globalDefineList.push_back({});
+	defines.push_back({}); 
 	ID3DBlob* pErrorBlob = nullptr;
 
 	auto stemp = std::wstring(szFileName.begin(), szFileName.end());
@@ -142,20 +148,22 @@ void CD3D1XVertexShader::ReSet()
 
 #pragma region Pixel Shader
 
-CD3D1XPixelShader::CD3D1XPixelShader(std::string fileName, std::string entryPoint)
-{// Compile shader
-	auto shaderModel = "ps_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+CD3D1XPixelShader::CD3D1XPixelShader(std::string fileName, std::string entryPoint, CD3D1XShaderDefineList* localShaderDefineList)
+{
+	// Compile shader
+	m_sShaderModel = "ps_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
+	m_sFilePath = fileName;
+	m_sEntryPoint = entryPoint;
+	if (!CALL_D3D_API(CompileShaderFromFile(m_sFilePath, m_sEntryPoint, m_sShaderModel, &m_pBlob, localShaderDefineList),
+		"Pixel shader compilation error, please see logs."))
+		return;
 
-	if (FAILED(CompileShaderFromFile(fileName, entryPoint, shaderModel, &m_pBlob)))
-		g_pDebug->printError("The FX file cannot be compiled.");
-
-	auto pd3dDevice = GET_D3D_DEVICE;
-	// Create shader
-	if (FAILED(pd3dDevice->CreatePixelShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11PixelShader**>(&m_pShaderDC))))
+	// Create shader resource
+	if (!CALL_D3D_API(GET_D3D_DEVICE->CreatePixelShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11PixelShader**>(&m_pShaderDC)),
+		"Failed to create pixel shader"))
 	{
 		m_pBlob->Release();
 		m_pBlob = nullptr;
-		g_pDebug->printError("Failed to create vertex shader");
 	}
 }
 
@@ -166,17 +174,40 @@ void CD3D1XPixelShader::Set()
 		return;
 #endif // USE_SHADER_CACHING
 	CD3D1XShader::Set();
-	auto pImmediateContext = GET_D3D_CONTEXT;
-	pImmediateContext->PSSetShader(static_cast<ID3D11PixelShader*>(m_pShaderDC), nullptr, 0); 
+	GET_D3D_CONTEXT->PSSetShader(static_cast<ID3D11PixelShader*>(m_pShaderDC), nullptr, 0);
 #ifdef USE_SHADER_CACHING
 	m_pLastShader = this;
 #endif // USE_SHADER_CACHING
 }
 void CD3D1XPixelShader::ReSet()
 {
-	auto pImmediateContext = GET_D3D_CONTEXT;
-	pImmediateContext->PSSetShader(nullptr, nullptr, 0);
+	GET_D3D_CONTEXT->PSSetShader(nullptr, nullptr, 0);
 	m_pLastShader = nullptr;
+}
+
+void CD3D1XPixelShader::Reload(CD3D1XShaderDefineList* localShaderDefineList)
+{
+	// first release resources
+	// TODO: check if they are used to avoid unexpected behavior
+	if (m_pShaderDC) {
+		m_pShaderDC->Release();
+		m_pShaderDC = nullptr;
+	}
+	if (m_pBlob) {
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+	}
+	// recompile shader
+	if (!CALL_D3D_API(CompileShaderFromFile(m_sFilePath, m_sEntryPoint, m_sShaderModel, &m_pBlob, localShaderDefineList),
+		"Pixel shader compilation error, please see logs."))
+		return;
+	// create shader resource
+	if (!CALL_D3D_API(GET_D3D_DEVICE->CreatePixelShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11PixelShader**>(&m_pShaderDC)),
+		"Failed to create pixel shader"))
+	{
+		m_pBlob->Release();
+		m_pBlob = nullptr;
+	}
 }
 
 #pragma endregion

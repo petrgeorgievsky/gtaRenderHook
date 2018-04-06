@@ -58,8 +58,12 @@ public:
 	void InitGUI(TwBar*);
 public:
 	unsigned int SSRMaxIterations;
+	unsigned int ShadowsBlurKernelSize;
 	float SSRStep;
 	float MaxShadowBlur;
 	float MinShadowBlur;
+	bool BlurShadows;
+	bool UsePCSS;
+	bool SampleShadows;
 };
 extern DeferredSettingsBlock gDeferredSettings;

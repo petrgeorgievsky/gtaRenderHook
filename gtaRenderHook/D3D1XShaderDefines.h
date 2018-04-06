@@ -11,10 +11,13 @@ public:
 
 	This class holds global shader definitions(e.g. feature level).
 */
-class CD3D1XGlobalShaderDefines
+class CD3D1XShaderDefineList
 {
 public:
-	CD3D1XGlobalShaderDefines();
+	/*!
+		Initializes global shader define list
+	*/
+	CD3D1XShaderDefineList();
 	/*!
 		Adds a global shader defenition
 	*/
@@ -31,4 +34,4 @@ private:
 	std::vector<CD3D1XShaderDefine> m_aDefines;
 };
 
-extern CD3D1XGlobalShaderDefines* g_pGlobalShaderDefines;
+extern CD3D1XShaderDefineList* g_pGlobalShaderDefines;

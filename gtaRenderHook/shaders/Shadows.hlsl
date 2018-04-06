@@ -1,6 +1,10 @@
 #include "Globals.hlsl"
 #ifndef SHADOWS_HLSL
 #define SHADOWS_HLSL
+
+#ifndef SHADOW_BLUR_KERNEL
+#define SHADOW_BLUR_KERNEL 2
+#endif
 cbuffer ShadowBuffer : register(b4)
 {
 	row_major matrix DirLightViewProj[4];
@@ -11,7 +15,7 @@ cbuffer ShadowBuffer : register(b4)
 	float4 ShadowBias;
 }
 
-// Samples shadow texture using poisson sampling. Approximatly uses 49 samples(perhaps that's way too much).
+// Samples shadow texture using poisson sampling. Approximatly uses (SHADOW_BLUR_KERNEL*2+1)^2 samples(perhaps that's way too much).
 float poissonShadowSampling(Texture2D txShadow, SamplerComparisonState samShadow, float2 ShadowCoord, float Z,float poissonScale) 
 {
 	float visibility=0.0;
@@ -19,15 +23,18 @@ float poissonShadowSampling(Texture2D txShadow, SamplerComparisonState samShadow
 	// Simple box 7x7 blur-dependent kernel. 
 	// TODO: Implement ability to change kernel minimum and maximum size and more kernels for ex. gaussian or
 	//		 user defined with custom matrix or ability to choose blur-independent kernel.
-	int kernelSize = ceil(poissonScale*2);	// Here kernelSize is half the actual kernel size
-	int count		 = (kernelSize*2+1)*(kernelSize*2+1);
-	
+    int kernelSize = min(ceil(poissonScale), SHADOW_BLUR_KERNEL); // Here kernelSize is half the actual kernel size
+#if BLUR_SHADOWS==1
+    int count		 = (kernelSize*2+1)*(kernelSize*2+1);
 	for (int x = -kernelSize;x<=kernelSize; x++) // (kernelSize*2+1)^2 comparisons and 3*(kernelSize*2+1)^2 ALU per cycle ~ o(kernelSize^2) complexity
 	for (int y = -kernelSize;y<=kernelSize; y++)
 	{
 		visibility += txShadow.SampleCmpLevelZero(samShadow, ShadowCoord + float2(x, y) * offsetScale, Z);
 	}
-	return visibility/count;
+    return visibility/count;
+#else
+    return txShadow.SampleCmpLevelZero(samShadow, ShadowCoord, Z);
+#endif	
 }
 
 //reciever's coordinate on shadow map, reciever's depth, shadow map sampler, current layer of the shadow map array sampler
@@ -80,11 +87,18 @@ float SampleShadowMap(Texture2D txShadow, SamplerComparisonState samShadow,Sampl
 	// calculate shadow coordinate(because we use 4 cascades, we need to get 4 texcoord spaces each is half of original space plus offset)
 	ShadowTexCoord *= 0.5; 
 	ShadowTexCoord += offset; 
-	
+    float blurScale;
+#if USE_PCS_SHADOWS
 	float avgRecieverDepth 	= txShadow.Sample(samShadowNonComp, ShadowTexCoord);
 	float avgCasterDepth   	= AvarageShadowCasterDepth(ShadowTexCoord,LightViewPos.z,samShadowNonComp,txShadow);
-    float blurScale 		= (LightViewPos.z-avgCasterDepth)/avgCasterDepth;
-	return poissonShadowSampling(txShadow, samShadow, ShadowTexCoord, LightViewPos.z - ShadowBias[i],min(max(blurScale*MaxShadowBlur,MinShadowBlur),1));//(LightViewPos.z - sSample < 0.001);
+    
+    blurScale = (LightViewPos.z - avgCasterDepth) / avgCasterDepth;
+    blurScale = max(blurScale * MaxShadowBlur, MinShadowBlur);
+#else
+    blurScale = MaxShadowBlur;
+#endif
+
+    return poissonShadowSampling(txShadow, samShadow, ShadowTexCoord, LightViewPos.z - ShadowBias[i], blurScale); //(LightViewPos.z - sSample < 0.001);
 }
 
 // Samples shadow texture without any blurring.

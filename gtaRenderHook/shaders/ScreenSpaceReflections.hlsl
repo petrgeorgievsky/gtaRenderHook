@@ -12,7 +12,7 @@ Texture2D txGB1 	: register(t1);
 Texture2D txGB2 	: register(t2);
 Texture2D txPrevFrame : register(t3);
 #ifndef SSR_SAMPLE_COUNT
-#define SSR_SAMPLE_COUNT 24
+#define SSR_SAMPLE_COUNT 8
 #endif
 #ifndef SAMLIN
 #define SAMLIN
@@ -107,8 +107,7 @@ float3 SSR(float3 texelPosition, float3 reflectDir,float roughness, out float fa
     float3 currentRay = 0;
 
     float3 nuv = 0;
-    float L = 0.001;
-    float fStep = SSRStep;
+    float L = SSRStep;
 	float fStepScaling = 1.0f;
 	fallback=0.0;
     float3 csRayStart = GetCameraSpacePos(texelPosition);
@@ -131,7 +130,7 @@ float3 SSR(float3 texelPosition, float3 reflectDir,float roughness, out float fa
         float ViewZ = DecodeFloatRG(NormalSpec.zw);
         float3 newPosition = posFromDepth(ViewZ, nuv.xy).xyz;
         L = length(texelPosition - newPosition);
-        if (abs(ViewZ - nuv.z) < 0.0001f)
+        if (abs(ViewZ - nuv.z) < 0.000001f)
         {
 			fallback=1.0;
             return float3(0, 0, 0);
@@ -171,7 +170,7 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     
     // simply return SSR for now, maybe will use DXR someday, but simple cubemap is way more possible 
     float Fallback;
-    float FresnelCoeff = MicrofacetFresnel(vSunLightDir.xyz, normalize(vSunLightDir.xyz - ViewDir), Roughness);
+    float FresnelCoeff = MicrofacetFresnel(NormalsVS, -ViewDir, Roughness);
    // float3 raytracedColor = ScreenSpaceRT(cameraSpacePos,)
     return float4(SSR(worldSpacePos, ReflDir, Roughness, Fallback) * (1 - Fallback) * FresnelCoeff, 1);
 }
