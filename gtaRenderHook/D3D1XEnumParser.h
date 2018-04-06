@@ -17,7 +17,11 @@ public:
 	/*!
 		Converts primitive topology to d3d specific enum
 	*/
-	static D3D11_PRIMITIVE_TOPOLOGY		ConvertPrimTopology(int prim);
+	static D3D11_PRIMITIVE_TOPOLOGY		ConvertPrimTopology(RwPrimitiveType prim);
+	/*!
+		Converts primitive topology from rw mesh header flags
+	*/
+	static RwPrimitiveType				ConvertPrimTopology(RpMeshHeaderFlags flags);
 	/*!
 		Converts blend function to d3d specific enum
 	*/

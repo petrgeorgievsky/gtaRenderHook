@@ -11,7 +11,9 @@ Texture2D txGB0 	: register(t0);
 Texture2D txGB1 	: register(t1);
 Texture2D txGB2 	: register(t2);
 Texture2D txPrevFrame : register(t3);
-
+#ifndef SSR_SAMPLE_COUNT
+#define SSR_SAMPLE_COUNT 24
+#endif
 #ifndef SAMLIN
 #define SAMLIN
 SamplerState samLinear : register(s0);
@@ -116,7 +118,7 @@ float3 SSR(float3 texelPosition, float3 reflectDir,float roughness, out float fa
     float3 hp;
    // return float3(0, 0, 0);
     //int maxIterations = min(SSRMaxIterations, 128);
-    for (int i = 0; i < 24; i++)
+    for (int i = 0; i < SSR_SAMPLE_COUNT; i++)
     {
         currentRay = texelPosition + reflectDir * L;
 

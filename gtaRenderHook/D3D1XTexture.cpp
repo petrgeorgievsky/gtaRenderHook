@@ -4,13 +4,17 @@
 #include "RwD3D1XEngine.h"
 #include "D3D1XShader.h"
 #include "CDebug.h"
+#include "D3DSpecificHelpers.h"
+
 CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : m_pParent{ pParent }, m_hasPalette{ hasPalette }
 {
 	m_pTexture			= nullptr;
 	m_shaderRV			= nullptr;
 	m_pStagingTexture	= nullptr;
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(m_pParent);
-
+	ID3D11Device* dev = GET_D3D_DEVICE;
+	// Hardcoded 3D texture initialization
+	// TODO: Move somewhere else
 	if (d3dRaster->textureFlags == 64) 
 	{
 		m_type = eD3D1XTextureType::TT_3DTexture;
@@ -19,15 +23,15 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 		desc.Height = m_pParent->height;
 		desc.Depth = m_pParent->depth;
 		desc.Format = d3dRaster->format;
-		ID3D11Device* dev = GET_D3D_DEVICE;
 		desc.MipLevels = 0;
 		desc.Usage = D3D11_USAGE_DEFAULT;
 		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_UNORDERED_ACCESS| D3D11_BIND_RENDER_TARGET;
 		desc.CPUAccessFlags = 0;
 		desc.MiscFlags = 0;
 
-		if (FAILED(dev->CreateTexture3D(&desc, NULL, &m_p3DTexture)))
-			g_pDebug->printError("Failed to create 3d texture");
+		if (!CALL_D3D_API(dev->CreateTexture3D(&desc, NULL, &m_p3DTexture), "Failed to create 3D texture buffer."))
+			return;
+
 		g_pDebug->SetD3DName(m_p3DTexture, "CD3D1XTexture::UAV3DTexture");
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC uavdesc;
@@ -36,32 +40,34 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 		uavdesc.Texture3D.FirstWSlice = 0;
 		uavdesc.Texture3D.WSize = -1;
 		uavdesc.ViewDimension = D3D11_UAV_DIMENSION::D3D11_UAV_DIMENSION_TEXTURE3D;
-		if (FAILED(dev->CreateUnorderedAccessView(m_p3DTexture, &uavdesc, &m_unorderedAV)))
-			g_pDebug->printError("Failed to create 3d unordered access view");
+
+		if (!CALL_D3D_API(dev->CreateUnorderedAccessView(m_p3DTexture, &uavdesc, &m_unorderedAV),"Failed to create 3D unordered access view"))
+			return;
 		g_pDebug->SetD3DName(m_unorderedAV, "CD3D1XTexture::3dUAV");
+
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
 		SRVDesc.Format = d3dRaster->format;
 		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 		SRVDesc.Texture3D.MipLevels = UINT32_MAX;
-		if (FAILED(dev->CreateShaderResourceView(m_p3DTexture, &SRVDesc, &m_shaderRV)))
-			g_pDebug->printError("Failed to create 3d shader resource view");
-		g_pDebug->SetD3DName(m_shaderRV, "CD3D1XTexture::3dShaderRV");
+		if (CALL_D3D_API(dev->CreateShaderResourceView(m_p3DTexture, &SRVDesc, &m_shaderRV), "Failed to create 3D shader resource view"))
+			g_pDebug->SetD3DName(m_shaderRV, "CD3D1XTexture::3dShaderRV");
+
 		return;
 	}
-
+	// Base texture initialization
 	D3D11_TEXTURE2D_DESC desc {};
 	desc.Width	= m_pParent->width;
 	desc.Height = m_pParent->height;
 	desc.Format = d3dRaster->format;
 	desc.ArraySize = 1;
 
-	ID3D11Device* dev = GET_D3D_DEVICE;
 	switch (m_pParent->cType)
 	{
 	case rwRASTERTYPENORMAL:
-	case rwRASTERTYPETEXTURE:
+	case rwRASTERTYPETEXTURE:					// Texture with shader resource view and nothing more 
 		m_type = eD3D1XTextureType::TT_Texture;
 		{
+			// base texture buffer
 			desc.MipLevels = mipMaps ? max(log2(min(desc.Width, desc.Height))-2,0) : 1;
 			desc.SampleDesc.Quality = 0;
 			desc.SampleDesc.Count = 1;
@@ -69,30 +75,33 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 			desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 			desc.CPUAccessFlags = 0;
 			desc.MiscFlags = 0;
-			if (FAILED(dev->CreateTexture2D(&desc, NULL, &m_pTexture)))
-				g_pDebug->printError("Failed to create texture");
+			if (!CALL_D3D_API(dev->CreateTexture2D(&desc, NULL, &m_pTexture),"Failed to create texture"))
+				return;
 			g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::Texture");
+
+			// staging texture buffer used for texture copying
 			desc.Usage = D3D11_USAGE_STAGING;
 			desc.BindFlags = 0;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
 
-			if (FAILED(dev->CreateTexture2D(&desc, NULL, &m_pStagingTexture)))
-				g_pDebug->printError("Failed to create staging texture");
+			if (!CALL_D3D_API(dev->CreateTexture2D(&desc, NULL, &m_pStagingTexture), "Failed to create staging texture"))
+				return;
 			g_pDebug->SetD3DName(m_pStagingTexture, "CD3D1XTexture::StagingTexture");
-			
+			// shader resource view
 			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
 			SRVDesc.Format = d3dRaster->format;
 			SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			SRVDesc.Texture2D.MipLevels = UINT32_MAX;
 
-			if (FAILED(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV)))
-				g_pDebug->printError("Failed to create shader resource view");
+			if (!CALL_D3D_API(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV), "Failed to create shader resource view"))
+				return;
 			g_pDebug->SetD3DName(m_shaderRV, "CD3D1XTexture::ShaderRV");
 		}
 		break;
-	case rwRASTERTYPEZBUFFER:
+	case rwRASTERTYPEZBUFFER:						// Texture used as depth target
 		m_type = eD3D1XTextureType::TT_DepthStencil;
 		{
+
 			desc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 			desc.MipLevels = 1;
 			desc.SampleDesc.Quality = 0;
@@ -102,8 +111,8 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 			desc.CPUAccessFlags = 0;
 			desc.MiscFlags = 0;
 
-			if (FAILED(dev->CreateTexture2D(&desc, NULL, &m_pTexture)))
-				g_pDebug->printError("Failed to create texture");
+			if (!CALL_D3D_API(dev->CreateTexture2D(&desc, NULL, &m_pTexture), "Failed to create depth texture"))
+				return;
 
 			g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::DSTexture");
 
@@ -111,8 +120,9 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 			descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 			descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			descDSV.Texture2D.MipSlice = 0;
-			if (FAILED(dev->CreateDepthStencilView(m_pTexture, &descDSV, &m_depthStencilRV)))
-				g_pDebug->printError("Failed to create depth stencil view");
+
+			if (!CALL_D3D_API(dev->CreateDepthStencilView(m_pTexture, &descDSV, &m_depthStencilRV), "Failed to create depth stencil view"))
+				return;
 			g_pDebug->SetD3DName(m_depthStencilRV, "CD3D1XTexture::DepthStencilRV");
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
@@ -120,8 +130,8 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 			SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			SRVDesc.Texture2D.MipLevels = UINT32_MAX;
 
-			if (FAILED(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV)))
-				g_pDebug->printError("Failed to create shader resource view");
+			if (!CALL_D3D_API(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV), "Failed to create shader resource view"))
+				return;
 			g_pDebug->SetD3DName(m_shaderRV, "CD3D1XTexture::ShaderRV");
 		}
 		break;
@@ -146,24 +156,24 @@ void CD3D1XTexture::InitCameraTextureRaster(ID3D11Device * dev, D3D11_TEXTURE2D_
 	desc->CPUAccessFlags = 0;
 	desc->MiscFlags = mipmaps ? D3D11_RESOURCE_MISC_GENERATE_MIPS:0;
 
-	if (FAILED(dev->CreateTexture2D(desc, NULL, &m_pTexture)))
-		g_pDebug->printError("Failed to create texture");
+	if (!CALL_D3D_API(dev->CreateTexture2D(desc, NULL, &m_pTexture), "Failed to create camera texture"))
+		return;
 	g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::CameraTexTexture");
 
 	D3D11_RENDER_TARGET_VIEW_DESC descRTSV{};
 	descRTSV.Format = d3dRaster->format;
 	descRTSV.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	descRTSV.Texture2D.MipSlice = 0;
-	if (FAILED(dev->CreateRenderTargetView(m_pTexture, &descRTSV, &m_renderTargetRV)))
-		g_pDebug->printError("Failed to create render target view.");
+	if (!CALL_D3D_API(dev->CreateRenderTargetView(m_pTexture, &descRTSV, &m_renderTargetRV), "Failed to create render target view."))
+		return;
 	g_pDebug->SetD3DName(m_renderTargetRV, "CD3D1XTexture::CameraTexRTV");
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
 	SRVDesc.Format = d3dRaster->format;
 	SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	SRVDesc.Texture2D.MipLevels = UINT32_MAX;
-	if (FAILED(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV)))
-		g_pDebug->printError("Failed to create shader resource view");
+	if (!CALL_D3D_API(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV), "Failed to create shader resource view"))
+		return;
 	g_pDebug->SetD3DName(m_shaderRV, "CD3D1XTexture::CameraTexSRV");
 }
 
@@ -172,11 +182,11 @@ void CD3D1XTexture::InitCameraRaster(ID3D11Device * dev)
 {
 	ID3D11Texture2D* pBackBuffer = nullptr;
 	
-	if (FAILED(GET_D3D_SWAP_CHAIN->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer))))
-		g_pDebug->printError("Failed to get back buffer.");
+	if (!CALL_D3D_API(GET_D3D_SWAP_CHAIN->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer)), "Failed to get back buffer texture."))
+		return;
 
-	if (FAILED(dev->CreateRenderTargetView(pBackBuffer, nullptr, &m_renderTargetRV)))
-		g_pDebug->printError("Failed to create render target view.");
+	if (!CALL_D3D_API(dev->CreateRenderTargetView(pBackBuffer, nullptr, &m_renderTargetRV), "Failed to create render target view."))
+		return;
 
 	g_pDebug->SetD3DName(m_renderTargetRV, "CD3D1XTexture::CameraRTV");
 	pBackBuffer->Release();
@@ -314,8 +324,8 @@ void CD3D1XTexture::Resize(UINT newWidth, UINT newHeight)
 		desc.CPUAccessFlags = 0;
 		desc.MiscFlags = 0;
 
-		if (FAILED(dev->CreateTexture2D(&desc, NULL, &m_pTexture)))
-			g_pDebug->printError("Failed to create texture");
+		if (!CALL_D3D_API(dev->CreateTexture2D(&desc, NULL, &m_pTexture), "Failed to create depth texture"))
+			return;
 
 		g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::DSTexture");
 
@@ -323,8 +333,8 @@ void CD3D1XTexture::Resize(UINT newWidth, UINT newHeight)
 		descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 		descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		descDSV.Texture2D.MipSlice = 0;
-		if (FAILED(dev->CreateDepthStencilView(m_pTexture, &descDSV, &m_depthStencilRV)))
-			g_pDebug->printError("Failed to create depth stencil view");
+		if (!CALL_D3D_API(dev->CreateDepthStencilView(m_pTexture, &descDSV, &m_depthStencilRV), "Failed to create depth stencil view"))
+			return;
 		g_pDebug->SetD3DName(m_depthStencilRV, "CD3D1XTexture::DepthStencilRV");
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
@@ -332,8 +342,8 @@ void CD3D1XTexture::Resize(UINT newWidth, UINT newHeight)
 		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		SRVDesc.Texture2D.MipLevels = UINT32_MAX;
 
-		if (FAILED(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV)))
-			g_pDebug->printError("Failed to create shader resource view");
+		if (!CALL_D3D_API(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV), "Failed to create shader resource view"))
+			return;
 		g_pDebug->SetD3DName(m_shaderRV, "CD3D1XTexture::ShaderRV");
 	}
 		break;
@@ -387,8 +397,8 @@ void CD3D1XTexture::Reload()
 		desc.CPUAccessFlags = 0;
 		desc.MiscFlags = 0;
 
-		if (FAILED(dev->CreateTexture2D(&desc, NULL, &m_pTexture)))
-			g_pDebug->printError("Failed to create texture");
+		if (!CALL_D3D_API(dev->CreateTexture2D(&desc, NULL, &m_pTexture),"Failed to create depth texture"))
+			return;
 
 		g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::DSTexture");
 
@@ -396,8 +406,8 @@ void CD3D1XTexture::Reload()
 		descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 		descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		descDSV.Texture2D.MipSlice = 0;
-		if (FAILED(dev->CreateDepthStencilView(m_pTexture, &descDSV, &m_depthStencilRV)))
-			g_pDebug->printError("Failed to create depth stencil view");
+		if (!CALL_D3D_API(dev->CreateDepthStencilView(m_pTexture, &descDSV, &m_depthStencilRV), "Failed to create depth stencil view"))
+			return;
 		g_pDebug->SetD3DName(m_depthStencilRV, "CD3D1XTexture::DepthStencilRV");
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
@@ -405,8 +415,8 @@ void CD3D1XTexture::Reload()
 		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		SRVDesc.Texture2D.MipLevels = UINT32_MAX;
 
-		if (FAILED(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV)))
-			g_pDebug->printError("Failed to create shader resource view");
+		if (!CALL_D3D_API(dev->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_shaderRV),"Failed to create shader resource view"))
+			return;
 		g_pDebug->SetD3DName(m_shaderRV, "CD3D1XTexture::ShaderRV");
 	}
 	break;

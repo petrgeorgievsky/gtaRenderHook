@@ -83,7 +83,7 @@ void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8
 	g_pStateMgr->SetInputLayout(static_cast<ID3D11InputLayout*>(entryData->header.vertexDeclaration));
 	g_pStateMgr->SetVertexBuffer(((CD3D1XVertexBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertex), 0);
 	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
-	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
+	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)entryData->header.primType));
 	m_pVS->Set();
 	m_pPS->Set();
 

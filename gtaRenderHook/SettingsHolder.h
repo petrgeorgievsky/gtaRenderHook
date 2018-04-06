@@ -31,7 +31,20 @@ public:
 	virtual void Reset() = 0;
 	virtual void InitGUI(TwBar* guiholder) = 0;
 };
-
+// Global shader settings block class, used to hold shader defenitions
+class ShaderDefinesSettingsBlock : public SettingsBlock {
+public:
+	ShaderDefinesSettingsBlock() {
+		m_sName = "ShaderSettings";
+	}
+	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
+	void Load(const tinyxml2::XMLDocument &doc);
+	void Reset();
+	void InitGUI(TwBar* guiholder);
+public:
+	bool UsePBR;
+	int SSRSampleCount;
+};
 // Debug settings block class, used to hold debugging settings
 class DebugSettingsBlock: public SettingsBlock {
 public:
@@ -49,3 +62,4 @@ public:
 };
 
 extern DebugSettingsBlock gDebugSettings;
+extern ShaderDefinesSettingsBlock gShaderDefineSettings;

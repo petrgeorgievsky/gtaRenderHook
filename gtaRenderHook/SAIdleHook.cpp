@@ -161,19 +161,18 @@ void CSAIdleHook::RenderInGame()
 	PrepareRenderStuff();
 
 	DefinedState();
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILENABLE, 0);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILENABLE, FALSE);
 
 	RwCameraSetFarClipPlane(Scene.m_pRwCamera, CTimeCycle::m_CurrentColours.m_fFarClip);
 
 	Scene.m_pRwCamera->fogPlane = CTimeCycle::m_CurrentColours.m_fFogStart;
 	
 	// Game variables initialization
-	const auto sunDirs = reinterpret_cast<RwV3d*>(0xB7CA50); // Sun direction table pointer(sun directions is always the same)
-	const auto curr_sun_dir = *reinterpret_cast<int*>(0xB79FD0); // Current sun direction id
-	if (sunDirs) {
-		const auto sundir = &sunDirs[curr_sun_dir];
-		g_pStateMgr->SetSunDir(sundir, m_fShadowDNBalance);
-	}
+	const auto sunDirs = reinterpret_cast<RwV3d*>(0xB7CA50);		// Sun direction table pointer(sun directions is always the same)
+	const auto curr_sun_dir = *reinterpret_cast<int*>(0xB79FD0);	// Current sun direction id
+	const auto curr_sun_dirvec = &sunDirs[curr_sun_dir];			// Current sun direction vector
+
+	g_pStateMgr->SetSunDir(curr_sun_dirvec, m_fShadowDNBalance);
 	g_pStateMgr->SetFogStart(CTimeCycle::m_CurrentColours.m_fFogStart);
 	g_pStateMgr->SetFogRange(CTimeCycle::m_CurrentColours.m_fFarClip - CTimeCycle::m_CurrentColours.m_fFogStart);
 	g_shaderRenderStateBuffer.vSkyLightCol = {	CTimeCycle::m_CurrentColours.m_nSkyTopRed / 255.0f,
@@ -210,10 +209,6 @@ void CSAIdleHook::RenderInGame()
 		PrepareRealTimeShadows(sunDirs[curr_sun_dir]);
 	
 	DebugRendering::ResetList();
-	//ConstructCustomRenderList(Scene.m_pRwCamera, Scene.m_pRwCamera->nearPlane, Scene.m_pRwCamera->farPlane);
-	
-	//CRenderer::PreRender();
-	
 
 	RwCameraEndUpdate(Scene.m_pRwCamera);
 	drawCallCount = 0;
@@ -225,31 +220,15 @@ void CSAIdleHook::RenderInGame()
 	scanTimer.Start();
 	CRenderer::ConstructRenderList();
 	scanTimer.Stop();
-	//CRenderer__ConstructRenderList();
 	CRenderer__PreRender();
 	CWorld::ProcessPedsAfterPreRender();
-	//g_pDeferredRenderer->m_pCubemapRenderer->RenderToCubemap(RenderForward);
 
 	shadowTimer.Start();
-
-	//CRenderer::ConstructShadowList();
 
 	if (sunDirs && !CGame__currArea&&m_fShadowDNBalance < 1.0) // Render shadows only if we are not inside interiors
 		RenderRealTimeShadows(sunDirs[curr_sun_dir]);
 
 	shadowTimer.Stop();
-
-	//RenderVoxelGI();
-
-	// Do standard gta culling.
-	g_pDebug->printMsg("Culling events: begin", 1);
-
-	
-	//CRenderer__ConstructRenderList();
-	//ConstructCustomRenderList(Scene.curCamera, Scene.curCamera->nearPlane, Scene.curCamera->farPlane);
-	
-
-	g_pDebug->printMsg("Culling events: end", 1);
 
 	RwCameraBeginUpdate(Scene.m_pRwCamera);
 

@@ -316,6 +316,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		SettingsHolder::Instance.AddSettingBlock(&gDebugSettings);
+		SettingsHolder::Instance.AddSettingBlock(&gShaderDefineSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gTonemapSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gShadowSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gDeferredSettings);

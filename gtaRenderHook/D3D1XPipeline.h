@@ -1,14 +1,25 @@
 #ifndef D3D1XPipeline_h__
 #define D3D1XPipeline_h__
 class CD3D1XShader;
-// Direct3D Pipeline base class
+/*!
+	\class CD3D1XPipeline
+	\brief Base D3D pipeline class.
+
+	This class represents rendering alghorithm for one object of some type.
+	If you want to add custom D3D pipeline for some rendering effect, use this class as base.
+*/
 class CD3D1XPipeline
 {
 public:
+	/*!
+		Initializes pixel and vertex shaders
+	*/
 	CD3D1XPipeline(std::string pipeName);
+	/*!
+		Releases shader resources
+	*/
 	~CD3D1XPipeline();
 protected:
-	void DrawIndexed(UINT, UINT, UINT);
 	// Base pixel shader ptr.
 	CD3D1XShader*		m_pVS		= nullptr;
 	// Base vertex shader ptr.

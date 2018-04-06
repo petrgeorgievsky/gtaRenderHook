@@ -3,6 +3,12 @@
 // TODO: Implement this class in existing code.
 class CD3DRenderer;
 class CD3D1XShader;
+/*!
+	\class CD3D1XVertexDeclaration
+	\brief Base D3D vertex declaration class.
+
+	This class represents input vertex layout for specific vertex shader.
+*/
 class CD3D1XVertexDeclaration
 {
 public:

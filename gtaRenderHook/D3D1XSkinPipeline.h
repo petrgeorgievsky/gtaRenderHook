@@ -41,7 +41,7 @@ private:
 
 private:
 	CD3D1XConstantBuffer<PerSkinMatrixBuffer>*		m_pSkinningDataBuffer = nullptr;
-	CD3D1XVertexDeclaration* m_pVertexDeclaration = nullptr;
+	CD3D1XVertexDeclaration*						m_pVertexDeclaration = nullptr;
 };
 
 #endif

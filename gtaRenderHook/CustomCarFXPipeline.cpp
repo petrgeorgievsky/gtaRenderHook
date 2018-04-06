@@ -61,7 +61,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 		if (!mesh->entryptr->header.indexBuffer)
 			g_pDebug->printMsg("CCustomCarFXPipeline: empty index buffer found", 2);
 		g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)mesh->entryptr->header.indexBuffer)->getBuffer());
-		g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(mesh->entryptr->header.primType));
+		g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)mesh->entryptr->header.primType));
 		m_pVS->Set();
 		m_pPS->Set();
 		RwRGBA paintColor;
@@ -129,7 +129,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 	g_pStateMgr->SetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
 	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
-	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
+	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)entryData->header.primType));
 	
 	// Set apropriate shaders
 	if (m_uiDeferredStage == 3 || m_uiDeferredStage == 4) {

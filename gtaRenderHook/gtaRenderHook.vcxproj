@@ -302,6 +302,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D3D1XGlobalShaderDefines.h" />
     <ClInclude Include="D3D1XIndexBuffer.h" />
     <ClInclude Include="D3D1XDynamicIndexBuffer.h" />
     <ClInclude Include="D3D1XDynamicVertexBuffer.h" />
@@ -361,6 +362,7 @@
     <ClInclude Include="VoxelPipeline.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3D1XGlobalShaderDefines.cpp" />
     <ClCompile Include="D3D1XIndexBuffer.cpp" />
     <ClCompile Include="D3D1XDynamicIndexBuffer.cpp" />
     <ClCompile Include="D3D1XDynamicVertexBuffer.cpp" />

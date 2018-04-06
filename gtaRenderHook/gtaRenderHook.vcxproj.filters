@@ -245,6 +245,9 @@
     <ClInclude Include="D3D1XIndexBuffer.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClInclude>
+    <ClInclude Include="D3D1XGlobalShaderDefines.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -406,10 +409,17 @@
     <ClCompile Include="D3D1XIndexBuffer.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Buffers</Filter>
     </ClCompile>
+    <ClCompile Include="D3D1XGlobalShaderDefines.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt">
       <Filter>Source</Filter>
+    </Text>
+    <Text Include="shaders\Shadows.hlsl" />
+    <Text Include="shaders\ScreenSpaceReflections.hlsl">
+      <Filter>Source\Shaders</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>
@@ -471,12 +481,6 @@
       <Filter>Source\Shaders</Filter>
     </None>
     <None Include="shaders\SACustomWater.hlsl">
-      <Filter>Source\Shaders</Filter>
-    </None>
-    <None Include="shaders\ScreenSpaceReflections.hlsl">
-      <Filter>Source\Shaders</Filter>
-    </None>
-    <None Include="shaders\Shadows.hlsl">
       <Filter>Source\Shaders</Filter>
     </None>
     <None Include="shaders\VoxelGI.hlsl">

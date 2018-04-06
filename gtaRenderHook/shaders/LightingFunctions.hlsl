@@ -144,7 +144,12 @@ void CalculateSpecularTerm(in float3 vNormal,in float3 vLightDir,in float3 vView
         return;
     }*/
 	//MicrofacetGeometricShadow(vNormal, vViewDir, fRoughness);
-    fSpecularTerm = ndfTerm * 0.25f; //PhongSpecular(vNormal, vLightDir, vViewDir, fRoughness);
+#if USE_PBR==1
+    fSpecularTerm = ndfTerm * 0.25f;
+#else
+    fSpecularTerm = PhongSpecular(vNormal, vLightDir, -vViewDir, fRoughness)*4.0f;
+#endif
+    //
     //ndfTerm * fresnelTerm;
 }
 #endif

@@ -121,7 +121,7 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 	g_pStateMgr->SetInputLayout(m_pVertexDeclaration->getInputLayout());
 	g_pStateMgr->SetVertexBuffer(((CD3D1XVertexBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertexSkin), 0);
 	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
-	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
+	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)entryData->header.primType));
 	m_pVS->Set();
 	// TODO: replace checks with different pipelines or pipeline variants or something like that
 	if (m_uiDeferredStage == 1)

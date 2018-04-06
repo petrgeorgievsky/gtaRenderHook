@@ -19,6 +19,7 @@
 #include "CustomWaterPipeline.h"
 #include "D3D1XVertexBufferManager.h"
 #include "D3D1XIndexBuffer.h"
+#include "D3D1XGlobalShaderDefines.h"
 #ifdef USE_ANTTWEAKBAR
 #include "AntTweakBar.h"
 #endif
@@ -54,6 +55,12 @@ bool CRwD3D1XEngine::Close()
 bool CRwD3D1XEngine::Start()
 {
 	m_pRenderer->InitDevice();
+	g_pGlobalShaderDefines = new CD3D1XGlobalShaderDefines();
+	const auto featureLevel = GET_D3D_FEATURE_LVL;
+	auto featureLvl = to_string(featureLevel);
+	g_pGlobalShaderDefines->AddDefine("FEATURE_LEVEL", featureLvl);
+	g_pGlobalShaderDefines->AddDefine("USE_PBR", to_string((int)gShaderDefineSettings.UsePBR));
+	g_pGlobalShaderDefines->AddDefine("SSR_SAMPLE_COUNT", to_string(gShaderDefineSettings.SSRSampleCount));
 	g_pStateMgr				= new CD3D1XStateManager();
 	g_pRenderBuffersMgr		= new CD3D1XRenderBuffersManager();
 	m_pIm2DPipe				= new CD3D1XIm2DPipeline();
@@ -468,7 +475,7 @@ bool CRwD3D1XEngine::RasterCreate(RwRaster *raster, UINT flags)
 	int maxTextureSize;
 	GetMaxTextureSize(maxTextureSize);
 
-	// If raster size exceeds resonable limit(2^14 for dx11) we shouldn't create it.
+	// If raster size exceeds maximum for current feature level we shouldn't create it.
 	if (raster->width >  maxTextureSize || raster->height > maxTextureSize)
 		return false;
 	// If somehow after format conversion, raster format is still unknown, and it isn't camera raster we shouldn't create it.
@@ -898,7 +905,7 @@ bool CRwD3D1XEngine::AtomicAllInOneNode(RxPipelineNode *self, const RxPipelineNo
 		return true;
 
 	RpD3DMeshHeader* mesh = (RpD3DMeshHeader*)geom->mesh;
-	if (!mesh->numMeshes)
+	if (mesh->numMeshes <= 0)
 		return true;
 
 	RwUInt32 flags = geom->flags;
@@ -911,40 +918,45 @@ bool CRwD3D1XEngine::AtomicAllInOneNode(RxPipelineNode *self, const RxPipelineNo
 			entryData = (RxInstanceData*)atomic->repEntry;
 		
 		if (entryData) {
-			if (entryData->header.serialNumber == mesh->serialNum) {
-				if (geom->lockedSinceLastInst || geom->numMorphTargets != 1) {
-					auto reinstance = callbacks->reinstance;
-					if (reinstance && !reinstance(atomic, entryData, callbacks->instance))
-					{
-						_RwResourcesFreeResEntry(entryData);
-						return false;
-					}
-					atomic->interpolator.flags &= 0xFE;
-					geom->lockedSinceLastInst = 0;
-				}
-				//_RwResourcesUseResEntry(entryData);
-				if (entryData->link.next) {
-					rwLinkListRemoveLLLink(&entryData->link);
-					const RwModuleInfo ResModule = RpResModule;
-					const UINT engineOffset = reinterpret_cast<UINT>(*static_cast<RwGlobals**>(RwEngineInstance));
-					auto globalPtr = reinterpret_cast<rwResourcesGlobals*>(engineOffset + ResModule.globalsOffset);
-					rwLinkListAddLLLink(globalPtr->res.usedEntries, &entryData->link);
-				}
-				goto RenderCB;
+			if (entryData->header.serialNumber != mesh->serialNum) {
+				_RwResourcesFreeResEntry(entryData);
+				entryData = nullptr;
 			}
-			_RwResourcesFreeResEntry(entryData);
 		}
-		if (geom->numMorphTargets == 1)
-			entryData = m_D3DInstance(atomic, geom, 1, &geom->repEntry, mesh, callbacks->instance,false);
-		else
-			entryData = m_D3DInstance(atomic, atomic, 1, &atomic->repEntry, mesh, callbacks->instance, false);
-		if (entryData != nullptr)
+		if (entryData) {
+			if (geom->lockedSinceLastInst || 
+				geom->numMorphTargets != 1) {
+				auto reinstance = callbacks->reinstance;
+				if (reinstance && !reinstance(atomic, entryData, callbacks->instance))
+				{
+					_RwResourcesFreeResEntry(entryData);
+					return false;
+				}
+				atomic->interpolator.flags &= ~rpINTERPOLATORDIRTYINSTANCE;
+				geom->lockedSinceLastInst = 0;
+			}
+			//_RwResourcesUseResEntry(entryData);
+			if (entryData->link.next) {
+				rwLinkListRemoveLLLink(&entryData->link);
+				const RwModuleInfo ResModule = RpResModule;
+				const UINT engineOffset = reinterpret_cast<UINT>(*static_cast<RwGlobals**>(RwEngineInstance));
+				auto globalPtr = reinterpret_cast<rwResourcesGlobals*>(engineOffset + ResModule.globalsOffset);
+				rwLinkListAddLLLink(globalPtr->res.usedEntries, &entryData->link);
+			}
+		}
+		else {
+			if (geom->numMorphTargets == 1)
+				entryData = m_D3DInstance(atomic, geom, 1, &geom->repEntry, mesh, callbacks->instance, false);
+			else
+				entryData = m_D3DInstance(atomic, atomic, 1, &atomic->repEntry, mesh, callbacks->instance, false);
+			if (entryData == nullptr)
+				return false;
 			geom->lockedSinceLastInst = 0;
+		}
 	}
 	else
 		entryData = static_cast<RxInstanceData*>(geom->repEntry);
 
-RenderCB:
 	if ((flags & rpGEOMETRYNATIVEFLAGSMASK) == rpGEOMETRYNATIVEINSTANCE)
 		return true;
 	{
@@ -991,17 +1003,22 @@ RwBool CRwD3D1XEngine::Im3DSubmitNode()
 	return m_pIm3DPipe->SubmitNode();
 }
 
-RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * instanceObject, RwUInt8 type, RwResEntry ** repEntry, RpD3DMeshHeader * mesh, RxD3D9AllInOneInstanceCallBack instance, int bNativeInstance)
+
+RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * owner,
+	RwUInt8 type, RwResEntry ** resEntryPointer, RpD3DMeshHeader * mesh, RxD3D9AllInOneInstanceCallBack instanceCallback, int allocateNative)
 {
+	// used decompiler output as base and
+	// now https://github.com/GTAmodding/rw37/blob/f3fb1bb4b5dfbb65e9ba60746aebaf4cb0c7708e/src/world/pipe/p2/d3d9/D3D9pipe.c as reference
 	bool	convertToTriList	= false,
 			createIndexBuffer	= false;
 	RxInstanceData *entry;
 	RpAtomic* atomic = (RpAtomic*)object;
-	size_t size = sizeof(RxD3D9InstanceData) * mesh->numMeshes + sizeof(RxD3D9ResEntryHeader);
+	auto size = sizeof(RxD3D9InstanceData) * mesh->numMeshes + sizeof(RxD3D9ResEntryHeader);
 
-	if (bNativeInstance) {
-		entry = (RxInstanceData*)_RwMalloc(sizeof(RxD3D9InstanceData) * mesh->numMeshes + sizeof(RxD3D9ResEntryHeader) + sizeof(RwResEntry), rwMEMHINTDUR_EVENT | rwID_WORLDPIPEMODULE);
-		*repEntry = entry;
+	if (allocateNative) {
+		entry = (RxInstanceData*)_RwMalloc(sizeof(RwResEntry) + size ,
+			rwMEMHINTDUR_EVENT | rwID_WORLDPIPEMODULE);
+		*resEntryPointer = entry;
 		entry->link.next		= nullptr;
 		entry->link.prev		= nullptr;
 		entry->size				= size;
@@ -1010,78 +1027,97 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * instanceObj
 		entry->destroyNotify	= destroyNotify;
 	}
 	else
-		entry = (RxInstanceData*)_RwResourcesAllocateResEntry(instanceObject, repEntry, size, destroyNotify);
+		entry = (RxInstanceData*)_RwResourcesAllocateResEntry(owner, resEntryPointer, size, destroyNotify);
 	
 	memset(&entry->header, 0, size);
 	entry->header.serialNumber	= mesh->serialNum;
 	entry->header.numMeshes		= mesh->numMeshes;
-	entry->header.indexBuffer	= 0;
+	entry->header.indexBuffer	= nullptr;
 	entry->header.totalNumIndex = 0;
 
 	auto primType = mesh->flags & rpMESHHEADERPRIMMASK;
 
-	if (!(mesh->flags & rpMESHHEADERUNINDEXED)) {
+	if ((mesh->flags & rpMESHHEADERUNINDEXED)==0) {
+
 		for (auto i = 0; i < mesh->numMeshes; i++)
 			entry->header.totalNumIndex += mesh->meshes[i].numIndices;
-		if (entry->header.totalNumIndex > 0)
+
+		if (entry->header.totalNumIndex > 0) {
 			createIndexBuffer = true;
-		if (primType == rpMESHHEADERTRISTRIP&&atomic->geometry->numTriangles * 3 > 0) {
-			convertToTriList = true;
-			entry->header.totalNumIndex = atomic->geometry->numTriangles * 3;
+			if (primType == rpMESHHEADERTRISTRIP) {
+				RwUInt32 numTriangles = 0xffffffff / 3;
+				if (type == (RwUInt8)rwSECTORATOMIC) {
+					RpWorldSector *sector = (RpWorldSector *)object;
+					numTriangles = sector->numTriangles;
+				}
+				else if (type == rpATOMIC) {
+					numTriangles = atomic->geometry->numTriangles;
+				}
+				// renderware converts inefficient tristrips to trilists to reduce primitive count
+				if (entry->header.totalNumIndex > numTriangles * 3) {
+					convertToTriList = true;
+					entry->header.totalNumIndex = 3 * numTriangles;
+				}
+			}
 		}
 	}
+
 	if(convertToTriList)
 		entry->header.primType = rwPRIMTYPETRILIST;
-	else if (primType == rpMESHHEADERTRISTRIP)
-		entry->header.primType = rwPRIMTYPETRISTRIP;
-	else if (primType == rpMESHHEADERTRIFAN)
-		entry->header.primType = rwPRIMTYPETRIFAN;
-	else if (primType == rpMESHHEADERLINELIST)
-		entry->header.primType = rwPRIMTYPELINELIST;
-	else if (primType == rpMESHHEADERPOLYLINE)
-		entry->header.primType = rwPRIMTYPEPOLYLINE;
-	else if (primType == rpMESHHEADERPOINTLIST)
-		entry->header.primType = rwPRIMTYPEPOINTLIST;
-	else if (primType == 0)
-		entry->header.primType = rwPRIMTYPETRILIST;
+	else 
+		entry->header.primType = (RwPrimitiveType)CD3D1XEnumParser::ConvertPrimTopology((RpMeshHeaderFlags)primType);
 
-	D3D11_BUFFER_DESC bd = {};
-	bd.Usage = D3D11_USAGE_IMMUTABLE;
-	bd.ByteWidth = entry->header.totalNumIndex * sizeof(RxVertexIndex);
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	/* Initialize the vertex buffers pointers */
+	for (int n = 0; n < RWD3D9_MAX_VERTEX_STREAMS; n++)
+	{
+		entry->header.vertexStream[n].vertexBuffer = nullptr;
+		entry->header.vertexStream[n].offset = 0;
+		entry->header.vertexStream[n].stride = 0;
+		entry->header.vertexStream[n].geometryFlags = false;
+		entry->header.vertexStream[n].managed = false;
+		entry->header.vertexStream[n].dynamicLock = false;
+	}
 
-	std::vector<RxVertexIndex> indexBufferData(entry->header.totalNumIndex*3);
+	entry->header.vertexDeclaration = nullptr;
+
+	std::vector<RxVertexIndex> indexBufferData(entry->header.totalNumIndex * 3);
+
+	unsigned int firstVert = 0;
+	unsigned int startIndex = 0;
+	
 	//	Load index buffer data.
 	if (mesh->numMeshes > 0)
 	{
 		RxD3D9InstanceData* meshData = nullptr;
-		size_t currentIndexOffset = 0;
-		for (size_t i = 0; i < mesh->numMeshes; i++)
+		unsigned int currentIndexOffset = 0;
+		for (unsigned int i = 0; i < mesh->numMeshes; i++)
 		{
 			meshData = &entry->models[i];
-			RwUInt32	minVert = 0,
-				numVert = 0;
+
+			RwUInt32	minVert = 0, numVert = 0;
 			if (mesh->flags & rpMESHHEADERPOINTLIST)
 			{
 				numVert = mesh->meshes[i].numIndices;
-				minVert = static_cast<UINT>(currentIndexOffset);
+				minVert = currentIndexOffset;
 			}
 			else if (mesh->meshes[i].numIndices > 0)
 			{
 				minVert = UINT_MAX;
 				UINT maxIndex = 0;
-				for (size_t j = 0; j < static_cast<size_t>(mesh->meshes[i].numIndices); j++)
+				for (unsigned int j = 0; j < mesh->meshes[i].numIndices; j++)
 				{
 					minVert = min(minVert, mesh->meshes[i].indices[j]);
 					maxIndex = max(maxIndex, mesh->meshes[i].indices[j]);
 				}
 				numVert = maxIndex - minVert + 1;
 			}
+
 			meshData->numVertices = numVert;
-			meshData->minVert = minVert;
-			meshData->vertexShader = nullptr;
+			meshData->minVert = minVert;			
 			meshData->material = mesh->meshes[i].material;
+			meshData->vertexShader = nullptr;
 			meshData->vertexAlpha = false;
+
 			if (currentIndexOffset>indexBufferData.size())
 			{
 				meshData->numIndex = 0;
@@ -1089,17 +1125,17 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * instanceObj
 			}
 			else {
 				meshData->numIndex = mesh->meshes[i].numIndices;
-				meshData->startIndex = static_cast<RwUInt32>(currentIndexOffset);
+				meshData->startIndex = currentIndexOffset;
 				if (convertToTriList) {
 					meshData->numIndex = rwD3D9ConvertToTriList(&indexBufferData[currentIndexOffset], mesh->meshes[i].indices, mesh->meshes[i].numIndices, meshData->minVert);
 				}
 				else if (meshData->minVert > 0)
 				{
-					for (size_t j = 0; j < static_cast<size_t>(mesh->meshes[i].numIndices); j++)
-						indexBufferData[currentIndexOffset + j] = mesh->meshes[i].indices[j] - static_cast<RwUInt16>(meshData->minVert);
+					for (size_t j = 0; j < mesh->meshes[i].numIndices; j++)
+						indexBufferData[currentIndexOffset + j] = mesh->meshes[i].indices[j] - meshData->minVert;
 				}
 				else
-					memcpy(&indexBufferData[currentIndexOffset], mesh->meshes[i].indices, static_cast<size_t>(mesh->meshes[i].numIndices) * sizeof(RxVertexIndex));
+					memcpy(&indexBufferData[currentIndexOffset], mesh->meshes[i].indices, mesh->meshes[i].numIndices * sizeof(RxVertexIndex));
 				if (entry->header.primType == rwPRIMTYPETRILIST)
 					qsort(&indexBufferData[currentIndexOffset], meshData->numIndex / 3, 6u, SortTriangles);
 				currentIndexOffset += static_cast<size_t>(meshData->numIndex);
@@ -1135,9 +1171,10 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * instanceObj
 	}
 	else
 		entry->header.indexBuffer = nullptr;
-	if (!instance || instance(object, &entry->header, 0))
+
+	if (!instanceCallback || instanceCallback(object, &entry->header, 0))
 		return entry;
-	else if (bNativeInstance)
+	else if (allocateNative)
 		_RwFree(entry);
 	else
 		_RwResourcesFreeResEntry(entry);

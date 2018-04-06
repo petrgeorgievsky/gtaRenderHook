@@ -10,7 +10,8 @@
 
 SettingsHolder SettingsHolder::Instance{};
 
-DebugSettingsBlock gDebugSettings;
+DebugSettingsBlock gDebugSettings; 
+ShaderDefinesSettingsBlock gShaderDefineSettings;
 
 SettingsHolder::SettingsHolder()
 {
@@ -99,7 +100,7 @@ void DebugSettingsBlock::Load(const tinyxml2::XMLDocument &doc)
 	// Debug
 	ShowPreformanceCounters = debugSettingsNode->BoolAttribute("ShowPreformanceCounters", true);
 	DebugMessaging = debugSettingsNode->BoolAttribute("DebugMessaging", false);
-	DebugLevel = debugSettingsNode->BoolAttribute("DebugLevel", 0);
+	DebugLevel = debugSettingsNode->IntAttribute("DebugLevel", 0);
 }
 
 void DebugSettingsBlock::Reset()
@@ -111,5 +112,32 @@ void DebugSettingsBlock::Reset()
 }
 
 void DebugSettingsBlock::InitGUI(TwBar * guiholder)
+{
+}
+
+tinyxml2::XMLElement * ShaderDefinesSettingsBlock::Save(tinyxml2::XMLDocument * doc)
+{
+	auto shaderSettingsNode = doc->NewElement(m_sName.c_str());
+
+	shaderSettingsNode->SetAttribute("UsePhysicallyBasedRendering", UsePBR);
+	shaderSettingsNode->SetAttribute("ScreenSpaceReflectionSampleCount", SSRSampleCount);
+
+	return shaderSettingsNode;
+}
+
+void ShaderDefinesSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
+{
+	auto shaderSettingsNode = doc.FirstChildElement(m_sName.c_str());
+	UsePBR = shaderSettingsNode->BoolAttribute("UsePhysicallyBasedRendering", true);
+	SSRSampleCount = shaderSettingsNode->IntAttribute("ScreenSpaceReflectionSampleCount", 24);
+}
+
+void ShaderDefinesSettingsBlock::Reset()
+{
+	UsePBR = true;
+	SSRSampleCount = 24;
+}
+
+void ShaderDefinesSettingsBlock::InitGUI(TwBar * guiholder)
 {
 }

@@ -4,6 +4,7 @@
 #include "CDebug.h"
 #include "D3D1XStateManager.h"
 #include "RwD3D1XEngine.h"
+#include "D3D1XGlobalShaderDefines.h"
 #include <d3dcompiler.h>
 
 #define USE_SHADER_CACHING
@@ -55,13 +56,22 @@ HRESULT CD3D1XShader::CompileShaderFromFile(std::string szFileName, std::string 
 	// Disable optimizations to further improve shader debugging
 	dwShaderFlags |= (1 << 2);
 #endif
+	// Currently shader defines is hardcoded
+	// TODO: Add local per-shader defines.
 	const auto featureLevel = GET_D3D_FEATURE_LVL;
 	auto featureLvl = to_string(featureLevel);
-	const D3D10_SHADER_MACRO defines[] = { {"FEATURE_LEVEL",featureLvl.c_str()}, {} };
+	//const D3D_SHADER_MACRO defines[] = { {"FEATURE_LEVEL", featureLvl.c_str()}, {} };
+	std::vector<D3D_SHADER_MACRO> defines;
+	auto globalDefineList = g_pGlobalShaderDefines->GetDefineList();
+	for (const auto &define : globalDefineList) {
+		defines.push_back({define.m_sName.c_str(), define.m_sDefinition.c_str() });
+	}
+	defines.push_back({});
+	//globalDefineList.push_back({});
 	ID3DBlob* pErrorBlob = nullptr;
 
 	auto stemp = std::wstring(szFileName.begin(), szFileName.end());
-	hr = D3DCompileFromFile(stemp.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, szEntryPoint.c_str(), szShaderModel.c_str(), dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
+	hr = D3DCompileFromFile(stemp.c_str(), defines.data(), D3D_COMPILE_STANDARD_FILE_INCLUDE, szEntryPoint.c_str(), szShaderModel.c_str(), dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
 
 	if (FAILED(hr))
 	{

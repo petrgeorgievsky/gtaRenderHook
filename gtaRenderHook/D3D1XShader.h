@@ -1,16 +1,31 @@
 #ifndef D3D1XShader_h__
 #define D3D1XShader_h__
 class CD3DRenderer;
+// TODO: Divide this into separate files perhaps
+/*!
+	\class CD3D1XShader
+	\brief Base D3D shader class.
 
-// Direct3D Shader base class.
+	This class represents shader of some sort.
+*/
 class CD3D1XShader
 {
 public:
+	/*!
+		Initializes shader resource.
+	*/
 	CD3D1XShader();
+	/*!
+		Releases shader resource.
+	*/
 	~CD3D1XShader();
-	// Sets shader to a D3D context.
+	/*!
+		Sets shader to a D3D context.
+	*/
 	virtual void Set();
-	// Removes shader from a D3D context.
+	/*!
+		Removes shader from a D3D context.
+	*/
 	virtual void ReSet();
 	// Returns shader byte-code blob.
 	ID3DBlob* getBlob() { return m_pBlob; }

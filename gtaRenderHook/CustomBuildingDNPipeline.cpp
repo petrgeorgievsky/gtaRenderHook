@@ -55,7 +55,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	if (!entryData->header.indexBuffer)
 		g_pDebug->printMsg("CustomBuildingDNPipeline: empty index buffer found", 2);
 	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
-	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology(entryData->header.primType));
+	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)entryData->header.primType));
 	if (m_uiDeferredStage == 3|| m_uiDeferredStage == 4) {
 		m_pVoxelVS->Set();
 		m_pVoxelGS->Set();

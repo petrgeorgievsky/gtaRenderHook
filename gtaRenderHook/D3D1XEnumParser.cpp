@@ -10,9 +10,28 @@ const D3D11_PRIMITIVE_TOPOLOGY CD3D1XEnumParser::m_primConvertTable[]{
 	D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
 	D3D11_PRIMITIVE_TOPOLOGY_POINTLIST
 };
-D3D11_PRIMITIVE_TOPOLOGY CD3D1XEnumParser::ConvertPrimTopology(int prim)
+D3D11_PRIMITIVE_TOPOLOGY CD3D1XEnumParser::ConvertPrimTopology(RwPrimitiveType prim)
 {
 	return m_primConvertTable[prim];
+}
+
+RwPrimitiveType CD3D1XEnumParser::ConvertPrimTopology(RpMeshHeaderFlags flags)
+{
+	switch (flags)
+	{
+	case rpMESHHEADERTRISTRIP:
+		return rwPRIMTYPETRISTRIP;
+	case rpMESHHEADERTRIFAN:
+		return rwPRIMTYPETRIFAN;
+	case rpMESHHEADERLINELIST:
+		return rwPRIMTYPELINELIST;
+	case rpMESHHEADERPOLYLINE:
+		return rwPRIMTYPEPOLYLINE;
+	case rpMESHHEADERPOINTLIST:
+		return rwPRIMTYPEPOINTLIST;
+	default:
+		return rwPRIMTYPETRILIST;
+	}
 }
 
 D3D11_BLEND CD3D1XEnumParser::ConvertBlendFunc(RwBlendFunction func)
