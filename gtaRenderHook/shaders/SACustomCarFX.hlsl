@@ -31,15 +31,25 @@ struct PS_VOXEL_INPUT
 	float4 vNormal		: NORMAL;
 	float2 vTexCoord	: TEXCOORD0;
 };
+struct DEFERRED_INPUTCF
+{
+    float4 vPosition : SV_POSITION;
+    float4 vColor : COLOR;
+    float4 vNormalDepth : NORMAL;
+    float4 vTexCoord : TEXCOORD0;
+    float4 vWorldPos : TEXCOORD1;
+};
+
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-DEFERRED_INPUT VS(VS_INPUT i)
+DEFERRED_INPUTCF VS(VS_INPUT i)
 {
-	DEFERRED_INPUT Out;
+    DEFERRED_INPUTCF Out;
 	// Compute clip-space position.
 	float4 	outPos = float4(i.inPosition, 1.0);
 	outPos = mul(outPos, World);
+    Out.vWorldPos = outPos;
 	outPos = mul(outPos, View);
 
 	Out.vPosition = mul(outPos, Projection);
@@ -83,32 +93,26 @@ void VoxelGS(triangle GS_VOXEL_IN input[3], inout TriangleStream<PS_VOXEL_INPUT>
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS(DEFERRED_INPUT i) : SV_Target
+float4 PS(DEFERRED_INPUTCF i) : SV_Target
 {
     const float3 ViewPos = ViewInv[3].xyz;
-    float3 vWorldPos = posFromDepth(i.vNormalDepth.w, i.vPosition.xy);
-    float3 Normals = normalize(i.vNormalDepth.xyz);
+    float3 vWorldPos = i.vWorldPos.xyz; //posFromDepth(i.vNormalDepth.w, i.vPosition.xy);
+    float3 Normals = (i.vNormalDepth.xyz*0.5f+0.5f)*2.0f-1.0f;
+    Normals.z = sqrt(1.01 - dot(Normals.xy, Normals.xy));
+    Normals = normalize(Normals);
     float3 ViewDir = normalize(vWorldPos.xyz - ViewPos);
     float3 LightDir = normalize(vSunLightDir.xyz);
     float3 LightPos = normalize(vSunLightDir.xyz) * 8000 + ViewPos;
-    //float3 MieScattering = CalculateMieScattering(LightPos, ViewPos, float3(0, 0, -1), ViewPos.z, i.vNormalDepth.w) * vHorizonCol.rgb;
-    //float3 RayleighScattering = CalculateRayleighScattering(LightPos, ViewPos, ViewDir, ViewPos.z, i.vNormalDepth.w) * vSkyLightCol.rgb;
-    float3 SunContribution = saturate(pow(max(dot(normalize(vSunLightDir.xyz), ViewDir), 0), 8)) * vSunColor;
-
-    //float4 FullScattering = float4(RayleighScattering + MieScattering + SunContribution,1);
+    
     float DiffuseTerm, SpecularTerm;
     CalculateDiffuseTerm_ViewDependent(Normals.xyz, LightDir, ViewDir, DiffuseTerm, 1-Glossiness);
-    CalculateSpecularTerm(Normals.xyz, LightDir, ViewDir, 1-Glossiness, SpecularTerm);
+    CalculateSpecularTerm(Normals.xyz, LightDir, -ViewDir, 1 - Glossiness, SpecularTerm);
     DiffuseTerm *= vSunLightDir.w;
-    DiffuseTerm += vSkyLightCol*0.4f;
-    //float3 rayleighRefl = CalculateRayleighScattering(LightPos, vWorldPos, reflect(ViewDir, normalize(i.vNormalDepth.xyz)), ViewPos.z, i.vNormalDepth.w) * vSkyLightCol.rgb;
     float4 albedoSample = txDiffuse.Sample(samLinear, i.vTexCoord.xy) * DiffuseColor;
     float4 outColor;
-    outColor.rgb = albedoSample.rgb * DiffuseTerm * vSunColor.rgb + SpecularTerm * vSunColor.rgb;
+    // todo: add lighting methods for forward renderer
+    outColor.rgb = albedoSample.rgb * (DiffuseTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * SpecularIntensity * vSunLightDir.w * vSunColor.rgb;
     outColor.a = lerp(albedoSample.a, 1, SpecularTerm);
-    /*lerp(txDiffuse.Sample(samLinear, i.vTexCoord.xy) * DiffuseColor * ((diff + (float4(rayleighRefl, 0)) * max((1 - diff) * 0.25, 0.15)))
-                    + float4(rayleighRefl, 0) * SpecularIntensity,
-                FullScattering, saturate(max(i.vNormalDepth.w - fFogStart, 0) / abs(fFogRange)))*/
 
 	return outColor;
 }

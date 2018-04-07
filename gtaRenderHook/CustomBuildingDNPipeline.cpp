@@ -84,6 +84,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	for (auto mesh: meshList)
 	{
 		bAlphaEnable = 0;
+		if (mesh.material->color.alpha == 0) continue;
 		if (m_uiDeferredStage != 2) {
 			RwRGBA color= mesh.material->color;
 			if (m_uiDeferredStage == 1) {

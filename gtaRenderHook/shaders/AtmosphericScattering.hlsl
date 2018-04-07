@@ -290,7 +290,7 @@ float4 AtmosphericScatteringPS(PSInput_Quad input) : SV_Target
     float3 MieScattering = CalculateMieScattering(LightPos, ViewPos, float3(0, 0, -1), ViewPos.z, ViewZ) * vHorizonCol.rgb;
     float3 RayleighScattering = CalculateRayleighScattering(LightPos, ViewPos, ViewDir, ViewPos.z, ViewZ) * vSkyLightCol.rgb;
     
-    float3 SunContribution = saturate(pow(max(dot(normalize(vSunLightDir.xyz), ViewDir), 0), 8)) * vSunColor.rgb * vSunLightDir.w;
+    float3 SunContribution = min(pow(cosPhi, 8.0f), 1.0f) * vSunColor.rgb * vSunLightDir.w;
     float3 FullScattering = ((RayleighScattering + MieScattering * 0.75f) + SunContribution);
 
     
@@ -356,7 +356,7 @@ float4 AtmosphericScatteringPS(PSInput_Quad input) : SV_Target
     OutLighting.a = 1;
     if (AlbedoColor.a <= 0)
     {
-        OutLighting.xyz = lerp(FullScattering, max(FullScattering, vSunColor.rgb * vSunColor.a), 1 - saturate(pow(cosPhi - 0.999, 16)));
+        OutLighting.xyz = lerp(FullScattering, max(FullScattering, vSunColor.rgb * vSunColor.a), 1 - min(pow(cosPhi - 0.999f, 16.0f),1.0f));
     }
     else
     {

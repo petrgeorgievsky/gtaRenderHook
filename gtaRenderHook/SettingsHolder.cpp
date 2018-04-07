@@ -98,6 +98,7 @@ tinyxml2::XMLElement * DebugSettingsBlock::Save(tinyxml2::XMLDocument *doc)
 	debugSettingsNode->SetAttribute("ShowPreformanceCounters", ShowPreformanceCounters);
 	debugSettingsNode->SetAttribute("DebugMessaging", DebugMessaging);
 	debugSettingsNode->SetAttribute("DebugLevel", DebugLevel);
+	debugSettingsNode->SetAttribute("UseIdleHook", UseIdleHook);
 
 	return debugSettingsNode;
 }
@@ -109,6 +110,7 @@ void DebugSettingsBlock::Load(const tinyxml2::XMLDocument &doc)
 	ShowPreformanceCounters = debugSettingsNode->BoolAttribute("ShowPreformanceCounters", true);
 	DebugMessaging = debugSettingsNode->BoolAttribute("DebugMessaging", false);
 	DebugLevel = debugSettingsNode->IntAttribute("DebugLevel", 0);
+	UseIdleHook = debugSettingsNode->IntAttribute("UseIdleHook", true);
 }
 
 void DebugSettingsBlock::Reset()
@@ -117,10 +119,12 @@ void DebugSettingsBlock::Reset()
 	ShowPreformanceCounters = true;
 	DebugMessaging = false;
 	DebugLevel = 0;
+	UseIdleHook = true;
 }
 
 void DebugSettingsBlock::InitGUI(TwBar * guiholder)
 {
+	TwAddVarRW(guiholder, "Enable RenderHook Idle", TwType::TW_TYPE_BOOL8, &UseIdleHook, "group=Global");
 }
 
 tinyxml2::XMLElement * ShaderDefinesSettingsBlock::Save(tinyxml2::XMLDocument * doc)

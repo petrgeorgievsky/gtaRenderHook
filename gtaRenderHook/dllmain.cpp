@@ -312,6 +312,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	LPVOID lpReserved
 )
 {
+	auto val2 = 0x6A01;
 	UNREFERENCED_PARAMETER(lpReserved);
 	UNREFERENCED_PARAMETER(hModule);
 	switch (ul_reason_for_call)
@@ -334,7 +335,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		RedirectCall(envMapSupportPtr, envMapSupport);
 		RedirectCall(SetRRPtr, SetRR);
 		RedirectCall(SetVMPtr, SetVM);
-		
+		// fix for mouse hiding when using anttweakbar
+		// TODO: make better
+		//Patch((void*)0x7481CD, (void*)&val2,2);
 		
 		SetPointer(Im2DRenderPrimPtr, im2DRenderPrim);
 		SetPointer(Im2DRenderIndexedPrimPtr, im2DRenderIndexedPrim);

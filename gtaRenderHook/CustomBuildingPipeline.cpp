@@ -65,6 +65,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 	for (auto mesh : m_aAlphaMeshList)
 	{
 		auto curmesh = mesh->entryptr->models[mesh->meshID];
+		if (curmesh.material->color.alpha == 0) continue;
 		g_pStateMgr->SetInputLayout((ID3D11InputLayout*)mesh->entryptr->header.vertexDeclaration);
 		g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)mesh->entryptr->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 
@@ -136,6 +137,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 	RwUInt8 bAlphaEnable = 0;
 	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
+		if (entryData->models[i].material->color.alpha == 0) continue;
 		bAlphaEnable = 0;
 		if (m_uiDeferredStage != 2) {
 			if (entryData->models[i].material->surfaceProps.ambient>1.0 || CRenderer::TOBJpass == true)

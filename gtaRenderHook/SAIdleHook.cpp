@@ -15,7 +15,7 @@
 #include "CubemapReflectionRenderer.h"
 #include "RwMethods.h"
 #include <mutex>
-#include "AntTweakBar.h"
+#include <AntTweakBar.h>
 #include "DebugRendering.h"
 #include "D3DRenderer.h"
 #include "DebugBBox.h"
@@ -24,25 +24,19 @@
 #include <game_sa\CWorld.h>
 #include <game_sa\CScene.h>
 #include <game_sa\CClock.h>
+#include <game_sa\CStreaming.h>
+#include <game_sa\CClouds.h>
+#include <game_sa\CWeaponEffects.h>
+#include <game_sa\CSpecialFX.h>
+#include <game_sa\CCoronas.h>
+#include <game_sa\Fx_c.h>
+
 #include "SettingsHolder.h"
-//#include <plugin.h>
-//#include <plugin_sa\game_sa\CFont.h>
 
 /* GTA Definitions TODO: Move somewhere else*/
 #define g_breakMan ((void *)0xBB4240)		// Break manager
-
-
-#define CCullZones__FindTunnelAttributesForCoors(coords) ((int (__cdecl *)(CVector*))0x72D9F0)(coords)
-#define CStreaming__StartRenderEntities() ((void (__cdecl *)())0x4096C0)()
-
-#define RenderPedWeapons() ((void (__cdecl *)())0x732F30)()
-#define sub_5071D0(audio) ((bool(__thiscall *)(CAudioEngine *))0x5071D0)(audio)
-// Font methods, used to display preformance counters
-#define CFont__PrintString(x,y,text) ((void(__cdecl *)(float, float, const char *))0x71A700)(x,y,text)
-#define CFont__SetFontStyle(style) ((void(__cdecl *)(unsigned char))0x719490)(style)
-#define CFont__SetColor(color) ((void(__cdecl *)(RwRGBA))0x719430)(color)
-// Renderer methods, probably will end up rewriten
-#define CRenderer__ProcessLodRenderLists() ((void (__cdecl *)())0x553770)()
+// default Idle method
+#define _Idle(ptr) ((void (__cdecl *)(void*))0x53E920)(ptr)
 // B7CB49     ; CTimer::m_UserPause
 #define CTimer__m_UserPause (*(bool *)0xB7CB49)	
 #define CPostEffects__m_bDisableAllPostEffect (*(bool *)0xC402CF)	
@@ -54,23 +48,11 @@ TwBar* CSAIdleHook::m_MainTWBAR;
 float CSAIdleHook::m_fShadowDNBalance = 1.0;
 void CSAIdleHook::Patch()
 {
-
 	//RedirectCall(0x748D9B, GameLoop);
 	RedirectCall(0x5343B2, RenderEntity2dfx);
 	RedirectCall(0x6FECF0, CreateEntity2dfx);//createroadsign
 	RedirectCall(0x53ECBD, Idle);
 }
-
-/*
-void TW_CALL SetShadowSizeCallback(const void *value, void *clientData)
-{
-	gShadowSettings.Size = *(int*)value;
-	g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = true;
-}
-void TW_CALL GetShadowSizeCallback(void *value, void *clientData)
-{
-	*(int*)value = gShadowSettings.Size;
-}*/
 
 void TW_CALL SaveDataCallBack(void *value)
 {
@@ -86,15 +68,23 @@ bool g_bDrawTweakBar = false;
 
 void CSAIdleHook::Idle(void *Data)
 {
+	
 	if (m_MainTWBAR == nullptr) {
 		m_MainTWBAR = TwNewBar("Settings");
 
 		gShadowSettings.InitGUI(m_MainTWBAR);
 		gTonemapSettings.InitGUI(m_MainTWBAR);
 		gDeferredSettings.InitGUI(m_MainTWBAR);
-
+		gDebugSettings.InitGUI(m_MainTWBAR);
 		TwAddButton(m_MainTWBAR, "Save", SaveDataCallBack, nullptr, "");
 		TwAddButton(m_MainTWBAR, "Reload", ReloadDataCallBack, nullptr, "");
+	}
+	if (!gDebugSettings.UseIdleHook) {
+		
+		_Idle(Data);
+		if (g_bDrawTweakBar)
+			TwDraw();
+		return;
 	}
 	SettingsHolder::Instance.ReloadShadersIfRequired(); 
 	// Update timers
@@ -318,7 +308,7 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	DefinedState();
 	CPostEffects__m_bDisableAllPostEffect = true;
 	// Render effects and 2d stuff
-	_RenderEffects();
+	RenderEffects();
 	DefinedState();
 	//RenderGrass();
 }
@@ -342,6 +332,42 @@ void CSAIdleHook::RenderForward()
 {
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
 	CRenderer::RenderRoads([](void* e) { return true; });
+}
+
+void CSAIdleHook::RenderEffects()
+{
+	//CBirds::Render();
+	//CSkidmarks::Render();
+	//CRopes::Render();
+	//CGlass::Render();
+	//CMovingThings::Render();
+	//CVisibilityPlugins::RenderReallyDrawLastObjects();
+
+	CCoronas::Render();
+	g_fx.Render(TheCamera.m_pRwCamera, 0);
+	//CWaterCannons::Render();
+	//CWaterLevel::RenderWaterFog();
+	CClouds::VolumetricCloudsRender();
+	CClouds::MovingFogRender();
+	/*if (CHeli::NumberOfSearchLights || CTheScripts::NumberOfScriptSearchLights)
+	{
+		CHeli::Pre_SearchLightCone();
+		CHeli::RenderAllHeliSearchLights();
+		CTheScripts::RenderAllSearchLights();
+		CHeli::Post_SearchLightCone();
+	}*/
+	CWeaponEffects::Render();
+	/*if (CReplay::Mode != 1 && !CPad::GetPad(0)->field_10E)
+	{
+		v1 = FindPlayerPed(-1);
+		CPlayerPed::DrawTriangleForMouseRecruitPed(v1);
+	}*/
+	CSpecialFX::Render();
+	//CVehicleRecording::Render();
+	//CPointLights::RenderFogEffect();
+	//CRenderer::RenderFirstPersonVehicle();
+	CVisibilityPlugins__RenderWeaponPedsForPC();
+	//CPostEffects::Render();
 }
 
 void CSAIdleHook::PrepareRealTimeShadows(const RwV3d &sundir)
@@ -510,36 +536,3 @@ void CSAIdleHook::TimeUpdate()
 	CTimer__Update();
 }
 
-// todo: implement sa culling and in sky checks, move out of CSAIdleHook
-void CSAIdleHook::ConstructCustomRenderList(const RwV3d & viewPos, const RwV3d & viewFrontVec, const float& nearDist, const float& farDist,RwCamera* camera)
-{
-	CRenderer__ms_bRenderTunnels		= true;
-	CRenderer__ms_bRenderOutsideTunnels = true;
-	CRenderer::ms_bInTheSky				= false;
-	CRenderer::ms_nNoOfVisibleEntities		= 0;
-	CRenderer::ms_nNoOfVisibleLods			= 0;
-	CRenderer::ms_nNoOfInVisibleEntities	= 0;
-	//CRenderer::ms_vecCameraPosition			= viewPos;
-	if(viewFrontVec.y==0&&viewFrontVec.x==0)
-		CRenderer::ms_fCameraHeading = 0.0f;
-	else
-		CRenderer::ms_fCameraHeading			= atan2(viewFrontVec.y,-viewFrontVec.x);
-	CRenderer__ms_fFarClipPlane				= farDist;
-	auto sceneCamMatrix = RwFrameGetMatrix(RwCameraGetFrame(Scene.m_pRwCamera));
-	auto camPos = *RwMatrixGetPos(sceneCamMatrix);
-	CRenderer::ScanWorld(camera,(RwV3d*)&camPos,nearDist, farDist);
-	//CRenderer::ms_pLodRenderList = (CEntity*)(0xC8E0C8+0x18);
-	CRenderer__ProcessLodRenderLists();
-	CStreaming__StartRenderEntities();
-}
-
-
-// Construct's object list to render for selected camera frustum.
-void CSAIdleHook::ConstructCustomRenderList(RwCamera* cam, const float& nearDist, const float& farDist) {
-	auto camMatrix = RwFrameGetMatrix(RwCameraGetFrame(cam));
-	auto camPos = *RwMatrixGetPos(camMatrix);
-	auto camAt = *RwMatrixGetAt(camMatrix);
-
-	ConstructCustomRenderList(camPos, camAt, nearDist, farDist,cam);
-
-}

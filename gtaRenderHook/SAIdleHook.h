@@ -70,7 +70,7 @@
 #define RenderGrass() ((void (__cdecl *)())0x5DBAE0)()
 #define sub_7154B0() ((void (__cdecl *)())0x7154B0)()
 #define RenderRainStreaks() ((void (__cdecl *)())0x72AF70)()
-#define RenderSunReflection() ((void (__cdecl *)())0x6FBAA0)()
+//#define RenderSunReflection() ((void (__cdecl *)())0x6FBAA0)()
 #define RenderStencil() ((unsigned char (__cdecl *)())0x7113B0)()
 #define FindPlayerPos(outvec,id) ((RwV3d* (__cdecl *)(RwV3d*, int))0x56E010)(outvec,id)
 
@@ -130,6 +130,7 @@ public:
 	static void ConstructCustomRenderList(RwCamera* cam, const float& nearDist, const float& farDist);
 	static void RenderDeferred();
 	static void RenderForward();
+	static void RenderEffects();
 	static void RenderForwardBeforeDeferred();
 	static void RenderForwardAfterDeferred();
 	static void RenderEmissiveObjects();

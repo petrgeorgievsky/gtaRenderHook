@@ -1,6 +1,6 @@
 #pragma once
-#include "tinyxml2.h"
-#include "AntTweakBar.h"
+#include <tinyxml2.h>
+#include <AntTweakBar.h>
 class SettingsBlock;
 class CD3D1XShader;
 class CD3D1XShaderDefineList;
@@ -62,6 +62,7 @@ public:
 	void Reset();
 	void InitGUI(TwBar* guiholder);
 public:
+	bool UseIdleHook;
 	bool ShowPreformanceCounters;
 	bool DebugMessaging;
 	int  DebugLevel;

@@ -87,7 +87,7 @@ float4 SunLightingPS(PSInput_Quad input) : SV_Target
     float ShadowTerm = 1.0;
 #endif
     float2 Lighting = float2(DiffuseTerm, SpecularTerm * SpecIntensity) * ShadowTerm;
-	OutLighting.xyzw = Lighting.xxxy;
+    OutLighting.xyzw = float4(Lighting.x * vSunColor.rgb, Lighting.y);
 	
 	return OutLighting;
 }
@@ -183,7 +183,7 @@ float4 FinalPassPS(PSInput_Quad input) : SV_Target
 		// Reflection term is computed before deferred
 		float3 reflectionTerm = txReflections.Sample(samLinear, input.texCoordOut.xy);
 		// Add atmospheric scattering to result
-        OutLighting.xyz = diffuseTerm * AlbedoColor.rgb + specularTerm + reflectionTerm * Metallness*2.5f;
+        OutLighting.xyz = diffuseTerm * AlbedoColor.rgb + specularTerm + reflectionTerm * Metallness;
 		OutLighting.a = 1;
 	}
 	return OutLighting;
