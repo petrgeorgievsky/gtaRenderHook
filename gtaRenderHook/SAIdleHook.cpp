@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "SAIdleHook.h"
-#include "RwD3D1XEngine.h"
 #include "DeferredRenderer.h"
 #include "ShadowRenderer.h"
 #include "Renderer.h"
@@ -10,11 +9,8 @@
 #include "HDRTonemapping.h"
 #include "CustomCarFXPipeline.h"
 #include "CustomBuildingPipeline.h"
-#include "SettingsHolder.h"
 #include "CWaterLevel.h"
-#include "CubemapReflectionRenderer.h"
 #include "RwMethods.h"
-#include <mutex>
 #include <AntTweakBar.h>
 #include "DebugRendering.h"
 #include "D3DRenderer.h"
@@ -30,8 +26,9 @@
 #include <game_sa\CSpecialFX.h>
 #include <game_sa\CCoronas.h>
 #include <game_sa\Fx_c.h>
+#include <game_sa\CGame.h>
+#include <game_sa\CDraw.h>
 
-#include "SettingsHolder.h"
 
 /* GTA Definitions TODO: Move somewhere else*/
 #define g_breakMan ((void *)0xBB4240)		// Break manager
@@ -119,14 +116,14 @@ void CSAIdleHook::Idle(void *Data)
 
 void CSAIdleHook::UpdateShadowDNBalance()
 {
-	float currentMinutes = (CClock::ms_nGameClockMinutes + 60 * CClock::ms_nGameClockHours) + CClock::ms_nGameClockSeconds * 0.016666668;
+	float currentMinutes = (CClock::ms_nGameClockMinutes + 60.0f * CClock::ms_nGameClockHours) + CClock::ms_nGameClockSeconds / 60.0f;
 	if (currentMinutes < 360.0) {
 		m_fShadowDNBalance = 1.0;
 		return;
 	}
 	if (currentMinutes < 420.0)
 	{
-		m_fShadowDNBalance = (420.0 - currentMinutes) / 60.0;
+		m_fShadowDNBalance = (420.0f - currentMinutes) / 60.0f;
 		return;
 	}
 	// 
@@ -138,7 +135,7 @@ void CSAIdleHook::UpdateShadowDNBalance()
 	if (currentMinutes >= 1200.0)
 		m_fShadowDNBalance = 1.0;
 	else
-		m_fShadowDNBalance = 1.0 - (1200.0 - currentMinutes) / 60.0;
+		m_fShadowDNBalance = 1.0f - (1200.0f - currentMinutes) / 60.0f;
 }
 
 // Render one game frame
@@ -475,9 +472,6 @@ void CSAIdleHook::PrepareRenderStuff()
 		TwMouseMotion(pMousePos.x, pMousePos.y);
 	ShowCursor(g_bDrawTweakBar);
 	CTimer__m_UserPause = g_bDrawTweakBar;
-	//CRenderer__ConstructRenderList();
-	//CRenderer__PreRender();           // CRenderer::PreRender
-	//CWorld__ProcessPedsAfterPreRender();
 }
 
 void CSAIdleHook::Render2dStuffAfterFade()
@@ -502,7 +496,7 @@ void CSAIdleHook::DoRWStuffEndOfFrame()
 
 void CSAIdleHook::PrepareRwCamera()
 {
-	CDraw__CalculateAspectRatio(); // CDraw::CalculateAspectRatio
+	CDraw::CalculateAspectRatio(); // CDraw::CalculateAspectRatio
 	CameraSize(Scene.m_pRwCamera, 0, tanf(CDraw__ms_fFOV*( 3.1415927f / 360.0f)), CDraw__ms_fAspectRatio);
 	CVisibilityPlugins__SetRenderWareCamera(Scene.m_pRwCamera); // CVisibilityPlugins::SetRenderWareCamera
 	RwCameraClear(Scene.m_pRwCamera, gColourTop, rwCAMERACLEARZ);
@@ -518,7 +512,7 @@ void CSAIdleHook::LightUpdate()
 
 void CSAIdleHook::GameUpdate()
 {
-	CGame__Process();
+	CGame::Process();
 	CAudioEngine__Service(AudioEngine);
 }
 

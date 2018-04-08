@@ -18,9 +18,9 @@
 extern int drawCallCount;
 CCustomBuildingDNPipeline::CCustomBuildingDNPipeline() :
 #ifndef DebuggingShaders
-	CDeferredPipeline("SACustomBuildingDN")
+	CDeferredPipeline("SACustomBuildingDN", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #else
-	CDeferredPipeline(L"SACustomBuildingDN")
+	CDeferredPipeline(L"SACustomBuildingDN", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #endif // !DebuggingShaders
 {
 }
@@ -90,7 +90,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 			if (m_uiDeferredStage == 1) {
 				color.alpha = max(color.alpha, 2);
 			}
-			if (mesh.material->surfaceProps.ambient>1.0|| CRenderer::TOBJpass == true)
+			if (mesh.material->surfaceProps.ambient>1.0 || CRenderer::TOBJpass == true)
 				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(color);
 			else
 				g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(color);

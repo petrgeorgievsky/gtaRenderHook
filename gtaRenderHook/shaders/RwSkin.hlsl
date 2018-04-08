@@ -5,6 +5,7 @@
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 Texture2D txDiffuse : register( t0 );
+Texture2D txSpec : register(t1);
 SamplerState samLinear : register( s0 );
 
 // Constant buffer for bone matrices
@@ -85,6 +86,7 @@ void VoxelEmmissivePS(DEFERRED_INPUT i)
 DEFERRED_OUTPUT DeferredPS(DEFERRED_INPUT i)
 {
 	DEFERRED_OUTPUT Out;
-	FillGBuffer(Out, txDiffuse.Sample(samLinear, i.vTexCoord.xy), (i.vNormalDepth.xyz), i.vNormalDepth.w, float2(0.1f, 0.3f));
+    float4 params = HasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(SpecularIntensity, Glossiness, 0, 2);
+    FillGBuffer(Out, txDiffuse.Sample(samLinear, i.vTexCoord.xy), (i.vNormalDepth.xyz), i.vNormalDepth.w, params);
 	return Out;
 }

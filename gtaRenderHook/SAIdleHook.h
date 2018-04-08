@@ -6,29 +6,16 @@
 
 // gta functions
 
-#define CTimer__GetCurrentTimeInCycles() ((size_t  (__cdecl *)())0x561A80)()
-#define CTimer__GetCyclesPerMillisecond() ((size_t  (__cdecl *)())0x561A40)()
 #define CTimer__GetTimeMillisecondsFromStart() ((size_t  (__cdecl *)())0x53BAD0)()
 #define CGame__TimeMillisecondsFromStart (*(size_t*)0xB72CA8)
-#define timerDef (*(size_t*)0xB7CB2C)
-#define RwInitialized (*(int*)0xC920E8)
-#define IsForegroundApp (*(int*)0x8D621C)
-
 
 #define CTimer__Update() ((void (__cdecl *)())0x561B10)()
-#define CSprite2d__InitPerFrame() ((void (__cdecl *)())0x727350)()
-
-#define CFont__InitPerFrame() ((void (__cdecl *)())0x719800)()
-#define CGame__Process() ((void (__cdecl *)())0x53BEE0)()
 #define CAudioEngine__Service(audio) ((void (__thiscall *)(CAudioEngine *))0x507750)(audio)
+
 #define SetLightsWithTimeOfDayColour(world) ((void (__cdecl *)(RpWorld *))0x7354E0)(world)
-#define CreateShadowManagerShadows(shadowManager) ((void (__thiscall *)(CShadowManager *))0x706AB0)(shadowManager)
-#define RenderSceneGeometryToMirror() ((void (__cdecl *)())0x727140)()
-#define DoRWStuffStartOfFrame_Horizon(topR, topG, topB, bottomR, bottomG, bottomB, A) ((unsigned int (__cdecl *)(unsigned short, unsigned short, \
-	unsigned short, unsigned short, unsigned short, unsigned short, unsigned short))0x53D7A0)(topR, topG, topB, bottomR, bottomG, bottomB, A)
+
 #define DefinedState() ((void (__cdecl *)())0x734650)()
 #define CCamera__GetScreenFadeStatus(camera) ((signed int (__thiscall *)(CCamera *))0x50AE20)(camera)
-#define CDraw__CalculateAspectRatio() ((double (__cdecl *)())0x6FF420)()
 #define CVisibilityPlugins__SetRenderWareCamera(camera) ((void (__cdecl *)(RwCamera *))0x7328C0)(camera)
 #define GetTimeFromRenderStart() ((DWORD (__cdecl *)())0x561A80)()
 #define GetTimerDivider() ((int (__cdecl *)())0x561A40)()

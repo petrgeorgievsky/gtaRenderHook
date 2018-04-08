@@ -11,6 +11,8 @@
 #include "D3D1XVertexDeclarationManager.h"
 #include "D3D1XVertexBufferManager.h"
 #include "D3D1XIndexBuffer.h"
+#include "PBSMaterial.h"
+#include "D3D1XRenderBuffersManager.h"
 
 CD3D1XSkinPipeline::CD3D1XSkinPipeline(): 
 #ifndef DebuggingShaders
@@ -156,10 +158,27 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 		{
 			alphaBlend |= GetD3D1XRaster(material->texture->raster)->alpha;
 			g_pRwCustomEngine->SetTexture(material->texture, 0);
+			g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(material->color);
+			auto glossiness = 0.1f;
+			auto intensity = 0.2f;
+			g_pRenderBuffersMgr->UpdateMaterialGlossiness(glossiness);
+			g_pRenderBuffersMgr->UpdateMaterialSpecularInt(intensity);
+			
+			// set physically based shading material params
+			// TODO: add a method for material initialization
+			CPBSMaterial* mat = CPBSMaterialMgr::materials[material->texture->name];
+			if (mat != nullptr) {
+				g_pStateMgr->SetRaster(mat->m_tSpecRoughness->raster, 1);
+				
+				g_pRenderBuffersMgr->UpdateHasSpecTex(1);
+			}
+			else
+				g_pRenderBuffersMgr->UpdateHasSpecTex(0);
 		}
 		// set alpha blending
 		g_pStateMgr->SetAlphaBlendEnable(alphaBlend > 0);
 		// flush and draw
+		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(model->numIndex, model->startIndex, model->minVert);
 	}

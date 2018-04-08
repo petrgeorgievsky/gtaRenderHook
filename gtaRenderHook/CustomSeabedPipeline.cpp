@@ -10,9 +10,9 @@
 
 CCustomSeabedPipeline::CCustomSeabedPipeline() :
 #ifndef DebuggingShaders
-	CDeferredPipeline("SACustomSeabed")
+	CDeferredPipeline("SACustomSeabed", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #else
-	CDeferredPipeline(L"SACustomSeabed")
+	CDeferredPipeline(L"SACustomSeabed", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #endif // !DebuggingShaders
 {
 	ID3D11Device* pd3dDevice = GET_D3D_DEVICE;

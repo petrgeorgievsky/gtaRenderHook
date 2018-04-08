@@ -18,9 +18,9 @@ extern int drawCallCount;
 std::list<AlphaMesh*> CCustomBuildingPipeline::m_aAlphaMeshList{};
 CCustomBuildingPipeline::CCustomBuildingPipeline():
 #ifndef DebuggingShaders
-CDeferredPipeline("SACustomBuilding")
+CDeferredPipeline("SACustomBuilding", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #else
-CDeferredPipeline( L"SACustomBuilding")
+CDeferredPipeline( L"SACustomBuilding", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #endif // !DebuggingShaders
 {
 	/*D3D11_BUFFER_DESC bd;

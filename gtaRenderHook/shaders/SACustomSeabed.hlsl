@@ -111,7 +111,7 @@ DEFERRED_OUTPUT DeferredPS(DEFERRED_INPUT i)
     float4 baseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     if (baseColor.a < 0.3)
         discard;
-	FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float2(SpecularIntensity, Glossiness));
+	FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(SpecularIntensity, Glossiness,0,0));
 	
 
 	return Out;

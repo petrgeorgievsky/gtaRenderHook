@@ -515,7 +515,8 @@ void CWaterLevel::RenderAndEmptyRenderBuffer()
 {
 	if (TempBufferVerticesStored) {
 		//GenerateNormals();
-		g_pCustomWaterPipe->RenderWater(TempVertexBuffer, TempBufferVerticesStored, TempBufferRenderIndexList, TempBufferIndicesStored);
+		if(g_pCustomWaterPipe)
+			g_pCustomWaterPipe->RenderWater(TempVertexBuffer, TempBufferVerticesStored, TempBufferRenderIndexList, TempBufferIndicesStored);
 	}
 	TempBufferIndicesStored = 0;
 	TempBufferVerticesStored = 0;

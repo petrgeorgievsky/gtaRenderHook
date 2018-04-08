@@ -16,9 +16,9 @@
 std::list<AlphaMesh*> CCustomCarFXPipeline::m_aAlphaMeshList{};
 CCustomCarFXPipeline::CCustomCarFXPipeline() :
 #ifndef DebuggingShaders
-	CDeferredPipeline("SACustomCarFX")
+	CDeferredPipeline("SACustomCarFX", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #else
-	CDeferredPipeline(L"SACustomCarFX")
+	CDeferredPipeline(L"SACustomCarFX", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #endif // !DebuggingShaders
 {
 }

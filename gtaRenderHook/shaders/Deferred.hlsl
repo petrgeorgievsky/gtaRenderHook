@@ -159,8 +159,8 @@ float4 FinalPassPS(PSInput_Quad input) : SV_Target
 	float4 OutLighting;
 
 	float4 AlbedoColor = txGB0.Sample(samLinear, input.texCoordOut.xy);
-	float2 Parameters = txGB2.Sample(samLinear, input.texCoordOut.xy).xy;
-
+	float4 Parameters = txGB2.Sample(samLinear, input.texCoordOut.xy);
+    uint materialType = ConvertToMatType(Parameters.w);
 	const float3 ViewPos = ViewInv[3].xyz;
 	
 	float Metallness = Parameters.x;
@@ -182,6 +182,11 @@ float4 FinalPassPS(PSInput_Quad input) : SV_Target
 		float3 specularTerm = (Lighting.w * Lighting.xyz);
 		// Reflection term is computed before deferred
 		float3 reflectionTerm = txReflections.Sample(samLinear, input.texCoordOut.xy);
+        // increase reflection for cars
+        if (materialType == 1)
+        {
+            reflectionTerm *= 2.0f;
+        }
 		// Add atmospheric scattering to result
         OutLighting.xyz = diffuseTerm * AlbedoColor.rgb + specularTerm + reflectionTerm * Metallness;
 		OutLighting.a = 1;

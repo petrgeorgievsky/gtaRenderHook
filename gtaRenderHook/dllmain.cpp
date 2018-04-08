@@ -20,6 +20,7 @@
 #include "ShadowRenderer.h"
 #include "gta_sa_ptrs.h"
 #include "SettingsHolder.h"
+#include "D3DRenderer.h"
 #include "PBSMaterial.h"
 #include <game_sa\CModelInfo.h>
 #include <game_sa\CVehicle.h>
@@ -65,7 +66,8 @@ char GTARwInit() {
 	g_pCustomBuildingDNPipe = new CCustomBuildingDNPipeline();
 	g_pCustomCarFXPipe = new CCustomCarFXPipeline();
 	g_pCustomSeabedPipe = new CCustomSeabedPipeline();
-	g_pCustomWaterPipe = new CCustomWaterPipeline();
+	if(GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
+		g_pCustomWaterPipe = new CCustomWaterPipeline();
 	CLightManager::Init();
 	//CVoxelOctreeRenderer::Init();
 	DebugBBox::Initialize();
@@ -76,7 +78,8 @@ char GTARwShutdown() {
 	DebugBBox::Shutdown();
 	//CVoxelOctreeRenderer::Shutdown();
 	CLightManager::Shutdown();
-	delete g_pCustomWaterPipe;
+	if(g_pCustomWaterPipe)
+		delete g_pCustomWaterPipe;
 	delete g_pCustomSeabedPipe;
 	delete g_pCustomBuildingDNPipe;
 	delete g_pCustomBuildingPipe;
