@@ -9,19 +9,27 @@
 #include "D3D1XStateManager.h"
 #include "D3D1XBuffer.h"
 #include <game_sa\CScene.h>
+#include "D3D1XShaderDefines.h"
 TonemapSettingsBlock gTonemapSettings{};
 
 CHDRTonemapping::CHDRTonemapping():CPostProcessEffect("HDRTonemapping")
 {
 	m_pAdaptationRaster[0] = RwRasterCreate(1, 1, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
 	m_pAdaptationRaster[1] = RwRasterCreate(1, 1, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
-	m_pLogAvg = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "LogLuminance");
-	m_pTonemap = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "Tonemap");
-	m_pDownScale2x2_Lum = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale2x2_Lum");
-	m_pDownScale3x3 = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3");
-	m_pDownScale3x3_BrightPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3_BrightPass");
-	m_pAdaptationPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "AdaptationPass");
+	m_pLogAvg = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "LogLuminancePS");
+	m_pTonemap = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "TonemapPS");
+	m_pDownScale2x2_Lum = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale2x2_LumPS");
+	m_pDownScale3x3 = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3PS");
+	m_pDownScale3x3_BrightPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3_BrightPassPS");
+	m_pAdaptationPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "AdaptationPassPS");
 	
+	gTonemapSettings.m_aShaderPointers.push_back(m_pLogAvg);
+	gTonemapSettings.m_aShaderPointers.push_back(m_pTonemap);
+	gTonemapSettings.m_aShaderPointers.push_back(m_pDownScale2x2_Lum);
+	gTonemapSettings.m_aShaderPointers.push_back(m_pDownScale3x3);
+	gTonemapSettings.m_aShaderPointers.push_back(m_pDownScale3x3_BrightPass);
+	gTonemapSettings.m_aShaderPointers.push_back(m_pAdaptationPass);
+
 	int nSampleLen = 1;
 	for (int i = 0; i < NUM_TONEMAP_TEXTURES; i++)
 	{
@@ -66,7 +74,6 @@ void CHDRTonemapping::Render(RwRaster * input)
 	g_pStateMgr->FlushRenderTargets();
 	m_pDownScale2x2_Lum->Set();
 	CFullscreenQuad::Draw();
-	m_pDownScale2x2_Lum->ReSet();
 
 	// Compute average scene luminance downsampling original raster by 3
 	for (int i = NUM_TONEMAP_TEXTURES - 1; i > 0; i--)
@@ -76,7 +83,6 @@ void CHDRTonemapping::Render(RwRaster * input)
 		g_pStateMgr->FlushRenderTargets();
 		m_pDownScale3x3->Set();
 		CFullscreenQuad::Draw();
-		m_pDownScale3x3->ReSet();
 	}
 
 	// Adapt luminance using previous frame luminance
@@ -87,7 +93,6 @@ void CHDRTonemapping::Render(RwRaster * input)
 	g_pStateMgr->SetRaster(m_pToneMapRaster[0], 1);
 	m_pAdaptationPass->Set();
 	CFullscreenQuad::Draw();
-	m_pAdaptationPass->ReSet();
 
 	m_nCurrentAdaptationRaster = 1 - m_nCurrentAdaptationRaster;
 
@@ -98,7 +103,6 @@ void CHDRTonemapping::Render(RwRaster * input)
 	g_pStateMgr->SetRaster(m_pAdaptationRaster[1 - m_nCurrentAdaptationRaster], 1);
 	m_pTonemap->Set();
 	CFullscreenQuad::Draw();
-	m_pTonemap->ReSet();
 	g_pStateMgr->SetRaster(nullptr, 0);
 	g_pStateMgr->SetRaster(nullptr, 1);
 }
@@ -106,36 +110,52 @@ void CHDRTonemapping::Render(RwRaster * input)
 tinyxml2::XMLElement * TonemapSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 {
 	auto node = doc->NewElement(m_sName.c_str());
-	node->SetAttribute("LumWhiteDay", gTonemapSettings.LumWhiteDay);
-	node->SetAttribute("LumWhiteNight", gTonemapSettings.LumWhiteNight);
-	node->SetAttribute("MiddleGrayDay", gTonemapSettings.MiddleGrayDay);
-	node->SetAttribute("MiddleGrayNight", gTonemapSettings.MiddleGrayNight);
+	node->SetAttribute("Enable", EnableTonemapping);
+	node->SetAttribute("UseGTAColorCorrection", EnableGTAColorCorrection);
+	node->SetAttribute("LumWhiteDay", LumWhiteDay);
+	node->SetAttribute("LumWhiteNight", LumWhiteNight);
+	node->SetAttribute("MiddleGrayDay", MiddleGrayDay);
+	node->SetAttribute("MiddleGrayNight", MiddleGrayNight);
 	return node;
 }
 
 void TonemapSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
 	auto node = doc.FirstChildElement(m_sName.c_str());
-	gTonemapSettings.LumWhiteDay = node->FloatAttribute("LumWhiteDay", 1.25f);
-	gTonemapSettings.LumWhiteNight = node->FloatAttribute("LumWhiteDay", 1.0f);
-	gTonemapSettings.MiddleGrayDay = node->FloatAttribute("MiddleGrayDay", 0.55f);
-	gTonemapSettings.MiddleGrayNight = node->FloatAttribute("MiddleGrayNight", 0.25f);
+	EnableTonemapping = node->BoolAttribute("Enable", true);
+	EnableGTAColorCorrection = node->BoolAttribute("UseGTAColorCorrection", true);
+	LumWhiteDay = node->FloatAttribute("LumWhiteDay", 1.25f);
+	LumWhiteNight = node->FloatAttribute("LumWhiteNight", 1.0f);
+	MiddleGrayDay = node->FloatAttribute("MiddleGrayDay", 0.55f);
+	MiddleGrayNight = node->FloatAttribute("MiddleGrayNight", 0.25f);
+	gTonemapSettings.m_pShaderDefineList = new CD3D1XShaderDefineList();
+	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)EnableGTAColorCorrection));
 }
 
 void TonemapSettingsBlock::Reset()
 {
+	EnableGTAColorCorrection = true;
+	EnableTonemapping = true;
 	MiddleGrayDay = 0.55f;
 	LumWhiteDay = 1.25f;
 	MiddleGrayNight = 0.25f;
 	LumWhiteNight = 1.0f;
 }
-
+void TW_CALL ReloadTonemapShadersCallBack(void *value)
+{
+	gTonemapSettings.m_bShaderReloadRequired = true;
+	gTonemapSettings.m_pShaderDefineList->Reset();
+	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)gTonemapSettings.EnableGTAColorCorrection));
+}
 void TonemapSettingsBlock::InitGUI(TwBar * bar)
 {
+	TwAddVarRW(bar, "Use GTA Color-Correction", TwType::TW_TYPE_BOOL8, &EnableGTAColorCorrection, "group=Tonemap");
 	TwAddVarRW(bar, "LumWhite Day", TwType::TW_TYPE_FLOAT, &LumWhiteDay, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
 	TwAddVarRW(bar, "LumWhite Night", TwType::TW_TYPE_FLOAT, &LumWhiteNight, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
 	TwAddVarRW(bar, "MiddleGray Day", TwType::TW_TYPE_FLOAT, &MiddleGrayDay, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
 	TwAddVarRW(bar, "MiddleGray Night", TwType::TW_TYPE_FLOAT, &MiddleGrayNight, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
+	
+	TwAddButton(bar, "Reload tonemap shaders", ReloadTonemapShadersCallBack, nullptr, "group=Tonemap");
 }
 
 float TonemapSettingsBlock::GetCurrentLumWhite()

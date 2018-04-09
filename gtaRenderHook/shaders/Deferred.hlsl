@@ -194,7 +194,7 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
 		float3 SpecularTerm = (Lighting.w * Lighting.xyz);
 		// Reflection term is computed before deferred
 		float3 ReflectionTerm = txReflections.Sample(samLinear, i.vTexCoord.xy);
-        // increase reflection for cars
+        // Increase reflection for cars
         if (MaterialType == 1)
         {
             ReflectionTerm *= 2.0f;

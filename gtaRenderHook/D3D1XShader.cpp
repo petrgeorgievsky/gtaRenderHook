@@ -116,7 +116,7 @@ CD3D1XVertexShader::CD3D1XVertexShader(std::string fileName, std::string entryPo
 	{
 		m_pBlob->Release();
 		m_pBlob = nullptr;
-		g_pDebug->printError("Failed to create vertex shader");
+		g_pDebug->printError("Failed to create vertex shader:" + fileName);
 	}
 }
 
@@ -154,13 +154,14 @@ CD3D1XPixelShader::CD3D1XPixelShader(std::string fileName, std::string entryPoin
 	m_sShaderModel = "ps_" + g_pStateMgr->GetShaderModel(GET_D3D_FEATURE_LVL);
 	m_sFilePath = fileName;
 	m_sEntryPoint = entryPoint;
+	
 	if (!CALL_D3D_API(CompileShaderFromFile(m_sFilePath, m_sEntryPoint, m_sShaderModel, &m_pBlob, localShaderDefineList),
 		"Pixel shader compilation error, please see logs."))
 		return;
 
 	// Create shader resource
 	if (!CALL_D3D_API(GET_D3D_DEVICE->CreatePixelShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11PixelShader**>(&m_pShaderDC)),
-		"Failed to create pixel shader"))
+		"Failed to create pixel shader:"+fileName))
 	{
 		m_pBlob->Release();
 		m_pBlob = nullptr;
@@ -187,26 +188,31 @@ void CD3D1XPixelShader::ReSet()
 
 void CD3D1XPixelShader::Reload(CD3D1XShaderDefineList* localShaderDefineList)
 {
-	// first release resources
-	// TODO: check if they are used to avoid unexpected behavior
-	if (m_pShaderDC) {
-		m_pShaderDC->Release();
-		m_pShaderDC = nullptr;
-	}
-	if (m_pBlob) {
-		m_pBlob->Release();
-		m_pBlob = nullptr;
-	}
+	// try to create shaders, if succeed than release old resources and set new
+	ID3D10Blob* pBlob;
+	ID3D11PixelShader* pShader;
 	// recompile shader
-	if (!CALL_D3D_API(CompileShaderFromFile(m_sFilePath, m_sEntryPoint, m_sShaderModel, &m_pBlob, localShaderDefineList),
+	if (!CALL_D3D_API_SILENT(CompileShaderFromFile(m_sFilePath, m_sEntryPoint, m_sShaderModel, &pBlob, localShaderDefineList),
 		"Pixel shader compilation error, please see logs."))
 		return;
 	// create shader resource
-	if (!CALL_D3D_API(GET_D3D_DEVICE->CreatePixelShader(m_pBlob->GetBufferPointer(), m_pBlob->GetBufferSize(), nullptr, reinterpret_cast<ID3D11PixelShader**>(&m_pShaderDC)),
-		"Failed to create pixel shader"))
+	if (!CALL_D3D_API_SILENT(GET_D3D_DEVICE->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
+		nullptr, &pShader),
+		"Failed to create pixel shader:" + m_sFilePath))
 	{
+		pBlob->Release();
+		pBlob = nullptr;
+		return;
+	}
+
+	// TODO: check if they are used to avoid unexpected behavior
+	if (m_pShaderDC) {
+		m_pShaderDC->Release();
+		m_pShaderDC = pShader;
+	}
+	if (m_pBlob) {
 		m_pBlob->Release();
-		m_pBlob = nullptr;
+		m_pBlob = pBlob;
 	}
 }
 
@@ -227,7 +233,7 @@ CD3D1XComputeShader::CD3D1XComputeShader(std::string fileName, std::string entry
 	{
 		m_pBlob->Release();
 		m_pBlob = nullptr;
-		g_pDebug->printError("Failed to create vertex shader");
+		g_pDebug->printError("Failed to create compute shader:" + fileName);
 	}
 }
 
@@ -268,7 +274,7 @@ CD3D1XGeometryShader::CD3D1XGeometryShader(std::string fileName, std::string ent
 	{
 		m_pBlob->Release();
 		m_pBlob = nullptr;
-		g_pDebug->printError("Failed to create vertex shader");
+		g_pDebug->printError("Failed to create geometry shader:" + fileName);
 	}
 }
 
@@ -309,7 +315,7 @@ CD3D1XHullShader::CD3D1XHullShader(std::string fileName, std::string entryPoint)
 	{
 		m_pBlob->Release();
 		m_pBlob = nullptr;
-		g_pDebug->printError("Failed to create vertex shader");
+		g_pDebug->printError("Failed to create hull shader:" + fileName);
 	}
 }
 
@@ -352,7 +358,7 @@ CD3D1XDomainShader::CD3D1XDomainShader(std::string fileName, std::string entryPo
 	{
 		m_pBlob->Release();
 		m_pBlob = nullptr;
-		g_pDebug->printError("Failed to create vertex shader");
+		g_pDebug->printError("Failed to create domain shader:" + fileName);
 	}
 }
 

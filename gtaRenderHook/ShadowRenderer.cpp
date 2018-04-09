@@ -23,6 +23,9 @@ CShadowRenderer::CShadowRenderer()
 	RwCameraSetNearClipPlane(m_pShadowCamera, -150);
 	RwCameraSetFarClipPlane(m_pShadowCamera, 1500);
 	RwCameraSetRaster(m_pShadowCamera, nullptr);
+	int maxTexSize;
+	if (g_pRwCustomEngine->GetMaxTextureSize(maxTexSize))
+		gShadowSettings.Size = min(gShadowSettings.Size, maxTexSize / 2);
 	RwCameraSetZRaster(m_pShadowCamera, RwRasterCreate(gShadowSettings.Size * 2, gShadowSettings.Size * 2, 32, rwRASTERTYPEZBUFFER));
 	vw.x = vw.y = 40;
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
@@ -359,8 +362,15 @@ void TW_CALL GetShadowSizeCallback(void *value, void *clientData)
 }
 void ShadowSettingsBlock::InitGUI(TwBar * bar)
 {
+	int maxTexSize;
+	std::string shadowSettings = "min=16 max=";
+	if (!g_pRwCustomEngine->GetMaxTextureSize(maxTexSize))
+		shadowSettings += "1024";
+	else
+		shadowSettings += to_string(maxTexSize/2);
+	shadowSettings += " step=2 help='Shadow map size, higher - less pixelation/blurry shadows, lower - higher performance' group=Shadows";
 	TwAddVarCB(bar, "Cascade Size", TwType::TW_TYPE_UINT32,
-		SetShadowSizeCallback, GetShadowSizeCallback, nullptr, " min=16 max=8192 step=2 help='Shadow map size, higher - less pixelation/blurry shadows, lower - higher performance' group=Shadows");
+		SetShadowSizeCallback, GetShadowSizeCallback, nullptr, shadowSettings.c_str());
 	TwAddVarRW(bar, "Max DrawDistance", TwType::TW_TYPE_FLOAT,
 		&MaxDrawDistance,
 		" min=5 max=30000 step=5 help='Maximum shadow draw distance, limits how far shadows being drawn.' group=Shadows");

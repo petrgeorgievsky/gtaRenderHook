@@ -360,6 +360,7 @@
       <FileType>Document</FileType>
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="shaders\ReflectionFunctions.hlsli" />
     <None Include="shaders\RwIm2D.hlsl">
       <FileType>Document</FileType>
       <DeploymentContent>true</DeploymentContent>

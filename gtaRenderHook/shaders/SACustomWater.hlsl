@@ -1,7 +1,8 @@
 #include "GameMath.hlsl"
 #include "LightingFunctions.hlsl"
 #include "GBuffer.hlsl"
-//#include "AtmosphericScattering.hlsl"
+#include "AtmosphericScatteringFunctions.hlsli"
+#include "ReflectionFunctions.hlsli"
 #include "VoxelizingHelper.hlsl"
 #include "Shadows.hlsl"
 //--------------------------------------------------------------------------------------
@@ -95,6 +96,7 @@ VS_OUTPUT_HS_INPUT VS(VS_INPUT i)
 
 	return Out;
 }
+
 HS_CONSTANT_DATA_OUTPUT ConstantsHS(InputPatch<VS_OUTPUT_HS_INPUT, 4> p)
 {
     HS_CONSTANT_DATA_OUTPUT output = (HS_CONSTANT_DATA_OUTPUT) 0;
@@ -120,6 +122,7 @@ HS_CONSTANT_DATA_OUTPUT ConstantsHS(InputPatch<VS_OUTPUT_HS_INPUT, 4> p)
 
     return output;
 }
+
 [domain("quad")]
 [partitioning("integer")]
 [outputtopology("triangle_cw")]
@@ -237,110 +240,63 @@ DS_OUTPUT DS(HS_CONSTANT_DATA_OUTPUT input, float2 vUVs : SV_DomainLocation,
     return output;
 }
 
-
-float3 GetUV(float3 position)
-{
-    float4 pVP = mul(mul(float4(position, 1.0f), mView), mProjection);
-    pVP.xy = float2(0.5f, 0.5f) + float2(0.5f, -0.5f) * pVP.xy / pVP.w;
-    return float3(pVP.xy, pVP.z / pVP.w);
-}
-float3 SSR(float3 texelPosition, float3 reflectDir)
-{
-    float3 currentRay = 0;
-
-    float3 nuv = 0;
-    float L = 0.001;
-
-    for (int i = 0; i < 8; i++)
-    {
-        currentRay = texelPosition + reflectDir * L;
-
-        nuv = GetUV(currentRay); // проецирование позиции на экран
-        if (nuv.x < 0 || nuv.x > 1 || nuv.y < 0 || nuv.y > 1)
-            return float3(0, 0, 0);
-        float4 NormalSpec = txGB1.Sample(samLinear, nuv.xy);
-        float ViewZ = DecodeFloatRG(NormalSpec.zw);
-        float3 newPosition = DepthToWorldPos(ViewZ, nuv.xy).xyz;
-        L = length(texelPosition - newPosition);
-        if (L <= 0.0011)
-            return float3(0, 0, 0);
-    }
-    float error0 = saturate(max(L - 0.011, 0) / 0.088);
-    float maxOutScreenRayDist = 0.05;
-    float error1 = saturate(max(nuv.x - maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25) *
-                   saturate(max(nuv.y - maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25) *
-                   saturate(max(1 - nuv.x + maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25) *
-                   saturate(max(1 - nuv.y + maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25);
-    return txGB0.Sample(samLinear, nuv.xy).rgb * error0 * error1;
-}
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
 float4 PS(PS_INPUT i) : SV_Target
 {
-    float4 outColor = float4(i.vNormal.xyz,1);
-    float3 vNormal = normalize(i.vNormal.xyz);
+    float4 OutColor = float4(i.vNormal.xyz,1);
+
+    float3 Normal = normalize(i.vNormal.xyz);
     float scatter_factor;
+
     float3 vLightPosition = mViewInv[3].xyz + vSunLightDir.xyz * 1000;
-    float3 pixel_to_light_vector = normalize(vLightPosition - i.vWorldPos);
-    float3 pixel_to_eye_vector = normalize(mViewInv[3].xyz - i.vWorldPos);
-    float2 screenCoords = i.vVPos.xy / float2(fScreenWidth, fScreenHeight);
-    float4 NormalSpec = txGB1.Sample(samLinear, screenCoords);
-    float3 Normals = normalize(DecodeNormals(NormalSpec.xy));
-    float ViewZ = DecodeFloatRG(NormalSpec.zw);
-    float shadow_factor = SampleShadowCascades(txShadow,samShadow,samLinear,i.vWorldPos, length(i.vWorldPos.xyz - mViewInv[3].xyz));
-    ViewZ = ViewZ <= 0 ? fFarClip : ViewZ;
+
+    float3 LightDir = normalize(vSunLightDir.xyz);
+    float3 ViewDir = normalize(i.vWorldPos - mViewInv[3].xyz);
+
+    float2 ScreenCoords = i.vVPos.xy / float2(fScreenWidth, fScreenHeight);
+    // Retrieve depth and normals
+    float3 Normals;
+    float ViewZ;
+    GetNormalsAndDepth(txGB1, samLinear, ScreenCoords, ViewZ, Normals);
+
+    float Shadow = SampleShadowCascades( txShadow, samShadow, samLinear, i.vWorldPos, length(i.vWorldPos.xyz - mViewInv[3].xyz) );
+
+    float3 SmallWaveNormal = normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord*16).gbr - float3(1, -8, 1));
+    SmallWaveNormal += normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord * 8 + 0.05).gbr - float3(1, -8, 1));
     
-    float3 microbump_normal = normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord*16).gbr - float3(1, -8, 1));
-    microbump_normal += normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord * 8 + 0.05).gbr - float3(1, -8, 1));
-    float3x3 normal_rotation_matrix;
+    float3x3 NormalSpaceMatrix;
 	// calculating base normal rotation matrix
-    normal_rotation_matrix[1] = vNormal.xyz;
-    normal_rotation_matrix[2] = normalize(cross(float3(0.0, -1.0, 0.0), normal_rotation_matrix[1]));
-    normal_rotation_matrix[0] = normalize(cross(normal_rotation_matrix[2], normal_rotation_matrix[1]));
+    NormalSpaceMatrix[1] = Normal.xyz;
+    NormalSpaceMatrix[2] = normalize(cross(float3(0.0, -1.0, 0.0), NormalSpaceMatrix[1]));
+    NormalSpaceMatrix[0] = normalize(cross(NormalSpaceMatrix[2], NormalSpaceMatrix[1]));
 
 	// applying base normal rotation matrix to high frequency bump normal
-    microbump_normal = mul(normalize(microbump_normal), normal_rotation_matrix);
-
-    scatter_factor = 2.5 * max(0, i.vWorldPos.z * 0.25 + 0.25);
-    scatter_factor *= shadow_factor*pow(max(0.0, dot(normalize(float3(pixel_to_light_vector.x, 0.0, pixel_to_light_vector.z)), -pixel_to_eye_vector)), 2.0);
-    scatter_factor *= pow(max(0.0, 1.0 - dot(pixel_to_light_vector, microbump_normal)), 8.0);
+    SmallWaveNormal = mul(normalize(SmallWaveNormal), NormalSpaceMatrix);
+    
     float g_WaterColorIntensity = 0.2;
-    // water crests gather more light than lobes, so more light is scattered under the crests
-    scatter_factor += shadow_factor*   1.5 * g_WaterColorIntensity * max(0, i.vWorldPos.z + 1) *
-		// the scattered light is best seen if observing direction is normal to slope surface
-		max(0, dot(pixel_to_eye_vector, microbump_normal)) *
-		// fading scattered light out at distance and if viewing direction is vertical to avoid unnatural look
-		max(0, 1 - pixel_to_eye_vector.y) * (300.0 / (300 + length(mViewInv[3].xyz - i.vWorldPos)));
 
-    float r = (1.2 - 1.0) / (1.2 + 1.0);
-    float fresnel_factor = max(0.0, min(1.0, r + (1.0 - r) * pow(1.0 - dot(microbump_normal, pixel_to_eye_vector), 4)));
+    float FresnelCoeff = MicrofacetFresnel(-ViewDir, Normal, 0.5f);
+    float DiffuseTerm = 0.1 + g_WaterColorIntensity * max(0, dot(LightDir, SmallWaveNormal)) * Shadow;
 
-    float diffuse_factor = 0.1 + g_WaterColorIntensity * max(0, dot(pixel_to_light_vector, microbump_normal));
-    float3 reflected_eye_to_pixel_vector = -pixel_to_eye_vector + 2 * dot(pixel_to_eye_vector, microbump_normal) * microbump_normal;
-    float specular_factor = shadow_factor * fresnel_factor * pow(max(0, dot(pixel_to_light_vector, reflected_eye_to_pixel_vector)), 1000.0);
-    float3 refl = SSR(i.vWorldPos, reflected_eye_to_pixel_vector); // +
-    //CalculateRayleighScattering(vLightPosition, i.vWorldPos, reflect(-pixel_to_eye_vector, microbump_normal), ViewInv[3].z, i.fDepth) * vSkyLightCol.rgb;
-    float waterDepth = ViewZ - i.fDepth;
-    waterDepth = max(0, waterDepth);
+    float3 ReflectDir = normalize(reflect(ViewDir, Normal));
 
-    // fading refraction color to water color according to distance that refracted ray travels in water 
-    float3 refraction_color = txGB0.Sample(samLinear, screenCoords);
-    refraction_color = vWaterColor.rgb * lerp(diffuse_factor, refraction_color, min(1, 1.0 * exp(-waterDepth / 8.0)));
-
-    outColor.rgb = lerp(refraction_color, refl, fresnel_factor);
-    outColor.rgb += /*g_WaterSpecularIntensity */specular_factor * vSunLightDir.w * fresnel_factor*350;
-    outColor.rgb += vSunColor.rgb * scatter_factor * 0.8f * vSunLightDir.w;
-
-    //float3 MieScattering = CalculateMieScattering(vLightPosition, ViewInv[3].xyz, float3(0, 0, -1), ViewInv[3].z, i.fDepth) * vHorizonCol.rgb;
-    //float3 RayleighScattering = CalculateRayleighScattering(vLightPosition, ViewInv[3].xyz, -pixel_to_eye_vector, ViewInv[3].z, i.fDepth) * vSkyLightCol.rgb;
-    //float3 SunContribution = saturate(pow(max(dot(normalize(vSunLightDir.xyz), -pixel_to_eye_vector), 0), 8)) * vSunColor.rgb * vSunLightDir.w;
-    fresnel_factor *= min(1, waterDepth * 5.0);
-   // float3 FullScattering = (RayleighScattering + MieScattering + SunContribution);
+    float SpecularTerm;
+    CalculateSpecularTerm(Normal.xyz, LightDir, -ViewDir, GetLuminance(SmallWaveNormal), SpecularTerm);
+    // = Shadow * FresnelCoeff;
     
-    //outColor.rgb = lerp(outColor.rgb, FullScattering, saturate(max(i.fDepth - fFogStart, 0) / abs(fFogRange)));
-    //outColor.xyz = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
-    
+    float WaterDepth = ViewZ - i.fDepth;
+    WaterDepth = max(0, WaterDepth);
 
-    return outColor;
+    float ReflectionFallback;
+    float3 ReflectionColor = lerp(SSR(txGB0, txGB1, samLinear, i.vWorldPos, ReflectDir, 0.5f, ReflectionFallback), vSkyLightCol.rgb, ReflectionFallback);
+    float3 RefractionColor = txGB0.Sample(samLinear, ScreenCoords);
+    RefractionColor = lerp(DiffuseTerm, RefractionColor, min(1, exp(-WaterDepth / 8.0))) * vWaterColor.rgb;
+
+    OutColor.rgb = lerp(RefractionColor, ReflectionColor, FresnelCoeff);
+    OutColor.rgb += min(SpecularTerm, 16.0f) * Shadow * vSunLightDir.w * FresnelCoeff;
+    float3 FullScattering;
+    OutColor.rgb = CalculateFogColor(OutColor.rgb, ViewDir, LightDir, min(ViewZ, i.fDepth), i.vWorldPos.z, FullScattering);
+    return OutColor;
 }

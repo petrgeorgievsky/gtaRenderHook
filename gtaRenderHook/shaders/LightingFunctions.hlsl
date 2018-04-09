@@ -1,5 +1,5 @@
 //#define PBR_LIGTHING
-// TODO: Cleanup this mess
+// TODO: Cleanup this mess, and do some research
 #ifndef LIGHTING_FUNCTIONS
 #define LIGHTING_FUNCTIONS
 static const float PI = 3.14;
@@ -74,13 +74,16 @@ inline float SmithJointGGXVisibilityTerm(float NdotL, float NdotV, float roughne
 	// Simplify visibility term: (2.0f * NdotL * NdotV) /  ((4.0f * NdotL * NdotV) * (lambda_v + lambda_l + 1e-5f));
 	return 0.5f / (lambdaV + lambdaL + 1e-5f);
 }
-float MicrofacetFresnel(in float3 vLightDir, in float3 vHalfWay, in float fRoughness) {
-	float fIOR = 1.5f;
-	float f0 = (1 - fIOR) / (1 + fIOR);
+// Totally microfacet, so true, much not false(need to think about it in spare time, 
+// model some microfacet surface, and approx frensel coeff over small area)
+float MicrofacetFresnel(in float3 LightDir, in float3 Normal, in float fRoughness) {
+	float IOR = 1.5f;
+    float f0 = (1 - IOR) / (1 + IOR);
 	f0 *= f0;
+    // Cosine between light and normal
+    float CosPhi = max(dot(LightDir, Normal), 0);
 
-	return f0+(1- f0)*pow5(1-max(dot(vLightDir, vHalfWay),0));
-	//float 
+    return f0 + (1 - f0) * pow5(1 - CosPhi);
 }
 float MicrofacetSpecular(in float3 vNormal,in float3 vLightDir,in float3 vViewDir,in float fRoughness){
 

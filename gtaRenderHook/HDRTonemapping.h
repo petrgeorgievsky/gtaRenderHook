@@ -48,8 +48,8 @@ public:
 	float LumWhiteNight;
 	float MiddleGrayDay;
 	float MiddleGrayNight;
-	float EnableColorCorrection;
-	float EnableTonemapp;
+	bool EnableGTAColorCorrection;
+	bool EnableTonemapping;
 	float GetCurrentLumWhite();
 	float GetCurrentMiddleGray();
 };

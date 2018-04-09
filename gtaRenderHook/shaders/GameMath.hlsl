@@ -17,6 +17,7 @@
 	}else if(uiAlphaTestType==0){\
 		alpha=1;\
 	}
+//-----------------------------------------VOXEL STUFF(UNUSED)-----------------------------------------------------
 // Converts from world space to voxel space. TODO: use matrices
 float3 ConvertToVoxelSpace(float3 p)
 {
@@ -41,6 +42,8 @@ float3 ConvertFromVoxelSpace(float3 p, float scale)
     float3 op = ((p - float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2)) / scale) + mViewInv[3].xyz;
     return op;
 }
+//-----------------------------------------------------------------------------------------------------------------
+
 // Converts uint to rgba.
 float4 UINTtoRGBA(uint color) {
 	if (color == 0xffffffff) return float4(1, 1, 1, 1);

@@ -326,6 +326,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SettingsHolder::Instance.AddSettingBlock(&gTonemapSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gShadowSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gDeferredSettings);
+		SettingsHolder::Instance.AddSettingBlock(&gWaterSettings);
 		SettingsHolder::Instance.ReloadFile();
 		g_pDebug = new CDebug("debug.log");
 		g_pRwCustomEngine = new CRwD3D1XEngine(g_pDebug);

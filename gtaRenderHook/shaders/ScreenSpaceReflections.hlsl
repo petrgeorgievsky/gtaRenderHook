@@ -1,6 +1,7 @@
 #include "GameMath.hlsl"
 #include "Shadows.hlsl"
 #include "LightingFunctions.hlsl"
+#include "ReflectionFunctions.hlsli"
 #include "GBuffer.hlsl"
 #include "VoxelGI.hlsl"
 #include "Shadows.hlsl"
@@ -11,9 +12,6 @@ Texture2D txGB0 	: register(t0);
 Texture2D txGB1 	: register(t1);
 Texture2D txGB2 	: register(t2);
 Texture2D txPrevFrame : register(t3);
-#ifndef SSR_SAMPLE_COUNT
-#define SSR_SAMPLE_COUNT 8
-#endif
 #ifndef SAMLIN
 #define SAMLIN
 SamplerState samLinear : register(s0);
@@ -102,53 +100,6 @@ void swap(inout float a, inout float b)
     a = b;
     b = t;
 }
-float3 SSR(float3 texelPosition, float3 reflectDir,float roughness, out float fallback)
-{
-    float3 currentRay = 0;
-
-    float3 nuv = 0;
-    float L = fSSRStep;
-	float fStepScaling = 1.0f;
-	fallback=0.0;
-    float3 csRayStart = GetCameraSpacePos(texelPosition);
-    float3 csRayDir = reflectDir;
-   // return csRayStart;
-    float2 uv;
-    float3 hp;
-   // return float3(0, 0, 0);
-    //int maxIterations = min(SSRMaxIterations, 128);
-    for (int i = 0; i < SSR_SAMPLE_COUNT; i++)
-    {
-        currentRay = texelPosition + reflectDir * L;
-
-        nuv = GetUV(currentRay);
-        if (nuv.x < 0 || nuv.x > 1 || nuv.y < 0 || nuv.y > 1){
-			fallback=1.0;
-            return float3(0, 0, 0);
-		}
-        float4 NormalSpec = txGB1.Sample(samLinear, nuv.xy);
-        float ViewZ = DecodeFloatRG(NormalSpec.zw);
-        float3 newPosition = DepthToWorldPos(ViewZ, nuv.xy).xyz;
-        L = length(texelPosition - newPosition);
-        if (abs(ViewZ - nuv.z) < 0.000001f)
-        {
-			fallback=1.0;
-            return float3(0, 0, 0);
-		}
-       /*L+=fStep;
-        fStep*=fStepScaling;*/
-    }
-    float error0 = saturate(max(L - 0.011,0) / 0.044);
-    float maxOutScreenRayDist = 0.03;
-    float error1 = saturate(max(nuv.x - maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25) *
-                   saturate(max(nuv.y - maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25) *
-                   saturate(max(1 - nuv.x + maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25) *
-                   saturate(max(1 - nuv.y + maxOutScreenRayDist, 0) / maxOutScreenRayDist * 0.25);
-	fallback = 1 - error0 * error1;
-    float3 refsample = txPrevFrame.Sample(samLinear, nuv.xy).rgb;
-    return refsample; //* error0 * error1;
-}
-
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
@@ -172,5 +123,5 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float Fallback;
     float FresnelCoeff = MicrofacetFresnel(NormalsVS, -ViewDir, Roughness);
    // float3 raytracedColor = ScreenSpaceRT(cameraSpacePos,)
-    return float4(SSR(worldSpacePos, ReflDir, Roughness, Fallback) * (1 - Fallback) * FresnelCoeff, 1);
+    return float4(lerp(SSR(txPrevFrame, txGB1, samLinear, worldSpacePos, ReflDir, Roughness, Fallback), vSkyLightCol.rgb, Fallback) * FresnelCoeff, 1);
 }

@@ -500,5 +500,8 @@
     <None Include="shaders\AtmosphericScatteringFunctions.hlsli">
       <Filter>Source\Shaders</Filter>
     </None>
+    <None Include="shaders\ReflectionFunctions.hlsli">
+      <Filter>Source\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

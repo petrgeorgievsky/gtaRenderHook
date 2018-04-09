@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D1XPipeline.h"
+#include "SettingsHolder.h"
 class CCustomWaterPipeline :
 	public CD3D1XPipeline
 {
@@ -15,3 +16,17 @@ public:
 	CD3D1XShader*		m_pDS = nullptr;
 };
 extern CCustomWaterPipeline* g_pCustomWaterPipe;
+// Tonemap settings block class
+class WaterSettingsBlock : public SettingsBlock {
+public:
+	WaterSettingsBlock() {
+		m_sName = "WaterSettings";
+	}
+	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
+	void Load(const tinyxml2::XMLDocument &doc);
+	void Reset();
+	void InitGUI(TwBar*);
+public:
+	bool EnableWater;
+};
+extern WaterSettingsBlock gWaterSettings;

@@ -6,7 +6,7 @@
 #include "D3D1XStateManager.h"
 #include "D3D1XRenderBuffersManager.h"
 #include "RwD3D1XEngine.h"
-
+WaterSettingsBlock gWaterSettings;
 CCustomWaterPipeline::CCustomWaterPipeline() :
 #ifndef DebuggingShaders
 	CD3D1XPipeline( "SACustomWater")
@@ -14,6 +14,7 @@ CCustomWaterPipeline::CCustomWaterPipeline() :
 	CD3D1XPipeline( L"SACustomWater")
 #endif // !DebuggingShaders
 {
+	gWaterSettings.m_aShaderPointers.push_back(m_pPS);
 	ID3D11Device* pd3dDevice = GET_D3D_DEVICE;
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
@@ -113,4 +114,36 @@ void CCustomWaterPipeline::RenderWater(RwIm3DVertex * verticles, UINT vertexCoun
 	m_pDS->ReSet();
 	m_pHS->ReSet();
 	//g_pStateMgr->SetFillMode(D3D11_FILL_SOLID);
+}
+void TW_CALL ReloadWaterShadersCallBack(void *value)
+{
+	gWaterSettings.m_bShaderReloadRequired = true;
+}
+tinyxml2::XMLElement * WaterSettingsBlock::Save(tinyxml2::XMLDocument * doc)
+{
+	auto node = doc->NewElement(m_sName.c_str());
+	node->SetAttribute("Enable", EnableWater);
+	return node;
+}
+
+void WaterSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
+{
+	auto node = doc.FirstChildElement(m_sName.c_str());
+	if (!node) {
+		Reset();
+		return;
+	}
+	
+	EnableWater = node->BoolAttribute("Enable", true);
+}
+
+void WaterSettingsBlock::Reset()
+{
+	EnableWater = true;
+}
+
+void WaterSettingsBlock::InitGUI(TwBar * bar)
+{
+	TwAddVarRW(bar, "Use Custom Water", TwType::TW_TYPE_BOOL8, &EnableWater, "group=Water");
+	TwAddButton(bar, "Reload water shaders", ReloadWaterShadersCallBack, nullptr, "group=Water");
 }
