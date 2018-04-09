@@ -33,3 +33,7 @@ void CPBSMaterialMgr::LoadMaterials()
 		}
 	}
 }
+
+void CPBSMaterialMgr::SetMaterial(const char * textureName)
+{
+}

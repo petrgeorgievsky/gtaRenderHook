@@ -323,6 +323,7 @@
     <ClCompile Include="VoxelPipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\AtmosphericScatteringFunctions.hlsli" />
     <None Include="shaders\AtmosphericScattering.hlsl">
       <FileType>Document</FileType>
       <DeploymentContent>true</DeploymentContent>

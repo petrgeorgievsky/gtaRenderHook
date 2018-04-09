@@ -4,13 +4,16 @@
 class SettingsBlock;
 class CD3D1XShader;
 class CD3D1XShaderDefineList;
-// Render Hook settings holder singleton
+/*! 
+	Render Hook settings holder singleton
+*/
 class SettingsHolder
 {
 	std::list<SettingsBlock*>	m_aSettingsBlocks;
 	tinyxml2::XMLDocument			mSettingsFile;
-	bool m_bInitialized=false;
-	
+	bool m_bInitialized = false;
+	bool m_bDrawTweakBar = false;
+	TwBar* m_pGuiholder = nullptr;
 public:
 	static SettingsHolder Instance;
 	SettingsHolder();
@@ -22,14 +25,22 @@ public:
 	void SaveSettings();
 	void ReloadFile();
 	void ReloadShadersIfRequired();
+	void InitGUI();
+	void DrawGUI();
+	bool IsGUIEnabled();
+	void EnableGUI();
+	void DisableGUI();
 };
 
-// Settings block base class, used to hold various settings
+/*!
+	Settings block base class, used to hold various settings
+*/
 class SettingsBlock {
 public:
 	std::string m_sName;
 	std::vector<CD3D1XShader*> m_aShaderPointers;
 	CD3D1XShaderDefineList* m_pShaderDefineList;
+
 	bool m_bShaderReloadRequired=false;
 	SettingsBlock() { }
 	virtual tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc) = 0;

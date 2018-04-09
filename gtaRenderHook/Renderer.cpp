@@ -1117,7 +1117,7 @@ void CRenderer::ScanWorld()
 	points[0].x = 0;
 	points[0].y = 0;
 	points[0].z = 0;// -TheCamera.m_pRwCamera->farPlane/4;
-	// first 4 frustum points in camera space
+	// first 4 far frustum plane points in camera space
 	points[1].x = -(farPlane * viewWindow.x);
 	points[1].y = farPlane * viewWindow.y;
 	points[1].z = farPlane;
@@ -1134,8 +1134,8 @@ void CRenderer::ScanWorld()
 	points[4].y = -(farPlane * viewWindow.y);
 	points[4].z = farPlane;
 	memset(&points[5], 0, 96u);
-
-	RwMatrix* m = &(((RwFrame*)TheCamera.m_pRwCamera->object.object.parent)->modelling);
+	
+	RwMatrix* m = &(RwCameraGetFrame(TheCamera.m_pRwCamera)->modelling);
 	m_pFirstPersonVehicle = nullptr;
 	CVisibilityPlugins__InitAlphaEntityList();
 

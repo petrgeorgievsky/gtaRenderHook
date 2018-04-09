@@ -3,42 +3,42 @@
 #define GAMEMATH
 // Shitty dx9 alpha test replacement.
 #define DO_ALPHA_TEST(alpha) if(uiAlphaTestType==1){\
-		if(outColor.a<=fAlphaTestRef) discard;\
+		if(alpha<=fAlphaTestRef) discard;\
 	}else if(uiAlphaTestType==2){\
-		if(outColor.a<fAlphaTestRef) discard;\
+		if(alpha<fAlphaTestRef) discard;\
 	}else if(uiAlphaTestType==3){\
-		if(outColor.a>=fAlphaTestRef) discard;\
+		if(alpha>=fAlphaTestRef) discard;\
 	}else if(uiAlphaTestType==4){\
-		if(outColor.a>fAlphaTestRef) discard;\
+		if(alpha>fAlphaTestRef) discard;\
 	}else if(uiAlphaTestType==5){\
-		if(outColor.a==fAlphaTestRef) discard;\
+		if(alpha==fAlphaTestRef) discard;\
 	}else if(uiAlphaTestType==6){\
-		if(outColor.a!=fAlphaTestRef) discard;\
+		if(alpha!=fAlphaTestRef) discard;\
 	}else if(uiAlphaTestType==0){\
-		outColor.a=1;\
+		alpha=1;\
 	}
 // Converts from world space to voxel space. TODO: use matrices
 float3 ConvertToVoxelSpace(float3 p)
 {
-    float3 op = ((p - ViewInv[3].xyz) * voxelGridScale + float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2));
+    float3 op = ((p - mViewInv[3].xyz) * voxelGridScale + float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2));
     return op;
 }
 // Converts from voxel space to world space. TODO: use matrices
 float3 ConvertFromVoxelSpace(float3 p)
 {
-    float3 op = ((p - float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2)) / voxelGridScale) + ViewInv[3].xyz;
+    float3 op = ((p - float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2)) / voxelGridScale) + mViewInv[3].xyz;
     return op;
 } 
 // Converts from world space to voxel space. TODO: use matrices
 float3 ConvertToVoxelSpace(float3 p,float scale)
 {
-    float3 op = ((p - ViewInv[3].xyz) * scale + float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2));
+    float3 op = ((p - mViewInv[3].xyz) * scale + float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2));
     return op;
 }
 // Converts from voxel space to world space. TODO: use matrices
 float3 ConvertFromVoxelSpace(float3 p, float scale)
 {
-    float3 op = ((p - float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2)) / scale) + ViewInv[3].xyz;
+    float3 op = ((p - float3(voxelGridSize, voxelGridSize, voxelGridSize) / (2)) / scale) + mViewInv[3].xyz;
     return op;
 }
 // Converts uint to rgba.
@@ -63,20 +63,25 @@ float3 CosineSampleHemisphere(float u, float v)
 	return float3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
 
-float4 viewPosFromDepth(float depth, float2 texCoord)
+float4 DepthToViewPos(float depth, float2 texCoord)
 {
     float x = texCoord.x * 2 - 1;
     float y = (1 - texCoord.y) * 2 - 1;
-    float2 screenSpaceRay = float2(x / Projection[0].x, y / Projection[1].y);
+    float2 screenSpaceRay = float2(x / mProjection[0].x, y / mProjection[1].y);
     float4 pos = float4(screenSpaceRay * depth, depth, 1.0);
     return pos;
 }
 
-float3 posFromDepth(float depth, float2 texCoord)
+float3 DepthToWorldPos(float depth, float2 texCoord)
 {
-    float4 pos = viewPosFromDepth(depth, texCoord);
-    pos = mul(pos, ViewInv);
+    float4 pos = DepthToViewPos(depth, texCoord);
+    pos = mul(pos, mViewInv);
     return pos.xyz;
+}
+
+float GetLuminance(float3 Color)
+{
+    return dot(g_vLuminance, Color);
 }
 
 #endif

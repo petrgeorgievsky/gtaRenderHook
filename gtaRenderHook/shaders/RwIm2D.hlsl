@@ -6,45 +6,45 @@ Texture2D       txDiffuse : register( t0 );
 SamplerState    samLinear : register( s0 );
 
 //--------------------------------------------------------------------------------------
-// Constant Buffer Variables
+// Structures
 //--------------------------------------------------------------------------------------
-struct VS_INPUT
+struct VS_IM2D_IN
 {
-    float4 Position   : POSITION;
-    float4 Color      : COLOR;
-    float2 TexCoord : TEXCOORD;
+    float4 vPosition   : POSITION;
+    float4 cColor      : COLOR;
+    float2 vTexCoord : TEXCOORD;
 };
 
-struct VS_OUTPUT_PS_INPUT
+struct PS_IM2D_IN
 {
-    float4 Position : SV_POSITION;
-    float4 Color : COLOR;
-    float2 TexCoord : TEXCOORD;
+    float4 vPosition : SV_POSITION;
+    float4 cColor : COLOR;
+    float2 vTexCoord : TEXCOORD;
 };
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-VS_OUTPUT_PS_INPUT VS(VS_INPUT input)
+PS_IM2D_IN VS(VS_IM2D_IN i)
 {
-    VS_OUTPUT_PS_INPUT output;
-    output.TexCoord = input.TexCoord;
-    output.Color    = input.Color.zyxw;
-    output.Position = float4((input.Position.x) * 2 / fScreenWidth - 1.0f, 
-                      1.0f - (input.Position.y) * 2 / fScreenHeight, 
-                              input.Position.z, 1.0); // transform to screen space
-    return output;
+    PS_IM2D_IN o;
+    o.vTexCoord = i.vTexCoord;
+    o.cColor    = i.cColor.zyxw;
+    o.vPosition = float4((i.vPosition.x) * 2 / fScreenWidth - 1.0f, 
+                      1.0f - (i.vPosition.y) * 2 / fScreenHeight, 
+                              i.vPosition.z, 1.0); // transform to screen space
+    return o;
 }
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS(float4 Pos : SV_POSITION, VS_OUTPUT_PS_INPUT input ) : SV_Target
+float4 PS(PS_IM2D_IN i) : SV_Target
 {
-	float4 outColor;
+	float4 OutColor;
 	if(bHasTexture!=0)
-        outColor = float4(txDiffuse.Sample(samLinear, input.TexCoord) * input.Color);
+        OutColor = float4(txDiffuse.Sample(samLinear, i.vTexCoord) * i.cColor);
 	else
-        outColor = float4(input.Color);
-    DO_ALPHA_TEST(outColor.a)
-	return outColor;
+        OutColor = float4(i.cColor);
+    DO_ALPHA_TEST(OutColor.a)
+    return OutColor;
 }

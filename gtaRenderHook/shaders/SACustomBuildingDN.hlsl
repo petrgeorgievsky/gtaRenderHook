@@ -12,10 +12,10 @@ Texture2D txShadow 	: register(t4);
 
 struct VS_INPUT
 {
-    float3 inPosition   	: POSITION;
-    float2 inTexCoord     	: TEXCOORD;
-    float3 vInNormal    	: NORMAL;
-	float4 vInColor 		: COLOR;
+    float3 vPosition   	: POSITION;
+    float2 vTexCoord    : TEXCOORD;
+    float3 vInNormal    : NORMAL;
+	float4 vInColor 	: COLOR;
 };
 struct GS_VOXEL_IN
 {
@@ -35,26 +35,26 @@ struct PS_VOXEL_INPUT
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-DEFERRED_INPUT VS( VS_INPUT i )
+PS_DEFERRED_IN VS( VS_INPUT i )
 {
-	DEFERRED_INPUT Out;
-	float4 	outPos 		= float4( i.inPosition,1.0);// transform to screen space
-			outPos 		= mul( outPos, World );
-			outPos		= mul( outPos, View );
-    Out.vPosition 	= mul( outPos, Projection );
-	Out.vNormalDepth = float4(mul( i.vInNormal,(float3x3)World), outPos.z);
-	Out.vTexCoord = float4(i.inTexCoord, 0, 0);
-	Out.vColor		= i.vInColor;
+    PS_DEFERRED_IN o;
+	float4 	outPos 		= float4( i.vPosition,1.0);// transform to screen space
+			outPos 		= mul( outPos, mWorld );
+			outPos		= mul( outPos, mView );
+    o.vPosition 	    = mul( outPos, mProjection );
+	o.vNormalDepth  = float4(mul( i.vInNormal,(float3x3)mWorld), outPos.z);
+	o.vTexCoord     = float4(i.vTexCoord, 0, 0);
+	o.vColor		= i.vInColor;
 	
-    return Out;
+    return o;
 }
 GS_VOXEL_IN VoxelVS(VS_INPUT i)
 {
 	GS_VOXEL_IN Out = (GS_VOXEL_IN)0.0f;
 
-	Out.vPosition = mul(float4(i.inPosition, 1.0), World);
-	Out.vTexCoord = i.inTexCoord;
-	Out.vNormal = float4(mul(i.vInNormal, (float3x3)World), 1.0);
+	Out.vPosition = mul(float4(i.vPosition, 1.0), mWorld);
+	Out.vTexCoord = i.vTexCoord;
+	Out.vNormal = float4(mul(i.vInNormal, (float3x3)mWorld), 1.0);
 	Out.vColor = i.vInColor;
 	return Out;
 }
@@ -71,7 +71,7 @@ void VoxelGS(triangle GS_VOXEL_IN input[3], inout TriangleStream<PS_VOXEL_INPUT>
 			output.vNormal = input[v].vNormal;
 			output.vColor = input[v].vColor;
 			output.vPosition = mul(input[v].vPosition, VoxelView[f]);
-			output.vPosition = mul(output.vPosition, Projection);
+			output.vPosition = mul(output.vPosition, mProjection);
 			output.vTexCoord = input[v].vTexCoord;
 			VoxelStream.Append(output);
 		}
@@ -82,29 +82,29 @@ void VoxelGS(triangle GS_VOXEL_IN input[3], inout TriangleStream<PS_VOXEL_INPUT>
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS(DEFERRED_INPUT i ) : SV_Target
+float4 PS(PS_DEFERRED_IN i) : SV_Target
 {
-	float4 outColor =txDiffuse.Sample( samLinear, i.vTexCoord.xy ) * DiffuseColor;
+	float4 outColor =txDiffuse.Sample( samLinear, i.vTexCoord.xy ) * cDiffuseColor;
     outColor.xyz *= i.vColor.xyz;
 	outColor.a		*=i.vColor.w;
 
 	return outColor;
 }
 
-void ShadowPS(DEFERRED_INPUT i)
+void ShadowPS(PS_DEFERRED_IN i)
 {
 	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
 	if (outColor.a < 0.3)
 		discard;
 }
 
-DEFERRED_OUTPUT DeferredPS(DEFERRED_INPUT i )
+PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {
-	DEFERRED_OUTPUT Out;
+    PS_DEFERRED_OUT Out;
 	float4 baseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
-    float4 params = HasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(SpecularIntensity, Glossiness,0,0);
+    float4 params = bHasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness,0,0);
 
-    FillGBuffer(Out, baseColor * DiffuseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params);
+    FillGBuffer(Out, baseColor * cDiffuseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params);
 	if (baseColor.a < 0.3)
 		discard;
     
@@ -113,7 +113,7 @@ DEFERRED_OUTPUT DeferredPS(DEFERRED_INPUT i )
 
 void VoxelPS(PS_VOXEL_INPUT i)
 {
-	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord)* DiffuseColor;
+	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord)* cDiffuseColor;
 	float DiffuseTerm;
 	CalculateDiffuseTerm(-i.vNormal.xyz, vSunLightDir.xyz, DiffuseTerm, 0.5f);
 
@@ -126,7 +126,7 @@ void VoxelPS(PS_VOXEL_INPUT i)
 }
 void VoxelEmmissivePS(PS_VOXEL_INPUT i)
 {
-	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord)* DiffuseColor;
+	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord)* cDiffuseColor;
 	float DiffuseTerm;
 	CalculateDiffuseTerm(i.vNormal.xyz, vSunLightDir.xyz, DiffuseTerm, 0.5f);
 

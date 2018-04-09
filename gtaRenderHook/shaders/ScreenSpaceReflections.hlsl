@@ -26,15 +26,15 @@ struct PSInput_Quad
 
 float3 GetUV(float3 position)
 {
-	float4 pV = mul(float4(position, 1.0f), View);
-	float4 pVP=mul(pV,Projection);
+	float4 pV = mul(float4(position, 1.0f), mView);
+	float4 pVP=mul(pV,mProjection);
 	pVP.xy = float2(0.5f, 0.5f) + float2(0.5f, -0.5f) * pVP.xy/ pVP.w;
     return float3(pVP.xy, pV.z / pV.w);
 }
 
 float3 GetCameraSpacePos(float3 position)
 {
-    float4 pV = mul(float4(position, 1.0f), View);
+    float4 pV = mul(float4(position, 1.0f), mView);
     return pV.xyz / pV.w;
 }
 float distanceSquared(float2 a, float2 b)
@@ -64,7 +64,7 @@ bool ScreenSpaceRT(float3 startPoint, float3 rayDir, float step, out float2 uv)
         float4 NormalSpec = txGB1.Sample(samLinear, clipSpacePos.xy);
         float ViewZ = DecodeFloatRG(NormalSpec.zw);
         ViewZ = ViewZ <= 0 ? fFarClip : ViewZ;
-        float3 restoredPosition = GetUV(posFromDepth(ViewZ, clipSpacePos.xy).xyz);
+        float3 restoredPosition = GetUV(DepthToWorldPos(ViewZ, clipSpacePos.xy).xyz);
         float dist = distance(restoredPosition.z, clipSpacePos.z);
         if (dist <= 0.1)
         {
@@ -107,7 +107,7 @@ float3 SSR(float3 texelPosition, float3 reflectDir,float roughness, out float fa
     float3 currentRay = 0;
 
     float3 nuv = 0;
-    float L = SSRStep;
+    float L = fSSRStep;
 	float fStepScaling = 1.0f;
 	fallback=0.0;
     float3 csRayStart = GetCameraSpacePos(texelPosition);
@@ -128,7 +128,7 @@ float3 SSR(float3 texelPosition, float3 reflectDir,float roughness, out float fa
 		}
         float4 NormalSpec = txGB1.Sample(samLinear, nuv.xy);
         float ViewZ = DecodeFloatRG(NormalSpec.zw);
-        float3 newPosition = posFromDepth(ViewZ, nuv.xy).xyz;
+        float3 newPosition = DepthToWorldPos(ViewZ, nuv.xy).xyz;
         L = length(texelPosition - newPosition);
         if (abs(ViewZ - nuv.z) < 0.000001f)
         {
@@ -157,13 +157,13 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float4 NormalSpec = txGB1.Sample(samLinear, input.texCoordOut.xy);
     float ViewZ = DecodeFloatRG(NormalSpec.zw);
     ViewZ = ViewZ <= 0 ? fFarClip : ViewZ;
-    float3 cameraSpacePos = viewPosFromDepth(ViewZ, input.texCoordOut.xy).xyz;
-    float3 worldSpacePos = posFromDepth(ViewZ, input.texCoordOut.xy).xyz;
+    float3 cameraSpacePos = DepthToViewPos(ViewZ, input.texCoordOut.xy).xyz;
+    float3 worldSpacePos = DepthToWorldPos(ViewZ, input.texCoordOut.xy).xyz;
     float3 NormalsVS = DecodeNormals(NormalSpec.xy);
     float2 Parameters = txGB2.Sample(samLinear, input.texCoordOut.xy).xy;
     float Roughness = 1 - Parameters.y;
 
-    const float3 ViewPos = ViewInv[3].xyz;
+    const float3 ViewPos = mViewInv[3].xyz;
 
     float3 ViewDir = normalize(worldSpacePos - ViewPos);
     float3 ReflDir = normalize(reflect(ViewDir, NormalsVS));

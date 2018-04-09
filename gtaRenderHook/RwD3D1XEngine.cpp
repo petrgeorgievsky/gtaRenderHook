@@ -21,7 +21,7 @@
 #include "D3D1XIndexBuffer.h"
 #include "D3D1XShaderDefines.h"
 #ifdef USE_ANTTWEAKBAR
-#include "AntTweakBar.h"
+#include <AntTweakBar.h>
 #endif
 extern CD3D1XStateManager* g_pStateMgr=nullptr;
 extern CD3D1XRenderBuffersManager* g_pRenderBuffersMgr = nullptr;

@@ -93,9 +93,9 @@ float SampleShadowMap(Texture2D txShadow, SamplerComparisonState samShadow,Sampl
 	float avgCasterDepth   	= AvarageShadowCasterDepth(ShadowTexCoord,LightViewPos.z,samShadowNonComp,txShadow);
     
     blurScale = (LightViewPos.z - avgCasterDepth) / avgCasterDepth;
-    blurScale = max(blurScale * MaxShadowBlur, MinShadowBlur);
+    blurScale = max(blurScale * fMaxShadowBlur, fMinShadowBlur);
 #else
-    blurScale = MaxShadowBlur;
+    blurScale = fMaxShadowBlur;
 #endif
 
     return poissonShadowSampling(txShadow, samShadow, ShadowTexCoord, LightViewPos.z - ShadowBias[i], blurScale); //(LightViewPos.z - sSample < 0.001);

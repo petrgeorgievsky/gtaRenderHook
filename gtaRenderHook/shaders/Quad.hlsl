@@ -2,25 +2,23 @@
 //--------------------------------------------------------------------------------------
 // Variables
 //--------------------------------------------------------------------------------------
-struct VSInput_Quad
+struct VS_QUAD_IN
 {
-    float4 pos : POSITION;
-    float2 texcoord : TEXCOORD0;
+    float4 vPosition : POSITION;
+    float2 vTexCoord : TEXCOORD0;
 };
-struct PSInput_Quad
+struct PS_QUAD_IN
 {
-    float4 pos : SV_Position;
-    float4 texCoordOut : TEXCOORD0;
+    float4 vPosition : SV_Position;
+    float4 vTexCoord : TEXCOORD0;
 };
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PSInput_Quad VS(VSInput_Quad input)
+PS_QUAD_IN VS(VS_QUAD_IN i)
 {
-    PSInput_Quad output;
-    output.pos = input.pos;
-    float2 tc0 = input.texcoord;
-    output.texCoordOut = float4(tc0, 0, 1);
-    
-    return output;
+    PS_QUAD_IN o;
+    o.vPosition = i.vPosition;
+    o.vTexCoord = float4(i.vTexCoord, 0, 1);
+    return o;
 }

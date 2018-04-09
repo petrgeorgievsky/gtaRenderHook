@@ -89,6 +89,51 @@ void SettingsHolder::ReloadShadersIfRequired()
 			block->ReloadShaders();
 	}
 }
+void TW_CALL SaveDataCallBack(void *value)
+{
+	SettingsHolder::Instance.SaveSettings();
+}
+
+void TW_CALL ReloadDataCallBack(void *value)
+{
+	SettingsHolder::Instance.ReloadFile();
+}
+
+void SettingsHolder::InitGUI()
+{
+	if (m_pGuiholder != nullptr)
+		return;
+	// Init new settings bar
+	m_pGuiholder = TwNewBar("Settings");
+	// Init each settings block
+	for (auto block : m_aSettingsBlocks)
+		block->InitGUI(m_pGuiholder);
+	// Init save and reload buttons
+	TwAddButton(m_pGuiholder, "Save", SaveDataCallBack, nullptr, "");
+	TwAddButton(m_pGuiholder, "Reload", ReloadDataCallBack, nullptr, "");
+}
+
+void SettingsHolder::DrawGUI()
+{
+	if (!m_bDrawTweakBar) return;
+
+	TwDraw();
+}
+
+bool SettingsHolder::IsGUIEnabled()
+{
+	return m_bDrawTweakBar;
+}
+
+void SettingsHolder::EnableGUI()
+{
+	m_bDrawTweakBar = true;
+}
+
+void SettingsHolder::DisableGUI()
+{
+	m_bDrawTweakBar = false;
+}
 
 tinyxml2::XMLElement * DebugSettingsBlock::Save(tinyxml2::XMLDocument *doc)
 {

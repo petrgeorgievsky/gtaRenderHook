@@ -1,7 +1,10 @@
 #include "Globals.hlsl"
 #ifndef GBUFFER
 #define GBUFFER
-// Encoding 32 bit float to 16bit RG chanell.
+
+/*!
+    Encoding 32 bit float to 16bit RG chanell.
+*/
 inline float2 EncodeFloatRG(float v)
 {
 	float2 kEncodeMul = float2(1.0, 255.0);
@@ -11,25 +14,26 @@ inline float2 EncodeFloatRG(float v)
 	enc.x -= enc.y * kEncodeBit;
 	return enc;
 }
-// Decoding 32bit float from 16bit RG chanell.
+
+/*!
+    Decoding 32bit float from 16bit RG chanell.
+*/
 inline float DecodeFloatRG(float2 enc)
 {
 	float2 kDecodeDot = float2(1.0, 1 / 255.0);
     float res = dot(enc, kDecodeDot);
-    //res = res * 2 - 1;
-    float fNearClip = 0.1;
-    float c1 = fFarClip / fNearClip;
-    float c0 = 1.0 - c1;
-    float linearDepth = (1.0 / res - c1)/c0;
-
     return res * fFarClip;
 }
-// Encoding normals.
+/*!
+    Encodes normals.
+*/
 inline float2 EncodeNormals(float2 v)
 {
 	return v*0.5+0.5;
 }
-// Decoding normals.
+/*!
+    Decodes normals.
+*/
 inline float3 DecodeNormals(float2 v)
 {
 	float3 n;
@@ -53,8 +57,10 @@ inline uint ConvertToMatType(float p)
     return (255 * p);
 }
 
-// Deferred output structure.
-struct DEFERRED_OUTPUT
+/*!
+    Deferred output structure.
+*/
+struct PS_DEFERRED_OUT
 {
 	float4 vColor				: SV_Target0; // color rgb, roughness a
 	float4 vNormalDepth			: SV_Target1; // normals - xy and depth - zw
@@ -65,24 +71,36 @@ struct DEFERRED_OUTPUT
                                               // custom param for car - metallness or second layer glossiness ?
                                               // custom param for ped/skin - translucency
 };
-struct DEFERRED_INPUT
+/*!
+    Deferred input structure.
+*/
+struct PS_DEFERRED_IN
 {
 	float4 vPosition		: SV_POSITION;
 	float4 vColor			: COLOR;
 	float4 vNormalDepth		: NORMAL;
 	float4 vTexCoord		: TEXCOORD0;
 };
-
-void FillGBuffer(out DEFERRED_OUTPUT output, float4 Color, float3 Normals, float ViewZ, float4 Params)
+/*!
+    Deferred output structure.
+*/
+void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float ViewZ, float4 Params)
 {
 	output.vColor = Color;
-    float fNearClip = 0.1;
-    float c1 = fFarClip / fNearClip;
-    float c0 = 1.0 - c1;
-    float linearDepth = ViewZ / fFarClip; // 1.0 / (c0 * ViewZ + c1);
-    output.vNormalDepth = float4(EncodeNormals(Normals.xy), EncodeFloatRG(linearDepth));
+    output.vNormalDepth = float4(EncodeNormals(Normals.xy), EncodeFloatRG(ViewZ / fFarClip));
 	output.vParameters = Params;
     output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
+}
+/*!
+    Returns view-space depth and world-space normals from GBuffer
+*/
+void GetNormalsAndDepth(Texture2D TexBuffer, SamplerState Sampler, float2 TexCoords, out float ViewDepth, out float3 Normals)
+{
+    float4 NormalSpec = TexBuffer.Sample(Sampler, TexCoords);
+
+    ViewDepth = DecodeFloatRG(NormalSpec.zw);
+    ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;
+    Normals = DecodeNormals(NormalSpec.xy);
 }
 
 #endif

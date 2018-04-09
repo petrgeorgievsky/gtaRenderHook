@@ -128,8 +128,8 @@ RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & l
 	vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[shadowCascade].getSizeZ()*0.5f;//faLightDim[1];
-	RwCameraSetNearClipPlane(m_pShadowCamera, min(-fLightZFar,-250.0f));
-	RwCameraSetFarClipPlane(m_pShadowCamera, max(fLightZFar,250.0f));
+	RwCameraSetNearClipPlane(m_pShadowCamera, -1500.0f/*min(-fLightZFar,-1500.0f)*/);
+	RwCameraSetFarClipPlane(m_pShadowCamera, 1500.0f /*max(fLightZFar,1500.0f)*/);
 	RwCameraSync(m_pShadowCamera);
 	//RwCameraEndUpdate(mainCam);
 	RwCameraSetNearClipPlane(mainCam, oldNP);
@@ -219,7 +219,7 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	RwV2d vw{ m_LightBBox[cascade].getSizeX() , m_LightBBox[cascade].getSizeY() };
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[cascade].getSizeZ()*0.5f;//faLightDim[1];
-	RwCameraSetNearClipPlane(m_pShadowCamera, -fLightZFar-25);
+	RwCameraSetNearClipPlane(m_pShadowCamera, -500 /*-fLightZFar-25*/);
 	RwCameraSetFarClipPlane(m_pShadowCamera, fLightZFar+25);
 	RwCameraSync(m_pShadowCamera);
 	//
@@ -367,34 +367,34 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 
 	TwAddVarRW(bar, "Distance multipier 1", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[0],
-		" min=0.001 max=1.0 step=0.0001 group=Cascade_1 ");
+		" min=0.00001 max=1.0 step=0.00001 group=Cascade_1 ");
 
 	TwAddVarRW(bar, "Distance multipier 2", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[1],
-		" min=0.001 max=1.0 step=0.0001  group=Cascade_2 ");
+		" min=0.00001 max=1.0 step=0.00001  group=Cascade_2 ");
 
 	TwAddVarRW(bar, "Distance multipier 3", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[2],
-		" min=0.001 max=1.0 step=0.0001  group=Cascade_3 ");
+		" min=0.00001 max=1.0 step=0.00001  group=Cascade_3 ");
 
 	TwAddVarRW(bar, "Bias 0", TwType::TW_TYPE_FLOAT,
 		&BiasCoefficients[0],
-		" min=0.0001 max=1.0 step=0.0001 group=Cascade_0 ");
+		" min=0.000001 max=1.0 step=0.000001 group=Cascade_0 ");
 
 
 	TwAddVarRW(bar, "Bias 1", TwType::TW_TYPE_FLOAT,
 		&BiasCoefficients[1],
-		" min=0.0001 max=1.0 step=0.0001 group=Cascade_1 ");
+		" min=0.0001 max=1.0 step=0.00001 group=Cascade_1 ");
 
 
 	TwAddVarRW(bar, "Bias 2", TwType::TW_TYPE_FLOAT,
 		&BiasCoefficients[2],
-		" min=0.0001 max=1.0 step=0.0001 group=Cascade_2 ");
+		" min=0.0001 max=1.0 step=0.00001 group=Cascade_2 ");
 
 
 	TwAddVarRW(bar, "Bias 3", TwType::TW_TYPE_FLOAT,
 		&BiasCoefficients[3],
-		" min=0.0001 max=1.0 step=0.0001 group=Cascade_3 ");
+		" min=0.0001 max=1.0 step=0.00001 group=Cascade_3 ");
 
 	TwDefine(" Settings/Cascade_0   group=Shadows label='1st Cascade'");
 	TwDefine(" Settings/Cascade_1   group=Shadows label='2nd Cascade'");

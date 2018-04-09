@@ -1,46 +1,50 @@
-#include "Globals.hlsl"
+#include "GameMath.hlsl"
 //--------------------------------------------------------------------------------------
-// Constant Buffer Variables
+// Variables
 //--------------------------------------------------------------------------------------
 Texture2D txDiffuse : register( t0 );
 SamplerState samLinear : register( s0 );
+
+struct VS_IM3D_IN
+{
+    float4 vPosition    : POSITION;
+    float4 cColor       : COLOR;
+    float2 vTexCoord    : TEXCOORD;
+};
+
+struct PS_IM3D_IN
+{
+    float4 vPosition    : SV_POSITION;
+    float4 cColor       : COLOR;
+    float2 vTexCoord    : TEXCOORD;
+};
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-float4 VS( in float4 Pos : POSITION,in float4 Color : COLOR,in float2 tc : TEXCOORD, out float2 texCoordOut:TEXCOORD, out float4 Col:COLOR ) : SV_POSITION
+PS_IM3D_IN VS(VS_IM3D_IN i)
 {
-	texCoordOut=tc;
-	Col=Color.zyxw;
-	float4 outPos=float4(Pos.xyz,1.0);// transform to screen space
-    outPos = mul( outPos, World );
-	outPos = mul( outPos, View );
-    outPos = mul( outPos, Projection );
-    return outPos;
+    PS_IM3D_IN o;
+	o.vTexCoord = i.vTexCoord;
+	o.cColor    = i.cColor.zyxw;
+	float4 outPos = float4(i.vPosition.xyz,1.0);// transform to world space
+    outPos = mul( outPos, mWorld );
+	outPos = mul( outPos, mView );
+    outPos = mul( outPos, mProjection );
+    o.vPosition = outPos;
+    return o;
 }
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS( float4 Pos : SV_POSITION,in float2 tc:TEXCOORD,in float4 Col:COLOR ) : SV_Target
+float4 PS(PS_IM3D_IN i) : SV_Target
 {
-	float4 outColor;
+	float4 OutColor;
 	if(bHasTexture!=0)
-		outColor = float4( txDiffuse.Sample( samLinear, tc ) * Col );
+        OutColor = float4(txDiffuse.Sample(samLinear, i.vTexCoord) * i.cColor);
 	else
-		outColor = float4( Col );
+        OutColor = float4(i.cColor);
 	
-	if(uiAlphaTestType==1){
-		if(outColor.a<=fAlphaTestRef) discard;
-	}else if(uiAlphaTestType==2){
-		if(outColor.a<fAlphaTestRef) discard;
-	}else if(uiAlphaTestType==3){
-		if(outColor.a>=fAlphaTestRef) discard;
-	}else if(uiAlphaTestType==4){
-		if(outColor.a>fAlphaTestRef) discard;
-	}else if(uiAlphaTestType==5){
-		if(outColor.a==fAlphaTestRef) discard;
-	}else if(uiAlphaTestType==6){
-		if(outColor.a!=fAlphaTestRef) discard;
-	}
-	return outColor;
+    DO_ALPHA_TEST(OutColor.w)
+    return OutColor;
 }

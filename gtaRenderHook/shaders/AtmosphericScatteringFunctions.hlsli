@@ -1,0 +1,67 @@
+/*
+	This file contains functions used to achive atmospheric scattering or fog effect
+	
+*/
+#include "LightingFunctions.hlsl"
+#include "GameMath.hlsl"
+
+static const float g_fAtmosphereHeight = 8000.0f;
+static const float g_fThickAtmosphereHeight = 1200.0f;
+
+/*!
+	Rayleigh density at given height
+*/
+inline float GetRayleighDensity(float Height)
+{
+    return exp(-Height / g_fAtmosphereHeight);
+}
+
+/*!
+	Mie density at given height
+*/
+inline float GetMieDensity(float Height)
+{
+    return exp(-Height / g_fThickAtmosphereHeight);
+}
+
+float3 CalculateRayleighScattering(float CosSqPlOne, float Height)
+{
+    // Rayleigh phase function approximation
+    float phase = 0.75f * CosSqPlOne;
+    // Rayleigh density approximation at current camera height
+    float density = GetRayleighDensity(Height);
+    // Rayleigh light scattering approximation(very rough)
+    return (density * phase).xxx;
+}
+
+float3 CalculateMieScattering(float CosPhi, float CosSqPlOne, float Height)
+{
+    // Assymetry factor for mie phase function
+    const float g = -0.85;
+    // Henyey-Greenstein mie phase function approximation
+    float MiePhase = 1.5f * ((1 - g * g) / (2 + g * g)) * (CosSqPlOne / pow(1 + g * g - 2 * g * CosPhi, 1.5f));
+    float MieDensity = GetMieDensity(Height);
+    // Mie light scattering approximation(very rough)
+    return MieDensity * MiePhase;
+}
+/*!
+    Computes atmospheric scattering color and blends it with screen color.
+*/
+float3 CalculateFogColor(float3 ScreenColor, float3 ViewDir, float3 LightDir, float ViewDepth, float Height, out float3 FullScattering)
+{
+    float CosPhi = max(dot(ViewDir, LightDir), 0.0);
+    float CosSqPlOne = (1 + CosPhi * CosPhi);
+
+    float MieCosPhi = max(-LightDir.z, 0.0);
+    float MieCosSqPlOne = (1 + MieCosPhi * MieCosPhi);
+    
+    float3 MieScattering = CalculateMieScattering(MieCosPhi, MieCosSqPlOne, Height) * vHorizonCol.rgb;
+    float3 RayleighScattering = CalculateRayleighScattering(CosSqPlOne, Height) * vSkyLightCol.rgb;
+    
+    float3 SunContribution = min(pow(CosPhi, 8.0f), 1.0f) * vSunColor.rgb * vSunLightDir.w;
+    FullScattering = ((RayleighScattering + MieScattering * 0.75f) + SunContribution);
+        
+    float FogFadeCoeff = saturate(max(ViewDepth - fFogStart, 0) / abs(fFogRange));
+    
+    return lerp(ScreenColor, FullScattering, FogFadeCoeff);
+}

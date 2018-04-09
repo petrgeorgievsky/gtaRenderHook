@@ -497,5 +497,8 @@
     <None Include="shaders\VoxelStuffCS.hlsl">
       <Filter>Source\Shaders</Filter>
     </None>
+    <None Include="shaders\AtmosphericScatteringFunctions.hlsli">
+      <Filter>Source\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

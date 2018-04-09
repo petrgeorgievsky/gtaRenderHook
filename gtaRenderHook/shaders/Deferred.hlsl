@@ -22,70 +22,78 @@ SamplerState samLinear : register(s0);
 SamplerComparisonState samShadow          : register(s1);
 struct Light
 {
-	float3 Position;
-	int m_nLightType;
-	float3 m_Color;
-	float m_fRange;
+	float3  vPosition;
+	int     nLightType;
+	float3  cColor;
+	float   fRange;
 };
-StructuredBuffer<Light> lightInfo : register(t5);
-struct VSInput_Quad
+StructuredBuffer<Light> sbLightInfo : register(t5);
+struct VS_QUAD_IN
 {
-	float4 pos : POSITION;
-	float2 texcoord : TEXCOORD0;
+    float4 vPosition : POSITION;
+	float2 vTexCoord : TEXCOORD0;
 };
-struct PSInput_Quad
+struct PS_QUAD_IN
 {
-	float4 pos : SV_Position;
-	float4 texCoordOut : TEXCOORD0;
+    float4 vPosition : SV_Position;
+    float4 vTexCoord : TEXCOORD0;
 };
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PSInput_Quad VS(VSInput_Quad input)
+PS_QUAD_IN VS(VS_QUAD_IN i)
 {
-	PSInput_Quad output;
-	output.pos = input.pos;
-	float2 tc0 = input.texcoord;
-	output.texCoordOut = float4(tc0, 0, 1);
-	
-	return output;
+    PS_QUAD_IN o;
+    o.vPosition = i.vPosition;
+    o.vTexCoord = float4(i.vTexCoord, 0, 1);
+	return o;
 }
-
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
 // Direction light pass
-float4 SunLightingPS(PSInput_Quad input) : SV_Target
+float4 SunLightingPS(PS_QUAD_IN i) : SV_Target
 {
 	float4 OutLighting;
-	if (vSunLightDir.w <= 0.0f)
-		return float4(0.0f, 0.0f, 0.0f, 0.0f);
-	float4 AlbedoColor		= txGB0.Sample(samLinear, input.texCoordOut.xy);
+
+    const float3 ViewPos = mViewInv[3].xyz;
+
+    clip(vSunLightDir.w <= 0.0f);
+
+    float4 AlbedoColor = txGB0.Sample(samLinear, i.vTexCoord.xy);
+
 	clip(length(AlbedoColor) <= 0);
-	
-	float4 NormalSpec		= txGB1.Sample(samLinear, input.texCoordOut.xy);
-	float3 Normals			= normalize(DecodeNormals(NormalSpec.xy));
-	float ViewZ				= DecodeFloatRG(NormalSpec.zw);
-	float2 Parameters		= txGB2.Sample(samLinear, input.texCoordOut.xy).xy;
+
+	float3 Normals;
+	float ViewZ;
+    GetNormalsAndDepth(txGB1, samLinear, i.vTexCoord.xy, ViewZ, Normals);
+    Normals = normalize(Normals);
+    float4 Parameters = txGB2.Sample(samLinear, i.vTexCoord.xy);
+
 	float Roughness = 1 - Parameters.y;
+    float SpecIntensity = Parameters.x;
+
 	float Luminance = dot(AlbedoColor.rgb, float3(0.2126, 0.7152, 0.0722));
-	const float3 ViewPos			= ViewInv[3].xyz;
-	float3 WorldPos			= posFromDepth(ViewZ, input.texCoordOut.xy).xyz;
+
+	
+	float3 WorldPos	= DepthToWorldPos(ViewZ, i.vTexCoord.xy).xyz;
 	
 	float3 ViewDir = normalize(WorldPos.xyz - ViewPos); // View direction vector
 	
 	float Distance = length(WorldPos.xyz - ViewPos);
 	
-	float SpecIntensity = Parameters.x;
+	
 	float DiffuseTerm, SpecularTerm;
 	CalculateDiffuseTerm_ViewDependent(Normals, vSunLightDir.xyz, ViewDir, DiffuseTerm, Roughness);
 	CalculateSpecularTerm(Normals, vSunLightDir.xyz, -ViewDir, Roughness, SpecularTerm);
+
 #if SAMPLE_SHADOWS==1
     float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, Distance) * vSunLightDir.w;
 #else
     float ShadowTerm = 1.0;
 #endif
+
     float2 Lighting = float2(DiffuseTerm, SpecularTerm * SpecIntensity) * ShadowTerm;
     OutLighting.xyzw = float4(Lighting.x * vSunColor.rgb, Lighting.y);
 	
@@ -93,81 +101,85 @@ float4 SunLightingPS(PSInput_Quad input) : SV_Target
 }
 
 // point and spot light pass
-float4 PointLightingPS(PSInput_Quad input) : SV_Target
+float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
 {
 	float4 OutLighting;
+    float3 Normals;
+    float ViewZ;
 
-	float4 AlbedoColor = txGB0.Sample(samLinear, input.texCoordOut.xy);
+    const float3 ViewPos = mViewInv[3].xyz;
+
+    float4 AlbedoColor = txGB0.Sample(samLinear, i.vTexCoord.xy);
 	clip(AlbedoColor.a <= 0);
+    
+    float4 Parameters = txGB2.Sample(samLinear, i.vTexCoord.xy);
 
-	float4 NormalSpec = txGB1.Sample(samLinear, input.texCoordOut.xy);
-	float3 Normals = normalize(DecodeNormals(NormalSpec.xy));
-	float ViewZ = DecodeFloatRG(NormalSpec.zw);
-	float2 Parameters = txGB2.Sample(samLinear, input.texCoordOut.xy).xy;
+    GetNormalsAndDepth(txGB1, samLinear, i.vTexCoord.xy, ViewZ, Normals);
+    Normals = normalize(Normals);
 
-	const float3 ViewPos = ViewInv[3].xyz;
-	float3 WorldPos = posFromDepth(ViewZ, input.texCoordOut.xy).xyz;
+    float3 WorldPos = DepthToWorldPos(ViewZ, i.vTexCoord.xy).xyz;
 	
 	float3 ViewDir = normalize(WorldPos.xyz - ViewPos); // View direction vector
 	
 	float Distance = length(WorldPos.xyz - ViewPos);
+
 	float Luminance = dot(AlbedoColor.rgb, float3(0.2126, 0.7152, 0.0722));
 	float Roughness = 1 - Parameters.y;
 	float SpecIntensity = Parameters.x;
+
 	float3 FinalDiffuseTerm = float3(0, 0, 0);
 	float FinalSpecularTerm = 0;
 	for (uint i = 0; i < uiLightCount; i++)
 	{
-		float3 LightDir = -normalize(WorldPos.xyz - lightInfo[i].Position.xyz);
-		float LightDistance = length(WorldPos.xyz - lightInfo[i].Position.xyz);
+		float3 LightDir = -normalize(WorldPos.xyz - sbLightInfo[i].vPosition.xyz);
+        float LightDistance = length(WorldPos.xyz - sbLightInfo[i].vPosition.xyz);
+
         float DiffuseTerm, SpecularTerm;
 		float3 LightColor =  float3(1, 1, 1);
 		CalculateDiffuseTerm_ViewDependent(Normals.xyz, LightDir, ViewDir, DiffuseTerm, Roughness);
 		CalculateSpecularTerm(Normals.xyz, LightDir, -ViewDir, Roughness, SpecularTerm);
 	
-		float d = max(LightDistance - lightInfo[i].m_fRange, 0);
-		float denom = d / lightInfo[i].m_fRange + 1;
+        float d = max(LightDistance - sbLightInfo[i].fRange, 0);
+        float denom = d / sbLightInfo[i].fRange + 1;
 		
-		float attenuation = 1.0f - saturate((LightDistance - 0.5f) / lightInfo[i].m_fRange);
-		attenuation = pow(attenuation, 2);
-		if (lightInfo[i].m_nLightType == 1)
+        float Attenuation = 1.0f - saturate((LightDistance - 0.5f) / sbLightInfo[i].fRange);
+        Attenuation = pow(Attenuation, 2);
+        if (sbLightInfo[i].nLightType == 1)
 		{
-			float fSpot = pow(max(dot(-LightDir, lightInfo[i].m_Color), 0.0f), 2.0f);
-			attenuation *= fSpot;
-		}
+            float fSpot = pow(max(dot(-LightDir, sbLightInfo[i].cColor), 0.0f), 2.0f);
+            Attenuation *= fSpot;
+        }
 		else
 		{
-			LightColor = lightInfo[i].m_Color;
-		}
+            LightColor = sbLightInfo[i].cColor;
+        }
 			
-		FinalDiffuseTerm += DiffuseTerm * attenuation*LightColor;
-		FinalSpecularTerm += SpecularTerm * attenuation*SpecIntensity;
-	}
+        FinalDiffuseTerm += DiffuseTerm * Attenuation * LightColor;
+        FinalSpecularTerm += SpecularTerm * Attenuation * SpecIntensity;
+    }
 	float4 Lighting = float4(FinalDiffuseTerm, FinalSpecularTerm);
 	OutLighting.xyzw = Lighting;
 	
 	return OutLighting;
 }
 
-float4 BlitPS(PSInput_Quad input) : SV_Target
+float4 BlitPS(PS_QUAD_IN i) : SV_Target
 {
-	return txPrevFrame.Sample(samLinear, input.texCoordOut.xy);
+	return txPrevFrame.Sample(samLinear, i.vTexCoord.xy);
 }
 
-float4 FinalPassPS(PSInput_Quad input) : SV_Target
+float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
 {
 	float4 OutLighting;
+    const float3 ViewPos = mViewInv[3].xyz;
 
-	float4 AlbedoColor = txGB0.Sample(samLinear, input.texCoordOut.xy);
-	float4 Parameters = txGB2.Sample(samLinear, input.texCoordOut.xy);
-    uint materialType = ConvertToMatType(Parameters.w);
-	const float3 ViewPos = ViewInv[3].xyz;
+    float4 AlbedoColor = txGB0.Sample(samLinear, i.vTexCoord.xy);
+    float4 Parameters = txGB2.Sample(samLinear, i.vTexCoord.xy);
+    uint MaterialType = ConvertToMatType(Parameters.w);
 	
 	float Metallness = Parameters.x;
 
-	float4 Lighting = txLighting.Sample(samLinear, input.texCoordOut.xy);
-			   
-	float3 refColor=lerp(float3(1,1,1), AlbedoColor.rgb, Metallness);
+    float4 Lighting = txLighting.Sample(samLinear, i.vTexCoord.xy);
 	
 	if (AlbedoColor.a <= 0)
 	{
@@ -177,18 +189,18 @@ float4 FinalPassPS(PSInput_Quad input) : SV_Target
 	else
 	{
 		// Diffuse term consists of diffuse lighting, and sky ambient
-		float3 diffuseTerm = (Lighting.xyz + vSkyLightCol.rgb * 0.3f);
+		float3 DiffuseTerm = (Lighting.xyz + vSkyLightCol.rgb * 0.3f);
 		// Specular term consists of specular highlights
-		float3 specularTerm = (Lighting.w * Lighting.xyz);
+		float3 SpecularTerm = (Lighting.w * Lighting.xyz);
 		// Reflection term is computed before deferred
-		float3 reflectionTerm = txReflections.Sample(samLinear, input.texCoordOut.xy);
+		float3 ReflectionTerm = txReflections.Sample(samLinear, i.vTexCoord.xy);
         // increase reflection for cars
-        if (materialType == 1)
+        if (MaterialType == 1)
         {
-            reflectionTerm *= 2.0f;
+            ReflectionTerm *= 2.0f;
         }
 		// Add atmospheric scattering to result
-        OutLighting.xyz = diffuseTerm * AlbedoColor.rgb + specularTerm + reflectionTerm * Metallness;
+        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb + SpecularTerm + ReflectionTerm * Metallness;
 		OutLighting.a = 1;
 	}
 	return OutLighting;

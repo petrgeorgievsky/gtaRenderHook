@@ -89,7 +89,7 @@ VS_OUTPUT_HS_INPUT VS(VS_INPUT i)
     const float fMaxDistance = 550.0f;
 
     // Calculate distance between vertex and camera, and a vertex distance factor issued from it
-    float fDistance = distance(outPos.xyz, ViewInv[3].xyz);
+    float fDistance = distance(outPos.xyz, mViewInv[3].xyz);
     Out.fVertexDistanceFactor = 1.0 - clamp(((fDistance - fMinDistance) / (fMaxDistance - fMinDistance)),
                                              0.0, 1.0 - (1.0 / 16.0f));
 
@@ -220,7 +220,7 @@ DS_OUTPUT DS(HS_CONSTANT_DATA_OUTPUT input, float2 vUVs : SV_DomainLocation,
                       vUVs.x * TrianglePatch[1].vColor +
                       vUVs.y * TrianglePatch[2].vColor +
                       (1 - vUVs.y) * TrianglePatch[3].vColor;*/
-        float fHeightMapMIPLevel = clamp((distance(vWorldPos, ViewInv[3].xyz) - 100.0f) / 100.0f, 3.0f, 6.0f);
+        float fHeightMapMIPLevel = clamp((distance(vWorldPos, mViewInv[3].xyz) - 100.0f) / 100.0f, 3.0f, 6.0f);
     float3 disp;
     ComputeWaves(vWorldPos.xy, disp, output.vNormal, fTimeStep);
     float4 water_normal = txDiffuse.SampleLevel(samLinear, output.texCoord.xy*8, 0);
@@ -229,8 +229,8 @@ DS_OUTPUT DS(HS_CONSTANT_DATA_OUTPUT input, float2 vUVs : SV_DomainLocation,
     vWorldPos.xy += disp.xy;
     vWorldPos.z += disp.z - water_normal.w*0.1+0.1;
     // Transform world position with viewprojection matrix
-    float4 outPos = mul(float4(vWorldPos.xyz, 1.0), View);
-    outPos = mul(outPos, Projection);
+    float4 outPos = mul(float4(vWorldPos.xyz, 1.0), mView);
+    outPos = mul(outPos, mProjection);
     output.vPosition = outPos;
     output.fDepth = outPos.z;
     output.vWorldPos = vWorldPos;
@@ -240,7 +240,7 @@ DS_OUTPUT DS(HS_CONSTANT_DATA_OUTPUT input, float2 vUVs : SV_DomainLocation,
 
 float3 GetUV(float3 position)
 {
-    float4 pVP = mul(mul(float4(position, 1.0f), View), Projection);
+    float4 pVP = mul(mul(float4(position, 1.0f), mView), mProjection);
     pVP.xy = float2(0.5f, 0.5f) + float2(0.5f, -0.5f) * pVP.xy / pVP.w;
     return float3(pVP.xy, pVP.z / pVP.w);
 }
@@ -260,7 +260,7 @@ float3 SSR(float3 texelPosition, float3 reflectDir)
             return float3(0, 0, 0);
         float4 NormalSpec = txGB1.Sample(samLinear, nuv.xy);
         float ViewZ = DecodeFloatRG(NormalSpec.zw);
-        float3 newPosition = posFromDepth(ViewZ, nuv.xy).xyz;
+        float3 newPosition = DepthToWorldPos(ViewZ, nuv.xy).xyz;
         L = length(texelPosition - newPosition);
         if (L <= 0.0011)
             return float3(0, 0, 0);
@@ -281,14 +281,14 @@ float4 PS(PS_INPUT i) : SV_Target
     float4 outColor = float4(i.vNormal.xyz,1);
     float3 vNormal = normalize(i.vNormal.xyz);
     float scatter_factor;
-    float3 vLightPosition = ViewInv[3].xyz + vSunLightDir.xyz * 1000;
+    float3 vLightPosition = mViewInv[3].xyz + vSunLightDir.xyz * 1000;
     float3 pixel_to_light_vector = normalize(vLightPosition - i.vWorldPos);
-    float3 pixel_to_eye_vector = normalize(ViewInv[3].xyz - i.vWorldPos);
+    float3 pixel_to_eye_vector = normalize(mViewInv[3].xyz - i.vWorldPos);
     float2 screenCoords = i.vVPos.xy / float2(fScreenWidth, fScreenHeight);
     float4 NormalSpec = txGB1.Sample(samLinear, screenCoords);
     float3 Normals = normalize(DecodeNormals(NormalSpec.xy));
     float ViewZ = DecodeFloatRG(NormalSpec.zw);
-    float shadow_factor = SampleShadowCascades(txShadow,samShadow,samLinear,i.vWorldPos, length(i.vWorldPos.xyz - ViewInv[3].xyz));
+    float shadow_factor = SampleShadowCascades(txShadow,samShadow,samLinear,i.vWorldPos, length(i.vWorldPos.xyz - mViewInv[3].xyz));
     ViewZ = ViewZ <= 0 ? fFarClip : ViewZ;
     
     float3 microbump_normal = normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord*16).gbr - float3(1, -8, 1));
@@ -311,7 +311,7 @@ float4 PS(PS_INPUT i) : SV_Target
 		// the scattered light is best seen if observing direction is normal to slope surface
 		max(0, dot(pixel_to_eye_vector, microbump_normal)) *
 		// fading scattered light out at distance and if viewing direction is vertical to avoid unnatural look
-		max(0, 1 - pixel_to_eye_vector.y) * (300.0 / (300 + length(ViewInv[3].xyz - i.vWorldPos)));
+		max(0, 1 - pixel_to_eye_vector.y) * (300.0 / (300 + length(mViewInv[3].xyz - i.vWorldPos)));
 
     float r = (1.2 - 1.0) / (1.2 + 1.0);
     float fresnel_factor = max(0.0, min(1.0, r + (1.0 - r) * pow(1.0 - dot(microbump_normal, pixel_to_eye_vector), 4)));

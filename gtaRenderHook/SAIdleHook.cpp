@@ -41,7 +41,6 @@
 int drawCallCount=0;
 void RenderEntity2dfx(CEntity* e);
 void *CreateEntity2dfx(void* e);
-TwBar* CSAIdleHook::m_MainTWBAR;
 float CSAIdleHook::m_fShadowDNBalance = 1.0;
 void CSAIdleHook::Patch()
 {
@@ -51,36 +50,13 @@ void CSAIdleHook::Patch()
 	RedirectCall(0x53ECBD, Idle);
 }
 
-void TW_CALL SaveDataCallBack(void *value)
-{
-	SettingsHolder::Instance.SaveSettings();
-}
-
-void TW_CALL ReloadDataCallBack(void *value)
-{
-	SettingsHolder::Instance.ReloadFile();
-}
-
-bool g_bDrawTweakBar = false;
-
 void CSAIdleHook::Idle(void *Data)
 {
-	
-	if (m_MainTWBAR == nullptr) {
-		m_MainTWBAR = TwNewBar("Settings");
-
-		gShadowSettings.InitGUI(m_MainTWBAR);
-		gTonemapSettings.InitGUI(m_MainTWBAR);
-		gDeferredSettings.InitGUI(m_MainTWBAR);
-		gDebugSettings.InitGUI(m_MainTWBAR);
-		TwAddButton(m_MainTWBAR, "Save", SaveDataCallBack, nullptr, "");
-		TwAddButton(m_MainTWBAR, "Reload", ReloadDataCallBack, nullptr, "");
-	}
+	SettingsHolder::Instance.InitGUI();
 	if (!gDebugSettings.UseIdleHook) {
 		
 		_Idle(Data);
-		if (g_bDrawTweakBar)
-			TwDraw();
+		SettingsHolder::Instance.DrawGUI();
 		return;
 	}
 	SettingsHolder::Instance.ReloadShadersIfRequired(); 
@@ -90,33 +66,44 @@ void CSAIdleHook::Idle(void *Data)
 	InitPerFrame2D();
 	// Update game processes
 	GameUpdate();
-	UpdateShadowDNBalance();
 	// Update lighting
 	LightUpdate();
 
+	// reload textures if required
 	g_pDeferredRenderer->QueueTextureReload();
+	// TODO: move to RwD3D1XEngine
 	CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
 	if (dxEngine->m_bScreenSizeChanged || g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading) {
 		dxEngine->ReloadTextures();
 		dxEngine->m_bScreenSizeChanged = false;
 		g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = false;
 	}
+
 	if (!Data)
 		return;
 	PrepareRwCamera();
 	if (!RsCameraBeginUpdate(Scene.m_pRwCamera))
 		return;
-	if (!FrontEndMenuManager->m_bMenuActive /*&& !CCamera__GetScreenFadeStatus(TheCamera) == 2*/) {
+	if (!FrontEndMenuManager.m_bMenuActive /*&& !CCamera__GetScreenFadeStatus(TheCamera) == 2*/) {
 		RenderInGame();
-		if(g_bDrawTweakBar)
-			TwDraw();
+		SettingsHolder::Instance.DrawGUI();
+		if (SettingsHolder::Instance.IsGUIEnabled()) {
+			POINT mousePos;
+			GetCursorPos(&mousePos);
+			FrontEndMenuManager.m_apTextures[23].Draw(
+				CRect{ (float)mousePos.x,(float)mousePos.y,
+				mousePos.x + 16.0f,mousePos.y +16.0f}, 
+				{ 255,255,255,255 });
+		}
 	}
 	RenderHUD();
 }
 
 void CSAIdleHook::UpdateShadowDNBalance()
 {
+	// TODO: make times adjustable perhaps?
 	float currentMinutes = (CClock::ms_nGameClockMinutes + 60.0f * CClock::ms_nGameClockHours) + CClock::ms_nGameClockSeconds / 60.0f;
+	// if time is less than 7 am then it's night
 	if (currentMinutes < 360.0) {
 		m_fShadowDNBalance = 1.0;
 		return;
@@ -126,12 +113,13 @@ void CSAIdleHook::UpdateShadowDNBalance()
 		m_fShadowDNBalance = (420.0f - currentMinutes) / 60.0f;
 		return;
 	}
-	// 
+	// if time is between 7 am and 7 pm than it's day
 	if (currentMinutes < 1140.0)
 	{
 		m_fShadowDNBalance = 0.0;
 		return;
 	}
+	// else it's night
 	if (currentMinutes >= 1200.0)
 		m_fShadowDNBalance = 1.0;
 	else
@@ -193,7 +181,7 @@ void CSAIdleHook::RenderInGame()
 	RenderForwardBeforeDeferred();
 
 	g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered = false;
-	if (sunDirs && !CGame__currArea&&(m_fShadowDNBalance < 1.0))
+	if (sunDirs && !CGame__currArea && (m_fShadowDNBalance < 1.0))
 		PrepareRealTimeShadows(sunDirs[curr_sun_dir]);
 	
 	DebugRendering::ResetList();
@@ -208,6 +196,7 @@ void CSAIdleHook::RenderInGame()
 	scanTimer.Start();
 	CRenderer::ConstructRenderList();
 	scanTimer.Stop();
+
 	CRenderer__PreRender();
 	CWorld::ProcessPedsAfterPreRender();
 
@@ -279,8 +268,8 @@ void CSAIdleHook::RenderInGame()
 
 void CSAIdleHook::RenderHUD()
 {
-	if (FrontEndMenuManager->m_bMenuActive)
-		DrawMenuManagerFrontEnd(FrontEndMenuManager); // CMenuManager::DrawFrontEnd
+	if (FrontEndMenuManager.m_bMenuActive)
+		DrawMenuManagerFrontEnd(&FrontEndMenuManager); // CMenuManager::DrawFrontEnd
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATETEXTURERASTER, NULL);
 
 	DoFade();
@@ -310,7 +299,6 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	//RenderGrass();
 }
 
-// Renders all entities in deferred render path
 void CSAIdleHook::RenderDeferred()
 {
 	RenderFadingInUnderwaterEntities();
@@ -390,7 +378,6 @@ void CSAIdleHook::RenderRealTimeShadows(const RwV3d &sundir)
 
 	// Render cascades
 	for (int i = 0; i < 4; i++) {
-
 		shadowRenderer->RenderShadowToBuffer(i, [](int k) { RenderDeferred(); });
 	}
 	shadowRenderer->m_bShadowsRendered = true;
@@ -464,14 +451,20 @@ void CSAIdleHook::PrepareRenderStuff()
 	mousePos.x = RsGlobal.maximumWidth * 0.5f;
 	mousePos.y = RsGlobal.maximumHeight * 0.5f;
 	POINT pMousePos;
-	g_bDrawTweakBar = GetKeyState(VK_F12) & 1;
+	// TODO: add custom key to show menu
+	auto guiEnabled = GetKeyState(VK_F12) & 1;
+	if (guiEnabled)
+		SettingsHolder::Instance.EnableGUI();	
+	else
+		SettingsHolder::Instance.DisableGUI();
+
 	GetCursorPos(&pMousePos);
-	if(!g_bDrawTweakBar)
+	if(!guiEnabled)
 		RsMouseSetPos(&mousePos);
 	else
 		TwMouseMotion(pMousePos.x, pMousePos.y);
-	ShowCursor(g_bDrawTweakBar);
-	CTimer__m_UserPause = g_bDrawTweakBar;
+	//ShowCursor(guiEnabled);
+	CTimer__m_UserPause = guiEnabled;
 }
 
 void CSAIdleHook::Render2dStuffAfterFade()
@@ -481,7 +474,7 @@ void CSAIdleHook::Render2dStuffAfterFade()
 	CFont__RenderFontBuffer();     // CFont::DrawFonts
 	if (CCredits__bCreditsGoing)
 	{
-		if (!FrontEndMenuManager->m_bMenuActive)
+		if (!FrontEndMenuManager.m_bMenuActive)
 			CCredits__Render();       // CCredits::Render
 	}
 }
@@ -497,7 +490,7 @@ void CSAIdleHook::DoRWStuffEndOfFrame()
 void CSAIdleHook::PrepareRwCamera()
 {
 	CDraw::CalculateAspectRatio(); // CDraw::CalculateAspectRatio
-	CameraSize(Scene.m_pRwCamera, 0, tanf(CDraw__ms_fFOV*( 3.1415927f / 360.0f)), CDraw__ms_fAspectRatio);
+	CameraSize(Scene.m_pRwCamera, 0, tanf(CDraw::ms_fFOV*( 3.1415927f / 360.0f)), CDraw::ms_fAspectRatio);
 	CVisibilityPlugins__SetRenderWareCamera(Scene.m_pRwCamera); // CVisibilityPlugins::SetRenderWareCamera
 	RwCameraClear(Scene.m_pRwCamera, gColourTop, rwCAMERACLEARZ);
 }
@@ -507,6 +500,7 @@ void CSAIdleHook::LightUpdate()
 {
 	CPointLights::NumLights = 0;
 	CLightManager::Reset();
+	UpdateShadowDNBalance();
 	SetLightsWithTimeOfDayColour(Scene.m_pRpWorld);
 }
 
@@ -524,8 +518,8 @@ void CSAIdleHook::InitPerFrame2D()
 
 void CSAIdleHook::TimeUpdate()
 {
-	while (CTimer__GetTimeMillisecondsFromStart() - CGame__TimeMillisecondsFromStart < 1)
-		;
+	//while (CTimer__GetTimeMillisecondsFromStart() - CGame__TimeMillisecondsFromStart < 1)
+	//	;
 	CGame__TimeMillisecondsFromStart = CTimer__GetTimeMillisecondsFromStart();
 	CTimer__Update();
 }
