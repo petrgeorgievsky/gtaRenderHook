@@ -16,12 +16,12 @@ CHDRTonemapping::CHDRTonemapping():CPostProcessEffect("HDRTonemapping")
 {
 	m_pAdaptationRaster[0] = RwRasterCreate(1, 1, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
 	m_pAdaptationRaster[1] = RwRasterCreate(1, 1, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
-	m_pLogAvg = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "LogLuminancePS");
-	m_pTonemap = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "TonemapPS");
-	m_pDownScale2x2_Lum = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale2x2_LumPS");
-	m_pDownScale3x3 = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3PS");
-	m_pDownScale3x3_BrightPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3_BrightPassPS");
-	m_pAdaptationPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "AdaptationPassPS");
+	m_pLogAvg = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "LogLuminancePS", gTonemapSettings.m_pShaderDefineList);
+	m_pTonemap = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "TonemapPS", gTonemapSettings.m_pShaderDefineList);
+	m_pDownScale2x2_Lum = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale2x2_LumPS", gTonemapSettings.m_pShaderDefineList);
+	m_pDownScale3x3 = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3PS", gTonemapSettings.m_pShaderDefineList);
+	m_pDownScale3x3_BrightPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3_BrightPassPS", gTonemapSettings.m_pShaderDefineList);
+	m_pAdaptationPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "AdaptationPassPS", gTonemapSettings.m_pShaderDefineList);
 	
 	gTonemapSettings.m_aShaderPointers.push_back(m_pLogAvg);
 	gTonemapSettings.m_aShaderPointers.push_back(m_pTonemap);

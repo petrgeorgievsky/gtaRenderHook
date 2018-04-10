@@ -254,10 +254,7 @@ void CSAIdleHook::RenderInGame()
 		
 		CFont::PrintString(FontXPos, FontYPos - 450.0f, (char*)("Draw call count: " + to_string(drawCallCount)).c_str());
 		CFont::PrintString(FontXPos, FontYPos - 400.0f, (char*)("Visible Entity count: " + to_string(CRenderer::ms_nNoOfVisibleEntities)).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 350.0f, (char*)("SC 3 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[3].size())).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 300.0f, (char*)("SC 2 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[2].size())).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 250.0f, (char*)("SC 1 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[1].size())).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 200.0f, (char*)("SC 0 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[0].size())).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 350.0f, (char*)("SC Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters.size())).c_str());
 			 
 		CFont::PrintString(FontXPos, FontYPos - 150.0f, (char*)scanTimer.GetTimerResult().c_str());
 		CFont::PrintString(FontXPos, FontYPos - 100.0f, (char*)shadowTimer.GetTimerResult().c_str());
@@ -378,7 +375,10 @@ void CSAIdleHook::RenderRealTimeShadows(const RwV3d &sundir)
 
 	// Render cascades
 	for (int i = 0; i < 4; i++) {
-		shadowRenderer->RenderShadowToBuffer(i, [](int k) { RenderDeferred(); });
+		shadowRenderer->RenderShadowToBuffer(i, [](int k) { 
+			CRenderer::RenderShadowCascade(0);
+			//RenderDeferred();
+		});
 	}
 	shadowRenderer->m_bShadowsRendered = true;
 	g_pDebug->printMsg("Shadow Pass: end", 1);

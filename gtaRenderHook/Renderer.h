@@ -104,6 +104,6 @@ public:
 	static bool TOBJpass;
 	static std::list<CEntity*> ms_aVisibleEntities;
 	static std::list<CEntity*> ms_aVisibleLods;
-	static std::list<CEntity*> ms_aVisibleShadowCasters[4];
+	static std::list<CEntity*> ms_aVisibleShadowCasters;
 };
 
