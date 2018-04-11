@@ -29,7 +29,7 @@ CShadowRenderer::CShadowRenderer()
 	RwCameraSetZRaster(m_pShadowCamera, RwRasterCreate(gShadowSettings.Size * 2, gShadowSettings.Size * 2, 32, rwRASTERTYPEZBUFFER));
 	vw.x = vw.y = 40;
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
-
+	gDebugSettings.DebugRenderTargetList.push_back(m_pShadowCamera->zBuffer);
 	RwObjectHasFrameSetFrame(m_pShadowCamera, RwFrameCreate());
 	RpWorldAddCamera(Scene.m_pRpWorld, m_pShadowCamera);
 	m_pLightViewProj = nullptr;
@@ -300,6 +300,9 @@ tinyxml2::XMLElement * ShadowSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 	shadowSettingsNode->SetAttribute("Enable", gShadowSettings.Enable);
 	shadowSettingsNode->SetAttribute("Size", gShadowSettings.Size);
 	shadowSettingsNode->SetAttribute("MaxDrawDistance", gShadowSettings.MaxDrawDistance);
+	shadowSettingsNode->SetAttribute("MinOffscreenShadowCasterSize", gShadowSettings.MinOffscreenShadowCasterSize);
+	shadowSettingsNode->SetAttribute("MaxSectorsAroundPlayer", gShadowSettings.MaxSectorsAroundPlayer);
+	shadowSettingsNode->SetAttribute("LodShadowsMinDistance", gShadowSettings.LodShadowsMinDistance);
 	for (size_t i = 0; i < 4; i++)
 	{
 		auto shadowCascadesSettingsNode = doc->NewElement("Cascade");
@@ -321,6 +324,9 @@ void ShadowSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 	gShadowSettings.Enable = shadowSettingsNode->BoolAttribute("Enable", true);
 	gShadowSettings.Size = shadowSettingsNode->IntAttribute("Size", 1024);
 	gShadowSettings.MaxDrawDistance = shadowSettingsNode->FloatAttribute("MaxDrawDistance", 500);
+	gShadowSettings.MinOffscreenShadowCasterSize = shadowSettingsNode->FloatAttribute("MinOffscreenShadowCasterSize", 50);
+	gShadowSettings.MaxSectorsAroundPlayer = shadowSettingsNode->IntAttribute("MaxSectorsAroundPlayer", 3);
+	gShadowSettings.LodShadowsMinDistance = shadowSettingsNode->FloatAttribute("LodShadowsMinDistance", 150);
 	// Read 4 shadow cascade parameters
 	auto shadowCascadeNode = shadowSettingsNode->FirstChildElement();
 	int id = shadowCascadeNode->IntAttribute("ID");
@@ -340,16 +346,19 @@ void ShadowSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 void ShadowSettingsBlock::Reset()
 {
 	// Shadows
-	gShadowSettings.Enable = true;
-	gShadowSettings.Size = 1024;
-	gShadowSettings.MaxDrawDistance = 500;
-	gShadowSettings.BiasCoefficients[0] = 0.003f;
-	gShadowSettings.BiasCoefficients[1] = 0.003f;
-	gShadowSettings.BiasCoefficients[2] = 0.003f;
-	gShadowSettings.BiasCoefficients[3] = 0.003f;
-	gShadowSettings.DistanceCoefficients[0] = 0.01f;
-	gShadowSettings.DistanceCoefficients[1] = 0.15f;
-	gShadowSettings.DistanceCoefficients[2] = 0.45f;
+	Enable = true;
+	Size = 1024;
+	MaxDrawDistance = 500;
+	BiasCoefficients[0] = 0.003f;
+	BiasCoefficients[1] = 0.003f;
+	BiasCoefficients[2] = 0.003f;
+	BiasCoefficients[3] = 0.003f;
+	DistanceCoefficients[0] = 0.01f;
+	DistanceCoefficients[1] = 0.15f;
+	DistanceCoefficients[2] = 0.45f;
+	MinOffscreenShadowCasterSize=50;
+	MaxSectorsAroundPlayer=3;
+	LodShadowsMinDistance = 150;
 }
 void TW_CALL SetShadowSizeCallback(const void *value, void *clientData)
 {
@@ -374,6 +383,15 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 	TwAddVarRW(bar, "Max DrawDistance", TwType::TW_TYPE_FLOAT,
 		&MaxDrawDistance,
 		" min=5 max=30000 step=5 help='Maximum shadow draw distance, limits how far shadows being drawn.' group=Shadows");
+	TwAddVarRW(bar, "Maximum Offscreen Shadow LOD distance", TwType::TW_TYPE_FLOAT,
+		&LodShadowsMinDistance,
+		" min=2 max=3000 step=1 help='Maximum shadow lod distance, limits start of lods in shadows behind player.' group=Shadows");
+	TwAddVarRW(bar, "Minimum Offscreen Shadow Caster radius", TwType::TW_TYPE_FLOAT,
+		&MinOffscreenShadowCasterSize,
+		" min=1 max=3000 step=1 help='Minimum bounding sphere for offscreen shadow casters.' group=Shadows");
+	TwAddVarRW(bar, "Max Offscreen Shadow Sectors", TwType::TW_TYPE_UINT32,
+		&MaxSectorsAroundPlayer,
+		" min=2 max=10 step=1 help='Maximum sectors for offscreen shadow scan.' group=Shadows");
 
 	TwAddVarRW(bar, "Distance multipier 1", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[0],

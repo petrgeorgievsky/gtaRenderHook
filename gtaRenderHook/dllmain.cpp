@@ -24,6 +24,7 @@
 #include "PBSMaterial.h"
 #include <game_sa\CModelInfo.h>
 #include <game_sa\CVehicle.h>
+#include "DebugRendering.h"
 
 #define CGame__InitialiseRenderWare() ((char(__cdecl *)())0x5BD600)()
 #define CGame__ShutdownRenderWare() ((char(__cdecl *)())0x53BB80)()
@@ -61,6 +62,7 @@ void SetVM(RwUInt32 videomode) {
 char GTARwInit() {
 	char c = CGame__InitialiseRenderWare();
 	CFullscreenQuad::Init();
+	DebugRendering::Init();
 	g_pDeferredRenderer = new CDeferredRenderer();
 	g_pCustomBuildingPipe = new CCustomBuildingPipeline();
 	g_pCustomBuildingDNPipe = new CCustomBuildingDNPipeline();

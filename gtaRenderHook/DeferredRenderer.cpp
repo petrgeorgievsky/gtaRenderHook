@@ -48,6 +48,13 @@ CDeferredRenderer::CDeferredRenderer()
 	gDeferredSettings.m_aShaderPointers.push_back(m_pFinalPassPS);
 	gDeferredSettings.m_aShaderPointers.push_back(m_pAtmospherePassPS);
 	gDeferredSettings.m_aShaderPointers.push_back(m_pReflectionPassPS);
+	for (int i = 0; i < 3; i++)
+	{
+		gDebugSettings.DebugRenderTargetList.push_back(m_aDeferredRasters[i]);
+	}
+	gDebugSettings.DebugRenderTargetList.push_back(m_pLightingRaster);
+	gDebugSettings.DebugRenderTargetList.push_back(m_pReflectionRaster);
+	gDebugSettings.DebugRenderTargetList.push_back(m_pFinalRasters[0]);
 
 	m_pShadowRenderer	= new CShadowRenderer();
 	m_pTonemapping		= new CHDRTonemapping();

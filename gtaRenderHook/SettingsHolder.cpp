@@ -144,6 +144,8 @@ tinyxml2::XMLElement * DebugSettingsBlock::Save(tinyxml2::XMLDocument *doc)
 	debugSettingsNode->SetAttribute("DebugMessaging", DebugMessaging);
 	debugSettingsNode->SetAttribute("DebugLevel", DebugLevel);
 	debugSettingsNode->SetAttribute("UseIdleHook", UseIdleHook);
+	debugSettingsNode->SetAttribute("Windowed", Windowed);
+	debugSettingsNode->SetAttribute("UseDefaultAdapter", UseDefaultAdapter);
 
 	return debugSettingsNode;
 }
@@ -155,7 +157,11 @@ void DebugSettingsBlock::Load(const tinyxml2::XMLDocument &doc)
 	ShowPreformanceCounters = debugSettingsNode->BoolAttribute("ShowPreformanceCounters", true);
 	DebugMessaging = debugSettingsNode->BoolAttribute("DebugMessaging", false);
 	DebugLevel = debugSettingsNode->IntAttribute("DebugLevel", 0);
-	UseIdleHook = debugSettingsNode->IntAttribute("UseIdleHook", true);
+	UseIdleHook = debugSettingsNode->BoolAttribute("UseIdleHook", true);
+	Windowed = debugSettingsNode->BoolAttribute("Windowed", true);
+	UseDefaultAdapter = debugSettingsNode->BoolAttribute("UseDefaultAdapter", true);
+	DebugRenderTarget = false;
+	DebugRenderTargetNumber = 0;
 }
 
 void DebugSettingsBlock::Reset()
@@ -165,11 +171,19 @@ void DebugSettingsBlock::Reset()
 	DebugMessaging = false;
 	DebugLevel = 0;
 	UseIdleHook = true;
+	DebugRenderTarget = false;
+	DebugRenderTargetNumber=0;
+	Windowed = true;
+	UseDefaultAdapter = true;
 }
 
 void DebugSettingsBlock::InitGUI(TwBar * guiholder)
 {
 	TwAddVarRW(guiholder, "Enable RenderHook Idle", TwType::TW_TYPE_BOOL8, &UseIdleHook, "group=Global");
+	TwAddVarRW(guiholder, "Show RenderTarget", TwType::TW_TYPE_BOOL8, &DebugRenderTarget, "group=Debug");
+	std::string rtIdSettings = "min=0 max=";
+	TwAddVarRW(guiholder, "RenderTarget ID", TwType::TW_TYPE_UINT32, &DebugRenderTargetNumber, 
+		(rtIdSettings +std::to_string(DebugRenderTargetList.size())+" group=Debug").c_str());
 }
 
 tinyxml2::XMLElement * ShaderDefinesSettingsBlock::Save(tinyxml2::XMLDocument * doc)

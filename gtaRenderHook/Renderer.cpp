@@ -786,7 +786,7 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 		float xDist = ms_vecCameraPosition.x - pos.x;
 		float yDist = ms_vecCameraPosition.y - pos.y;
 		float zDist = ms_vecCameraPosition.z - pos.z;
-		float lodStartDist = 150;
+		float lodStartDist = gShadowSettings.LodShadowsMinDistance*gShadowSettings.LodShadowsMinDistance;
 		renderDistance = xDist*xDist + yDist * yDist + zDist * zDist;
 		CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
 		
@@ -794,9 +794,9 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 		
 		if (modelInfo != nullptr&&modelInfo->m_pColModel!=nullptr) {
 			float entityRadius = modelInfo->m_pColModel->m_boundSphere.m_fRadius;
-			if (renderDistance > lodStartDist * lodStartDist && !entity->m_bIsBIGBuilding&&!modelInfo->bIsRoad)
+			if (renderDistance > lodStartDist && !modelInfo->bIsRoad)
 				shadowEntity = shadowEntity->m_pLod;
-			if (shadowEntity != nullptr && entityRadius > 80.0f)
+			if (shadowEntity != nullptr && entityRadius > gShadowSettings.MinOffscreenShadowCasterSize)
 				AddEntityToShadowCasterList(shadowEntity, renderDistance);
 		}
 		current = current->pNext;
@@ -1224,9 +1224,9 @@ void CRenderer::ScanWorld()
 	shadowSector[7].y = points[4].y * 0.02f + 60.0f;*/
 	int currentSectorX = ceil(ms_vecCameraPosition.x / 50.0f + 60.0f);
 	int currentSectorY = ceil(ms_vecCameraPosition.y / 50.0f + 60.0f);
-	for (int x = -3; x < 4; x++)
+	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
 	{
-		for (int y = -3; y < 4; y++) {
+		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer+1; y++) {
 			CRenderer::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
 		}
 	}

@@ -9,6 +9,13 @@ cbuffer ConstantBuffer : register( b0 )
 	row_major matrix View;
 	row_major matrix Projection;
 }
+
+struct PS_QUAD_IN
+{
+    float4 vPosition : SV_Position;
+    float4 vTexCoord : TEXCOORD0;
+};
+
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
@@ -28,4 +35,10 @@ float4 PS( float4 Pos : SV_POSITION ) : SV_Target
 {
 	float4 outColor=float4(1,1,1,1);
 	return outColor;
+}
+
+float4 RenderRasterPS(PS_QUAD_IN i) : SV_Target
+{
+    float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
+    return outColor;
 }

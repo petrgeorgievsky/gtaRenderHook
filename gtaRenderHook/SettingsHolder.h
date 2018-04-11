@@ -73,10 +73,16 @@ public:
 	void Reset();
 	void InitGUI(TwBar* guiholder);
 public:
+	bool Windowed;
+	bool UseDefaultAdapter;
 	bool UseIdleHook;
 	bool ShowPreformanceCounters;
 	bool DebugMessaging;
 	int  DebugLevel;
+
+	bool DebugRenderTarget;
+	int DebugRenderTargetNumber;
+	std::vector<RwRaster*> DebugRenderTargetList;
 };
 
 extern DebugSettingsBlock gDebugSettings;

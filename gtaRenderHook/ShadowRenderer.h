@@ -56,5 +56,8 @@ public:
 	float DistanceCoefficients[3];
 	float BiasCoefficients[4];
 	float MaxDrawDistance;
+	float MinOffscreenShadowCasterSize;
+	float LodShadowsMinDistance;
+	int MaxSectorsAroundPlayer;
 };
 extern ShadowSettingsBlock gShadowSettings;

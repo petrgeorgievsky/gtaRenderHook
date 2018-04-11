@@ -236,7 +236,9 @@ void CSAIdleHook::RenderInGame()
 	g_pDeferredRenderer->RenderTonemappedOutput(); //TODO fix
 	renderer->EndDebugEvent();
 	DebugRendering::Render();
-
+	if (gDebugSettings.DebugRenderTarget &&
+		gDebugSettings.DebugRenderTargetList[gDebugSettings.DebugRenderTargetNumber]!=nullptr)
+		DebugRendering::RenderRaster(gDebugSettings.DebugRenderTargetList[gDebugSettings.DebugRenderTargetNumber]);
 	
 	/*int Render2dStuffAddress = *(DWORD *)0x53EB13 + 0x53EB12 + 5;
 	((int (__cdecl *)())Render2dStuffAddress)();*/

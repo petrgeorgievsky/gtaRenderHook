@@ -15,8 +15,14 @@ CD3DRenderer::CD3DRenderer(HWND& window)
 
 	IDXGIAdapter * pAdapter;
 	// Init adapter list.
-	for (UINT i = 0; m_pdxgiFactory->EnumAdapters(i, &pAdapter) != DXGI_ERROR_NOT_FOUND; ++i)
-		m_vAdapters.push_back(pAdapter);
+	if (!gDebugSettings.UseDefaultAdapter) {
+		for (UINT i = 0; m_pdxgiFactory->EnumAdapters(i, &pAdapter) != DXGI_ERROR_NOT_FOUND; ++i)
+			m_vAdapters.push_back(pAdapter);
+	}
+	else {
+		if(m_pdxgiFactory->EnumAdapters(0, &pAdapter) != DXGI_ERROR_NOT_FOUND)
+			m_vAdapters.push_back(pAdapter);
+	}
 	
 	IDXGIOutput *pOutput;
 	if (!CALL_D3D_API(m_vAdapters[m_uiCurrentAdapter]->EnumOutputs(0, &pOutput),
@@ -176,7 +182,7 @@ bool CD3DRenderer::InitDevice()
 		ZeroMemory(&fsd, sizeof(fsd));
 		fsd.Scaling = currentAdapterMode.Scaling;
 		fsd.ScanlineOrdering = currentAdapterMode.ScanlineOrdering;
-		fsd.Windowed = TRUE;
+		fsd.Windowed = gDebugSettings.Windowed;
 		fsd.RefreshRate = currentAdapterMode.RefreshRate;
 
 		if(CALL_D3D_API(dxgiFactory2->CreateSwapChainForHwnd(m_pd3dDevice, m_hWnd, &sd, &fsd, nullptr, &m_pSwapChain1),
@@ -200,7 +206,7 @@ bool CD3DRenderer::InitDevice()
 		sd.OutputWindow = m_hWnd;
 		sd.SampleDesc.Count = 1;
 		sd.SampleDesc.Quality = 0;
-		sd.Windowed = TRUE;
+		sd.Windowed = gDebugSettings.Windowed;
 		sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 		CALL_D3D_API(m_pdxgiFactory->CreateSwapChain(m_pd3dDevice, &sd, &m_pSwapChain), "Failed to create swap chain using DX11 API");
 	}

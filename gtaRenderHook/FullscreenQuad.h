@@ -1,5 +1,8 @@
 #pragma once
 class CD3D1XShader;
+class CD3D1XVertexDeclaration;
+class CD3D1XVertexBuffer;
+class CD3D1XIndexBuffer;
 struct QuadVertex
 {
 	RwV4d Position;
@@ -12,9 +15,9 @@ public:
 	static void Shutdown();
 	static void Draw();
 private:
-	static ID3D11Buffer* m_quadVB;
-	static ID3D11Buffer* m_quadIB;
+	static CD3D1XVertexBuffer* m_quadVB;
+	static CD3D1XIndexBuffer* m_quadIB;
 	static CD3D1XShader* m_quadVS;
-	static ID3D11InputLayout* m_quadIL;
+	static CD3D1XVertexDeclaration* m_pVertexDecl;
 };
 
