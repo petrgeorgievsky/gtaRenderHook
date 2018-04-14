@@ -7,6 +7,7 @@ class DebugBBox :
 {
 public:
 	DebugBBox(RW::BBox bbox);
+	DebugBBox(RW::BBox bbox, RW::Matrix rotationMatrix);
 	~DebugBBox();
 	void Render();
 	static void Initialize();

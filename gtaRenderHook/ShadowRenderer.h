@@ -24,13 +24,14 @@ public:
 	void RenderShadowToBuffer(int cascade, void(*render)(int cascade));
 	void SetShadowBuffer() const;
 	void CalculateShadowDistances(RwReal fNear, RwReal fFar);
-	void AddEntityToShadowList(void* ptr);
-	bool IsEntityInShadowList(void* ptr);
 	void QueueTextureReload();
 	RwCamera* m_pShadowCamera = nullptr;
 	float	m_fShadowDistances[5];
 	bool	m_bShadowsRendered = false;
 	bool	m_bRequiresReloading = false;
+	/*!
+		Light aligned bounding box for each shadow cascade
+	*/
 	static RW::BBox m_LightBBox[4];
 	static RwV3d m_LightPos[4];
 	static RW::Matrix m_LightSpaceMatrix[4];

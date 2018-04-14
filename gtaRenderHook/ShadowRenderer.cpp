@@ -270,17 +270,6 @@ void CShadowRenderer::CalculateShadowDistances(const RwReal fNear, const RwReal 
 		m_pLightCB->data.FadeDistances[i] = m_fShadowDistances[i];
 }
 
-void CShadowRenderer::AddEntityToShadowList(void * ptr)
-{
-	m_aShadowObjectCacheList.push_back(ptr);
-}
-
-bool CShadowRenderer::IsEntityInShadowList(void * ptr)
-{
-	auto found= std::find(m_aShadowObjectCacheList.begin(), m_aShadowObjectCacheList.end(), ptr);
-	return found != m_aShadowObjectCacheList.end();
-}
-
 void CShadowRenderer::QueueTextureReload()
 {
 	if (m_bRequiresReloading) {
@@ -388,10 +377,10 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 		" min=2 max=3000 step=1 help='Maximum shadow lod distance, limits start of lods in shadows behind player.' group=Shadows");
 	TwAddVarRW(bar, "Minimum Offscreen Shadow Caster radius", TwType::TW_TYPE_FLOAT,
 		&MinOffscreenShadowCasterSize,
-		" min=1 max=3000 step=1 help='Minimum bounding sphere for offscreen shadow casters.' group=Shadows");
+		" min=0 max=3000 step=1 help='Minimum bounding sphere for offscreen shadow casters.' group=Shadows");
 	TwAddVarRW(bar, "Max Offscreen Shadow Sectors", TwType::TW_TYPE_UINT32,
 		&MaxSectorsAroundPlayer,
-		" min=2 max=10 step=1 help='Maximum sectors for offscreen shadow scan.' group=Shadows");
+		" min=1 max=10 step=1 help='Maximum sectors for offscreen shadow scan.' group=Shadows");
 
 	TwAddVarRW(bar, "Distance multipier 1", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[0],

@@ -1,4 +1,8 @@
 #pragma once
+/*!
+	\class CD3D1XShaderDefine
+	\brief Shader definition.
+*/
 class CD3D1XShaderDefine {
 public:
 	CD3D1XShaderDefine(const std::string &name, const std::string &def);

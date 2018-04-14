@@ -11,6 +11,8 @@
 #include <game_sa\CEntity.h>
 #include <game_sa\CVisibilityPlugins.h>
 #include "DebugRendering.h"
+#include "DeferredRenderer.h"
+#include "SAIdleHook.h"
 #include "DebugBBox.h"
 bool		&CRenderer::ms_bRenderTunnels = *(bool*)0xB745C0;
 bool		&CRenderer::ms_bRenderOutsideTunnels = *(bool*)0xB745C1;
@@ -20,6 +22,7 @@ UINT&		CRenderer::ms_nNoOfVisibleLods = *(UINT*)0xB76840;
 UINT&		CRenderer::ms_nNoOfInVisibleEntities = *(UINT*)0xB7683C;
 UINT&		CRenderer::m_loadingPriority = *(UINT*)0xB76850;
 CEntity*	CRenderer::m_pFirstPersonVehicle = (CEntity*)0xB745D4;
+RwPlane CRenderer::ms_aShadowCasterBoundingPlanes[4][4] = { {}, {}, {}, {} };
 
 sLodListEntry*&	CRenderer::ms_pLodRenderList = *(sLodListEntry**)0xB745D0;
 sLodListEntry*&	CRenderer::ms_pLodDontRenderList = *(sLodListEntry**)0xB745CC;
@@ -36,7 +39,7 @@ float&				CRenderer::ms_fFarClipPlane = *(float*)0xB76848;
 bool CRenderer::TOBJpass = false;
 std::list<CEntity*> CRenderer::ms_aVisibleEntities{};
 std::list<CEntity*> CRenderer::ms_aVisibleLods{};
-std::list<CEntity*> CRenderer::ms_aVisibleShadowCasters = {};
+std::list<CEntity*> CRenderer::ms_aVisibleShadowCasters[4] = { {}, {},{},{} };
 
 /*struct CSector {
 public:
@@ -85,7 +88,7 @@ public:
 #define CVehicle__ResetAfterRender(veh) ((void(__thiscall *)(void*))0x6D0E20)(veh)
 //56E0D0     ; CVehicle *__cdecl FindPlayerVehicle(int playerNum, char includeRemote)
 #define FindPlayerVehicle(playerNum, includeRemote) ((CVehicle* (__cdecl *)(int, bool))0x56E0D0)(playerNum,includeRemote)
-void CRenderer::RenderRoads(bool(*predicate)(void* entity))
+void CRenderer::RenderRoads()
 {
 	// Set road render-states.
 	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEFOGENABLE, 1);
@@ -105,14 +108,14 @@ void CRenderer::RenderRoads(bool(*predicate)(void* entity))
 	for (size_t i = 0; i < ms_nNoOfVisibleEntities; ++i) {
 		auto entity = ms_aVisibleEntityPtrs[i];
 		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
-		if (predicate(ms_aVisibleEntityPtrs[i]) && st != 3)
+		if (st != 3)
 			RenderOneNonRoad(ms_aVisibleEntityPtrs[i]);
 	}
 	//}
 	for (size_t i = 0; i < ms_nNoOfVisibleLods; ++i) {
 		auto entity = ms_aVisibleLodPtrs[i];
 		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
-		if (predicate(ms_aVisibleLodPtrs[i]) && st != 3)
+		if (st != 3)
 			RenderOneNonRoad(ms_aVisibleLodPtrs[i]);
 	}
 }
@@ -148,7 +151,7 @@ void CRenderer::RenderTOBJs()
 
 void CRenderer::RenderShadowCascade(int i)
 {
-	for (auto shadowEntity: ms_aVisibleShadowCasters)
+	for (auto shadowEntity: ms_aVisibleShadowCasters[i])
 	{
 		RenderOneRoad(shadowEntity);
 	}
@@ -280,9 +283,9 @@ void CRenderer::AddEntityToRenderList(CEntity * entity, float renderDistance)
 	CRenderer__AddEntityToRenderList(entity, renderDistance);
 }
 
-char CRenderer::AddEntityToShadowCasterList(CEntity * entity, float renderDistance)
+char CRenderer::AddEntityToShadowCasterList(CEntity * entity, float renderDistance, int shadowCascade)
 {
-	ms_aVisibleShadowCasters.push_back(entity);
+	ms_aVisibleShadowCasters[shadowCascade].push_back(entity);
 	return true;
 }
 
@@ -321,18 +324,63 @@ char CRenderer::AddToLodRenderList(CEntity * entity, float renderDistance)
 	return CRenderer__AddToLodRenderList(entity, renderDistance);
 }
 
-bool CRenderer::CheckInsideFrustum(RwCamera * camera, const RwBBox& b)
+void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity)
+{
+	int modelID = entity->m_nModelIndex;
+	CVector pos = entity->GetPosition();
+	float xDist = ms_vecCameraPosition.x - pos.x;
+	float yDist = ms_vecCameraPosition.y - pos.y;
+	float zDist = ms_vecCameraPosition.z - pos.z;
+	float lodStartDist = gShadowSettings.LodShadowsMinDistance*gShadowSettings.LodShadowsMinDistance;
+	float renderDistance = xDist * xDist + yDist * yDist + zDist * zDist;
+	CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
+	auto shadowEntity = entity;
+	// We add entity to render list only if it has bbox, because we need to cull entities that don't affect objects on screen
+	if (modelInfo != nullptr && modelInfo->m_pColModel != nullptr) {
+		auto entityPos = entity->GetPosition().ToRwV3d();
+		auto entityRadius = modelInfo->m_pColModel->m_boundSphere.m_fRadius;
+
+		// Get entity bounding box
+		RW::BBox entityBBox = { RW::V3d{ modelInfo->m_pColModel->m_boundBox.m_vecMin.ToRwV3d() },
+			RW::V3d{ modelInfo->m_pColModel->m_boundBox.m_vecMax.ToRwV3d() } };
+		// Transform it to world space
+		entityBBox += entityPos;
+		//DebugRendering::AddToRenderList(new DebugBBox(entityBBox));
+		
+		// Use lods if entity is not road and it's outside of lod rendering distance
+		if (renderDistance > lodStartDist && !modelInfo->bIsRoad)
+			shadowEntity = shadowEntity->m_pLod;
+		
+		// Add entity to shadow caster list if it exists, inside frustum bbox and bigger than minimum shadow caster size
+		if (shadowEntity != nullptr &&
+			entityRadius > gShadowSettings.MinOffscreenShadowCasterSize) 
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				// Check if entity is inside light bounding volume 
+				bool isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i],
+					4, entityBBox);
+				AddEntityToShadowCasterList(shadowEntity, renderDistance, i);
+			}
+		}
+	}
+}
+
+bool CRenderer::IsAABBInsideBoundingVolume(RwPlane * boundingPlanes, int planeCount, 
+											const RW::BBox& b)
 {
 
-	for (size_t i = 0; i < 6; i++)
+	for (auto i = 0; i < planeCount; i++)
 	{
-		RwV3d normal = camera->frustumPlanes[i].plane.normal;
-		bool infIsOutside = (b.inf.x)*normal.x +
-							(b.inf.y)*normal.y + 
-							(b.inf.z)*normal.z - 
-							camera->frustumPlanes[i].plane.distance < 0;
-		bool supIsOutside = b.sup.x*normal.x + b.sup.y*normal.y + b.sup.z*normal.z - camera->frustumPlanes[i].plane.distance < 0;
-		if (infIsOutside&&supIsOutside)
+		RwV3d normal = boundingPlanes[i].normal;
+		auto min = b.getMin();
+		auto max = b.getMax();
+		bool infIsOutside = (min.getX())*normal.x +
+							(min.getY())*normal.y +
+							(min.getZ())*normal.z -
+			boundingPlanes[i].distance < 0;
+		bool supIsOutside = max.getX()*normal.x + max.getY()*normal.y + max.getZ()*normal.z - boundingPlanes[i].distance < 0;
+		if (infIsOutside && supIsOutside)
 			return false;
 	}
 	return true;
@@ -679,7 +727,7 @@ void CRenderer::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 		RendererVisibility visibility = SetupEntityVisibility(entity, &renderDistance);
 
 		int modelID = entity->m_nModelIndex;
-		
+		AddEntityToShadowCastersIfNeeded(entity);
 		// Depending on visibility value, request model, add to render list or invisible render list
 		switch (visibility)
 		{
@@ -706,7 +754,6 @@ void CRenderer::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 				CStreaming::RequestModel(modelID, 0);
 			break;
 		case RendererVisibility::VISIBLE:
-			AddEntityToShadowCasterList(entity, renderDistance);
 			AddEntityToRenderList(entity, renderDistance);
 			break;
 		case RendererVisibility::INVISIBLE:
@@ -740,7 +787,7 @@ void CRenderer::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 			break;
 		case RendererVisibility::OFFSCREEN:
 			entity->m_bOffscreen = true;
-			AddEntityToShadowCasterList(entity, renderDistance);
+			//AddEntityToShadowCasterList(entity, renderDistance);
 			if (entity->m_bHasPreRenderEffects) {
 				auto pos = entity->GetPosition();
 				auto maxDist = 30.0;
@@ -778,27 +825,9 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 			current = current->pNext;
 			continue;
 		}
-		float renderDistance;
-
 		entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
-		int modelID = entity->m_nModelIndex;
-		CVector pos = entity->GetPosition();
-		float xDist = ms_vecCameraPosition.x - pos.x;
-		float yDist = ms_vecCameraPosition.y - pos.y;
-		float zDist = ms_vecCameraPosition.z - pos.z;
-		float lodStartDist = gShadowSettings.LodShadowsMinDistance*gShadowSettings.LodShadowsMinDistance;
-		renderDistance = xDist*xDist + yDist * yDist + zDist * zDist;
-		CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
-		
-		auto shadowEntity = entity;
-		
-		if (modelInfo != nullptr&&modelInfo->m_pColModel!=nullptr) {
-			float entityRadius = modelInfo->m_pColModel->m_boundSphere.m_fRadius;
-			if (renderDistance > lodStartDist && !modelInfo->bIsRoad)
-				shadowEntity = shadowEntity->m_pLod;
-			if (shadowEntity != nullptr && entityRadius > gShadowSettings.MinOffscreenShadowCasterSize)
-				AddEntityToShadowCasterList(shadowEntity, renderDistance);
-		}
+
+		AddEntityToShadowCastersIfNeeded(entity);
 		current = current->pNext;
 	}
 }
@@ -1016,7 +1045,8 @@ void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart
 	sector[4].y = points[10].y * 0.02f + 60.0f;
 	ms_aVisibleEntities.clear();
 	ms_aVisibleLods.clear();
-	ms_aVisibleShadowCasters.clear();
+	for (int i = 0; i < 4; i++)
+		ms_aVisibleShadowCasters[i].clear();
 	//RwBBox bbox;
 	//GenerateCameraBBox(camera, bbox);
 	/*for (int x = 0; x < 120; x++)
@@ -1161,7 +1191,8 @@ void CRenderer::ScanWorld()
 	
 	RwV3dTransformPoints(points, points, 17, m);
 	m_loadingPriority = 0;
-	ms_aVisibleShadowCasters.clear();
+	for (int i = 0; i < 4; i++)
+		ms_aVisibleShadowCasters[i].clear();
 	RwV2d sector[5];
 	sector[0].x = points[0].x * 0.02f + 60.0f;
 	sector[0].y = points[0].y * 0.02f + 60.0f;
@@ -1206,6 +1237,30 @@ void CRenderer::ScanWorld()
 	sector[3].y = points[3].y * 0.005f + 15.0f;
 	sector[4].x = points[4].x * 0.005f + 15.0f;
 	sector[4].y = points[4].y * 0.005f + 15.0f;
+	
+	if (CGame__currArea || (CSAIdleHook::m_fShadowDNBalance >= 1.0))
+		return;
+	for (auto i = 0; i < 4; i++)
+		CalculateShadowBoundingPlanes(i);
+	
+	int currentSectorX = ceil(ms_vecCameraPosition.x / 50.0f + 60.0f);
+	int currentSectorY = ceil(ms_vecCameraPosition.y / 50.0f + 60.0f);
+	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
+	{
+		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer+1; y++) {
+			float sectorPosX = (x - 60) * 50.0f + 25.0f;
+			float sectorPosY = (y - 60) * 50.0f + 25.0f;
+			RW::BBox	 sectorBBox = { { sectorPosX + 25.0f , sectorPosY + 25.0f,3000 },{ sectorPosX - 25.0f , sectorPosY - 25.0f,-3000 } };
+			bool isInsideLightBBox = 
+				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[0], 4, sectorBBox) ||
+				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[1], 4, sectorBBox) || 
+				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[2], 4, sectorBBox) || 
+				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[3], 4, sectorBBox);
+			if (isInsideLightBBox) {
+				CRenderer::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
+			}
+		}
+	}
 	/*shadowSector[0].x = minX * 0.02 + 60.0;
 	shadowSector[0].y = minY * 0.02 + 60.0;
 	shadowSector[1].x = maxX * 0.02 + 60.0;
@@ -1222,14 +1277,6 @@ void CRenderer::ScanWorld()
 	shadowSector[6].y = points[3].y * 0.02f + 60.0f;
 	shadowSector[7].x = points[4].x * 0.02f + 60.0f;
 	shadowSector[7].y = points[4].y * 0.02f + 60.0f;*/
-	int currentSectorX = ceil(ms_vecCameraPosition.x / 50.0f + 60.0f);
-	int currentSectorY = ceil(ms_vecCameraPosition.y / 50.0f + 60.0f);
-	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
-	{
-		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer+1; y++) {
-			CRenderer::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
-		}
-	}
 	//CWorldScan__ScanWorld(sector, 5, CRenderer::ScanSectorListForShadowCasters);
 	//m_loadingPriority = 0;
 }
@@ -1248,4 +1295,31 @@ sLodListEntry *CRenderer::GetLodRenderListBase()
 sLodListEntry *CRenderer::GetLodDontRenderListBase()
 {
 	return &(*(sLodListEntry *)0xC900C8);
+}
+
+void CRenderer::CalculateShadowBoundingPlanes(int shadowCascade)
+{
+	auto lightSpaceFrustum = g_pDeferredRenderer->m_pShadowRenderer->m_LightSpaceMatrix[0];
+	RW::V3d  LightAABBCenter = { g_pDeferredRenderer->m_pShadowRenderer->m_LightPos[0] };
+	RW::BBox lightAABB = g_pDeferredRenderer->m_pShadowRenderer->m_LightBBox[shadowCascade];
+	auto lightAABBX = lightAABB.getSizeX() / 2.0f;
+	auto lightAABBY = lightAABB.getSizeY() / 2.0f;
+	auto rightAxis = lightSpaceFrustum.getRightv3();
+	auto upAxis = lightSpaceFrustum.getUpv3();
+	// Calculate light frustum planes
+	ms_aShadowCasterBoundingPlanes[shadowCascade][0].normal = rightAxis.getRWVector();
+	ms_aShadowCasterBoundingPlanes[shadowCascade][0].distance = (LightAABBCenter - rightAxis *lightAABBX).
+		dot(rightAxis);
+
+	ms_aShadowCasterBoundingPlanes[shadowCascade][1].normal = (-rightAxis).getRWVector();
+	ms_aShadowCasterBoundingPlanes[shadowCascade][1].distance = (LightAABBCenter + rightAxis *lightAABBX).
+		dot(-rightAxis);
+
+	ms_aShadowCasterBoundingPlanes[shadowCascade][2].normal = upAxis.getRWVector();
+	ms_aShadowCasterBoundingPlanes[shadowCascade][2].distance = (LightAABBCenter - upAxis * lightAABBY).
+		dot(upAxis);
+
+	ms_aShadowCasterBoundingPlanes[shadowCascade][3].normal = (-upAxis).getRWVector();
+	ms_aShadowCasterBoundingPlanes[shadowCascade][3].distance = (LightAABBCenter + upAxis * lightAABBY).
+		dot(-upAxis);
 }

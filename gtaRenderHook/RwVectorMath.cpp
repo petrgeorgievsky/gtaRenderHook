@@ -203,6 +203,11 @@ RwV4d V4d::getRWVector()
 	return RwV4d{ x_, y_, z_, w_ };
 }
 
+RwV3d RW::V4d::getRW3Vector()
+{
+	return RwV3d{ x_, y_, z_ };
+}
+
 RW::Matrix::Matrix()
 {
 	right_ = { };
@@ -260,6 +265,24 @@ Matrix Matrix::inverse()
 				right_.getY()*at_.getX() - right_.getX()*at_.getY(),
 				right_.getX()*up_.getY() - right_.getY()*up_.getX(),0.0) / det, {}
 	};
+}
+
+RwMatrix RW::Matrix::getRWMatrix()
+{
+	RwMatrix mat;
+	RwUInt32 rightW = right_.getW();
+	RwUInt32 upW = up_.getW();
+	RwUInt32 atW = at_.getW();
+	RwUInt32 posW = pos_.getW();
+	mat.right = right_.getRW3Vector();
+	mat.flags = reinterpret_cast<RwUInt32&>(rightW);
+	mat.up = up_.getRW3Vector();
+	mat.pad1 = reinterpret_cast<RwUInt32&>(upW);
+	mat.at = at_.getRW3Vector();
+	mat.pad2 = reinterpret_cast<RwUInt32&>(atW);
+	mat.pos = pos_.getRW3Vector();
+	mat.pad3 = reinterpret_cast<RwUInt32&>(posW);
+	return mat;
 }
 
 BBox::BBox()

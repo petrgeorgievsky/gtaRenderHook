@@ -64,6 +64,7 @@ namespace RW {
 		float length();
 		void normalize();
 		RwV4d getRWVector();
+		RwV3d getRW3Vector();
 		float getX() const { return x_; }
 		float getY() const { return y_; }
 		float getZ() const { return z_; }
@@ -81,14 +82,19 @@ namespace RW {
 
 		Matrix operator*(const Matrix& mat);
 		Matrix inverse();
-		V4d getRight () const { return right_; }
+		V4d getRight() const { return right_; }
+		V3d getRightv3() { return V3d{ right_.getRW3Vector() }; }
 		V4d getUp () const { return up_; }
+		V3d getUpv3() { return V3d{ up_.getRW3Vector() }; }
 		V4d getAt	() const { return at_; }
+		V3d getAtv3() { return V3d{ at_.getRW3Vector() }; }
+		V4d& getPos () { return pos_; }
 		V4d getPos () const { return pos_; }
+		RwMatrix getRWMatrix();
 	private:
 		V4d right_;
 		V4d up_;
-		V4d at_;		
+		V4d at_;
 		V4d pos_;
 	};
 

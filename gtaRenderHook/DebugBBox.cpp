@@ -53,6 +53,14 @@ DebugBBox::DebugBBox(RW::BBox bbox)
 	m_WorldMatrix.pad3 = 0x3F800000;
 }
 
+DebugBBox::DebugBBox(RW::BBox bbox, RW::Matrix rotationMatrix)
+{
+	auto pos = bbox.getCenter();
+	RW::Matrix wsMatrix = { RW::V4d{ bbox.getSizeX(),0.0,0.0,0.0 }, RW::V4d{ 0.0,bbox.getSizeY(),0.0,0.0 },
+						RW::V4d{ 0.0,0.0,bbox.getSizeZ(),0.0 }, RW::V4d{ pos, 1.0 } };
+	m_WorldMatrix = (wsMatrix*rotationMatrix).getRWMatrix();
+}
+
 
 DebugBBox::~DebugBBox()
 {

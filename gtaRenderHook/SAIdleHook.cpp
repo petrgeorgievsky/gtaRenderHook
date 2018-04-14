@@ -4,6 +4,7 @@
 #include "ShadowRenderer.h"
 #include "Renderer.h"
 #include "D3D1XStateManager.h"
+#include "D3D1XRenderBuffersManager.h"
 #include "VoxelOctreeRenderer.h"
 #include "LightManager.h"
 #include "HDRTonemapping.h"
@@ -208,7 +209,6 @@ void CSAIdleHook::RenderInGame()
 	shadowTimer.Stop();
 
 	RwCameraBeginUpdate(Scene.m_pRwCamera);
-
 	deferredTimer.Start();
 	g_pCustomCarFXPipe->ResetAlphaList();
 	g_pCustomBuildingPipe->ResetAlphaList();
@@ -256,8 +256,9 @@ void CSAIdleHook::RenderInGame()
 		
 		CFont::PrintString(FontXPos, FontYPos - 450.0f, (char*)("Draw call count: " + to_string(drawCallCount)).c_str());
 		CFont::PrintString(FontXPos, FontYPos - 400.0f, (char*)("Visible Entity count: " + to_string(CRenderer::ms_nNoOfVisibleEntities)).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 350.0f, (char*)("SC Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters.size())).c_str());
-			 
+		CFont::PrintString(FontXPos, FontYPos - 350.0f, (char*)("SC 0 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[0].size())).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 300.0f, (char*)("SC 1 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[1].size())).c_str());
+		
 		CFont::PrintString(FontXPos, FontYPos - 150.0f, (char*)scanTimer.GetTimerResult().c_str());
 		CFont::PrintString(FontXPos, FontYPos - 100.0f, (char*)shadowTimer.GetTimerResult().c_str());
 		CFont::PrintString(FontXPos, FontYPos - 50.0f, (char*)deferredTimer.GetTimerResult().c_str());
@@ -300,10 +301,11 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 
 void CSAIdleHook::RenderDeferred()
 {
+	
 	RenderFadingInUnderwaterEntities();
 	CVisibilityPlugins__RenderFadingInEntities();
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
-	CRenderer::RenderRoads([](void* e) { return true; });
+	CRenderer::RenderRoads();
 	CRenderer::RenderEverythingBarRoads();
 	BreakManager_c__Render(g_breakMan, 0);
 	 // CRenderer::RenderFadingInUnderwaterEntities
@@ -315,7 +317,7 @@ void CSAIdleHook::RenderDeferred()
 void CSAIdleHook::RenderForward()
 {
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
-	CRenderer::RenderRoads([](void* e) { return true; });
+	CRenderer::RenderRoads();
 }
 
 void CSAIdleHook::RenderEffects()
@@ -350,6 +352,8 @@ void CSAIdleHook::RenderEffects()
 	//CVehicleRecording::Render();
 	//CPointLights::RenderFogEffect();
 	//CRenderer::RenderFirstPersonVehicle();
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 1);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, 1);
 	CVisibilityPlugins__RenderWeaponPedsForPC();
 	//CPostEffects::Render();
 }
@@ -378,7 +382,7 @@ void CSAIdleHook::RenderRealTimeShadows(const RwV3d &sundir)
 	// Render cascades
 	for (int i = 0; i < 4; i++) {
 		shadowRenderer->RenderShadowToBuffer(i, [](int k) { 
-			CRenderer::RenderShadowCascade(0);
+			CRenderer::RenderShadowCascade(k);
 			//RenderDeferred();
 		});
 	}
