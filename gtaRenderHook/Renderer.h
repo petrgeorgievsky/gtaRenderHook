@@ -25,6 +25,8 @@
 #define CRenderer__AddEntityToRenderList(entity,renderDistance) ((char (__cdecl *)(CEntity *, float))0x5534B0)(entity,renderDistance)
 //553710     ; int __cdecl CRenderer::AddToLodRenderList(CEntity *a1, float a2)
 #define CRenderer__AddToLodRenderList(entity,renderDistance) ((char (__cdecl *)(CEntity *, float))0x553710)(entity,renderDistance)
+
+#define CRenderer__SetupBigBuildingVisibility(entity,renderDistance) ((char (__cdecl *)(CEntity *, float*))0x554650)(entity,renderDistance)
 //B992B8     _ZN6CWorld17ms_aRepeatSectorsE CRepeatSector
 
 enum RendererVisibility {
@@ -86,7 +88,7 @@ public:
 	/*!
 		Adds entity to shadow caster render list if it's inside light frustum
 	*/
-	static void AddEntityToShadowCastersIfNeeded(CEntity* entity);
+	static void AddEntityToShadowCastersIfNeeded(CEntity* entity,bool checkBBox);
 	/*!
 		Checks if AABB is inside plane bounded volume
 	*/
@@ -95,6 +97,11 @@ public:
 		Calculates entity visibility based on flags and distance
 	*/
 	static RendererVisibility SetupEntityVisibility(CEntity* entity, float* renderDistance);
+	/*!
+		Calculates BIG building entity visibility based on flags and distance
+	*/
+	static RendererVisibility SetupBigBuildingVisibility(CEntity* entity, float* renderDistance);
+	
 	/*!
 		Calculates map entity visibility
 	*/
@@ -176,11 +183,11 @@ public:
 	static CEntity** ms_aVisibleLodPtrs;
 	static sLodListEntry* &ms_pLodRenderList;
 	static sLodListEntry* &ms_pLodDontRenderList;
-	static RwPlane ms_aShadowCasterBoundingPlanes[4][4];
+	static RwPlane ms_aShadowCasterBoundingPlanes[4][5];
 	//static CBaseModelInfo **ms_modelInfoPtrs;
 	static bool TOBJpass;
 	static std::list<CEntity*> ms_aVisibleEntities;
 	static std::list<CEntity*> ms_aVisibleLods;
-	static std::list<CEntity*> ms_aVisibleShadowCasters[4];
+	static std::vector<CEntity*> ms_aVisibleShadowCasters[4];
 };
 

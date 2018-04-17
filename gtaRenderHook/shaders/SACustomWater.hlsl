@@ -225,12 +225,14 @@ DS_OUTPUT DS(HS_CONSTANT_DATA_OUTPUT input, float2 vUVs : SV_DomainLocation,
                       (1 - vUVs.y) * TrianglePatch[3].vColor;*/
         float fHeightMapMIPLevel = clamp((distance(vWorldPos, mViewInv[3].xyz) - 100.0f) / 100.0f, 3.0f, 6.0f);
     float3 disp;
-    ComputeWaves(vWorldPos.xy, disp, output.vNormal, fTimeStep);
-    float4 water_normal = txDiffuse.SampleLevel(samLinear, output.texCoord.xy*8, 0);
-    output.vNormal += water_normal.xyw*0.01f;
-    output.vNormal = normalize(output.vNormal);
-    vWorldPos.xy += disp.xy;
-    vWorldPos.z += disp.z - water_normal.w*0.1+0.1;
+    output.vNormal = vUVs.y * (vUVs.x * TrianglePatch[0].vNormal + (1 - vUVs.x) * TrianglePatch[1].vNormal) +
+                (1 - vUVs.y) * (vUVs.x * TrianglePatch[2].vNormal + (1 - vUVs.x) * TrianglePatch[3].vNormal);
+    //ComputeWaves(vWorldPos.xy, disp, output.vNormal, fTimeStep);
+    //float4 water_normal = txDiffuse.SampleLevel(samLinear, output.texCoord.xy*8, 0);
+    //output.vNormal += water_normal.xyw*0.01f;
+    //output.vNormal = normalize(output.vNormal);
+    //vWorldPos.xy += disp.xy;
+    //vWorldPos.z += disp.z - water_normal.w*0.1+0.1;
     // Transform world position with viewprojection matrix
     float4 outPos = mul(float4(vWorldPos.xyz, 1.0), mView);
     outPos = mul(outPos, mProjection);

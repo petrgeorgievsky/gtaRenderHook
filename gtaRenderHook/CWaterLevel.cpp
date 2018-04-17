@@ -4,6 +4,13 @@
 #include "CustomSeabedPipeline.h"
 
 #include <game_sa\CCamera.h>
+#include <game_sa\CGame.h>
+#include <game_sa\CTimer.h>
+#include <game_sa\CWeather.h>
+#include <game_sa\CVector.h>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 UINT &CWaterLevel::m_NumBlocksOutsideWorldToBeRendered = *(UINT*)0xC215EC;
 UINT &CWaterLevel::m_nNumOfWaterTriangles = *(UINT*)0xC22884;
@@ -15,77 +22,68 @@ USHORT* CWaterLevel::m_BlocksToBeRenderedOutsideWorldY = (USHORT*)0xC214D0;
 CWaterVertice* CWaterLevel::m_aVertices = (CWaterVertice*)0xC22910;
 CWaterTriangle* CWaterLevel::m_aTriangles = (CWaterTriangle*)0xC22854;
 CWaterQuad* CWaterLevel::m_aQuads = (CWaterQuad*)0xC21C90;
+float &CWaterLevel::m_CurrentFlowX= *(float*)0xC22890;
+float &CWaterLevel::m_CurrentFlowY= *(float*)0xC22894;
+
+float *CMaths::ms_SinTable = (float*)0xBB3DFC;
+float *CWaterLevel::g_aFlowIntensity = (float*)0x8D38C8;
+unsigned int &CWaterLevel::m_nWaterTimeOffset = *(unsigned int*)0xC228A4;
+
 //     ; CWaterVertice CWaterLevel::m_aVertices[1021]
 //
 float TextureShiftU = 0;
 float TextureShiftV = 0;
 float TextureShiftSecondU = 0;
 float TextureShiftSecondV = 0;
-float someShift = 0.5; 
-float someShift2 = 0.5;
+float TextureShiftHighLightU = 0;
+float TextureShiftHighLightV = 0;
+float CurrentTextureShiftU = 0.5;
+float CurrentTextureShiftV = 0.5;
+float CurrentTextureShiftSecondU = 0.5;
+float CurrentTextureShiftSecondV = 0.5;
+// GTA Water has fixed speed depending on framerate(or perhaps I'm wrong), but R* didn't account for unlocked framerate
+// TODO: Fix this issue
+float WATER_UPDATE_FRAMERATE = 25.0;
 void CWaterLevel::RenderWater()
 {
-	if (CGame__currArea && CGame__currArea != 5)
+	if (!CGame::CanSeeWaterFromCurrArea())
 		return;
-	//CWaterLevel_RenderWater();
 	SetCameraRange();
-	//TempBufferVerticesStored = 0;
-	//TempBufferIndicesStored = 0;
-	//RwEngineInstance->dOpenDevice.fpRenderStateSet(rwRENDERSTATEZWRITEENABLE, 0);
-	//RwEngineInstance->dOpenDevice.fpRenderStateSet(rwRENDERSTATETEXTUREADDRESS, dword_8D3930);
-	/*float v10 = CTimer_ms_fTimeStep * CWaterLevel::m_CurrentFlowX * flt_8D392C;
-	flt_8D3824 = 0.079999998 * v10 + flt_8D3824;
-	v9 = CTimer::ms_fTimeStep * CWaterLevel::m_CurrentFlowY * flt_8D392C;
-	flt_8D3828 = 0.079999998 * v9 + flt_8D3828;
-	if (flt_8D3824 > 1.0)
-		flt_8D3824 = flt_8D3824 - 1.0;
-	if (flt_8D3828 > 1.0)
-		flt_8D3828 = flt_8D3828 - 1.0;
-	flt_8D382C = v10 * 0.039999999 + flt_8D382C;
-	flt_8D3830 = v9 * 0.039999999 + flt_8D3830;
-	if (flt_8D382C > 1.0)
-		flt_8D382C = flt_8D382C - 1.0;
-	if (flt_8D3830 > 1.0)
-		flt_8D3830 = flt_8D3830 - 1.0;
-	v12 = (CTimer::m_snTimeInMilliseconds & 0xFFF) * 0.0015339808;
-	flt_C21184 = sin(v12) * flt_C812E8 * 0.079999998 + flt_8D3824;
-	flt_C21180 = cos(v12) * flt_C812E8 * 0.079999998 + flt_8D3828;
-	dword_C2117C = LODWORD(flt_8D382C);
-	v13 = (CTimer::m_snTimeInMilliseconds & 0x1FFF) * 0.00076699042;
-	v14 = *&dword_8D3928;
-	v15 = cos(v13);
-	v16 = v15;
-	flt_C21178 = v15 * 0.024 + flt_8D3830;
-	v17 = rand() * 0.000030518509 * v14;
-	v18 = *&dword_8D3928;
-	flt_C21174 = v17;
-	v19 = rand();
-	flt_C21174 = sin(v13) * flt_8D3834 + flt_C21174;
-	flt_C21170 = v19 * 0.000030518509 * v18 + v16 * flt_8D3834;
-	byte_C2116C = flt_B7C508;
-	unk_C2116D = flt_B7C50C;
-	byte_C2116E = flt_B7C510;
-	dword_C21168 = *&byte_C2116C;
-	v20 = (flt_B7C514 * 0.5);
-	dword_8D380C = v20;
-	v11 = (v20 << 8) / (256 - v20);
-	dword_8D3808 = 255;
-	if (v11 <= 255)
-		dword_8D3808 = v11;*/
+
 	TempBufferIndicesStored = 0;
 	TempBufferVerticesStored = 0;
 	WaterColor = { 255,255,255,255 };
+	float waterSpeedX = (CTimer::ms_fTimeStep * m_CurrentFlowX) / WATER_UPDATE_FRAMERATE;
+	float waterSpeedY = (CTimer::ms_fTimeStep * m_CurrentFlowY) / WATER_UPDATE_FRAMERATE;
+
+	CurrentTextureShiftU += 0.08f * waterSpeedX;
+	CurrentTextureShiftV += 0.08f * waterSpeedY; 
+	CurrentTextureShiftSecondU += 0.04f * waterSpeedX;
+	CurrentTextureShiftSecondU += 0.04f * waterSpeedY;
 	
-	someShift += 0.079999998 * CTimer__ms_fTimeStep * 0.04;
-	someShift2 += 0.079999998 * CTimer__ms_fTimeStep * 0.04;
-	if (someShift > 3.14*2)
-		someShift -= 3.14 * 2;
-	if (someShift2 > 3.14 * 2)
-		someShift2 -= 3.14 * 2;
+	if (CurrentTextureShiftU > 1.0)
+		CurrentTextureShiftU -= 1.0;
+	if (CurrentTextureShiftV > 1.0)
+		CurrentTextureShiftV -= 1.0;
+	if (CurrentTextureShiftSecondU > 1.0)
+		CurrentTextureShiftSecondU -= 1.0;
+	if (CurrentTextureShiftSecondV > 1.0)
+		CurrentTextureShiftSecondV -= 1.0;
+
+	// R* MAGIC
+	float magic0 = (CTimer::m_snTimeInMilliseconds & 0xFFF) * 0.0015339808f;
+	float magic1 = (CTimer::m_snTimeInMilliseconds & 0x1FFF) * 0.00076699042f;
+	float magic2 = rand() * 0.000030518509f / WATER_UPDATE_FRAMERATE;
+
+	TextureShiftU = sin(magic0) * CWeather::Wavyness * 0.08f + CurrentTextureShiftU;
+	TextureShiftV = cos(magic0) * CWeather::Wavyness * 0.08f + CurrentTextureShiftV;
+	// R* copypast? or is it intended this way?
+	TextureShiftSecondU = CurrentTextureShiftSecondU;
+	TextureShiftSecondV = cos(magic1) * 0.024f + CurrentTextureShiftSecondV;
 	
-	float v12 = (CTimer__m_snTimeInMilliseconds & 0xFFF) * 0.0015339808;
-	TextureShiftU = someShift;
-	TextureShiftV = someShift2;
+	TextureShiftHighLightU = sin(magic1) * 0.1f + magic2;
+	TextureShiftHighLightV = cos(magic1) * 0.1f + magic2;
+
 	// Water triangles
 	/*for (int j = 0; j < m_nNumOfWaterTriangles; ++j)
 	{
@@ -116,8 +114,12 @@ void CWaterLevel::RenderWater()
 				int b = m_aQuads[i].b;
 				int c = m_aQuads[i].c;
 				int d = m_aQuads[i].d;
-				RenderWaterRectangle(
-					m_aVertices[a].posX, m_aVertices[b].posX, m_aVertices[a].posY, m_aVertices[c].posY,
+				int minX = min(min(min(m_aVertices[a].posX, m_aVertices[b].posX), m_aVertices[c].posX), m_aVertices[d].posX);
+				int maxX = max(max(max(m_aVertices[a].posX, m_aVertices[b].posX), m_aVertices[c].posX), m_aVertices[d].posX);
+				int minY = min(min(min(m_aVertices[a].posY, m_aVertices[b].posY), m_aVertices[c].posY), m_aVertices[d].posY);
+				int maxY = max(max(max(m_aVertices[a].posY, m_aVertices[b].posY), m_aVertices[c].posY), m_aVertices[d].posY);
+
+				RenderWaterRectangle(minX, maxX, minY, maxY,
 					m_aVertices[a].renPar,
 					m_aVertices[b].renPar,
 					m_aVertices[c].renPar,
@@ -135,13 +137,13 @@ void CWaterLevel::RenderWater()
 				continue;
 		}
 
-		float x = 500 * m_BlocksToBeRenderedOutsideWorldX[k];
-		float y = 500 * m_BlocksToBeRenderedOutsideWorldY[k];
+		float x = m_BlocksToBeRenderedOutsideWorldX[k];
+		float y = m_BlocksToBeRenderedOutsideWorldY[k];
 
 		RenderWaterRectangle(
-			(x - 3000.0), ((x + 500) - 3000.0), (y - 3000.0), ((y + 500) - 3000.0),
-			{ 0.0,	1.0,	0.0,	0.0 }, { 0.0,	1.0,	0.0,	0.0 },
-			{ 0.0,	1.0,	0.0,	0.0 }, { 0.0,	1.0,	0.0,	0.0 });
+			(x * 500.0f - 3000.0f), ((x + 1) * 500.0f - 3000.0f), (y * 500.0f - 3000.0), ((y + 1) * 500.0f - 3000.0),
+			{ 0.0,	1.0,	0.0,	0,0,0 }, { 0.0,	1.0,	0.0,	0,0,0 },
+			{ 0.0,	1.0,	0.0,	0,0,0 }, { 0.0,	1.0,	0.0,	0,0,0 });
 
 	}
 	
@@ -188,7 +190,6 @@ void CWaterLevel::SetCameraRange()
 	CameraRangeMaxX = 2 * ceil((DETAILEDWATERDIST + camPos.x) * 0.5);
 	CameraRangeMinY = 2 * floor((camPos.y - DETAILEDWATERDIST) * 0.5);
 	CameraRangeMaxY = 2 * ceil((DETAILEDWATERDIST + camPos.y) * 0.5);
-	CWaterLevel_SetCameraRange();
 }
 
 void CWaterLevel::RenderBoatWakes()
@@ -202,45 +203,48 @@ CRenPar * __cdecl CRenPar_Lerp(CRenPar *a1, CRenPar a, CRenPar b, float t)
 {
 	float invT = 1.0f - t;
 	
-	a1->z = a.z * invT + b.z * t;
-	a1->u = a.u * invT + b.u * t;
-	a1->v = a.v * invT + b.v * t;
-	a1->velocity = 0;
+	a1->baseHeight = a.baseHeight * invT + b.baseHeight * t;
+	a1->wave0Height = a.wave0Height * invT + b.wave0Height * t;
+	a1->wave1Height = a.wave1Height * invT + b.wave1Height * t;
+	a1->flowX= a1->flowY = 0;
+	a1->pad = 0;
 	return a1;
 }
 
-void CWaterLevel::RenderWaterRectangle(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
+void CWaterLevel::RenderWaterRectangle(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
 {
-	int w0 = w;
-	int z0 = z;
-	if (z < w)
-	{
-		w = z;
-		z = w0;
+	/*int maxY, minY;
+	if (y0 < y1) {
+		maxY = y1;
+		minY = y0;
 	}
-	if (x >= CameraRangeMaxX || y <= CameraRangeMinX|| w >= CameraRangeMaxY || z <= CameraRangeMinY)
+	else {
+		minY = y1;
+		maxY = y0;
+	}*/
+	if (x0 >= CameraRangeMaxX || x1 <= CameraRangeMinX || y0 >= CameraRangeMaxY || y1 <= CameraRangeMinY)
 	{
-		RenderFlatWaterRectangle(x, y, z, w, a, b, c, d);
+		RenderFlatWaterRectangle(x0, x1, y0, y1, a, b, c, d);
 		//CWaterLevel::SetUpWaterFog(x, w, y, z);
 	}
-	else if (y > CameraRangeMaxX)
+	else if (x1 > CameraRangeMaxX)
 	{
-		SplitWaterRectangleAlongXLine(CameraRangeMaxX, x, y, z, w, a, b, c, d);
+		SplitWaterRectangleAlongXLine(CameraRangeMaxX, x0, x1, y0, y1, a, b, c, d);
 	}
-	else if (x < CameraRangeMinX)
+	else if (x0 < CameraRangeMinX)
 	{
-		SplitWaterRectangleAlongXLine(CameraRangeMinX, x, y, z, w, a, b, c, d);
+		SplitWaterRectangleAlongXLine(CameraRangeMinX, x0, x1, y0, y1, a, b, c, d);
 	}
-	else if (z > CameraRangeMaxY)
+	else if (y1 > CameraRangeMaxY)
 	{
-		SplitWaterRectangleAlongYLine(CameraRangeMaxY, x, y, z, w, a, b, c, d);
+		SplitWaterRectangleAlongYLine(CameraRangeMaxY, x0, x1, y0, y1, a, b, c, d);
 	}
-	else if (w < CameraRangeMinY)
+	else if (y0 < CameraRangeMinY)
 	{
-		SplitWaterRectangleAlongYLine(CameraRangeMinY, x, y, z, w, a, b, c, d);
+		SplitWaterRectangleAlongYLine(CameraRangeMinY, x0, x1, y0, y1, a, b, c, d);
 	}
 	else
-		RenderDetailedWaterRectangle_OneLayer(x, y, z, w, a, b, c, d,0);
+		RenderDetailedWaterRectangle_OneLayer(x0, x1, y0, y1, a, b, c, d, 0);
 }
 
 void CWaterLevel::RenderFlatWaterRectangle(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
@@ -249,40 +253,40 @@ void CWaterLevel::RenderFlatWaterRectangle(int x, int y, int z, int w, CRenPar a
 	//CWaterLevel_RenderFlatWaterRectangle(x, y, z, w, a, b, c, d);
 }
 
-void CWaterLevel::SplitWaterRectangleAlongYLine(int m, int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
+void CWaterLevel::SplitWaterRectangleAlongYLine(int m, int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
 {
 	CRenPar b_d, a_c;
-	float blendFactor = (m - z) / (w - z);
+	float blendFactor = (m - y0) / (y1 - y0) * 1.0f;
 
 	// First split part
 	CRenPar_Lerp(&b_d, b, d, blendFactor);
 	CRenPar_Lerp(&a_c, a, c, blendFactor);
 
-	RenderWaterRectangle(x, y, z, m, a, b, a_c, b_d);
+	RenderWaterRectangle(x0, x1, y0, m, a, b, a_c, b_d);
 
 	// Second split part
 	CRenPar_Lerp(&b_d, b, d, blendFactor);
 	CRenPar_Lerp(&a_c, a, c, blendFactor);
 
-	RenderWaterRectangle(x, y, m, w, a_c, b_d, c, d);
+	RenderWaterRectangle(x0, x1, m, y1, a_c, b_d, c, d);
 }
 
-void CWaterLevel::SplitWaterRectangleAlongXLine(int m, int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
+void CWaterLevel::SplitWaterRectangleAlongXLine(int m, int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
 {
 	CRenPar c_d, a_b;
-	float blendFactor = (m - x) / (y - x);
+	float blendFactor = (m - x0) / (x1 - x0) * 1.0f;
 
 	// First split part
 	CRenPar_Lerp(&c_d, c, d, blendFactor);
 	CRenPar_Lerp(&a_b, a, b, blendFactor);
 
-	RenderWaterRectangle(x, m, z, w, a, a_b, c, c_d);
+	RenderWaterRectangle(x0, m, y0, y1, a, a_b, c, c_d);
 
 	// Second split part
 	CRenPar_Lerp(&c_d, c, d, blendFactor);
 	CRenPar_Lerp(&a_b, a, b, blendFactor);
 
-	RenderWaterRectangle(m, y, z, w, a_b, b, c_d, d);
+	RenderWaterRectangle(m, x1, y0, y1, a_b, b, c_d, d);
 }
 
 void CWaterLevel::RenderDetailedSeaBedSegment(int x, int y, float a, float b, float c, float d)
@@ -568,7 +572,7 @@ void CWaterLevel::GenerateNormals()
 }
 
 
-void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e)
+void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e)
 {
 	int startIndex, startVertex;
 	if (TempBufferIndicesStored >= 4090 || TempBufferVerticesStored >= 2044)
@@ -606,44 +610,50 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x, int y, int z, int w, 
 	}
 	tU = tU - 7.0;
 	//v28 = a4 - a3;
-	if (w - z <= 0)
+	if (y1 - y0 <= 0)
 		tV = tV + 7.0;
 	else
 		tV = tV - 7.0;
-	//v17 = *&WaterColor.red;
-	
-	//v18 = v10;
+	float diffuse, sunGlare;
+	height = a.baseHeight;
+	CalculateWavesForCoordinate(x0, y0, a.wave0Height, a.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex].objNormal);
 	TempVertexBuffer[startVertex].u = 0;
 	TempVertexBuffer[startVertex].v = 0;
-	TempVertexBuffer[startVertex].objVertex.x = x;
-	TempVertexBuffer[startVertex].objVertex.y = z;
-	TempVertexBuffer[startVertex].objVertex.z = a.z + height;
-	TempVertexBuffer[startVertex].objNormal.z = 1.0;
+	TempVertexBuffer[startVertex].objVertex.x = x0;
+	TempVertexBuffer[startVertex].objVertex.y = y0;
+	TempVertexBuffer[startVertex].objVertex.z = height;
+	//TempVertexBuffer[startVertex].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex].color = 0xFFFFFFFF;
-	float tU2 = (y - x) * v27 + tU;
-	float tV2 = (w - z) * v27 + tV;
+	float tU2 = (x1 - x0) * v27 + tU;
+	float tV2 = (y1 - y0) * v27 + tV;
+	height = b.baseHeight;
+	CalculateWavesForCoordinate(x1, y0, b.wave0Height, b.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+1].objNormal);
 	TempVertexBuffer[startVertex + 1].u = 1;
 	TempVertexBuffer[startVertex + 1].v = 0;
-	TempVertexBuffer[startVertex + 1].objVertex.x = y;
-	TempVertexBuffer[startVertex + 1].objVertex.y = z;
-	TempVertexBuffer[startVertex + 1].objVertex.z = b.z + height;
-	TempVertexBuffer[startVertex + 1].objNormal.z = 1.0;
+	TempVertexBuffer[startVertex + 1].objVertex.x = x1;
+	TempVertexBuffer[startVertex + 1].objVertex.y = y0;
+	TempVertexBuffer[startVertex + 1].objVertex.z = height;
+	//TempVertexBuffer[startVertex + 1].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex + 1].color = 0xFFFFFFFF;
 
+	height = c.baseHeight;
+	CalculateWavesForCoordinate(x0, y1, c.wave0Height, c.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+2].objNormal);
 	TempVertexBuffer[startVertex + 2].u = 0;
 	TempVertexBuffer[startVertex + 2].v = 1;
-	TempVertexBuffer[startVertex + 2].objVertex.x = x;
-	TempVertexBuffer[startVertex + 2].objVertex.y = w;
-	TempVertexBuffer[startVertex + 2].objVertex.z = c.z + height;
-	TempVertexBuffer[startVertex + 2].objNormal.z = 1.0;
+	TempVertexBuffer[startVertex + 2].objVertex.x = x0;
+	TempVertexBuffer[startVertex + 2].objVertex.y = y1;
+	TempVertexBuffer[startVertex + 2].objVertex.z = height;
+	//TempVertexBuffer[startVertex + 2].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex + 2].color = 0xFFFFFFFF;
 
+	height = d.baseHeight;
+	CalculateWavesForCoordinate(x1, y1, d.wave0Height, d.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+3].objNormal);
 	TempVertexBuffer[startVertex + 3].u = 1;
 	TempVertexBuffer[startVertex + 3].v = 1;
-	TempVertexBuffer[startVertex + 3].objVertex.x = y;
-	TempVertexBuffer[startVertex + 3].objVertex.y = w;
-	TempVertexBuffer[startVertex + 3].objVertex.z = d.z + height;
-	TempVertexBuffer[startVertex + 3].objNormal.z = 1.0;
+	TempVertexBuffer[startVertex + 3].objVertex.x = x1;
+	TempVertexBuffer[startVertex + 3].objVertex.y = y1;
+	TempVertexBuffer[startVertex + 3].objVertex.z = height;
+	//TempVertexBuffer[startVertex + 3].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex + 3].color = 0xFFFFFFFF;
 
 	TempBufferRenderIndexList[startIndex] = startVertex;
@@ -656,87 +666,157 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x, int y, int z, int w, 
 	TempBufferIndicesStored = startIndex + 4;//6;
 }
 
-void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e)
+void CWaterLevel::CalculateWavesForCoordinate(int x, int y, float a3, float a4, float *resHeight, float *diffuse, float *sunGlare, CVector *resNormal)
 {
+	float g_fWaterDiffuseIntensity = 0.65f;
+	float g_fWaterAmbientIntensity = 0.27f;
+	CVector lightDir(1, 1, 1);
+	lightDir.Normalise();
+
+	x = abs(x);
+	y = abs(y);
+
+	float waveIntensity = g_aFlowIntensity[x / 2 & 7] * g_aFlowIntensity[(y / 2 & 7) + 8] * CWeather::Wavyness;
+	int timeDiff = CTimer::m_snTimeInMilliseconds - CWaterLevel::m_nWaterTimeOffset;
+
+	int lookUpID0 = (int)(((timeDiff % 5000) / 2500.0f + (y + x) / 32.0f) * 128) % 127;
+	int lookUpID1 = (int)(((timeDiff % 3500) / 1750.0f + y / 26.0f + x / 13.0f) * 128) % 127;
+	int lookUpID2 = (int)(((timeDiff % 3000) / 1500.0f + y / 10.0f) * 128) % 127;
+
+	float sin0 = CMaths::ms_SinTable[lookUpID0 + 1];
+	float cos0 = CMaths::ms_SinTable[(lookUpID0 + 64) + 1];
+	float sin1 = CMaths::ms_SinTable[lookUpID1 + 1];
+	float cos1 = CMaths::ms_SinTable[(lookUpID1 + 64) + 1];
+	float sin2 = CMaths::ms_SinTable[lookUpID2 + 1];
+	float cos2 = CMaths::ms_SinTable[(lookUpID2 + 64) + 1];
+
+	*resHeight = sin0 * 2.0 * waveIntensity * a3 + *resHeight;
+	float wave0 = -(cos0 * 2.0 * waveIntensity * a3 * M_PI / 32.0f);
+	resNormal->x = wave0;
+	resNormal->y = wave0;
+	resNormal->z = 1.0f;
+
+	*resHeight = sin1 * waveIntensity * a4 + *resHeight;
+	float wave1 = cos1 * waveIntensity * a4 * M_PI / 13;
+	resNormal->x += wave1;
+	resNormal->y += wave1;
+
+	*resHeight = sin2 * 0.5f * waveIntensity * a4 + *resHeight;
+	resNormal->x += waveIntensity * (cos2 * 0.5f) * a4 * M_PI / 10.0f;
+
+	resNormal->Normalise();
+
+
+	float cosA = resNormal->x*lightDir.x + resNormal->y*lightDir.y + resNormal->z*lightDir.z;
+
+	float diffuseCoeff = max(cosA, 0.0f);
+	*diffuse = diffuseCoeff * g_fWaterDiffuseIntensity + g_fWaterAmbientIntensity;
+
+	*sunGlare = cosA;
+	float sunGlareCoeff = cosA * 8.0 - 5.0;
+
+	if (sunGlareCoeff >= 0.0)
+	{
+		sunGlareCoeff = min(sunGlareCoeff, 0.99f);
+		*sunGlare = sunGlareCoeff * CWeather::SunGlare;
+	}
+	else
+	{
+		*sunGlare = 0.0;
+	}
+}
+
+void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int layer)
+{
+	
 	int startIndex, startVertex;
 	if (TempBufferIndicesStored >= 4090 || TempBufferVerticesStored >= 2044)
 	{
 		RenderAndEmptyRenderBuffer();
 	}
-	
-	float tU = 0, tV = 0, v27, height;
-	if (e == 0)
+	float tU = 0, tV = 0, layerTCScale, height;
+	if (layer == 0)
 	{
 		float tcU =/* x * 0.079999998 +*/ TextureShiftU;
 		float tcV =/* z * 0.079999998 +*/ TextureShiftV;
 		tU = tcU;//- floor(tcU);
 		tV = tcV;//- floor(tcV);
-
-
-		v27 = 0.079999998;
+		layerTCScale = 1.0f/(25.0f*2.0f);
 		//LOBYTE(a21) = dword_8D3808;
 		height = 0.0;
 	}
-	else if (e == 1)
+	else if (layer == 1)
 	{
 		float tcU = /*x * 0.039999999 +*/ TextureShiftSecondU;
 		float tcV = /*z * 0.039999999 +*/ TextureShiftSecondV;
 		tU = tcU;//- floor(tcU);
 		tV = tcV;//- floor(tcV);
-		v27 = 0.039999999;
+		layerTCScale = 1.0f/25.0f;
 		//LOBYTE(a21) = dword_8D380C;
 		height = 0.0;
 	}
-	else
-	{
-		//v13 = a21;
-	}
 	tU = tU - 7.0;
-	if (w - z <= 0)
+	if (y1 - y0 <= 0)
 		tV = tV + 7.0;
 	else
 		tV = tV - 7.0;
-	float tU2 = (y - x) * v27 + tU;
-	float tV2 = (w - z) * v27 + tV;
+	float tU2 = (x1 - x0) * layerTCScale + tU;
+	float tV2 = (y1 - y0) * layerTCScale + tV;
 	int tessFactor = 16;
-	float xSize = (y - x)/ (float)tessFactor;
-	float ySize = (w - z)/ (float)tessFactor;
+	float xSize = (x1 - x0)/ (float)tessFactor;
+	float ySize = (y1 - y0)/ (float)tessFactor;
+	float wave0avgHeight = (a.wave0Height + b.wave0Height + c.wave0Height + d.wave0Height) / 4.0f;
+	float wave1avgHeight = (a.wave1Height + b.wave1Height + c.wave1Height + d.wave1Height) / 4.0f;
 	for (size_t x_offset = 0; x_offset < tessFactor; x_offset++)
 	{
 		for (size_t y_offset = 0; y_offset < tessFactor; y_offset++)
 		{
 			startIndex = TempBufferIndicesStored;
 			startVertex = TempBufferVerticesStored;
+			float diffuse;
+			float sunGlare;
+			int x = x0 + xSize * x_offset;
+			int y = y0 + ySize * y_offset;
+			height = a.baseHeight;
+			CalculateWavesForCoordinate(x, y, wave0avgHeight, wave1avgHeight, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex].objNormal);
 			TempVertexBuffer[startVertex].u = x_offset / (float)tessFactor;
 			TempVertexBuffer[startVertex].v = y_offset / (float)tessFactor;
-			TempVertexBuffer[startVertex].objVertex.x = x + xSize*x_offset;
-			TempVertexBuffer[startVertex].objVertex.y = z + ySize*y_offset;
-			TempVertexBuffer[startVertex].objVertex.z = a.z + height;
-			TempVertexBuffer[startVertex].objNormal.z = 1.0;
+			TempVertexBuffer[startVertex].objVertex.x = x;
+			TempVertexBuffer[startVertex].objVertex.y = y;
+			TempVertexBuffer[startVertex].objVertex.z = height;
 			TempVertexBuffer[startVertex].color = 0xFFFFFFFF;
 
-			TempVertexBuffer[startVertex + 1].u =( x_offset+1) / (float)tessFactor;
+			x = x0 + xSize * (x_offset + 1);
+			y = y0 + ySize * y_offset;
+			height = b.baseHeight;
+			CalculateWavesForCoordinate(x, y, wave0avgHeight, wave1avgHeight, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+1].objNormal);
+			TempVertexBuffer[startVertex + 1].u =(x_offset+1) / (float)tessFactor;
 			TempVertexBuffer[startVertex + 1].v = y_offset / (float)tessFactor;
-			TempVertexBuffer[startVertex + 1].objVertex.x = x + xSize*(x_offset + 1);
-			TempVertexBuffer[startVertex + 1].objVertex.y = z + ySize*y_offset;
-			TempVertexBuffer[startVertex + 1].objVertex.z = b.z + height;
-			TempVertexBuffer[startVertex + 1].objNormal.z = 1.0;
+			TempVertexBuffer[startVertex + 1].objVertex.x = x;
+			TempVertexBuffer[startVertex + 1].objVertex.y = y;
+			TempVertexBuffer[startVertex + 1].objVertex.z = height;
 			TempVertexBuffer[startVertex + 1].color = 0xFFFFFFFF;
 
+			x = x0 + xSize * x_offset;
+			y = y0 + ySize * (y_offset + 1);
+			height = c.baseHeight;
+			CalculateWavesForCoordinate(x, y, wave0avgHeight, wave1avgHeight, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+2].objNormal);
 			TempVertexBuffer[startVertex + 2].u = x_offset / (float)tessFactor;
 			TempVertexBuffer[startVertex + 2].v = (y_offset+1) / (float)tessFactor;
-			TempVertexBuffer[startVertex + 2].objVertex.x = x + xSize*x_offset;
-			TempVertexBuffer[startVertex + 2].objVertex.y = z + ySize*(y_offset + 1);
-			TempVertexBuffer[startVertex + 2].objVertex.z = c.z + height;
-			TempVertexBuffer[startVertex + 2].objNormal.z = 1.0;
+			TempVertexBuffer[startVertex + 2].objVertex.x = x;
+			TempVertexBuffer[startVertex + 2].objVertex.y = y;
+			TempVertexBuffer[startVertex + 2].objVertex.z = height;
 			TempVertexBuffer[startVertex + 2].color = 0xFFFFFFFF;
 
+			x = x0 + xSize * (x_offset + 1);
+			y = y0 + ySize * (y_offset + 1);
+			height = d.baseHeight;
+			CalculateWavesForCoordinate(x, y, wave0avgHeight, wave1avgHeight, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex + 3].objNormal);
 			TempVertexBuffer[startVertex + 3].u = (x_offset+1) / (float)tessFactor;
 			TempVertexBuffer[startVertex + 3].v = (y_offset+1) / (float)tessFactor;
-			TempVertexBuffer[startVertex + 3].objVertex.x = x + xSize*(x_offset + 1);
-			TempVertexBuffer[startVertex + 3].objVertex.y = z + ySize*(y_offset + 1);
-			TempVertexBuffer[startVertex + 3].objVertex.z = d.z + height;
-			TempVertexBuffer[startVertex + 3].objNormal.z = 1.0;
+			TempVertexBuffer[startVertex + 3].objVertex.x = x;
+			TempVertexBuffer[startVertex + 3].objVertex.y = y;
+			TempVertexBuffer[startVertex + 3].objVertex.z = height;
 			TempVertexBuffer[startVertex + 3].color = 0xFFFFFFFF;
 
 			TempBufferRenderIndexList[startIndex] = startVertex;

@@ -114,13 +114,15 @@ public:
 	   Starts debugging event.
 	 */
 	void BeginDebugEvent(LPCWSTR name) {
-		m_pRenderingAnnotation->BeginEvent(name);
+		if(m_pRenderingAnnotation!=nullptr)
+			m_pRenderingAnnotation->BeginEvent(name);
 	}
 	/*!
 	   Ends debugging event.
 	 */
 	void EndDebugEvent() {
-		m_pRenderingAnnotation->EndEvent();
+		if (m_pRenderingAnnotation != nullptr)
+			m_pRenderingAnnotation->EndEvent();
 	}
 
 private:

@@ -176,7 +176,7 @@ bool CD3DRenderer::InitDevice()
 		sd.SampleDesc.Quality = 0;
 		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		sd.BufferCount = 1;
-		sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		sd.Flags = gDebugSettings.Windowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH : 0;
 
 		DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsd;
 		ZeroMemory(&fsd, sizeof(fsd));
@@ -207,7 +207,7 @@ bool CD3DRenderer::InitDevice()
 		sd.SampleDesc.Count = 1;
 		sd.SampleDesc.Quality = 0;
 		sd.Windowed = gDebugSettings.Windowed;
-		sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+		sd.Flags = gDebugSettings.Windowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH : 0;
 		CALL_D3D_API(m_pdxgiFactory->CreateSwapChain(m_pd3dDevice, &sd, &m_pSwapChain), "Failed to create swap chain using DX11 API");
 	}
 	m_pdxgiFactory->Release();

@@ -60,5 +60,7 @@ public:
 	float MinOffscreenShadowCasterSize;
 	float LodShadowsMinDistance;
 	int MaxSectorsAroundPlayer;
+	bool CullPerCascade;
+	bool ScanShadowsBehindPlayer;
 };
 extern ShadowSettingsBlock gShadowSettings;

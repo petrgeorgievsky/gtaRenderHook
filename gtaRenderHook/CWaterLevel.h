@@ -1,7 +1,10 @@
 #pragma once
 #include "gta_sa_ptrs.h"
 struct CRenPar {
-	float z, u, v, velocity;
+	float baseHeight, wave0Height, wave1Height;
+	char flowX;
+	char flowY;
+	short pad;
 };
 struct CWaterTriangle {
 	short a, b, c;
@@ -32,7 +35,7 @@ struct CWaterVertice {
 #define CTimer__m_snTimeInMilliseconds (*(UINT *)0xB7CB84)
 #define WaterColor (*(RwRGBA *)0xC2116C)
 //C22910     ; CWaterVertice CWaterLevel::m_aVertices[1021]
-
+class CVector;
 class CWaterLevel
 {
 public:
@@ -44,6 +47,8 @@ public:
 	static void SplitWaterRectangleAlongYLine(int m, int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d);
 	static void SplitWaterRectangleAlongXLine(int m,int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d);
 	
+	static void CalculateWavesForCoordinate(int x, int y, float a3, float a4, float *resHeight, float *diffuse, float *sunGlare, CVector *resNormal);
+
 	static void RenderDetailedSeaBedSegment(int x, int y, float a, float b, float c, float d);
 	static void RenderSeaBedSegment(int x, int y, float a, float b, float c, float d);
 	static void RenderSeaBed();
@@ -58,8 +63,18 @@ public:
 	static UINT	&m_nNumOfWaterQuads;
 	static USHORT* m_BlocksToBeRenderedOutsideWorldX;
 	static USHORT* m_BlocksToBeRenderedOutsideWorldY;
-	static CWaterTriangle* m_aTriangles;
-	static CWaterVertice* m_aVertices;
-	static CWaterQuad* m_aQuads;
+	static float &m_CurrentFlowX;
+	static float &m_CurrentFlowY;
+	static float *g_aFlowIntensity;
+	static unsigned int &m_nWaterTimeOffset;
+	static CWaterTriangle*	m_aTriangles;
+	static CWaterVertice*	m_aVertices;
+	static CWaterQuad*		m_aQuads;
+
 };
 
+class CMaths
+{
+public:
+	static float* ms_SinTable;
+};

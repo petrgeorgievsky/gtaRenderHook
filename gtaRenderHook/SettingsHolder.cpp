@@ -154,7 +154,7 @@ void DebugSettingsBlock::Load(const tinyxml2::XMLDocument &doc)
 {
 	auto debugSettingsNode = doc.FirstChildElement("DebugSettings");
 	// Debug
-	ShowPreformanceCounters = debugSettingsNode->BoolAttribute("ShowPreformanceCounters", true);
+	ShowPreformanceCounters = debugSettingsNode->BoolAttribute("ShowPreformanceCounters", false);
 	DebugMessaging = debugSettingsNode->BoolAttribute("DebugMessaging", false);
 	DebugLevel = debugSettingsNode->IntAttribute("DebugLevel", 0);
 	UseIdleHook = debugSettingsNode->BoolAttribute("UseIdleHook", true);
@@ -167,7 +167,7 @@ void DebugSettingsBlock::Load(const tinyxml2::XMLDocument &doc)
 void DebugSettingsBlock::Reset()
 {
 	// Debug
-	ShowPreformanceCounters = true;
+	ShowPreformanceCounters = false;
 	DebugMessaging = false;
 	DebugLevel = 0;
 	UseIdleHook = true;
@@ -180,6 +180,7 @@ void DebugSettingsBlock::Reset()
 void DebugSettingsBlock::InitGUI(TwBar * guiholder)
 {
 	TwAddVarRW(guiholder, "Enable RenderHook Idle", TwType::TW_TYPE_BOOL8, &UseIdleHook, "group=Global");
+	TwAddVarRW(guiholder, "Show performance counters", TwType::TW_TYPE_BOOL8, &ShowPreformanceCounters, "group=Debug");
 	TwAddVarRW(guiholder, "Show RenderTarget", TwType::TW_TYPE_BOOL8, &DebugRenderTarget, "group=Debug");
 	std::string rtIdSettings = "min=0 max=";
 	TwAddVarRW(guiholder, "RenderTarget ID", TwType::TW_TYPE_UINT32, &DebugRenderTargetNumber, 

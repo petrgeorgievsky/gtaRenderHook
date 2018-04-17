@@ -287,6 +287,8 @@ tinyxml2::XMLElement * ShadowSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 
 
 	shadowSettingsNode->SetAttribute("Enable", gShadowSettings.Enable);
+	shadowSettingsNode->SetAttribute("CullPerCascade", gShadowSettings.CullPerCascade);
+	shadowSettingsNode->SetAttribute("ScanShadowsBehindPlayer", gShadowSettings.ScanShadowsBehindPlayer);
 	shadowSettingsNode->SetAttribute("Size", gShadowSettings.Size);
 	shadowSettingsNode->SetAttribute("MaxDrawDistance", gShadowSettings.MaxDrawDistance);
 	shadowSettingsNode->SetAttribute("MinOffscreenShadowCasterSize", gShadowSettings.MinOffscreenShadowCasterSize);
@@ -311,6 +313,9 @@ void ShadowSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 	auto shadowSettingsNode = doc.FirstChildElement(m_sName.c_str());
 	// Shadows
 	gShadowSettings.Enable = shadowSettingsNode->BoolAttribute("Enable", true);
+	gShadowSettings.CullPerCascade = shadowSettingsNode->BoolAttribute("CullPerCascade", false);
+	gShadowSettings.ScanShadowsBehindPlayer = shadowSettingsNode->BoolAttribute("ScanShadowsBehindPlayer", true);
+	
 	gShadowSettings.Size = shadowSettingsNode->IntAttribute("Size", 1024);
 	gShadowSettings.MaxDrawDistance = shadowSettingsNode->FloatAttribute("MaxDrawDistance", 500);
 	gShadowSettings.MinOffscreenShadowCasterSize = shadowSettingsNode->FloatAttribute("MinOffscreenShadowCasterSize", 50);
@@ -336,6 +341,8 @@ void ShadowSettingsBlock::Reset()
 {
 	// Shadows
 	Enable = true;
+	CullPerCascade = false;
+	ScanShadowsBehindPlayer = true;
 	Size = 1024;
 	MaxDrawDistance = 500;
 	BiasCoefficients[0] = 0.003f;
@@ -381,7 +388,13 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 	TwAddVarRW(bar, "Max Offscreen Shadow Sectors", TwType::TW_TYPE_UINT32,
 		&MaxSectorsAroundPlayer,
 		" min=1 max=10 step=1 help='Maximum sectors for offscreen shadow scan.' group=Shadows");
-
+	
+	TwAddVarRW(bar, "Cull per cascade", TwType::TW_TYPE_BOOL8,
+		&CullPerCascade,
+		"help='meh' group=Shadows");
+	TwAddVarRW(bar, "Scan for shadows behind player", TwType::TW_TYPE_BOOL8,
+		&ScanShadowsBehindPlayer,
+		"help='meh' group=Shadows");
 	TwAddVarRW(bar, "Distance multipier 1", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[0],
 		" min=0.00001 max=1.0 step=0.00001 group=Cascade_1 ");
