@@ -678,17 +678,25 @@ void CWaterLevel::CalculateWavesForCoordinate(int x, int y, float a3, float a4, 
 
 	float waveIntensity = g_aFlowIntensity[x / 2 & 7] * g_aFlowIntensity[(y / 2 & 7) + 8] * CWeather::Wavyness;
 	int timeDiff = CTimer::m_snTimeInMilliseconds - CWaterLevel::m_nWaterTimeOffset;
+	float wave0Freq = (float)(timeDiff % 5000) / 2500.0f;
+	float wave1Freq = (float)(timeDiff % 3500) / 1750.0f;
+	float wave2Freq = (float)(timeDiff % 3000) / 1500.0f;
 
-	int lookUpID0 = (int)(((timeDiff % 5000) / 2500.0f + (y + x) / 32.0f) * 128) % 127;
-	int lookUpID1 = (int)(((timeDiff % 3500) / 1750.0f + y / 26.0f + x / 13.0f) * 128) % 127;
-	int lookUpID2 = (int)(((timeDiff % 3000) / 1500.0f + y / 10.0f) * 128) % 127;
+	int lookUpID0 = (int)((wave0Freq + (y + x) / 32.0f) * 128) % 127;
+	int lookUpID1 = (int)((wave1Freq + y / 26.0f + x / 13.0f) * 128) % 127;
+	int lookUpID2 = (int)((wave2Freq + y / 10.0f) * 128) % 127;
 
-	float sin0 = CMaths::ms_SinTable[lookUpID0 + 1];
-	float cos0 = CMaths::ms_SinTable[(lookUpID0 + 64) + 1];
-	float sin1 = CMaths::ms_SinTable[lookUpID1 + 1];
-	float cos1 = CMaths::ms_SinTable[(lookUpID1 + 64) + 1];
-	float sin2 = CMaths::ms_SinTable[lookUpID2 + 1];
-	float cos2 = CMaths::ms_SinTable[(lookUpID2 + 64) + 1];
+	float wave0Phi = (wave0Freq + (y + x) / 32.0f);
+	float wave1Phi = (wave1Freq + y / 26.0f + x / 13.0f);
+	float wave2Phi = (wave2Freq + y / 10.0f);
+
+	
+	float sin0 = sin(wave0Phi*M_PI);//CMaths::ms_SinTable[lookUpID0 + 1];
+	float cos0 = cos(wave0Phi*M_PI);//CMaths::ms_SinTable[(lookUpID0 + 64) + 1];
+	float sin1 = sin(wave1Phi*M_PI);//CMaths::ms_SinTable[lookUpID1 + 1];
+	float cos1 = cos(wave1Phi*M_PI);//CMaths::ms_SinTable[(lookUpID1 + 64) + 1];
+	float sin2 = sin(wave2Phi*M_PI);//CMaths::ms_SinTable[lookUpID2 + 1];
+	float cos2 = cos(wave2Phi*M_PI);//CMaths::ms_SinTable[(lookUpID2 + 64) + 1];
 
 	*resHeight = sin0 * 2.0 * waveIntensity * a3 + *resHeight;
 	float wave0 = -(cos0 * 2.0 * waveIntensity * a3 * M_PI / 32.0f);
@@ -697,7 +705,7 @@ void CWaterLevel::CalculateWavesForCoordinate(int x, int y, float a3, float a4, 
 	resNormal->z = 1.0f;
 
 	*resHeight = sin1 * waveIntensity * a4 + *resHeight;
-	float wave1 = cos1 * waveIntensity * a4 * M_PI / 13;
+	float wave1 = cos1 * waveIntensity * a4 * M_PI / 13.0f;
 	resNormal->x += wave1;
 	resNormal->y += wave1;
 

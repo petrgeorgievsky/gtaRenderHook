@@ -449,6 +449,7 @@ struct CBaseModelInfo {
 #define RpMaterialGetFxEnvShininess(material) ((float (__cdecl *)(RpMaterial *)) 0x5D70D0)(material)
 #define RpWorldAddCamera(world,cam)	((RpWorld* (__cdecl*) (RpWorld *, RwCamera *)) 0x750F20)(world,cam)
 #define rpD3D9SkinVertexShaderMatrixUpdate(mat,atomic,skin) ((RpAtomic* (__cdecl*)(RwMatrix * , RpAtomic* , RpSkin* ))0x7C78A0)(mat,atomic,skin)
+#define _RpClumpRender(clump) ((void (__cdecl *)(RpClump *)) 0x749B20)(clump)
 
 /*
 *	GTA Class methods

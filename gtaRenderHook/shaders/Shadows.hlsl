@@ -163,8 +163,9 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
     blendFactor = min(max(viewZ - near, 0) / blendDistance, 1.0);
 	
     Shadow = lerp(Shadow, SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos.xyz, shadowTCOffsets[3], 3), blendFactor);
+    blendFactor = min(max(viewZ - far, 0) / blendDistance, 1.0);
 
-    return max(Shadow, 1 - vSunLightDir.w);
+    return max(lerp(Shadow, 1.0, blendFactor), 1 - vSunLightDir.w);
 }
 // Samples cascade shadow maps, blended 
 float SampleShadowCascadesUnfiltered(Texture2D txShadow, SamplerComparisonState samShadow, SamplerState samShadowNonComp, float3 worldPos, float viewZ)

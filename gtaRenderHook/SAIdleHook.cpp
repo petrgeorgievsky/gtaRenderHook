@@ -115,16 +115,16 @@ void CSAIdleHook::UpdateShadowDNBalance()
 		return;
 	}
 	// if time is between 7 am and 7 pm than it's day
-	if (currentMinutes < 1140.0)
+	if (currentMinutes < 1080.0)
 	{
 		m_fShadowDNBalance = 0.0;
 		return;
 	}
 	// else it's night
-	if (currentMinutes >= 1200.0)
+	if (currentMinutes >= 1140.0)
 		m_fShadowDNBalance = 1.0;
 	else
-		m_fShadowDNBalance = 1.0f - (1200.0f - currentMinutes) / 60.0f;
+		m_fShadowDNBalance = 1.0f - (1140.0f - currentMinutes) / 60.0f;
 }
 
 // Render one game frame
@@ -366,7 +366,7 @@ void CSAIdleHook::PrepareRealTimeShadows(const RwV3d &sundir)
 
 	shadowRenderer->CalculateShadowDistances(Scene.m_pRwCamera->nearPlane, Scene.m_pRwCamera->farPlane);
 	// Render cascades
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
 		shadowRenderer->DirectionalLightTransform(Scene.m_pRwCamera, sundir, i);
 	
 	g_pDebug->printMsg("Shadow PrePass: end", 1);
@@ -380,10 +380,9 @@ void CSAIdleHook::RenderRealTimeShadows(const RwV3d &sundir)
 	RwCameraClear(shadowRenderer->m_pShadowCamera, gColourTop, rwCAMERACLEARZ);
 
 	// Render cascades
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < gShadowSettings.ShadowCascadeCount; i++) {
 		shadowRenderer->RenderShadowToBuffer(i, [](int k) { 
 			CRenderer::RenderShadowCascade(k);
-			//RenderDeferred();
 		});
 	}
 	shadowRenderer->m_bShadowsRendered = true;

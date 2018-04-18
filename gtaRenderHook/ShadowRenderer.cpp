@@ -127,7 +127,7 @@ RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & l
 	vFrustrumCenter = vFrustrumCenter*0.5f;
 	RwV2d vw{ faLightDim[0] ,faLightDim[2] };
 	*/
-	RwV2d vw{ m_LightBBox[shadowCascade].getSizeX() , m_LightBBox[shadowCascade].getSizeY() };
+	RwV2d vw{ m_LightBBox[shadowCascade].getSizeX()*0.5f , m_LightBBox[shadowCascade].getSizeY()*0.5f };
 	vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[shadowCascade].getSizeZ()*0.5f;//faLightDim[1];
@@ -205,9 +205,9 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	RW::V4d upAxis = { 0,1,0,0 };
 	RW::V4d zaxis = m_LightSpaceMatrix[cascade].getAt();
 
-	RW::V4d	xaxis = upAxis.cross(zaxis);
-	xaxis.normalize();
-	RW::V4d	yaxis = zaxis.cross(xaxis);
+	RW::V4d	xaxis = m_LightSpaceMatrix[cascade].getRight();//upAxis.cross(zaxis);
+	//xaxis.normalize();
+	RW::V4d	yaxis = m_LightSpaceMatrix[cascade].getUp();//zaxis.cross(xaxis);
 
 
 	shadowCamMatrix->at = { zaxis.getX(),zaxis.getY(),zaxis.getZ() };
@@ -219,7 +219,7 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	// Move camera back to needed position.
 	RwFrameTranslate(shadowCamFrame, &lightPos, rwCOMBINEPOSTCONCAT);
 	// Set light orthogonal projection parameters.
-	RwV2d vw{ m_LightBBox[cascade].getSizeX() , m_LightBBox[cascade].getSizeY() };
+	RwV2d vw{ m_LightBBox[cascade].getSizeX() *0.5f, m_LightBBox[cascade].getSizeY() *0.5f };
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[cascade].getSizeZ()*0.5f;//faLightDim[1];
 	RwCameraSetNearClipPlane(m_pShadowCamera, -500 /*-fLightZFar-25*/);
@@ -294,6 +294,8 @@ tinyxml2::XMLElement * ShadowSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 	shadowSettingsNode->SetAttribute("MinOffscreenShadowCasterSize", gShadowSettings.MinOffscreenShadowCasterSize);
 	shadowSettingsNode->SetAttribute("MaxSectorsAroundPlayer", gShadowSettings.MaxSectorsAroundPlayer);
 	shadowSettingsNode->SetAttribute("LodShadowsMinDistance", gShadowSettings.LodShadowsMinDistance);
+	shadowSettingsNode->SetAttribute("ShadowCascadeCount", gShadowSettings.ShadowCascadeCount);
+	
 	for (size_t i = 0; i < 4; i++)
 	{
 		auto shadowCascadesSettingsNode = doc->NewElement("Cascade");
@@ -312,28 +314,30 @@ void ShadowSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
 	auto shadowSettingsNode = doc.FirstChildElement(m_sName.c_str());
 	// Shadows
-	gShadowSettings.Enable = shadowSettingsNode->BoolAttribute("Enable", true);
-	gShadowSettings.CullPerCascade = shadowSettingsNode->BoolAttribute("CullPerCascade", false);
-	gShadowSettings.ScanShadowsBehindPlayer = shadowSettingsNode->BoolAttribute("ScanShadowsBehindPlayer", true);
+	Enable = shadowSettingsNode->BoolAttribute("Enable", true);
+	CullPerCascade = shadowSettingsNode->BoolAttribute("CullPerCascade", false);
+	ScanShadowsBehindPlayer = shadowSettingsNode->BoolAttribute("ScanShadowsBehindPlayer", true);
 	
-	gShadowSettings.Size = shadowSettingsNode->IntAttribute("Size", 1024);
-	gShadowSettings.MaxDrawDistance = shadowSettingsNode->FloatAttribute("MaxDrawDistance", 500);
-	gShadowSettings.MinOffscreenShadowCasterSize = shadowSettingsNode->FloatAttribute("MinOffscreenShadowCasterSize", 50);
-	gShadowSettings.MaxSectorsAroundPlayer = shadowSettingsNode->IntAttribute("MaxSectorsAroundPlayer", 3);
-	gShadowSettings.LodShadowsMinDistance = shadowSettingsNode->FloatAttribute("LodShadowsMinDistance", 150);
+	Size = shadowSettingsNode->IntAttribute("Size", 1024);
+	MaxDrawDistance = shadowSettingsNode->FloatAttribute("MaxDrawDistance", 500);
+	MinOffscreenShadowCasterSize = shadowSettingsNode->FloatAttribute("MinOffscreenShadowCasterSize", 50);
+	MaxSectorsAroundPlayer = shadowSettingsNode->IntAttribute("MaxSectorsAroundPlayer", 3);
+	LodShadowsMinDistance = shadowSettingsNode->FloatAttribute("LodShadowsMinDistance", 150);
+	ShadowCascadeCount =min(max(shadowSettingsNode->IntAttribute("ShadowCascadeCount", 3),4),1);
+	
 	// Read 4 shadow cascade parameters
 	auto shadowCascadeNode = shadowSettingsNode->FirstChildElement();
 	int id = shadowCascadeNode->IntAttribute("ID");
 	if (id != 1)
-		gShadowSettings.DistanceCoefficients[id - 2] = shadowCascadeNode->FloatAttribute("StartDistanceMultiplier");
-	gShadowSettings.BiasCoefficients[id - 1] = shadowCascadeNode->FloatAttribute("BiasCoefficients");
+		DistanceCoefficients[id - 2] = shadowCascadeNode->FloatAttribute("StartDistanceMultiplier");
+	BiasCoefficients[id - 1] = shadowCascadeNode->FloatAttribute("BiasCoefficients");
 	for (size_t i = 1; i < 4; i++)
 	{
 		shadowCascadeNode = shadowCascadeNode->NextSiblingElement("Cascade");
 		id = shadowCascadeNode->IntAttribute("ID");
 		if (id != 1)
-			gShadowSettings.DistanceCoefficients[id - 2] = shadowCascadeNode->FloatAttribute("StartDistanceMultiplier");
-		gShadowSettings.BiasCoefficients[id - 1] = shadowCascadeNode->FloatAttribute("BiasCoefficients");
+			DistanceCoefficients[id - 2] = shadowCascadeNode->FloatAttribute("StartDistanceMultiplier");
+		BiasCoefficients[id - 1] = shadowCascadeNode->FloatAttribute("BiasCoefficients");
 	}
 }
 
@@ -355,6 +359,7 @@ void ShadowSettingsBlock::Reset()
 	MinOffscreenShadowCasterSize=50;
 	MaxSectorsAroundPlayer=3;
 	LodShadowsMinDistance = 150;
+	ShadowCascadeCount = 3;
 }
 void TW_CALL SetShadowSizeCallback(const void *value, void *clientData)
 {
@@ -389,12 +394,10 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 		&MaxSectorsAroundPlayer,
 		" min=1 max=10 step=1 help='Maximum sectors for offscreen shadow scan.' group=Shadows");
 	
-	TwAddVarRW(bar, "Cull per cascade", TwType::TW_TYPE_BOOL8,
-		&CullPerCascade,
-		"help='meh' group=Shadows");
-	TwAddVarRW(bar, "Scan for shadows behind player", TwType::TW_TYPE_BOOL8,
-		&ScanShadowsBehindPlayer,
-		"help='meh' group=Shadows");
+	TwAddVarRW(bar, "Cull per cascade", TwType::TW_TYPE_BOOL8, &CullPerCascade, "help='meh' group=Shadows");
+	TwAddVarRW(bar, "Scan for shadows behind player", TwType::TW_TYPE_BOOL8, &ScanShadowsBehindPlayer, "help='meh' group=Shadows");
+	TwAddVarRW(bar, "Cascade count", TwType::TW_TYPE_INT32, &ShadowCascadeCount, "min=1 max=4 help='meh' group=Shadows");
+
 	TwAddVarRW(bar, "Distance multipier 1", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[0],
 		" min=0.00001 max=1.0 step=0.00001 group=Cascade_1 ");

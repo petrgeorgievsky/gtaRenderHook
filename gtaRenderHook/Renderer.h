@@ -159,6 +159,10 @@ public:
 	*/
 	static void ResetLodRenderLists();
 	/*!
+		Renders shadow caster entity, skips effect rendering as well as 
+	*/
+	static void RenderShadowCasterEntity(CEntity*);
+	/*!
 		Returns base of LOD render list
 	*/
 	static sLodListEntry *GetLodRenderListBase();

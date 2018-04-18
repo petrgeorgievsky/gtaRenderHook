@@ -49,13 +49,15 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 		return;
 
 	g_pStateMgr->SetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
-	UINT stride = sizeof(SimpleVertex);
-	UINT offset = 0;
-	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
+	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertex), 0);
+
 	if (!entryData->header.indexBuffer)
 		g_pDebug->printMsg("CustomBuildingDNPipeline: empty index buffer found", 2);
+
 	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
+
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)entryData->header.primType));
+
 	if (m_uiDeferredStage == 3|| m_uiDeferredStage == 4) {
 		m_pVoxelVS->Set();
 		m_pVoxelGS->Set();
@@ -77,12 +79,13 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	RwUInt8 bAlphaEnable = 0;
 	set<RpMaterial*> materialSet{};
 	// To improve preformance we try to reduce texture set calls, to do that we need to sort every object by texture pointer.
-	list<RxD3D9InstanceData> meshList{};
-	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
-		meshList.push_back(entryData->models[i]);
-	meshList.sort([](const RxD3D9InstanceData &a, const RxD3D9InstanceData &b) {return a.material->texture > b.material->texture; });
-	for (auto mesh: meshList)
+	//list<RxD3D9InstanceData> meshList{};
+	//for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
+	//	meshList.push_back(entryData->models[i]);
+	//meshList.sort([](const RxD3D9InstanceData &a, const RxD3D9InstanceData &b) {return a.material->texture > b.material->texture; });
+	for (int i=0; i<entryData->header.numMeshes;i++)
 	{
+		auto mesh = entryData->models[i];
 		bAlphaEnable = 0;
 		if (mesh.material->color.alpha == 0) continue;
 		if (m_uiDeferredStage != 2) {
@@ -90,7 +93,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 			if (m_uiDeferredStage == 1) {
 				color.alpha = max(color.alpha, 2);
 			}
-			if (mesh.material->surfaceProps.ambient>1.0 || CRenderer::TOBJpass == true)
+			if (mesh.material->surfaceProps.ambient>1.0)
 				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(color);
 			else
 				g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(color);
@@ -105,10 +108,12 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 			bAlphaEnable |= GetD3D1XRaster(mesh.material->texture->raster)->alpha;
 			
 			g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
-			CPBSMaterial* mat = CPBSMaterialMgr::materials[mesh.material->texture->name];
-			if (mat != nullptr) {
-				g_pStateMgr->SetRaster(mat->m_tSpecRoughness->raster, 1);
-				g_pRenderBuffersMgr->UpdateHasSpecTex(1);
+			if (m_uiDeferredStage != 2) {
+				CPBSMaterial* mat = CPBSMaterialMgr::materials[mesh.material->texture->name];
+				if (mat != nullptr) {
+					g_pStateMgr->SetRaster(mat->m_tSpecRoughness->raster, 1);
+					g_pRenderBuffersMgr->UpdateHasSpecTex(1);
+				}
 			}
 		}
 		if (m_uiDeferredStage != 1)

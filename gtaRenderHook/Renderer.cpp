@@ -154,8 +154,8 @@ void CRenderer::RenderTOBJs()
 
 void CRenderer::RenderShadowCascade(int i)
 {
-	for (auto shadowEntity: ms_aVisibleShadowCasters[gShadowSettings.CullPerCascade?i:0])
-		shadowEntity->Render();
+	for (auto shadowEntity : ms_aVisibleShadowCasters[gShadowSettings.CullPerCascade ? i : 0])
+		RenderShadowCasterEntity(shadowEntity);//shadowEntity->Render();
 	
 }
 
@@ -328,6 +328,7 @@ char CRenderer::AddToLodRenderList(CEntity * entity, float renderDistance)
 
 void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBoundBox)
 {
+	// TODO: cleanup, improve performance, improve culling heuristics, perhaps add occlusion checks
 	int modelID = entity->m_nModelIndex;
 	CVector pos = entity->GetPosition();
 	float xDist = ms_vecCameraPosition.x - pos.x;
@@ -335,15 +336,18 @@ void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBou
 	float zDist = ms_vecCameraPosition.z - pos.z;
 	float lodStartDist = gShadowSettings.LodShadowsMinDistance*gShadowSettings.LodShadowsMinDistance;
 	float renderDistance = xDist * xDist + yDist * yDist + zDist * zDist;
+
 	CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
 	auto shadowEntity = entity;
 	// We add entity to render list only if it has bbox, because we need to cull entities that don't affect objects on screen
 	if (modelInfo != nullptr && modelInfo->m_pColModel != nullptr) {
 		// Use lods if entity is not road and it's outside of lod rendering distance
-		if (renderDistance > lodStartDist && !modelInfo->bIsRoad&&shadowEntity->m_pLod!=nullptr)
+		//if (renderDistance > lodStartDist && !modelInfo->bIsRoad&&shadowEntity->m_pLod!=nullptr)
+		//	shadowEntity = shadowEntity->m_pLod;
+		if(modelInfo->m_nAlpha==0 && shadowEntity->m_pLod!=nullptr)
 			shadowEntity = shadowEntity->m_pLod;
-		if (shadowEntity->m_pRwObject == nullptr)
-			shadowEntity->CreateRwObject();
+		//if (shadowEntity->m_pRwObject == nullptr)
+		//	shadowEntity->CreateRwObject();
 		auto entityPos = shadowEntity->GetPosition().ToRwV3d();
 		auto entityRadius = modelInfo->m_pColModel->m_boundSphere.m_fRadius;
 
@@ -358,26 +362,21 @@ void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBou
 		// Add entity to shadow caster list if it exists, inside frustum bbox and bigger than minimum shadow caster size
 		if (shadowEntity != nullptr) 
 		{
-			
 			bool isInsideLightBBox=false;
 			if (!gShadowSettings.CullPerCascade) {
-				for (auto i = 0; i < 4; i++)
+				// Check if entity is inside any of existing light bounding volumes
+				for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
 				{
-					// Check if entity is inside light bounding volume 
-					isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i],
-						4, entityBBox);
-					bool testb = checkBoundBox ? i <= 2 : true;
-
+					isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, entityBBox);
 				}
 				if (isInsideLightBBox)
 					AddEntityToShadowCasterList(shadowEntity, renderDistance, 0);
 			}
 			else {
-				for (auto i = 0; i < 4; i++)
+				for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
 				{
 					// Check if entity is inside light bounding volume 
-					isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i],
-						4, entityBBox);
+					isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, entityBBox);
 					if (isInsideLightBBox)
 						AddEntityToShadowCasterList(shadowEntity, renderDistance, i);
 				}
@@ -917,8 +916,8 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 }
 void CRenderer::ScanBigBuildingList(int x, int y)
 {
-	/*CRenderer__ScanBigBuildingList(x, y);
-	return;*/
+	CRenderer__ScanBigBuildingList(x, y);
+	return;
 	bool loadIfRequired = false;
 	if (x < 0 || y < 0 | x >= 30 || y >= 30)
 		return;
@@ -1382,12 +1381,11 @@ void CRenderer::ScanWorld()
 
 			RW::BBox	 sectorBBox = { { sectorBoundXMin , sectorBoundYMin, -3000 },
 										{ sectorBoundXMax , sectorBoundYMax, 3000 } };
-
-			bool isInsideLightBBox = 
-				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[0], 4, sectorBBox) ||
-				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[1], 4, sectorBBox) || 
-				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[2], 4, sectorBBox) || 
-				IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[3], 4, sectorBBox);
+			bool isInsideLightBBox = false;
+			for (int i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
+			{
+				isInsideLightBBox = isInsideLightBBox || IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, sectorBBox);
+			}
 			if (isInsideLightBBox) {
 				CRenderer::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
 			}
@@ -1417,6 +1415,18 @@ void CRenderer::ResetLodRenderLists()
 {
 	ms_pLodRenderList = GetLodRenderListBase();
 	ms_pLodDontRenderList = GetLodDontRenderListBase();
+}
+
+void CRenderer::RenderShadowCasterEntity(CEntity *entity)
+{
+	if (entity->m_pRwObject == nullptr)
+		return;
+	entity->m_bImBeingRendered = true;
+	if (entity->m_pRwObject->type == rpATOMIC)
+		entity->m_pRwAtomic->renderCallBack(entity->m_pRwAtomic);
+	else
+		_RpClumpRender(entity->m_pRwClump);
+	entity->m_bImBeingRendered = false;
 }
 
 sLodListEntry *CRenderer::GetLodRenderListBase()
