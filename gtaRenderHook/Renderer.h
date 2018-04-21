@@ -13,7 +13,7 @@
 
 #define CRenderer__ms_fFarClipPlane (*(float *)0xB76848)
 #define CRenderer__ScanWorld() ((void (__cdecl *)())0x554FE0)()
-#define CWorld__ms_nCurrentScanCode (*(unsigned short *)0xB7CD78)
+#define CWorld__ms_nCurrentScanCode (*(short *)0xB7CD78)
 #define CWorld__ClearScanCodes() ((void (__cdecl *)())0x563470)()
 #define CVisibilityPlugins__InitAlphaEntityList() ((void (__cdecl *)())0x734540)()
 #define CWorldScan__ScanWorld(a1,a2,a3) ((void (__cdecl *)(RwV2d *, signed int , void (__cdecl *)(int, int) ) )0x72CAE0)(a1,a2,a3)

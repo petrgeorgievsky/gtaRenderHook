@@ -44,29 +44,6 @@ std::list<CEntity*> CRenderer::ms_aVisibleEntities{};
 std::list<CEntity*> CRenderer::ms_aVisibleLods{};
 std::vector<CEntity*> CRenderer::ms_aVisibleShadowCasters[4] = { {}, {},{},{} };
 
-/*struct CSector {
-public:
-	CPtrList *m_buildings;
-	CPtrList *m_dummies;
-};*/
-/*struct CRepeatSector
-{
-	CPtrList *vehicleList;
-	CPtrList *pedList;
-	CPtrList *objectList;
-};*/
-/*struct CStreamingInfo
-{
-	__int16 m_next;
-	__int16 m_prev;
-	__int16 m_nextOnCd;
-	char m_flags;
-	char m_imgId;
-	int m_blockOffset;
-	int m_blockCount;
-	char m_loadState;
-	char _pad[3];
-};*/
 //9654B0     ; CStreaming::ms_disableStreaming
 #define CStreaming__ms_disableStreaming (*(unsigned char *)0x9654B0)
 //8E4CB8     ; CStreaming::ms_numPriorityRequests
@@ -87,6 +64,7 @@ public:
 #define CGeneral__LimitRadianAngle(a) ((float (__cdecl *)(float))0x53CB50)(a)
 #define CRenderer__ProcessLodRenderLists() ((void (__cdecl *)())0x553770)()
 #define CRenderer__ResetLodRenderLists() ((void (__cdecl *)())0x5536F0)()
+#define COcclusion__ProcessBeforeRendering() ((void (__cdecl *)())0x7201C0)()
 #define CVehicle__SetupRender(veh) ((void(__thiscall *)(void*))0x6D64F0)(veh)
 #define CVehicle__ResetAfterRender(veh) ((void(__thiscall *)(void*))0x6D0E20)(veh)
 //56E0D0     ; CVehicle *__cdecl FindPlayerVehicle(int playerNum, char includeRemote)
@@ -100,9 +78,9 @@ void CRenderer::RenderRoads()
 	//if (ms_nNoOfVisibleEntities == 0) {
 	for (auto entity : ms_aVisibleEntities) {
 		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
-		if (st != 3) {
+		//if (st != 3) {
 			RenderOneNonRoad(entity);
-		}
+		//}
 	}
 	//for (auto entity : ms_aVisibleLods)
 	//	RenderOneRoad(entity);
@@ -111,14 +89,14 @@ void CRenderer::RenderRoads()
 	for (size_t i = 0; i < ms_nNoOfVisibleEntities; ++i) {
 		auto entity = ms_aVisibleEntityPtrs[i];
 		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
-		if (st != 3)
+		//if (st != 3)
 			RenderOneNonRoad(ms_aVisibleEntityPtrs[i]);
 	}
 	//}
 	for (size_t i = 0; i < ms_nNoOfVisibleLods; ++i) {
 		auto entity = ms_aVisibleLodPtrs[i];
 		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
-		if (st != 3)
+		//if (st != 3)
 			RenderOneNonRoad(ms_aVisibleLodPtrs[i]);
 	}
 }
@@ -250,6 +228,7 @@ void CRenderer::ConstructRenderList()
 	ms_bRenderOutsideTunnels = true;
 	ms_bInTheSky = false;
 	ms_lowLodDistScale = 1.0;
+	COcclusion__ProcessBeforeRendering();
 
 	ms_vecCameraPosition = TheCamera.GetPosition();
 	ms_fCameraHeading	 = TheCamera.GetHeading();
@@ -260,7 +239,7 @@ void CRenderer::ConstructRenderList()
 	ms_nNoOfInVisibleEntities = 0;
 
 	ResetLodRenderLists();
-
+	
 	ScanWorld();
 	ProcessLodRenderLists();
 
@@ -367,7 +346,7 @@ void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBou
 				// Check if entity is inside any of existing light bounding volumes
 				for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
 				{
-					isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, entityBBox);
+					isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
 				}
 				if (isInsideLightBBox)
 					AddEntityToShadowCasterList(shadowEntity, renderDistance, 0);
@@ -376,7 +355,7 @@ void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBou
 				for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
 				{
 					// Check if entity is inside light bounding volume 
-					isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, entityBBox);
+					isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
 					if (isInsideLightBBox)
 						AddEntityToShadowCasterList(shadowEntity, renderDistance, i);
 				}
@@ -754,8 +733,8 @@ void CRenderer::ScanSectorList(int x, int y)
 	// If sector id is wrong than quit scanning.
 	if (x < 0 || y < 0 || x >= 120 || y >= 120)
 		dontRenderSectorEntities = true;
-	CSector*	  sector	   = CWorld__GetSector(x, y);
-	CRepeatSector* repeatSector = CWorld__GetRepeatSector(x,y);
+	CSector*	  sector	   = GetSector(x, y);
+	CRepeatSector* repeatSector = GetRepeatSector(x,y);
 	// Calculate sector world space position, there are 120 sectors with size of 50 units 
 	// TODO: move it out of this method
 	float sectorPosX = (x - 60) * 50.0f + 25.0f;
@@ -764,20 +743,18 @@ void CRenderer::ScanSectorList(int x, int y)
 	// Calculate distance to camera
 	float camDistX = sectorPosX - ms_vecCameraPosition.x;
 	float camDistY = sectorPosY - ms_vecCameraPosition.y;
-	if (camDistY * camDistY + camDistX * camDistX < 100000.0
-		|| (fabs(CGeneral::LimitRadianAngle(atan2(sectorPosY, -sectorPosX) - ms_fCameraHeading)) < 0.36))
+	if (camDistY * camDistY + camDistX * camDistX < 10000.0f
+		|| (fabs(CGeneral::LimitRadianAngle(atan2(camDistY, -camDistX) - ms_fCameraHeading)) < 0.36f))
 	{
 		loadIfRequired = true;
 	}
-	
-	RwBBox	 sectorBBox = {	{ sectorPosX + 25.0f , sectorPosY + 25.0f,3000 },{ sectorPosX - 25.0f , sectorPosY - 25.0f,-3000 }};
 
 	if (!dontRenderSectorEntities) 
 		ScanPtrList(&sector->m_buildings, loadIfRequired);
 
-	ScanPtrList(&repeatSector->m_lists[0], loadIfRequired);
-	ScanPtrList(&repeatSector->m_lists[1], loadIfRequired);
-	ScanPtrList(&repeatSector->m_lists[2], loadIfRequired);
+	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_OBJECTS], loadIfRequired);
+	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_PEDS], loadIfRequired);
+	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_VEHICLES], loadIfRequired);
 
 	if (!dontRenderSectorEntities)
 		ScanPtrList(&sector->m_dummies, loadIfRequired);
@@ -796,19 +773,20 @@ void CRenderer::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 	{
 		entity = (CEntity*)current->pItem;
 		// If this entity has the same scan code as current, than we could skip it
-		if (entity->m_nScanCode == CWorld::ms_nCurrentScanCode) {
+		if (entity->m_nScanCode == CWorld__ms_nCurrentScanCode) {
 			current = current->pNext;
 			continue;
 		}
 		float renderDistance;
 
-		entity->m_nScanCode = CWorld::ms_nCurrentScanCode;
-		AddEntityToShadowCastersIfNeeded(entity,false);
+		entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
+		
 		// entity is on screen by default
 		entity->m_bOffscreen = false;
 			
 		RendererVisibility visibility = SetupEntityVisibility(entity, &renderDistance);
-
+		if(visibility!= RendererVisibility::INVISIBLE&&visibility != RendererVisibility::NOT_LOADED)
+			AddEntityToShadowCastersIfNeeded(entity, false);
 		int modelID = entity->m_nModelIndex;
 		
 		// Depending on visibility value, request model, add to render list or invisible render list
@@ -904,16 +882,17 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 	{
 		entity = (CEntity*)current->pItem;
 		// If this entity has the same scan code as current, than we could skip it
-		if (entity->m_nScanCode == CWorld::ms_nCurrentScanCode) {
+		if (entity->m_nScanCode == CWorld__ms_nCurrentScanCode) {
 			current = current->pNext;
 			continue;
 		}
-		entity->m_nScanCode = CWorld::ms_nCurrentScanCode;
+		entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
 
 		AddEntityToShadowCastersIfNeeded(entity,true);
 		current = current->pNext;
 	}
 }
+
 void CRenderer::ScanBigBuildingList(int x, int y)
 {
 	CRenderer__ScanBigBuildingList(x, y);
@@ -934,9 +913,9 @@ void CRenderer::ScanBigBuildingList(int x, int y)
 	for ( ; current!=nullptr; current = current->pNext)
 	{
 		auto entity = (CEntity*)current->pItem;
-		if (entity->m_nScanCode != CWorld::ms_nCurrentScanCode)
+		if (entity->m_nScanCode != CWorld__ms_nCurrentScanCode)
 		{
-			entity->m_nScanCode = CWorld::ms_nCurrentScanCode;
+			entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
 			float distance;
 			
 			auto visibility = SetupBigBuildingVisibility(entity, &distance)-1;
@@ -1082,6 +1061,7 @@ void CRenderer::ProcessLodRenderLists()
 		}
 	}
 }
+
 static RwIm3DVertex LineList[14];
 
 void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart, float shadowEnd)
@@ -1367,8 +1347,8 @@ void CRenderer::ScanWorld()
 		return;
 	
 	
-	int currentSectorX = ceil(ms_vecCameraPosition.x / 50.0f + 60.0f);
-	int currentSectorY = ceil(ms_vecCameraPosition.y / 50.0f + 60.0f);
+	int currentSectorX = ceil((ms_vecCameraPosition.x-25.0f) / 50.0f + 60.0f);
+	int currentSectorY = ceil((ms_vecCameraPosition.y-25.0f) / 50.0f + 60.0f);
 	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
 	{
 		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer+1; y++) {
@@ -1444,9 +1424,9 @@ void CRenderer::CalculateShadowBoundingPlanes(int shadowCascade)
 	auto lightSpaceFrustum = g_pDeferredRenderer->m_pShadowRenderer->m_LightSpaceMatrix[0];
 	RW::V3d  LightAABBCenter = { g_pDeferredRenderer->m_pShadowRenderer->m_LightPos[0] };
 	RW::BBox lightAABB = g_pDeferredRenderer->m_pShadowRenderer->m_LightBBox[shadowCascade];
-	auto lightAABBX = lightAABB.getSizeX() / 2.0f;
-	auto lightAABBY = lightAABB.getSizeY() / 2.0f;
-	auto lightAABBZ = lightAABB.getSizeZ() / 2.0f;
+	auto lightAABBX = lightAABB.getSizeX();
+	auto lightAABBY = lightAABB.getSizeY();
+	auto lightAABBZ = lightAABB.getSizeZ();
 	auto rightAxis = lightSpaceFrustum.getRightv3();
 	auto upAxis = lightSpaceFrustum.getUpv3();
 	auto atAxis = lightSpaceFrustum.getAtv3();

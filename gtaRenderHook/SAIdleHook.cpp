@@ -75,10 +75,11 @@ void CSAIdleHook::Idle(void *Data)
 	g_pDeferredRenderer->QueueTextureReload();
 	// TODO: move to RwD3D1XEngine
 	CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
-	if (dxEngine->m_bScreenSizeChanged || g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading) {
+	if (dxEngine->m_bScreenSizeChanged || g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading || g_pDeferredRenderer->m_bRequiresReloading) {
 		dxEngine->ReloadTextures();
 		dxEngine->m_bScreenSizeChanged = false;
 		g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = false;
+		g_pDeferredRenderer->m_bRequiresReloading = false;
 	}
 
 	if (!Data)
@@ -285,14 +286,14 @@ void CSAIdleHook::RenderForwardBeforeDeferred()
 
 void CSAIdleHook::RenderForwardAfterDeferred()
 {
-	g_pCustomCarFXPipe->RenderAlphaList();
-	g_pCustomBuildingPipe->RenderAlphaList();
-
 	g_pDeferredRenderer->SetNormalDepthRaster();
 	g_pDeferredRenderer->SetPreviousNonTonemappedFinalRaster();
 	g_pDeferredRenderer->m_pShadowRenderer->SetShadowBuffer();
 	CWaterLevel::RenderWater();
 	DefinedState();
+
+	g_pCustomCarFXPipe->RenderAlphaList();
+	g_pCustomBuildingPipe->RenderAlphaList();
 	CPostEffects__m_bDisableAllPostEffect = true;
 	// Render effects and 2d stuff
 	RenderEffects();
@@ -304,16 +305,15 @@ void CSAIdleHook::RenderDeferred()
 {
 	CVisibilityPluginsRH::ClearWeaponPedsList();
 	
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
 	CRenderer::RenderRoads();
 	CRenderer::RenderEverythingBarRoads();
 	RenderFadingInUnderwaterEntities();
 	CVisibilityPlugins__RenderFadingInEntities();
 	BreakManager_c__Render(g_breakMan, 0);
 	 // CRenderer::RenderFadingInUnderwaterEntities
-	//CVisibilityPlugins__RenderWeaponPedsForPC();
 	CVisibilityPluginsRH::RenderWeaponPedsNoMuzzleFlash();
-	CRenderer::RenderTOBJs();
+	//CRenderer::RenderTOBJs();
 	//CWaterLevel::RenderSeaBed();
 }
 
@@ -331,7 +331,8 @@ void CSAIdleHook::RenderEffects()
 	//CGlass::Render();
 	//CMovingThings::Render();
 	//CVisibilityPlugins::RenderReallyDrawLastObjects();
-
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, false);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, false);
 	CCoronas::Render();
 	g_fx.Render(TheCamera.m_pRwCamera, 0);
 	//CWaterCannons::Render();

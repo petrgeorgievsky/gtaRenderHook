@@ -243,13 +243,16 @@ void CWaterLevel::RenderWaterRectangle(int x0, int x1, int y0, int y1, CRenPar a
 	{
 		SplitWaterRectangleAlongYLine(CameraRangeMinY, x0, x1, y0, y1, a, b, c, d);
 	}
-	else
+	else {
 		RenderDetailedWaterRectangle_OneLayer(x0, x1, y0, y1, a, b, c, d, 0);
+		RenderDetailedWaterRectangle_OneLayer(x0, x1, y0, y1, a, b, c, d, 1);
+	}
 }
 
 void CWaterLevel::RenderFlatWaterRectangle(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
 {
 	RenderFlatWaterRectangle_OneLayer(x, y, z, w, a, b, c, d, 0);
+	RenderFlatWaterRectangle_OneLayer(x, y, z, w, a, b, c, d, 1);
 	//CWaterLevel_RenderFlatWaterRectangle(x, y, z, w, a, b, c, d);
 }
 

@@ -29,6 +29,7 @@ public:
 	void	QueueTextureReload();
 	CShadowRenderer* m_pShadowRenderer;
 	CHDRTonemapping* m_pTonemapping;
+	bool	m_bRequiresReloading = false;
 private:
 	RwRaster*	m_aDeferredRasters[3];
 	RwRaster*	m_pLightingRaster;
@@ -43,6 +44,7 @@ private:
 	CD3D1XShader* m_pBlitPassPS;
 	CD3D1XConstantBuffer<CBDeferredRendering>* m_pDeferredBuffer;
 	UINT m_uiCurrentFinalRaster=0;
+	
 };
 extern CDeferredRenderer* g_pDeferredRenderer;
 extern UINT m_uiDeferredStage;
@@ -60,6 +62,7 @@ public:
 	unsigned int SSRMaxIterations;
 	unsigned int ShadowsBlurKernelSize;
 	float SSRStep;
+	float SSRScale;
 	float MaxShadowBlur;
 	float MinShadowBlur;
 	bool BlurShadows;

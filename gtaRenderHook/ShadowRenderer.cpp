@@ -25,8 +25,8 @@ CShadowRenderer::CShadowRenderer()
 	RwCameraSetRaster(m_pShadowCamera, nullptr);
 	int maxTexSize;
 	if (g_pRwCustomEngine->GetMaxTextureSize(maxTexSize))
-		gShadowSettings.Size = min(gShadowSettings.Size, maxTexSize / 2);
-	RwCameraSetZRaster(m_pShadowCamera, RwRasterCreate(gShadowSettings.Size * 2, gShadowSettings.Size * 2, 32, rwRASTERTYPEZBUFFER));
+		gShadowSettings.Size = min(gShadowSettings.Size, maxTexSize / gShadowSettings.ShadowCascadeCount);
+	RwCameraSetZRaster(m_pShadowCamera, RwRasterCreate(gShadowSettings.Size * gShadowSettings.ShadowCascadeCount, gShadowSettings.Size, 32, rwRASTERTYPEZBUFFER));
 	vw.x = vw.y = 40;
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	gDebugSettings.DebugRenderTargetList.push_back(m_pShadowCamera->zBuffer);
@@ -96,37 +96,7 @@ RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & l
 		vFrustumCorners[i] = vFrustumCorners[i] * m_LightSpaceMatrix[shadowCascade];
 	// Generate light-aligned Bounding Box from frustum corners in light space
 	m_LightBBox[shadowCascade]={ vFrustumCorners, 8 };
-	/*
-	// Calculate light-aligned camera bbox.
-	for (auto i = 0; i < 8; i++)
-	{
-		for (auto k = 0; k < 3; k++)
-		{
-			const auto fDistance =	vLightBasis[k].getX()*mainCam->frustumCorners[i].x +
-									vLightBasis[k].getY()*mainCam->frustumCorners[i].y+ 
-									vLightBasis[k].getZ()*mainCam->frustumCorners[i].z;
 
-			if (fDistance < faMinAABB[k])
-				faMinAABB[k] = fDistance;
-
-			if (fDistance > faMaxAABB[k])
-				faMaxAABB[k] = fDistance;
-		}
-	}
-
-	for (int i = 0; i < 3; i++)
-	{
-		faLightDim[i] = faMaxAABB[i] - faMinAABB[i];
-		vFrustrumCenter = vFrustrumCenter + vLightBasis[i]*(faMinAABB[i] + faMaxAABB[i]);
-	}
-	vFrustrumCenter = {
-		(mainCam->frustumBoundBox.inf.x + mainCam->frustumBoundBox.sup.x) / 2.0f,
-		(mainCam->frustumBoundBox.inf.y + mainCam->frustumBoundBox.sup.y) / 2.0f,
-		(mainCam->frustumBoundBox.inf.z + mainCam->frustumBoundBox.sup.z) / 2.0f
-	};
-	vFrustrumCenter = vFrustrumCenter*0.5f;
-	RwV2d vw{ faLightDim[0] ,faLightDim[2] };
-	*/
 	RwV2d vw{ m_LightBBox[shadowCascade].getSizeX()*0.5f , m_LightBBox[shadowCascade].getSizeY()*0.5f };
 	vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
@@ -202,24 +172,16 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	RwFrameTranslate(shadowCamFrame, &invCamPos, rwCOMBINEPOSTCONCAT);
 
 	// Rotate camera towards light direction
-	RW::V4d upAxis = { 0,1,0,0 };
-	RW::V4d zaxis = m_LightSpaceMatrix[cascade].getAt();
-
-	RW::V4d	xaxis = m_LightSpaceMatrix[cascade].getRight();//upAxis.cross(zaxis);
-	//xaxis.normalize();
-	RW::V4d	yaxis = m_LightSpaceMatrix[cascade].getUp();//zaxis.cross(xaxis);
-
-
-	shadowCamMatrix->at = { zaxis.getX(),zaxis.getY(),zaxis.getZ() };
-	shadowCamMatrix->up = { yaxis.getX(),yaxis.getY(),yaxis.getZ() };
-	shadowCamMatrix->right = { xaxis.getX(),xaxis.getY(),xaxis.getZ() };
+	shadowCamMatrix->at = m_LightSpaceMatrix[cascade].getAt().getRW3Vector();
+	shadowCamMatrix->up = m_LightSpaceMatrix[cascade].getUp().getRW3Vector();
+	shadowCamMatrix->right = m_LightSpaceMatrix[cascade].getRight().getRW3Vector();
 	shadowCamMatrix->pos = {};
 	shadowCamMatrix->pad3 = 0x3F800000;
 
 	// Move camera back to needed position.
 	RwFrameTranslate(shadowCamFrame, &lightPos, rwCOMBINEPOSTCONCAT);
 	// Set light orthogonal projection parameters.
-	RwV2d vw{ m_LightBBox[cascade].getSizeX() *0.5f, m_LightBBox[cascade].getSizeY() *0.5f };
+	RwV2d vw{ m_LightBBox[cascade].getSizeX() * 0.5f, m_LightBBox[cascade].getSizeY() * 0.5f };
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[cascade].getSizeZ()*0.5f;//faLightDim[1];
 	RwCameraSetNearClipPlane(m_pShadowCamera, -500 /*-fLightZFar-25*/);
@@ -233,8 +195,8 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	vp.Height = static_cast<FLOAT>(gShadowSettings.Size);
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = gShadowSettings.Size*(cascade % 2);
-	vp.TopLeftY = gShadowSettings.Size*(cascade / 2);
+	vp.TopLeftX = (gShadowSettings.Size * cascade);
+	vp.TopLeftY = 0;
 	g_pStateMgr->SetViewport(vp);
 
 	RwGraphicsMatrix* view = (RwGraphicsMatrix *)&RwD3D9D3D9ViewTransform;
@@ -247,6 +209,7 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 void CShadowRenderer::SetShadowBuffer() const
 {
 	m_pLightCB->data.ShadowSize = gShadowSettings.Size;
+	m_pLightCB->data.CascadeCount = gShadowSettings.ShadowCascadeCount;
 	for (auto i = 0; i < 4; i++)
 		m_pLightCB->data.ShadowBias[i] = gShadowSettings.BiasCoefficients[i];
 	m_pLightCB->Update();
@@ -273,8 +236,8 @@ void CShadowRenderer::CalculateShadowDistances(const RwReal fNear, const RwReal 
 void CShadowRenderer::QueueTextureReload()
 {
 	if (m_bRequiresReloading) {
-		m_pShadowCamera->zBuffer->width = gShadowSettings.Size * 2;
-		m_pShadowCamera->zBuffer->height = gShadowSettings.Size * 2;
+		m_pShadowCamera->zBuffer->width = gShadowSettings.Size * gShadowSettings.ShadowCascadeCount;
+		m_pShadowCamera->zBuffer->height = gShadowSettings.Size;
 		CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
 		dxEngine->m_pRastersToReload.push_back(m_pShadowCamera->zBuffer);
 	}
@@ -363,12 +326,25 @@ void ShadowSettingsBlock::Reset()
 }
 void TW_CALL SetShadowSizeCallback(const void *value, void *clientData)
 {
-	gShadowSettings.Size = *(int*)value;
+	int maxTexSize;
+	g_pRwCustomEngine->GetMaxTextureSize(maxTexSize);
+	gShadowSettings.Size = max(min(*(int*)value, maxTexSize / gShadowSettings.ShadowCascadeCount),16);
 	g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = true;
 }
 void TW_CALL GetShadowSizeCallback(void *value, void *clientData)
 {
 	*(int*)value = gShadowSettings.Size;
+}
+void TW_CALL SetCascadeCountCallback(const void *value, void *clientData)
+{
+	int maxTexSize;
+	g_pRwCustomEngine->GetMaxTextureSize(maxTexSize);
+	gShadowSettings.ShadowCascadeCount = max(min(*(int*)value, maxTexSize / gShadowSettings.Size),1);
+	g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = true;
+}
+void TW_CALL GetCascadeCountCallback(void *value, void *clientData)
+{
+	*(int*)value = gShadowSettings.ShadowCascadeCount;
 }
 void ShadowSettingsBlock::InitGUI(TwBar * bar)
 {
@@ -396,7 +372,8 @@ void ShadowSettingsBlock::InitGUI(TwBar * bar)
 	
 	TwAddVarRW(bar, "Cull per cascade", TwType::TW_TYPE_BOOL8, &CullPerCascade, "help='meh' group=Shadows");
 	TwAddVarRW(bar, "Scan for shadows behind player", TwType::TW_TYPE_BOOL8, &ScanShadowsBehindPlayer, "help='meh' group=Shadows");
-	TwAddVarRW(bar, "Cascade count", TwType::TW_TYPE_INT32, &ShadowCascadeCount, "min=1 max=4 help='meh' group=Shadows");
+	TwAddVarCB(bar, "Cascade count", TwType::TW_TYPE_INT32, 
+		SetCascadeCountCallback, GetCascadeCountCallback, nullptr, "min=1 max=4 help='meh' group=Shadows");
 
 	TwAddVarRW(bar, "Distance multipier 1", TwType::TW_TYPE_FLOAT,
 		&DistanceCoefficients[0],

@@ -8,7 +8,8 @@ struct CBShadows
 	RwMatrix ViewProj[4];
 	float	FadeDistances[5];
 	int		ShadowSize;
-	float	pad[2];
+	int		CascadeCount;
+	float	pad;
 	float	ShadowBias[4];
 };
 

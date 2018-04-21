@@ -39,11 +39,11 @@ float3 SSR(Texture2D ScreenTexture, Texture2D NormalDepth,
         float3 RestoredWorldPos = DepthToWorldPos(ViewZ, ClipSpacePos.xy).xyz;
 
         L = length(WorldPos - RestoredWorldPos);
-        if (abs(ViewZ - ClipSpacePos.z) < 0.000001f)
+       /* if (abs(ViewZ - ClipSpacePos.z) < 0.000001f)
         {
             Fallback = 1.0;
             return float3(0, 0, 0);
-        }
+        }*/
         /*L+=fStep;
         fStep*=fStepScaling;*/
     }
