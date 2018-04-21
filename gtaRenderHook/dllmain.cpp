@@ -22,8 +22,12 @@
 #include "SettingsHolder.h"
 #include "D3DRenderer.h"
 #include "PBSMaterial.h"
+#include "D3D1XStateManager.h"
+#include "CVisibilityPluginsRH.h"
 #include <game_sa\CModelInfo.h>
 #include <game_sa\CVehicle.h>
+#include <game_sa\CRadar.h>
+#include <game_sa\CGame.h>
 #include "DebugRendering.h"
 
 #define CGame__InitialiseRenderWare() ((char(__cdecl *)())0x5BD600)()
@@ -60,7 +64,7 @@ void SetVM(RwUInt32 videomode) {
 
 // GTA RenderWare Initialization hooks
 char GTARwInit() {
-	char c = CGame__InitialiseRenderWare();
+	char c = CGame::InitialiseRenderWare();
 	CFullscreenQuad::Init();
 	DebugRendering::Init();
 	g_pDeferredRenderer = new CDeferredRenderer();
@@ -145,7 +149,7 @@ RwBool  _rwD3D9RWSetRasterStage(RwRaster* raster, int stage) {
 RwTexture* CopyTex(RwTexture* tex) {
 	return g_pRwCustomEngine->CopyTexture(tex);
 }
-RxPipeline * RxPipelineExecute(RxPipeline *pipeline, void *data, RwBool heapReset) {
+RxPipeline * __RxPipelineExecute(RxPipeline *pipeline, void *data, RwBool heapReset) {
 	return pipeline;
 }
 
@@ -158,10 +162,11 @@ bool AddLight(char type, CVector pos, CVector dir, float radius, float red, floa
 }
 //6E0E20     ; CVehicle::DoHeadLightBeam(int, CMatrix &, unsigned char)
 #define CVehicle__DoHeadLightBeam(veh,matrix,text) ((void(__cdecl *)(void*, void*, unsigned char))0x6E0E20)(veh,y,text)
+// TODO: Move this out to lights
 void __fastcall  AddSpotLight(CVehicle* vehicle, void *Unknown, int a,CMatrix* matrix, bool isRight) {
 	CLight light{};
-	CBaseModelInfo* vehicleMI = CModelInfo::ms_modelInfoPtrs[vehicle->m_nModelIndex];
-	CVector* headlightPos = reinterpret_cast<CVector*>( reinterpret_cast<UINT>(vehicleMI) + 0x5C);
+	CVehicleModelInfo* vehicleMI = (CVehicleModelInfo*)CModelInfo::ms_modelInfoPtrs[vehicle->m_nModelIndex];
+	CVector* headlightPos = &vehicleMI->m_pVehicleStruct->m_avDummyPos[a];//reinterpret_cast<CVector*>( reinterpret_cast<UINT>(vehicleMI) + 0x5C);
 	//RwMatrix m = matrix->;
 	light.m_vPos = { 
 		matrix->at.x * headlightPos->z + matrix->up.x * headlightPos->y + matrix->right.x * headlightPos->x + matrix->pos.x ,
@@ -171,9 +176,9 @@ void __fastcall  AddSpotLight(CVehicle* vehicle, void *Unknown, int a,CMatrix* m
 		float dist = headlightPos->x + headlightPos->x;
 		light.m_vPos = { light.m_vPos.x - dist*matrix->right.x ,light.m_vPos.y - dist*matrix->right.y,light.m_vPos.z - dist*matrix->right.z };
 	}
-	float distance = 3.5f;
-	light.m_vPos = { light.m_vPos.x + matrix->up.x*distance ,light.m_vPos.y + matrix->up.y*distance,light.m_vPos.z + matrix->up.z*distance };
-	light.m_fRange = 10; 
+	float distance = 0.15f;
+	light.m_vPos = { light.m_vPos.x + matrix->up.x*distance , light.m_vPos.y + matrix->up.y*distance, light.m_vPos.z + matrix->up.z*distance };
+	light.m_fRange = 10;
 	light.m_vDir = { matrix->up.x,matrix->up.y,matrix->up.z };
 	light.m_nLightType = 1;
 	CLightManager::AddLight(light);
@@ -271,20 +276,45 @@ void* destructRwD3D11Raster(void* raster, RwInt32 offset, RwInt32 size) {
 	return raster;
 }
 void RenderRadarSA(RwPrimitiveType prim, RwIm2DVertex * vert, int count) {
-	CRadar__DrawRadarMask();
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF, 60);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTION, rwSTENCILFUNCTIONGREATER);
+	CVector2D radarSquare[4] = { { -1.0f,1.0f },{ 1.0f,1.0f },{ 1.0f,-1.0f },{ -1.0f,-1.0f } };
+	CVector2D radarSquareScreenSpace[8] = {};
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATETEXTURERASTER, 0);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILENABLE, 1);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 0);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, 0);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF, 5);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONMASK, 0xFF);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONWRITEMASK, 0xFF);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTION, rwSTENCILFUNCTIONALWAYS);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILPASS, rwSTENCILOPERATIONREPLACE);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFAIL, rwSTENCILOPERATIONKEEP);
+	g_pStateMgr->SetAlphaTestEnable(false);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, 1);
+	for (int i = 0; i < 4; i++)
+	{
+		CRadar::TransformRadarPointToScreenSpace(radarSquareScreenSpace[0], radarSquare[i]);
+
+		for (int j = 1; j < 8; j++)
+		{
+			CVector2D vert(cos((j-1)*0.2617994f)*radarSquare[i].x, sin((j-1)*0.2617994f)*radarSquare[i].y);
+			CRadar::TransformRadarPointToScreenSpace(radarSquareScreenSpace[j], vert);
+		}
+		CSprite2d::SetMaskVertices(8, (float*)radarSquareScreenSpace, CSprite2d::NearScreenZ);
+		im2DRenderPrim(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 8);
+	}
+
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF, 5);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONWRITEMASK, 0);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTION, rwSTENCILFUNCTIONNOTEQUAL);
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILPASS, rwSTENCILOPERATIONKEEP);
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFAIL, rwSTENCILOPERATIONKEEP);
 }
 void RenderRadarSAPrimHook(RwPrimitiveType prim, RwIm2DVertex * vert, int count) {
-	
-	im2DRenderPrim(prim, vert, count);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILENABLE, 1);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF, 64);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILPASS, rwSTENCILOPERATIONREPLACE);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFAIL, rwSTENCILOPERATIONZERO);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTION, rwSTENCILFUNCTIONALWAYS);
+	CRadar::DrawRadarMap();
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILENABLE, 0);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEALPHATESTFUNCTION, rwALPHATESTFUNCTIONGREATEREQUAL);
+	g_pStateMgr->SetAlphaTestEnable(true);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, 1);
 }
 HHOOK hookHandle;
 
@@ -353,6 +383,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SetWindowsHookEx(WH_GETMESSAGE, MessageProc, NULL, GetCurrentThreadId());
 #endif
 #if GTA_SA
+		CVisibilityPluginsRH::Patch();
 		//RedirectCall(0x7481CF, ShowCursor_fix);
 		RedirectCall(0x5BD60B, InitD3DResourseSystem);
 		RedirectCall(0x53CAEC, InitD3DResourseSystem);// Shutdown
@@ -382,8 +413,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		RedirectCall(0x6A2EDA, AddSpotLight);
 		RedirectCall(0x6A2EF2, AddSpotLight);//
 		RedirectCall(0x6BDE80, AddSpotLight);//
-		//RedirectCall(0x586887, RenderRadarSA);
-		//RedirectCall(0x58580E, RenderRadarSAPrimHook);
+		RedirectCall(0x586887, RenderRadarSA);
+		RedirectJump(0x586D4E, RenderRadarSAPrimHook);
 		
 #endif // GTA_SA
 

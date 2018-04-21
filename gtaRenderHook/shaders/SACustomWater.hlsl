@@ -12,6 +12,7 @@ Texture2D txDiffuse : register(t0);
 Texture2D txGB1     : register(t1);
 Texture2D txGB0     : register(t2);
 Texture2D txShadow 	: register(t3);
+Texture2D txWaterWake : register(t4);
 
 SamplerState samLinear : register(s0);
 SamplerComparisonState samShadow : register(s1);
@@ -264,7 +265,7 @@ float4 PS(PS_INPUT i) : SV_Target
     GetNormalsAndDepth(txGB1, samLinear, ScreenCoords, ViewZ, Normals);
 
     float Shadow = SampleShadowCascades( txShadow, samShadow, samLinear, i.vWorldPos, length(i.vWorldPos.xyz - mViewInv[3].xyz) );
-
+    float2 waterWake = txWaterWake.Sample(samLinear, i.vTexCoord * 16).ra;
     float3 SmallWaveNormal = normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord*16).gbr - float3(1, -8, 1));
     SmallWaveNormal += normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord * 8 + 0.05).gbr - float3(1, -8, 1));
     
@@ -279,13 +280,14 @@ float4 PS(PS_INPUT i) : SV_Target
     
     float g_WaterColorIntensity = 0.2;
 
-    float FresnelCoeff = MicrofacetFresnel(-ViewDir, Normal, 0.5f);
-    float DiffuseTerm = 0.1 + g_WaterColorIntensity * max(0, dot(LightDir, SmallWaveNormal)) * Shadow;
+    float FresnelCoeff = MicrofacetFresnel(-ViewDir, SmallWaveNormal, 0.5f);
+    float DiffuseLighting = max(0, dot(LightDir, SmallWaveNormal)) * Shadow;
+    float DiffuseTerm = 0.1 + g_WaterColorIntensity * DiffuseLighting;
 
-    float3 ReflectDir = normalize(reflect(ViewDir, Normal));
+    float3 ReflectDir = normalize(reflect(ViewDir, SmallWaveNormal));
 
     float SpecularTerm;
-    CalculateSpecularTerm(Normal.xyz, LightDir, -ViewDir, GetLuminance(SmallWaveNormal), SpecularTerm);
+    CalculateSpecularTerm(SmallWaveNormal.xyz, LightDir, -ViewDir, GetLuminance(SmallWaveNormal), SpecularTerm);
     // = Shadow * FresnelCoeff;
     
     float WaterDepth = ViewZ - i.fDepth;
@@ -296,9 +298,10 @@ float4 PS(PS_INPUT i) : SV_Target
     float3 RefractionColor = txGB0.Sample(samLinear, ScreenCoords);
     RefractionColor = lerp(DiffuseTerm, RefractionColor, min(1, exp(-WaterDepth / 8.0))) * vWaterColor.rgb;
 
-    OutColor.rgb = lerp(RefractionColor, ReflectionColor, FresnelCoeff);
+    OutColor.rgb = lerp(lerp(RefractionColor, ReflectionColor, FresnelCoeff), waterWake.rrr * min(DiffuseLighting + 0.5, 1.0f), min(exp(-WaterDepth), 1) * waterWake.g);
     OutColor.rgb += min(SpecularTerm, 16.0f) * Shadow * vSunLightDir.w * FresnelCoeff;
     float3 FullScattering;
     OutColor.rgb = CalculateFogColor(OutColor.rgb, ViewDir, LightDir, min(ViewZ, i.fDepth), i.vWorldPos.z, FullScattering);
+    OutColor.a = 1-min(exp(-WaterDepth*2), 1);
     return OutColor;
 }

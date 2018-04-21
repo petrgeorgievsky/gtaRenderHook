@@ -54,6 +54,8 @@ CCustomWaterPipeline::CCustomWaterPipeline() :
 		g_pDebug->printError("Failed to create index buffer");
 	m_pDS = new CD3D1XDomainShader("shaders/SACustomWater.hlsl", "DS");
 	m_pHS = new CD3D1XHullShader("shaders/SACustomWater.hlsl", "HS");
+
+	
 }
 
 
@@ -68,7 +70,8 @@ CCustomWaterPipeline::~CCustomWaterPipeline()
 
 void CCustomWaterPipeline::RenderWater(RwIm3DVertex * verticles, UINT vertexCount, USHORT * indices, UINT indexCount)
 {
-	m_pWaterRaster= (*(RwRaster**)0xC228A8);
+	m_pWaterRaster = (*(RwRaster**)0xC228A8);
+	m_pWaterWakeRaster = (*(RwRaster**)0xC228B8);
 	RwMatrix identity{};
 	identity.right.x = 1.0f;
 	identity.up.y = 1.0f;
@@ -103,7 +106,8 @@ void CCustomWaterPipeline::RenderWater(RwIm3DVertex * verticles, UINT vertexCoun
 	g_pStateMgr->SetVertexBuffer(m_pVertexBuffer, stride, offset);
 	g_pStateMgr->SetIndexBuffer(m_pIndexBuffer);
 	g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
-	g_pStateMgr->SetRaster(m_pWaterRaster);
+	g_pStateMgr->SetRaster(m_pWaterRaster, 0);
+	g_pStateMgr->SetRaster(m_pWaterWakeRaster, 4);
 	//g_pStateMgr->SetFillMode(D3D11_FILL_WIREFRAME);
 	m_pVS->Set();
 	m_pPS->Set();

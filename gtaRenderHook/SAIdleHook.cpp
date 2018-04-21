@@ -16,6 +16,7 @@
 #include "DebugRendering.h"
 #include "D3DRenderer.h"
 #include "DebugBBox.h"
+#include "CVisibilityPluginsRH.h"
 #include <game_sa\CPointLights.h>
 #include <game_sa\CFont.h>
 #include <game_sa\CWorld.h>
@@ -301,15 +302,17 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 
 void CSAIdleHook::RenderDeferred()
 {
+	CVisibilityPluginsRH::ClearWeaponPedsList();
 	
-	RenderFadingInUnderwaterEntities();
-	CVisibilityPlugins__RenderFadingInEntities();
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
 	CRenderer::RenderRoads();
 	CRenderer::RenderEverythingBarRoads();
+	RenderFadingInUnderwaterEntities();
+	CVisibilityPlugins__RenderFadingInEntities();
 	BreakManager_c__Render(g_breakMan, 0);
 	 // CRenderer::RenderFadingInUnderwaterEntities
-	CVisibilityPlugins__RenderWeaponPedsForPC();
+	//CVisibilityPlugins__RenderWeaponPedsForPC();
+	CVisibilityPluginsRH::RenderWeaponPedsNoMuzzleFlash();
 	CRenderer::RenderTOBJs();
 	//CWaterLevel::RenderSeaBed();
 }
@@ -352,9 +355,9 @@ void CSAIdleHook::RenderEffects()
 	//CVehicleRecording::Render();
 	//CPointLights::RenderFogEffect();
 	//CRenderer::RenderFirstPersonVehicle();
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 1);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, 1);
-	CVisibilityPlugins__RenderWeaponPedsForPC();
+	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 1);
+	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, 1);
+	//CVisibilityPlugins__RenderWeaponPedsForPC();
 	//CPostEffects::Render();
 }
 

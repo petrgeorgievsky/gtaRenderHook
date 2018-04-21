@@ -460,7 +460,7 @@ struct CBaseModelInfo {
 /*
 *	GTA Global methods
 */
-
+//#define GetAnimHierarchyFromSkinClump(clump) ((RpHAnimHierarchy* (__cdecl *)(RpClump *)) 0x734A40)(clump)
 #define Im2DRenderQuad(x_offset, y_offset, width, height, a5, a6, a7) ((RwCamera *(__cdecl *)(float , float , int , int , int, int, int))0x705A20)(x_offset, y_offset,width,height,a5,a6,a7)
 #define CameraSize(camera, rect, viewWindow, aspectRatio) ((void (__cdecl *)(RwCamera *, void *, float, float))0x72FC70)\
 	(camera, rect, viewWindow, aspectRatio)

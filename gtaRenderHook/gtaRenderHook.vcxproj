@@ -193,6 +193,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CVisibilityPluginsRH.h" />
     <ClInclude Include="D3D1XShaderDefines.h" />
     <ClInclude Include="D3D1XIndexBuffer.h" />
     <ClInclude Include="D3D1XDynamicIndexBuffer.h" />
@@ -253,6 +254,7 @@
     <ClInclude Include="VoxelPipeline.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CVisibilityPluginsRH.cpp" />
     <ClCompile Include="D3D1XShaderDefines.cpp" />
     <ClCompile Include="D3D1XIndexBuffer.cpp" />
     <ClCompile Include="D3D1XDynamicIndexBuffer.cpp" />

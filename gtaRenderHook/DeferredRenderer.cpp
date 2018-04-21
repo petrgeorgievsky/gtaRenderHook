@@ -116,8 +116,9 @@ void CDeferredRenderer::RenderOutput()
 	g_pRwCustomEngine->SetRenderTargets(&m_pLightingRaster, Scene.m_pRwCamera->zBuffer, 1);
 	g_pStateMgr->FlushRenderTargets();
 
-	// Set deferred textures	
-	for (auto i = 0; i < 3; i++)
+	// Set deferred textures
+	g_pStateMgr->SetRaster(m_aDeferredRasters[0]);
+	for (auto i = 1; i < 3; i++)
 		g_pStateMgr->SetRaster(m_aDeferredRasters[i], i);
 	
 	m_pShadowRenderer->SetShadowBuffer();

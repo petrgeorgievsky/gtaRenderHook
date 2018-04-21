@@ -208,7 +208,7 @@ void CD3D1XStateManager::SetAlphaTestEnable(bool bEnable)
 	}
 	else
 	{
-		g_shaderRenderStateBuffer.uiAlphaTestType = 0;
+		g_shaderRenderStateBuffer.uiAlphaTestType = 7;
 		context->UpdateSubresource(m_pGlobalValuesBuffer, 0, nullptr, &g_shaderRenderStateBuffer, 0, 0);
 	}
 }

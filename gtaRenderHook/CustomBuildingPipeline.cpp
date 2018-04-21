@@ -23,13 +23,6 @@ CDeferredPipeline("SACustomBuilding", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_1
 CDeferredPipeline( L"SACustomBuilding", GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 #endif // !DebuggingShaders
 {
-	/*D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(RwV4d);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	m_pRenderer->getDevice()->CreateBuffer(&bd, nullptr, &m_pMaterialDataBuffer);*/
 }
 
 

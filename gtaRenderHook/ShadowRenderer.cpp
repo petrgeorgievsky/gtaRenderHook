@@ -323,7 +323,7 @@ void ShadowSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 	MinOffscreenShadowCasterSize = shadowSettingsNode->FloatAttribute("MinOffscreenShadowCasterSize", 50);
 	MaxSectorsAroundPlayer = shadowSettingsNode->IntAttribute("MaxSectorsAroundPlayer", 3);
 	LodShadowsMinDistance = shadowSettingsNode->FloatAttribute("LodShadowsMinDistance", 150);
-	ShadowCascadeCount =min(max(shadowSettingsNode->IntAttribute("ShadowCascadeCount", 3),4),1);
+	ShadowCascadeCount =max(min(shadowSettingsNode->IntAttribute("ShadowCascadeCount", 3),4),1);
 	
 	// Read 4 shadow cascade parameters
 	auto shadowCascadeNode = shadowSettingsNode->FirstChildElement();

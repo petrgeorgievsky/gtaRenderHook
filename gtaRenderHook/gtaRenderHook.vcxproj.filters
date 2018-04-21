@@ -251,6 +251,9 @@
     <ClInclude Include="D3D1XShaderDefines.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
     </ClInclude>
+    <ClInclude Include="CVisibilityPluginsRH.h">
+      <Filter>Source\GTA_SA\GTAClasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -414,6 +417,9 @@
     </ClCompile>
     <ClCompile Include="D3D1XShaderDefines.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="CVisibilityPluginsRH.cpp">
+      <Filter>Source\GTA_SA\GTAClasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

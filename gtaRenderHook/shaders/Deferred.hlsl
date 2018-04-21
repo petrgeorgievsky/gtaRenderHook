@@ -143,10 +143,10 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
         float denom = d / sbLightInfo[i].fRange + 1;
 		
         float Attenuation = 1.0f - saturate((LightDistance - 0.5f) / sbLightInfo[i].fRange);
-        Attenuation = pow(Attenuation, 2);
+        Attenuation *= Attenuation;
         if (sbLightInfo[i].nLightType == 1)
 		{
-            float fSpot = pow(max(dot(-LightDir, sbLightInfo[i].cColor), 0.0f), 2.0f);
+            float fSpot = pow(max(dot(-LightDir, sbLightInfo[i].cColor), 0.0f), 5.0f);
             Attenuation *= fSpot;
         }
 		else
