@@ -197,7 +197,7 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
         // Increase reflection for cars
         if (MaterialType == 1)
         {
-            ReflectionTerm *= 2.0f;
+            ReflectionTerm *= 1.2f;
         }
 		// Add atmospheric scattering to result
         OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb + SpecularTerm + ReflectionTerm * Metallness;

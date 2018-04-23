@@ -181,7 +181,7 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	// Move camera back to needed position.
 	RwFrameTranslate(shadowCamFrame, &lightPos, rwCOMBINEPOSTCONCAT);
 	// Set light orthogonal projection parameters.
-	RwV2d vw{ m_LightBBox[cascade].getSizeX() * 0.5f, m_LightBBox[cascade].getSizeY() * 0.5f };
+	RwV2d vw{ m_LightBBox[cascade].getSizeX() * 0.65f, m_LightBBox[cascade].getSizeY() * 0.65f };
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[cascade].getSizeZ()*0.5f;//faLightDim[1];
 	RwCameraSetNearClipPlane(m_pShadowCamera, -500 /*-fLightZFar-25*/);

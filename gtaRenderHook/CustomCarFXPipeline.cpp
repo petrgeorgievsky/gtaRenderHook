@@ -86,7 +86,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 			paintColor.green = 0;
 			paintColor.red = 0;
 		}
-		if (curmesh.material->surfaceProps.ambient>1.0&&curmesh.material->surfaceProps.diffuse<=0.0)
+		if (curmesh.material->surfaceProps.ambient>1.0)
 			g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(paintColor);
 		else
 			g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(paintColor);
@@ -184,8 +184,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 
 			float fShininess = 1.0f - RpMaterialGetFxEnvShininess(entryData->models[i].material);
 			float fSpec = CCustomCarEnvMapPipeline__GetFxSpecSpecularity(entryData->models[i].material);
-			if(entryData->models[i].material->surfaceProps.ambient>1.0 &&
-				entryData->models[i].material->surfaceProps.diffuse<=0.0)
+			if(entryData->models[i].material->surfaceProps.ambient>1.0)
 				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(paintColor);
 			else
 				g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(paintColor);

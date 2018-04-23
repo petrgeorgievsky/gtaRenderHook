@@ -58,6 +58,7 @@ public:
 	static void GenerateNormals();
 	static void RenderFlatWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e);
 	static void RenderDetailedWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e);
+	static void RenderHighDetailWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e, int xToYHalfRatio, int a23, signed int halfXSize, signed int halfYSize);
 	static UINT	&m_NumBlocksOutsideWorldToBeRendered;
 	static UINT	&m_nNumOfWaterTriangles;
 	static UINT	&m_nNumOfWaterQuads;

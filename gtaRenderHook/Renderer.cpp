@@ -895,8 +895,8 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 
 void CRenderer::ScanBigBuildingList(int x, int y)
 {
-	CRenderer__ScanBigBuildingList(x, y);
-	return;
+	//CRenderer__ScanBigBuildingList(x, y);
+	//return;
 	bool loadIfRequired = false;
 	if (x < 0 || y < 0 | x >= 30 || y >= 30)
 		return;
@@ -929,7 +929,7 @@ void CRenderer::ScanBigBuildingList(int x, int y)
 			else
 			{
 				float dist = distance + 0.01f;
-				//AddEntityToShadowCastersIfNeeded(entity, true);
+				AddEntityToShadowCastersIfNeeded(entity, true);
 				AddEntityToRenderList(entity, dist);
 				entity->m_bOffscreen = false;
 			}

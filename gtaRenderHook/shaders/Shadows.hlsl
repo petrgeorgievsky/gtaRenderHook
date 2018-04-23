@@ -9,7 +9,7 @@ cbuffer ShadowBuffer : register(b4)
 {
 	row_major matrix DirLightViewProj[4];
 	float4 FadeDistances;
-	float MaxDrawDistance;
+    float FadeDistanceMax;
 	int ShadowSize;
     int CascadeCount;
     float _pad;
@@ -138,34 +138,29 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
 	const float blendDistance=6; 
 	// Shift view depth by blend distance, optimization for static blend distance
 	viewZ+=blendDistance;
-	static const float2 shadowTCOffsets[]={
-		float2(0.0f,0.0f),
-		float2(0.5f,0.0f),
-		float2(0.0f,0.5f),
-		float2(0.5f,0.5f)
-	};
+    const float LFadeDistances[] =
+    {
+        FadeDistances.x,
+        FadeDistances.y,
+        FadeDistances.z,
+        FadeDistances.w,
+        FadeDistanceMax
+    };
     float Shadow = 1;
     float blendFactor;
     float far, near;
     float4 WorldPos = float4(worldPos.xyz, 1);
     uint i;
-    for (i = 0; i < CascadeCount-1; i++)
-    {
-        float4 LightViewPos = mul(WorldPos, DirLightViewProj[i]);
-        far = FadeDistances[i + 1];
-        near = FadeDistances[i];
+    for (i = 0; i < CascadeCount; i++)
+    {        
+        float3 LightViewPos = mul(WorldPos, DirLightViewProj[i]).xyz;
+        far = LFadeDistances[i + 1];
+        near = LFadeDistances[i];
 		// Cascade blending factor
         blendFactor = min(max(viewZ - near, 0) / blendDistance, 1.0);
         float2 shadowTCOffset = float2((float) i / CascadeCount, 0.0f);
-        Shadow = lerp(Shadow, SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos.xyz, shadowTCOffset, i), blendFactor);
+        Shadow = lerp(Shadow, SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos, shadowTCOffset, i), blendFactor);
     }
-	// Last cascade
-    float4 LightViewPos = mul(WorldPos, DirLightViewProj[CascadeCount - 1]);
-    far = CascadeCount > 3 ? MaxDrawDistance : FadeDistances[CascadeCount];
-    near = FadeDistances[CascadeCount - 1];
-    blendFactor = min(max(viewZ - near, 0) / blendDistance, 1.0);
-	
-    Shadow = lerp(Shadow, SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos.xyz, float2((float) (CascadeCount-1) / CascadeCount, 0.0f), CascadeCount - 1), blendFactor);
     blendFactor = min(max(viewZ - far, 0) / blendDistance, 1.0);
 
     return max(lerp(Shadow, 1.0, blendFactor), 1 - vSunLightDir.w);
@@ -202,7 +197,7 @@ float SampleShadowCascadesUnfiltered(Texture2D txShadow, SamplerComparisonState 
     }
 	// Last cascade
     float4 LightViewPos = mul(float4(worldPos.xyz, 1), DirLightViewProj[3]);
-    far = MaxDrawDistance;
+    far = FadeDistanceMax;
     near = FadeDistances[3];
     blendFactor = min(max(viewZ - near, 0) / blendDistance, 1.0);
 	

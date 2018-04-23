@@ -312,7 +312,7 @@ void RenderRadarSA(RwPrimitiveType prim, RwIm2DVertex * vert, int count) {
 void RenderRadarSAPrimHook(RwPrimitiveType prim, RwIm2DVertex * vert, int count) {
 	CRadar::DrawRadarMap();
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILENABLE, 0);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEALPHATESTFUNCTION, rwALPHATESTFUNCTIONGREATEREQUAL);
+	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEALPHATESTFUNCTION, rwALPHATESTFUNCTIONGREATEREQUAL);
 	g_pStateMgr->SetAlphaTestEnable(true);
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, 1);
 }

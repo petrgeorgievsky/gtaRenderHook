@@ -30,6 +30,7 @@
 #include <game_sa\Fx_c.h>
 #include <game_sa\CGame.h>
 #include <game_sa\CDraw.h>
+#include <game_sa\CVisibilityPlugins.h>
 
 
 /* GTA Definitions TODO: Move somewhere else*/
@@ -296,6 +297,7 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	g_pCustomBuildingPipe->RenderAlphaList();
 	CPostEffects__m_bDisableAllPostEffect = true;
 	// Render effects and 2d stuff
+	DefinedState();
 	RenderEffects();
 	DefinedState();
 	//RenderGrass();
@@ -330,7 +332,7 @@ void CSAIdleHook::RenderEffects()
 	//CRopes::Render();
 	//CGlass::Render();
 	//CMovingThings::Render();
-	//CVisibilityPlugins::RenderReallyDrawLastObjects();
+	CVisibilityPlugins::RenderReallyDrawLastObjects();
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, false);
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, false);
 	CCoronas::Render();
