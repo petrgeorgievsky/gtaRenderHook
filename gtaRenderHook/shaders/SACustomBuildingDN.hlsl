@@ -2,6 +2,7 @@
 #include "LightingFunctions.hlsl"
 #include "GBuffer.hlsl"
 #include "VoxelizingHelper.hlsl"
+#include "AtmosphericScatteringFunctions.hlsli"
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
@@ -32,14 +33,23 @@ struct PS_VOXEL_INPUT
 	float4 vColor		: COLOR;
 	float2 vTexCoord	: TEXCOORD0;
 };
+struct PS_DEFERRED_DN_IN
+{
+    float4 vPosition    : SV_POSITION;
+    float4 vColor       : COLOR;
+    float4 vNormalDepth : NORMAL;
+    float4 vTexCoord    : TEXCOORD0;
+    float4 vWorldPos    : TEXCOORD1;
+};
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PS_DEFERRED_IN VS( VS_INPUT i )
+PS_DEFERRED_DN_IN VS(VS_INPUT i)
 {
-    PS_DEFERRED_IN o;
+    PS_DEFERRED_DN_IN o;
 	float4 	outPos 		= float4( i.vPosition,1.0);// transform to screen space
 			outPos 		= mul( outPos, mWorld );
+    o.vWorldPos = outPos;
 			outPos		= mul( outPos, mView );
     o.vPosition 	    = mul( outPos, mProjection );
 	o.vNormalDepth  = float4(mul( i.vInNormal,(float3x3)mWorld), outPos.z);
@@ -82,12 +92,20 @@ void VoxelGS(triangle GS_VOXEL_IN input[3], inout TriangleStream<PS_VOXEL_INPUT>
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS(PS_DEFERRED_IN i) : SV_Target
+float4 PS(PS_DEFERRED_DN_IN i) : SV_Target
 {
+    const float3 ViewPos = mViewInv[3].xyz;
+    float3 WorldPos = i.vWorldPos.xyz;
+    float3 Normals = (i.vNormalDepth.xyz * 0.5f + 0.5f) * 2.0f - 1.0f;
+    Normals.z = sqrt(1.01 - dot(Normals.xy, Normals.xy));
+    Normals = normalize(Normals);
+    float3 LightDir = normalize(vSunLightDir.xyz);
+    float3 ViewDir = normalize(WorldPos.xyz - ViewPos);
 	float4 outColor =txDiffuse.Sample( samLinear, i.vTexCoord.xy ) * cDiffuseColor;
     outColor.xyz *= i.vColor.xyz;
 	outColor.a		*=i.vColor.w;
-
+    float3 FullScattering;
+    outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
 	return outColor;
 }
 

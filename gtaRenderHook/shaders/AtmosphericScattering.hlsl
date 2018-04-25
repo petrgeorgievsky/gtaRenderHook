@@ -41,16 +41,11 @@ float4 AtmosphericScatteringPS(PS_QUAD_IN i) : SV_Target
 
     // Some coefficients used in fog computation
     float Height    = ViewPos.z;
-    float CosPhi    = max(dot(ViewDir, LightDir), 0.0);
     
     float3 FullScattering;
     float3 ObjectColor = CalculateFogColor(ScreenColor.rgb, ViewDir, LightDir, ViewZ, Height, FullScattering);
-
-    // Compute sky color at skydome by blending scattering with sun disk
-    float3 SunDiskColor = max(FullScattering, vSunColor.rgb * vSunColor.a);
-    float  SunDiskCoeff = 1.0f - min(pow(CosPhi - 0.999f, 16.0f), 1.0f);
     
-    float3 SkyColor = lerp(FullScattering, SunDiskColor, SunDiskCoeff);
+    float3 SkyColor = GetSkyColor(ViewDir, LightDir, FullScattering);
     // TODO: Remove if operation to improve performance, or maybe not
     if (ScreenColor.a <= 0)
         OutLighting.xyz = SkyColor;

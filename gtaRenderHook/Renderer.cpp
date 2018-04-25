@@ -43,6 +43,7 @@ bool CRenderer::TOBJpass = false;
 std::list<CEntity*> CRenderer::ms_aVisibleEntities{};
 std::list<CEntity*> CRenderer::ms_aVisibleLods{};
 std::vector<CEntity*> CRenderer::ms_aVisibleShadowCasters[4] = { {}, {},{},{} };
+std::vector<CEntity*> CRenderer::ms_aVisibleReflectionObjects{};
 
 //9654B0     ; CStreaming::ms_disableStreaming
 #define CStreaming__ms_disableStreaming (*(unsigned char *)0x9654B0)
@@ -1236,10 +1237,7 @@ void CRenderer::ScanWorld()
 	RwMatrix* m = &(RwCameraGetFrame(TheCamera.m_pRwCamera)->modelling);
 	m_pFirstPersonVehicle = nullptr;
 	CVisibilityPlugins__InitAlphaEntityList();
-
-	// Resets scan codes if it exceeds 2^16
-	SetNextScanCode();
-
+	
 	points[5].x = -(viewWindow.x) * 300.0f;
 	points[5].y = viewWindow.y * 300.0f;
 	points[5].z = 300.0f;
@@ -1294,10 +1292,21 @@ void CRenderer::ScanWorld()
 	
 	RwV3dTransformPoints(points, points, 17, m);
 	m_loadingPriority = 0;
+	ms_aVisibleReflectionObjects.clear();
 	for (int i = 0; i < 4; i++)
 		ms_aVisibleShadowCasters[i].clear();
 	for (auto i = 0; i < 4; i++)
 		CalculateShadowBoundingPlanes(i);
+	int currentSectorX = ceil((ms_vecCameraPosition.x - 25.0f) / 50.0f + 60.0f);
+	int currentSectorY = ceil((ms_vecCameraPosition.y - 25.0f) / 50.0f + 60.0f);
+	// TODO: Add reflections culling
+	// Resets scan codes if it exceeds 2^16
+	//SetNextScanCode();
+	//CRenderer::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
+
+	// Resets scan codes if it exceeds 2^16
+	SetNextScanCode();
+
 	RwV2d sector[5];
 	sector[0].x = points[0].x * 0.02f + 60.0f;
 	sector[0].y = points[0].y * 0.02f + 60.0f;
@@ -1347,8 +1356,7 @@ void CRenderer::ScanWorld()
 		return;
 	
 	
-	int currentSectorX = ceil((ms_vecCameraPosition.x-25.0f) / 50.0f + 60.0f);
-	int currentSectorY = ceil((ms_vecCameraPosition.y-25.0f) / 50.0f + 60.0f);
+	
 	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
 	{
 		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer+1; y++) {

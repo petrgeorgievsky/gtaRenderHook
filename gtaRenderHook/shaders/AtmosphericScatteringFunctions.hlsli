@@ -65,3 +65,16 @@ float3 CalculateFogColor(float3 ScreenColor, float3 ViewDir, float3 LightDir, fl
     
     return lerp(ScreenColor, FullScattering, FogFadeCoeff);
 }
+/*!
+    Calculates sky color in specific direction.
+*/
+float3 GetSkyColor(float3 ViewDir, float3 LightDir, float3 FullScattering)
+{
+    float CosPhi = max(dot(ViewDir, LightDir), 0.0);
+
+    // Compute sky color at skydome by blending scattering with sun disk
+    float3 SunDiskColor = max(FullScattering, vSunColor.rgb * vSunColor.a);
+    float SunDiskCoeff = 1.0f - min(pow(CosPhi - 0.999f, 16.0f), 1.0f);
+    
+    return lerp(FullScattering, SunDiskColor, SunDiskCoeff);
+}

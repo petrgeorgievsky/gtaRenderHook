@@ -10,11 +10,12 @@ public:
 	CCubemapReflectionRenderer();
 	~CCubemapReflectionRenderer();
 	void RenderToCubemap(void(*renderCB)());
-	void RenderOneFace(void(*renderCB)(),int id,const RW::V3d&At, const RW::V3d&Up, const RW::V3d&Right, RW::V3d&Pos);
+	void RenderOneFace(void(*renderCB)(),int id, float angleA, RwV3d axisA, float angleB, RwV3d axisB, RwV3d camPos/*,const RW::V3d&At, const RW::V3d&Up, const RW::V3d&Right, RW::V3d&Pos*/);
 	void SetCubemap();
 public:
 	CBReflections cb_refl;
 	RwCamera* m_pReflCamera;
+	RwFrame* m_pReflCameraFrame;
 private:
 	ID3D11Buffer* m_pReflCB=nullptr;
 	ID3D11Texture2D*                    g_pEnvMap;          // Environment map

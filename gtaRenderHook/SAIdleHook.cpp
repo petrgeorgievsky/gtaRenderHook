@@ -183,7 +183,7 @@ void CSAIdleHook::RenderInGame()
 
 	// First forward pass(clouds, sky etc.)
 	RenderForwardBeforeDeferred();
-
+	
 	g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered = false;
 	if (sunDirs && !CGame__currArea && (m_fShadowDNBalance < 1.0))
 		PrepareRealTimeShadows(sunDirs[curr_sun_dir]);
@@ -203,6 +203,8 @@ void CSAIdleHook::RenderInGame()
 
 	CRenderer__PreRender();
 	CWorld::ProcessPedsAfterPreRender();
+
+	g_pDeferredRenderer->RenderToCubemap(RenderForward);
 
 	shadowTimer.Start();
 

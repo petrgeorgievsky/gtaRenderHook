@@ -57,6 +57,7 @@ CDeferredRenderer::CDeferredRenderer()
 	gDebugSettings.DebugRenderTargetList.push_back(m_pFinalRasters[0]);
 
 	m_pShadowRenderer	= new CShadowRenderer();
+	m_pReflRenderer = new CCubemapReflectionRenderer();
 	m_pTonemapping		= new CHDRTonemapping();
 	m_pDeferredBuffer = new CD3D1XConstantBuffer<CBDeferredRendering>();
 	m_pDeferredBuffer->SetDebugName("DeferredCB");
@@ -65,6 +66,7 @@ CDeferredRenderer::CDeferredRenderer()
 
 CDeferredRenderer::~CDeferredRenderer()
 {
+	delete m_pReflRenderer;
 	delete m_pDeferredBuffer;
 	delete m_pTonemapping;
 	delete m_pShadowRenderer;
@@ -150,6 +152,7 @@ void CDeferredRenderer::RenderOutput()
 	g_pRwCustomEngine->SetRenderTargets(&m_pReflectionRaster, Scene.m_pRwCamera->zBuffer, 1);
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetRaster(m_pFinalRasters[2], 3);
+	m_pReflRenderer->SetCubemap();
 	m_pReflectionPassPS->Set();
 	CFullscreenQuad::Draw();
 
@@ -187,6 +190,11 @@ void CDeferredRenderer::RenderOutput()
 
 	for (auto i = 0; i < 7; i++)
 		g_pStateMgr->SetRaster(nullptr, i);
+}
+
+void CDeferredRenderer::RenderToCubemap(void(*renderCB)())
+{
+	m_pReflRenderer->RenderToCubemap(renderCB);
 }
 
 void CDeferredRenderer::RenderTonemappedOutput()

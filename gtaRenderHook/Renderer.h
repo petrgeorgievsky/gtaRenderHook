@@ -193,5 +193,6 @@ public:
 	static std::list<CEntity*> ms_aVisibleEntities;
 	static std::list<CEntity*> ms_aVisibleLods;
 	static std::vector<CEntity*> ms_aVisibleShadowCasters[4];
+	static std::vector<CEntity*> ms_aVisibleReflectionObjects;
 };
 

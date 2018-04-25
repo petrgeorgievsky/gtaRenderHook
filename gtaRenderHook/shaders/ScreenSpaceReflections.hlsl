@@ -5,6 +5,7 @@
 #include "GBuffer.hlsl"
 #include "VoxelGI.hlsl"
 #include "Shadows.hlsl"
+#include "AtmosphericScatteringFunctions.hlsli"
 //--------------------------------------------------------------------------------------
 // Variables
 //--------------------------------------------------------------------------------------
@@ -12,6 +13,7 @@ Texture2D txGB0 	: register(t0);
 Texture2D txGB1 	: register(t1);
 Texture2D txGB2 	: register(t2);
 Texture2D txPrevFrame : register(t3);
+TextureCube txCubeMap : register(t4);
 #ifndef SAMLIN
 #define SAMLIN
 SamplerState samLinear : register(s0);
@@ -120,8 +122,18 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float3 ReflDir = normalize(reflect(ViewDir, NormalsVS));
     
     // simply return SSR for now, maybe will use DXR someday, but simple cubemap is way more possible 
-    float Fallback;
+    float Fallback=0;
     float FresnelCoeff = MicrofacetFresnel(NormalsVS, -ViewDir, Roughness);
+    float3 SSRColor = SSR(txPrevFrame, txGB1, samLinear, worldSpacePos, ReflDir, Roughness, Fallback);
+    ReflDir.x *= -1;
+    float3 LightDir = normalize(vSunLightDir.xyz);
+    float4 CubeMap = txCubeMap.Sample(samLinear, ReflDir);
+    float3 FullScattering;
+    ReflDir.x *= -1;
+    float3 ObjectColor = CalculateFogColor(CubeMap.rgb, ReflDir, LightDir, 1000, 0, FullScattering);
+    
+    float3 SkyColor = GetSkyColor(ReflDir, LightDir, FullScattering);
+    float3 ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, CubeMap.a < 0.5);
    // float3 raytracedColor = ScreenSpaceRT(cameraSpacePos,)
-    return float4(lerp(SSR(txPrevFrame, txGB1, samLinear, worldSpacePos, ReflDir, Roughness, Fallback), vSkyLightCol.rgb, Fallback) * FresnelCoeff, 1);
+    return float4(lerp(SSRColor, ReflectionFallBack, Fallback), 1);
 }

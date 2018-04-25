@@ -22,12 +22,14 @@ public:
 	~CDeferredRenderer();
 	void	RenderToGBuffer(void(*renderCB)());
 	void	RenderOutput();
+	void	RenderToCubemap(void(*renderCB)());
 	void	RenderTonemappedOutput();
 	void	SetNormalDepthRaster();
 	void	SetPreviousFinalRaster();
 	void	SetPreviousNonTonemappedFinalRaster();
 	void	QueueTextureReload();
 	CShadowRenderer* m_pShadowRenderer;
+	CCubemapReflectionRenderer* m_pReflRenderer;
 	CHDRTonemapping* m_pTonemapping;
 	bool	m_bRequiresReloading = false;
 private:

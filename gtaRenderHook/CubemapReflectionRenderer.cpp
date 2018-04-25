@@ -4,9 +4,12 @@
 #include "D3DRenderer.h"
 #include "RwMethods.h"
 #include "D3D1XRenderBuffersManager.h"
+#include "D3D1XStateManager.h"
 #include <game_sa\CScene.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
-#define ENVMAPSIZE 128
+#define ENVMAPSIZE 512
 #define MIPLEVELS 1
 
 CCubemapReflectionRenderer::CCubemapReflectionRenderer()
@@ -18,26 +21,14 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer()
 
 	RwCameraSetNearClipPlane(m_pReflCamera, 0.1f);
 	RwCameraSetFarClipPlane(m_pReflCamera, 100);
-	RwV2d vw;
-	vw.x = vw.y = tan(3.14f / 4.0f);
-	RwCameraSetViewWindow(m_pReflCamera, &vw);
-	
-	//m_pShadowCamera->projectionType = rwPARALLEL;
 
-	RwCameraSetRaster(m_pReflCamera, nullptr);
+	RwCameraSetRaster(m_pReflCamera, RwRasterCreate(ENVMAPSIZE, ENVMAPSIZE, 32, rwRASTERTYPECAMERATEXTURE));
 	RwCameraSetZRaster(m_pReflCamera, RwRasterCreate(ENVMAPSIZE, ENVMAPSIZE, 32, rwRASTERTYPEZBUFFER));
 
-	//CameraSize(m_pReflCamera, 0, tan(3.14f / 2), 1.0f);
-	RwObjectHasFrameSetFrame(m_pReflCamera, RwFrameCreate());
+	CameraSize(m_pReflCamera, nullptr, tanf(3.14f / 4), 1.0f);
+	m_pReflCameraFrame = RwFrameCreate();
+	RwObjectHasFrameSetFrame(m_pReflCamera, m_pReflCameraFrame);
 	RpWorldAddCamera(Scene.m_pRpWorld, m_pReflCamera);
-	/*
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(CBReflections);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	renderer->getDevice()->CreateBuffer(&bd, nullptr, &m_pReflCB);*/
 
 	// Create cubic depth stencil texture.
 	D3D11_TEXTURE2D_DESC dstex{};
@@ -111,6 +102,7 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer()
 CCubemapReflectionRenderer::~CCubemapReflectionRenderer()
 {
 	RwRasterDestroy(m_pReflCamera->zBuffer);
+	RwRasterDestroy(m_pReflCamera->frameBuffer);
 	RwCameraDestroy(m_pReflCamera);
 	if (m_pReflCB) m_pReflCB->Release();
 	if (g_pEnvMap) g_pEnvMap->Release();
@@ -131,104 +123,48 @@ void CCubemapReflectionRenderer::RenderToCubemap(void(*renderCB)())
 	// Move reflection camera to game camera position.
 	auto s_cam_frame = RwCameraGetFrame(m_pReflCamera);
 	RwV3d campos;
+	//campos = *RwMatrixGetPos(RwFrameGetMatrix(RwCameraGetFrame(Scene.m_pRwCamera)));
 	FindPlayerCoors(&campos, 0);
-	RW::V3d pos = { campos };
-	//=*RwMatrixGetPos(RwFrameGetMatrix(RwCameraGetFrame(Scene.curCamera)));
-	//RwFrameTranslate(s_cam_frame, &campos, rwCOMBINEREPLACE);
-
-
-	//renderer->BeginDebugEvent(L"Reflection");
-	// Setup values
-	bool rotate2[] = { false, false,false,false,true,true };
-	float angle[] = { 0, 180,-90,180,90,180 };
-	// впереди, сзади, справа, слева, снизу, сверху
 	// Render each face.
-	RW::V3d At, Up, Right;
+	RwV3d At, Up, Right;
 	At = { 1.0f,0.0f,0.0f };
 	Up = { 0.0f,1.0f,0.0f };
 	Right = { 0.0f,0.0f,1.0f };
-	RenderOneFace(renderCB, 0,At,Up,Right, pos);
-	At = { -1.0f,0.0f,0.0f };
-	Up = { 0.0f,1.0f,0.0f };
-	Right = { 0.0f,0.0f,1.0f };
-	RenderOneFace(renderCB, 1,At,Up, Right, pos);
-	At = { 0.0f,1.0f,0.0f };	   
-	Up = { 0.0f,0.0f,-1.0f };
-	Right = { 1.0f,0.0f,0.0f };
-	RenderOneFace(renderCB, 2,At,Up, Right, pos);
-	At = { 0.0f,-1.0f,0.0f };	   
-	Up = { 0.0f,0.0f,1.0f };
-	Right = { 1.0f,0.0f,0.0f };
-	RenderOneFace(renderCB, 3,At,Up, Right, pos);
-	At = { 0.0f,0.0f,1.0f };	   
-	Up = { 0.0f,1.0f,0.0f };
-	Right = { 1.0f,0.0f,0.0f };
-	RenderOneFace(renderCB, 4,At,Up, Right, pos);
-	At = { 0.0f,0.0f,-1.0f };	   
-	Up = { 0.0f,1.0f,0.0f };
-	Right = { 1.0f,0.0f,1.0f };
-	RenderOneFace(renderCB, 5,At,Up, Right, pos);
-	/*for (int i = 0; i < 6; i++)
-	{
-		if (angle != 0) {
-			if (!rotate2[i])
-				CameraRotate(m_pReflCamera, nullptr, angle[i]);
-			else
-				CameraRotate2(m_pReflCamera, nullptr, angle[i]);
-		}
-		RenderOneFace(renderCB, i);
-	}*/
-
-	//renderer->EndDebugEvent();
+	
+	RenderOneFace(renderCB, 0, 0, At, 270, Up, campos);  // forward 
+	RenderOneFace(renderCB, 1, 0, Right, 90, Up, campos);  // backward
+	RenderOneFace(renderCB, 2, 270, At, 0,  Up, campos);  // right
+	RenderOneFace(renderCB, 3, 90, At, 0,  Up, campos); // left
+	RenderOneFace(renderCB, 4, 0, At, 0,  Up, campos); // down
+	RenderOneFace(renderCB, 5, 0, At, 180,  Up, campos);   // up
 }
 
-void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, const RW::V3d&At, const RW::V3d&Up, const RW::V3d&Right, RW::V3d&  Pos)
+void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, float angleA, RwV3d axisA, float angleB, RwV3d axisB, RwV3d camPos /*const RW::V3d&At, const RW::V3d&Up, const RW::V3d&Right, RW::V3d&  Pos*/)
 {
 	ID3D11DeviceContext* context = GET_D3D_CONTEXT;
 
-	RwFrame*	reflCamFrame = RwCameraGetFrame(m_pReflCamera);
-	RwMatrix*	reflCamMatrix = RwFrameGetMatrix(reflCamFrame);
-	//
-	RwV3d		camPos = *RwMatrixGetPos(RwFrameGetMatrix(RwCameraGetFrame(Scene.m_pRwCamera)));
-
-																							 // Transform shadow camera to main camera position. TODO: move it to the center of frustum to cover full scene.
-	RwFrameTranslate(reflCamFrame, &camPos, rwCOMBINEREPLACE);
-
-	RwV3d invCamPos;
-	camPos = *RwMatrixGetPos(reflCamMatrix);
-	RwV3dScale(&invCamPos, &camPos, -1.0f);
-
-	// Move camera to the origin position.
-	RwFrameTranslate(reflCamFrame, &invCamPos, rwCOMBINEPOSTCONCAT);
-
-	// Rotate camera towards light direction
-	RW::V3d upAxis = Up;
-	RW::V3d zaxis = At;
-
-	RW::V3d	xaxis = Right;//upAxis.cross(zaxis);
-	//xaxis.normalize();
-	RW::V3d	yaxis = zaxis.cross(xaxis);
-
-
-	reflCamMatrix->at = zaxis.getRWVector();
-	reflCamMatrix->up = upAxis.getRWVector();
-	reflCamMatrix->right = xaxis.getRWVector();
-	reflCamMatrix->pos = {};
-	reflCamMatrix->pad3 = 0x3F800000;
-	// Move camera back to needed position.
-	RwFrameTranslate(reflCamFrame, &camPos, rwCOMBINEPOSTCONCAT);
-
+	RwFrameSetIdentity(m_pReflCameraFrame);
+	RwFrameRotate(m_pReflCameraFrame, &axisA, angleA, rwCOMBINEREPLACE);
+	RwFrameRotate(m_pReflCameraFrame, &axisB, angleB, rwCOMBINEPOSTCONCAT);
+	RwFrameTranslate(m_pReflCameraFrame, &camPos, rwCOMBINEPOSTCONCAT);
+	RwFrameUpdateObjects(m_pReflCameraFrame);
+	RwCameraSetNearClipPlane(m_pReflCamera, 0.1f);
+	RwCameraSetFarClipPlane(m_pReflCamera, 100.0f);
 	RwCameraClear(m_pReflCamera, gColourTop, rwCAMERACLEARZ);
-
+	
 	RwCameraBeginUpdate(m_pReflCamera);
-	//RwMatrixLookAtLH(Pos, { At.x + Pos.x,At.y + Pos.y,At.z + Pos.z }, Up);
 
-	float ClearColor[4] = { 0.0, 0.0, 0.0, 0.0 };
+	float ClearColor[4] = { 0.0, 0.0, 0.0, 0.4 };
 	context->ClearRenderTargetView(g_apEnvMapOneRTV[id], ClearColor);
 	context->ClearDepthStencilView(g_pEnvMapOneDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
 	ID3D11RenderTargetView* aRTViews[1] = { g_apEnvMapOneRTV[id] };
-	context->OMSetRenderTargets(sizeof(aRTViews) / sizeof(aRTViews[0]), aRTViews, g_pEnvMapOneDSV);
-
+	context->OMSetRenderTargets(1, aRTViews, g_pEnvMapOneDSV);
+	D3D11_VIEWPORT vp{};
+	vp.Width = ENVMAPSIZE;
+	vp.Height = ENVMAPSIZE;
+	vp.MaxDepth = 1.0;
+	g_pStateMgr->SetViewport(vp);
+	g_pStateMgr->FlushStates();
 	renderCB();
 	RwCameraEndUpdate(m_pReflCamera);
 
@@ -237,5 +173,5 @@ void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, const 
 void CCubemapReflectionRenderer::SetCubemap()
 {
 	ID3D11DeviceContext* context = GET_D3D_CONTEXT;
-	context->PSSetShaderResources(6, 1, &g_pEnvMapSRV);
+	context->PSSetShaderResources(4, 1, &g_pEnvMapSRV);
 }
