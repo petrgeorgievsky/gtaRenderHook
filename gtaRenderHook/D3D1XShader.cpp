@@ -156,7 +156,7 @@ CD3D1XPixelShader::CD3D1XPixelShader(std::string fileName, std::string entryPoin
 	m_sEntryPoint = entryPoint;
 	
 	if (!CALL_D3D_API(CompileShaderFromFile(m_sFilePath, m_sEntryPoint, m_sShaderModel, &m_pBlob, localShaderDefineList),
-		"Pixel shader compilation error, please see logs."))
+		"Pixel shader compilation error:" + fileName + "/" + entryPoint))
 		return;
 
 	// Create shader resource
@@ -194,7 +194,7 @@ void CD3D1XPixelShader::Reload(CD3D1XShaderDefineList* localShaderDefineList)
 	ID3D11PixelShader* pShader;
 	// recompile shader
 	if (!CALL_D3D_API_SILENT(CompileShaderFromFile(m_sFilePath, m_sEntryPoint, m_sShaderModel, &pBlob, localShaderDefineList),
-		"Pixel shader compilation error, please see logs."))
+		"Pixel shader compilation error:" + m_sFilePath + "/" + m_sEntryPoint))
 		return;
 	// create shader resource
 	if (!CALL_D3D_API_SILENT(GET_D3D_DEVICE->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(),

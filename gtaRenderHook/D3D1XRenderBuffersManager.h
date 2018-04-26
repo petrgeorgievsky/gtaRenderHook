@@ -24,7 +24,9 @@ struct MaterialBuffer
 	float		diffuseIntensity;
 	float		specularIntensity;
 	float		glossiness;
+	float		metallness;
 	int			hasSpecTex;
+	float		padd__[3];
 };
 struct RwGraphicsMatrix;
 class CD3DRenderer;
@@ -95,6 +97,10 @@ public:
 		Updates current glossiness for material
 	*/
 	void UpdateMaterialGlossiness(float &intensity);
+	/*!
+		Updates current metallness for material
+	*/
+	void UpdateMaterialMetalness(float &intensity);
 	/*!
 		Updates current value of specular texture avaliablity
 	*/

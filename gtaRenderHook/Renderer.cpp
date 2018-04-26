@@ -14,7 +14,10 @@
 #include <game_sa\CGame.h>
 #include "DebugRendering.h"
 #include <game_sa\CGeneral.h>
+#include <game_sa\CVehicle.h>
 #include "DeferredRenderer.h"
+#include "CVisibilityPluginsRH.h"
+#include "D3D1XStateManager.h"
 #include "SAIdleHook.h"
 #include "DebugBBox.h"
 bool		&CRenderer::ms_bRenderTunnels = *(bool*)0xB745C0;
@@ -53,16 +56,6 @@ std::vector<CEntity*> CRenderer::ms_aVisibleReflectionObjects{};
 #define CStreaming__ms_aInfoForModel ((CStreamingInfo *)0x9654B0)
 
 #define CRenderer__SetupEntityVisibility(a1,a2) ((int (__cdecl *)(CEntity *, float *))0x554230)(a1,a2)
-//407260     ; CSector *__cdecl CWorld::GetSector(int x, int y)
-#define CWorld__GetSector(x,y) ((CSector* (__cdecl *)(int, int))0x407260)(x,y)
-#define CWorld__GetRepeatSector(x,y) ((CRepeatSector* (__cdecl *)(int, int))0x4072A0)(x,y)
-//00B992B8     ; CRepeatSector CWorld::ms_aRepeatSectors
-#define CWorld__ms_aRepeatSectors ((CRepeatSector *)0xB992B8)
-//4087E0     ; CStreaming::RequestModel(int, int)
-#define CStreaming__RequestModel(id,y) ((void (__cdecl *)(int, int))0x4087E0)(id,y)
-//5334F0     ; void __thiscall CPlaceable::transformFromObjectSpace(CPlaceable *this, RwV3D *dst, RwV3D *b)
-#define CPlaceable__transformFromObjectSpace(this_,dst,b) ((void(__thiscall *)(CPlaceable *, RwV3d *,RwV3d *))0x5334F0)(this_,dst,b)
-#define CGeneral__LimitRadianAngle(a) ((float (__cdecl *)(float))0x53CB50)(a)
 #define CRenderer__ProcessLodRenderLists() ((void (__cdecl *)())0x553770)()
 #define CRenderer__ResetLodRenderLists() ((void (__cdecl *)())0x5536F0)()
 #define COcclusion__ProcessBeforeRendering() ((void (__cdecl *)())0x7201C0)()
@@ -100,6 +93,13 @@ void CRenderer::RenderRoads()
 		//if (st != 3)
 			RenderOneNonRoad(ms_aVisibleLodPtrs[i]);
 	}
+}
+
+void CRenderer::RenderCubemapEntities()
+{
+	g_pStateMgr->SetAlphaTestEnable(true);
+	for (auto entity : ms_aVisibleReflectionObjects)
+		RenderReflectionEntity(entity);
 }
 
 void CRenderer::RenderEverythingBarRoads()
@@ -263,6 +263,15 @@ void CRenderer::AddEntityToRenderList(CEntity * entity, float renderDistance)
 		ms_aVisibleEntities.push_back(entity);
 	*/
 	CRenderer__AddEntityToRenderList(entity, renderDistance);
+}
+
+void CRenderer::AddEntityToReflectionList(CEntity * entity, float renderDistance)
+{
+	// Make lod everything >50 units away and cull everything >100 units away
+	if (renderDistance < 50) 
+		ms_aVisibleReflectionObjects.push_back(entity);
+	else if(entity->m_pLod!=nullptr&&renderDistance < 100)
+		ms_aVisibleReflectionObjects.push_back(entity->m_pLod);
 }
 
 char CRenderer::AddEntityToShadowCasterList(CEntity * entity, float renderDistance, int shadowCascade)
@@ -696,13 +705,13 @@ RendererVisibility CRenderer::SetupMapEntityVisibility(CEntity * entity, CBaseMo
 
 void CRenderer::RenderOneRoad(CEntity * entity)
 {
-	if (entity->m_nType == eEntityType::ENTITY_TYPE_VEHICLE) {
-		CVehicle__SetupRender(entity);
-	}
+	if (entity->m_nType == eEntityType::ENTITY_TYPE_VEHICLE)
+		((CVehicle*)entity)->SetupRender();
+	
 	((void(__cdecl *)(CEntity *))0x553230)(entity);
-	if (entity->m_nType == eEntityType::ENTITY_TYPE_VEHICLE) {
-		CVehicle__ResetAfterRender(entity);
-	}
+	if (entity->m_nType == eEntityType::ENTITY_TYPE_VEHICLE)
+		((CVehicle*)entity)->ResetAfterRender();
+	
 }
 
 //6D64F0     ; void __thiscall CVehicle::SetupRender(CVehicle *this)
@@ -894,6 +903,28 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 	}
 }
 
+void CRenderer::ScanPtrListForReflections(CPtrList * ptrList, bool loadIfRequired)
+{
+	// If entity list is empty, than return. 
+	if (ptrList == nullptr)
+		return;
+	auto current = ptrList->GetNode();
+	CEntity* entity;
+	while (current != nullptr)
+	{
+		entity = (CEntity*)current->pItem;
+		// If this entity has the same scan code as current, than we could skip it
+		if (entity->m_nScanCode == CWorld__ms_nCurrentScanCode) {
+			current = current->pNext;
+			continue;
+		}
+		entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
+		if(entity->m_nType == eEntityType::ENTITY_TYPE_BUILDING || entity->m_nType == eEntityType::ENTITY_TYPE_OBJECT)
+			AddEntityToReflectionList(entity, true);
+		current = current->pNext;
+	}
+}
+
 void CRenderer::ScanBigBuildingList(int x, int y)
 {
 	//CRenderer__ScanBigBuildingList(x, y);
@@ -941,6 +972,15 @@ void CRenderer::ScanBigBuildingList(int x, int y)
 	
 }
 
+void CRenderer::ScanSectorListForReflections(int x, int y)
+{
+	CSector*	  sector = GetSector(x, y);
+	CRepeatSector* repeatSector = GetRepeatSector(x, y);
+
+	ScanPtrListForReflections(&sector->m_buildings, false);
+	ScanPtrListForReflections(&repeatSector->m_lists[REPEATSECTOR_OBJECTS], false);
+}
+
 void CRenderer::ScanSectorListForShadowCasters(int x, int y)
 {
 	bool dontRenderSectorEntities = false; 
@@ -959,8 +999,8 @@ void CRenderer::ScanSectorListForShadowCasters(int x, int y)
 
 	/*if (distanceToSector >= CRenderer__ms_fFarClipPlane)
 		return;*/
-	CSector*	  sector		= CWorld__GetSector(x, y);
-	CRepeatSector* repeatSector = CWorld__GetRepeatSector(x, y);
+	CSector*	  sector		= GetSector(x, y);
+	CRepeatSector* repeatSector = GetRepeatSector(x, y);
 	// TODO: Add sector skip to improve performance
 	if (!dontRenderSectorEntities)
 		ScanPtrListForShadows(&sector->m_buildings, loadIfRequired);
@@ -1301,8 +1341,8 @@ void CRenderer::ScanWorld()
 	int currentSectorY = ceil((ms_vecCameraPosition.y - 25.0f) / 50.0f + 60.0f);
 	// TODO: Add reflections culling
 	// Resets scan codes if it exceeds 2^16
-	//SetNextScanCode();
-	//CRenderer::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
+	SetNextScanCode();
+	CRenderer::ScanSectorListForReflections(currentSectorX, currentSectorY);
 
 	// Resets scan codes if it exceeds 2^16
 	SetNextScanCode();
@@ -1406,6 +1446,20 @@ void CRenderer::ResetLodRenderLists()
 }
 
 void CRenderer::RenderShadowCasterEntity(CEntity *entity)
+{
+	if (entity->m_pRwObject == nullptr)
+		return;
+	entity->m_bImBeingRendered = true;
+	if (entity->m_nType == eEntityType::ENTITY_TYPE_PED)
+		CVisibilityPluginsRH::RenderWeaponsForPed((CPed*)entity);
+	if (entity->m_pRwObject->type == rpATOMIC)
+		entity->m_pRwAtomic->renderCallBack(entity->m_pRwAtomic);
+	else
+		_RpClumpRender(entity->m_pRwClump);
+	entity->m_bImBeingRendered = false;
+}
+
+void CRenderer::RenderReflectionEntity(CEntity *entity)
 {
 	if (entity->m_pRwObject == nullptr)
 		return;

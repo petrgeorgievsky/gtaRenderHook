@@ -57,7 +57,7 @@ CDeferredRenderer::CDeferredRenderer()
 	gDebugSettings.DebugRenderTargetList.push_back(m_pFinalRasters[0]);
 
 	m_pShadowRenderer	= new CShadowRenderer();
-	m_pReflRenderer = new CCubemapReflectionRenderer();
+	m_pReflRenderer = new CCubemapReflectionRenderer(gDeferredSettings.CubemapSize);
 	m_pTonemapping		= new CHDRTonemapping();
 	m_pDeferredBuffer = new CD3D1XConstantBuffer<CBDeferredRendering>();
 	m_pDeferredBuffer->SetDebugName("DeferredCB");
@@ -265,6 +265,9 @@ tinyxml2::XMLElement * DeferredSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 	deferredSettingsNode->SetAttribute("BlurShadows", BlurShadows);
 	deferredSettingsNode->SetAttribute("UsePCSS", UsePCSS);
 	deferredSettingsNode->SetAttribute("SampleShadows", SampleShadows);
+	deferredSettingsNode->SetAttribute("UseSSR", UseSSR);
+	deferredSettingsNode->SetAttribute("SampleCubemap", SampleCubemap);
+	deferredSettingsNode->SetAttribute("CubemapSize", CubemapSize);
 	return deferredSettingsNode;
 }
 
@@ -285,6 +288,9 @@ void DeferredSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 	BlurShadows = deferredSettingsNode->BoolAttribute("BlurShadows", true);
 	UsePCSS = deferredSettingsNode->BoolAttribute("UsePCSS", true);
 	SampleShadows = deferredSettingsNode->BoolAttribute("SampleShadows", true);
+	UseSSR = deferredSettingsNode->BoolAttribute("UseSSR", true);
+	SampleCubemap = deferredSettingsNode->BoolAttribute("SampleCubemap", true);
+	CubemapSize = deferredSettingsNode->IntAttribute("CubemapSize", 128);
 
 	gDeferredSettings.m_pShaderDefineList = new CD3D1XShaderDefineList();
 	gDeferredSettings.m_pShaderDefineList->AddDefine("SSR_SAMPLE_COUNT", to_string(SSRMaxIterations));
@@ -292,6 +298,8 @@ void DeferredSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)BlurShadows));
 	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)UsePCSS));
 	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(ShadowsBlurKernelSize));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)gDeferredSettings.UseSSR));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)gDeferredSettings.SampleCubemap));
 }
 
 void DeferredSettingsBlock::Reset()
@@ -305,6 +313,9 @@ void DeferredSettingsBlock::Reset()
 	BlurShadows = true;
 	UsePCSS = true;
 	SampleShadows = true;
+	CubemapSize = 128;
+	UseSSR = true;
+	SampleCubemap = true;
 }
 void TW_CALL ReloadDeferredShadersCallBack(void *value)
 {
@@ -315,6 +326,8 @@ void TW_CALL ReloadDeferredShadersCallBack(void *value)
 	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)gDeferredSettings.BlurShadows));
 	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)gDeferredSettings.UsePCSS));
 	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(gDeferredSettings.ShadowsBlurKernelSize));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)gDeferredSettings.UseSSR));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)gDeferredSettings.SampleCubemap));
 }
 void TW_CALL ReloadDeferredTexturesCallBack(void *value)
 {
@@ -332,10 +345,14 @@ void DeferredSettingsBlock::InitGUI(TwBar * bar)
 	
 	TwDefine("Settings/ShadowBlur   group=Deferred label='Shadow bluring'");
 
+	TwAddVarRW(bar, "Sample Cubemap", TwType::TW_TYPE_BOOL8, &SampleCubemap, "group=Reflections");
+
+	TwDefine("Settings/Reflections   group=Deferred label='Reflections'");
 	// Deferred reflections settings
 	TwAddVarRW(bar, "Maximum iterations", TwType::TW_TYPE_UINT32, &SSRMaxIterations, " min=2 max=512 step=1 help='meh' group=SSR");
 	TwAddVarRW(bar, "Step", TwType::TW_TYPE_FLOAT, &SSRStep, " min=0 max=10 step=0.0001 help='meh' group=SSR");
 	TwAddVarRW(bar, "Reflection scaling", TwType::TW_TYPE_FLOAT, &SSRScale, "min=0.1 max=1.5 step=0.01 group=SSR");
+	TwAddVarRW(bar, "Use SSR", TwType::TW_TYPE_BOOL8, &UseSSR, "group=Reflections");
 	TwDefine("Settings/SSR   group=Deferred label='Screen-Space Reflection'");
 
 	TwAddButton(bar, "Reload shaders", ReloadDeferredShadersCallBack, nullptr, "group=Deferred");

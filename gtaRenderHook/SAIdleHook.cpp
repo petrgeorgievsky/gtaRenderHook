@@ -31,6 +31,10 @@
 #include <game_sa\CGame.h>
 #include <game_sa\CDraw.h>
 #include <game_sa\CVisibilityPlugins.h>
+#include <game_sa\CBirds.h>
+#include <game_sa\CRopes.h>
+//#include <game_sa\CGlass.h>
+//#include <game_sa\CSkidmarks.h>
 
 
 /* GTA Definitions TODO: Move somewhere else*/
@@ -297,7 +301,7 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 
 	g_pCustomCarFXPipe->RenderAlphaList();
 	g_pCustomBuildingPipe->RenderAlphaList();
-	CPostEffects__m_bDisableAllPostEffect = true;
+	//CPostEffects__m_bDisableAllPostEffect = true;
 	// Render effects and 2d stuff
 	DefinedState();
 	RenderEffects();
@@ -324,20 +328,24 @@ void CSAIdleHook::RenderDeferred()
 void CSAIdleHook::RenderForward()
 {
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
-	CRenderer::RenderRoads();
+	CRenderer::RenderCubemapEntities();
 }
 
 void CSAIdleHook::RenderEffects()
 {
-	//CBirds::Render();
+	CBirds::Render();
 	//CSkidmarks::Render();
-	//CRopes::Render();
+	CRopes::Render();
 	//CGlass::Render();
 	//CMovingThings::Render();
-	CVisibilityPlugins::RenderReallyDrawLastObjects();
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, false);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, false);
+	//CVisibilityPlugins::RenderReallyDrawLastObjects();
+	//Scene.m_pRwCamera->frameBuffer->width
+	g_pStateMgr->SetAlphaTestEnable(false);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
+	CCoronas::RenderReflections();
+	//CCoronas::RenderSunReflection();
 	CCoronas::Render();
+	g_pStateMgr->SetAlphaTestEnable(true);
 	g_fx.Render(TheCamera.m_pRwCamera, 0);
 	//CWaterCannons::Render();
 	//CWaterLevel::RenderWaterFog();

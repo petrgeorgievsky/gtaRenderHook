@@ -131,9 +131,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     float4 baseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy) * cDiffuseColor;
     if (baseColor.a < 0.3)
         discard;
-	FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness,0,1));
-	
-
+    FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness, fMetallness, 1));
 	return Out;
 }
 void VoxelPS(PS_VOXEL_INPUT i)

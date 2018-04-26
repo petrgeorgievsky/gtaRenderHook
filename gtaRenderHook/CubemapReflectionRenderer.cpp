@@ -12,7 +12,7 @@
 #define ENVMAPSIZE 512
 #define MIPLEVELS 1
 
-CCubemapReflectionRenderer::CCubemapReflectionRenderer()
+CCubemapReflectionRenderer::CCubemapReflectionRenderer(int size): m_nCubemapSize(size)
 {
 	ID3D11Device* device = GET_D3D_DEVICE;
 
@@ -22,8 +22,8 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer()
 	RwCameraSetNearClipPlane(m_pReflCamera, 0.1f);
 	RwCameraSetFarClipPlane(m_pReflCamera, 100);
 
-	RwCameraSetRaster(m_pReflCamera, RwRasterCreate(ENVMAPSIZE, ENVMAPSIZE, 32, rwRASTERTYPECAMERATEXTURE));
-	RwCameraSetZRaster(m_pReflCamera, RwRasterCreate(ENVMAPSIZE, ENVMAPSIZE, 32, rwRASTERTYPEZBUFFER));
+	RwCameraSetRaster(m_pReflCamera, RwRasterCreate(m_nCubemapSize, m_nCubemapSize, 32, rwRASTERTYPECAMERATEXTURE));
+	RwCameraSetZRaster(m_pReflCamera, RwRasterCreate(m_nCubemapSize, m_nCubemapSize, 32, rwRASTERTYPEZBUFFER));
 
 	CameraSize(m_pReflCamera, nullptr, tanf(3.14f / 4), 1.0f);
 	m_pReflCameraFrame = RwFrameCreate();
@@ -32,8 +32,8 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer()
 
 	// Create cubic depth stencil texture.
 	D3D11_TEXTURE2D_DESC dstex{};
-	dstex.Width = ENVMAPSIZE;
-	dstex.Height = ENVMAPSIZE;
+	dstex.Width = m_nCubemapSize;
+	dstex.Height = m_nCubemapSize;
 	dstex.MipLevels = 1;
 	dstex.ArraySize = 6;
 	dstex.SampleDesc.Count = 1;
@@ -160,8 +160,8 @@ void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, float 
 	ID3D11RenderTargetView* aRTViews[1] = { g_apEnvMapOneRTV[id] };
 	context->OMSetRenderTargets(1, aRTViews, g_pEnvMapOneDSV);
 	D3D11_VIEWPORT vp{};
-	vp.Width = ENVMAPSIZE;
-	vp.Height = ENVMAPSIZE;
+	vp.Width = m_nCubemapSize;
+	vp.Height = m_nCubemapSize;
 	vp.MaxDepth = 1.0;
 	g_pStateMgr->SetViewport(vp);
 	g_pStateMgr->FlushStates();

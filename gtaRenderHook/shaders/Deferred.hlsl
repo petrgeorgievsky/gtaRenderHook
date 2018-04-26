@@ -175,6 +175,14 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
 
     float4 AlbedoColor = txGB0.Sample(samLinear, i.vTexCoord.xy);
     float4 Parameters = txGB2.Sample(samLinear, i.vTexCoord.xy);
+    float3 Normals;
+    float ViewZ;
+    GetNormalsAndDepth(txGB1, samLinear, i.vTexCoord.xy, ViewZ, Normals);
+    Normals = normalize(Normals);
+
+    float3 WorldPos = DepthToWorldPos(ViewZ, i.vTexCoord.xy).xyz;
+
+    float3 ViewDir = normalize(WorldPos.xyz - ViewPos);
     uint MaterialType = ConvertToMatType(Parameters.w);
 	
 	float Metallness = Parameters.x;
@@ -194,13 +202,16 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
 		float3 SpecularTerm = (Lighting.w * Lighting.xyz);
 		// Reflection term is computed before deferred
 		float3 ReflectionTerm = txReflections.Sample(samLinear, i.vTexCoord.xy);
+        // Fresnel coeff
+        float FresnelCoeff = MicrofacetFresnel(Normals, -ViewDir, Parameters.y);
         // Increase reflection for cars
         if (MaterialType == 1)
         {
-            ReflectionTerm *= 1.2f;
+            FresnelCoeff = lerp(1.0f,FresnelCoeff, Parameters.y);
+            ReflectionTerm *= 1.5f;
         }
 		// Add atmospheric scattering to result
-        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb + SpecularTerm + ReflectionTerm * Metallness;
+        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb + SpecularTerm * Parameters.x + ReflectionTerm * FresnelCoeff * Parameters.x;
 		OutLighting.a = 1;
 	}
 	return OutLighting;

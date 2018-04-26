@@ -350,6 +350,14 @@ void CD3D1XRenderBuffersManager::UpdateMaterialGlossiness(float & intensity)
 	}
 }
 
+void CD3D1XRenderBuffersManager::UpdateMaterialMetalness(float & intensity)
+{
+	if (abs(m_pPerMaterialBuffer->data.metallness - intensity)> 0.001) {
+		m_pPerMaterialBuffer->data.metallness = intensity;
+		m_bMaterialBufferRequiresUpdate = true;
+	}
+}
+
 void CD3D1XRenderBuffersManager::UpdateHasSpecTex(const int & hastex)
 {
 	if (m_pPerMaterialBuffer->data.hasSpecTex!= hastex) {

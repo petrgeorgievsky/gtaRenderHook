@@ -125,15 +125,26 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float Fallback=0;
     float FresnelCoeff = MicrofacetFresnel(NormalsVS, -ViewDir, Roughness);
     float3 SSRColor = SSR(txPrevFrame, txGB1, samLinear, worldSpacePos, ReflDir, Roughness, Fallback);
-    ReflDir.x *= -1;
+    
     float3 LightDir = normalize(vSunLightDir.xyz);
-    float4 CubeMap = txCubeMap.Sample(samLinear, ReflDir);
     float3 FullScattering;
-    ReflDir.x *= -1;
-    float3 ObjectColor = CalculateFogColor(CubeMap.rgb, ReflDir, LightDir, 1000, 0, FullScattering);
+    float3 ObjectColor = CalculateFogColor(float3(0,0,0), ReflDir, LightDir, 1000, 0, FullScattering);
     
     float3 SkyColor = GetSkyColor(ReflDir, LightDir, FullScattering);
-    float3 ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, CubeMap.a < 0.5);
-   // float3 raytracedColor = ScreenSpaceRT(cameraSpacePos,)
-    return float4(lerp(SSRColor, ReflectionFallBack, Fallback), 1);
+
+    float3 ReflectionFallBack;
+#if SAMPLE_CUBEMAP ==1
+    ReflDir.x *= -1;
+    float4 CubeMap = txCubeMap.Sample(samLinear, ReflDir);
+    ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, CubeMap.a < 0.5);
+#else
+    ReflectionFallBack = SkyColor;
+#endif
+    float3 FinalReflect;
+#if USE_SSR==1
+    FinalReflect = lerp(SSRColor, ReflectionFallBack, Fallback);
+#else
+    FinalReflect = ReflectionFallBack;
+#endif
+    return float4(FinalReflect, 1);
 }

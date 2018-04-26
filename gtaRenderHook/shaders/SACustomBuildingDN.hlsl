@@ -106,6 +106,7 @@ float4 PS(PS_DEFERRED_DN_IN i) : SV_Target
 	outColor.a		*=i.vColor.w;
     float3 FullScattering;
     outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
+    DO_ALPHA_TEST(outColor.w)
 	return outColor;
 }
 
@@ -119,10 +120,12 @@ void ShadowPS(PS_DEFERRED_IN i)
 PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
-	float4 baseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
+    float4 baseColor = cDiffuseColor * lerp(float4(1.0f, 1.0f, 1.0f, i.vColor.w), i.vColor + float4(0.5f, 0.5f, 0.5f, 0), 1.0f - vSunLightDir.w);
+    if (bHasTexture != 0)
+        baseColor *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     float4 params = bHasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness,0,0);
 
-    FillGBuffer(Out, baseColor * cDiffuseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params);
+    FillGBuffer(Out, baseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params);
 	if (baseColor.a < 0.3)
 		discard;
     

@@ -50,6 +50,10 @@ public:
 	*/
 	static void RenderRoads();
 	/*!
+		Renders all cubemap entities.
+	*/
+	static void RenderCubemapEntities();
+	/*!
 		Renders all non-road entities.
 	*/
 	static void RenderEverythingBarRoads();
@@ -77,6 +81,10 @@ public:
 		Adds entity to main render list
 	*/
 	static void AddEntityToRenderList(CEntity* entity, float renderDistance);
+	/*!
+		Adds entity to reflection list
+	*/
+	static void AddEntityToReflectionList(CEntity* entity, float renderDistance);
 	/*!
 		Adds entity to shadow caster render list
 	*/
@@ -131,9 +139,17 @@ public:
 	*/
 	static void ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired);
 	/*!
+		Scans entity pointer list for reflections
+	*/
+	static void ScanPtrListForReflections(CPtrList* ptrList, bool loadIfRequired);
+	/*!
 		Scans sector for BIG buildings
 	*/
 	static void ScanBigBuildingList(int x, int y);
+	/*!
+		Scans sector for reflection entities
+	*/
+	static void ScanSectorListForReflections(int x, int y);
 	/*!
 		Scans sector for shadow casting entities
 	*/
@@ -159,9 +175,13 @@ public:
 	*/
 	static void ResetLodRenderLists();
 	/*!
-		Renders shadow caster entity, skips effect rendering as well as 
+		Renders shadow caster entity, skips effect rendering. 
 	*/
 	static void RenderShadowCasterEntity(CEntity*);
+	/*!
+		Renders reflection entity, skips effect rendering. 
+	*/
+	static void RenderReflectionEntity(CEntity*);
 	/*!
 		Returns base of LOD render list
 	*/

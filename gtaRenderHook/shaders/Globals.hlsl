@@ -55,7 +55,9 @@ cbuffer PerMaterialBuffer : register(b3)
 	float	fDiffuseIntensity;
 	float	fSpecularIntensity;
 	float	fGlossiness;
+    float   fMetallness;
     int     bHasSpecTex;
+    float  ___padding[3];
 }
 
 cbuffer VoxelViewMatrices : register(b4)

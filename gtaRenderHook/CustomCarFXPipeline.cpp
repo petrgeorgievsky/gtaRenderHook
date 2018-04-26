@@ -93,11 +93,13 @@ void CCustomCarFXPipeline::RenderAlphaList()
 		//g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(paintColor);
 		float fShininess = 1.0f - RpMaterialGetFxEnvShininess(curmesh.material);
 		float fSpec = CCustomCarEnvMapPipeline__GetFxSpecSpecularity(curmesh.material);
+		float fMetal = curmesh.material->surfaceProps.specular;
 		//RwMatrix *ltm = RwFrameGetLTM((RwFrame*)((RpAtomic*)mesh->entryptr->owner)->object.object.parent);
 		g_pRenderBuffersMgr->UpdateWorldMatrix(mesh->worldMatrix);
 		g_pRenderBuffersMgr->SetMatrixBuffer();
 		g_pRenderBuffersMgr->UpdateMaterialSpecularInt(fSpec);
 		g_pRenderBuffersMgr->UpdateMaterialGlossiness(fShininess);
+		g_pRenderBuffersMgr->UpdateMaterialMetalness(fMetal);
 
 		if (curmesh.material->texture) {
 			if (curmesh.material->texture->raster != nullptr) {
@@ -184,6 +186,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 
 			float fShininess = 1.0f - RpMaterialGetFxEnvShininess(entryData->models[i].material);
 			float fSpec = CCustomCarEnvMapPipeline__GetFxSpecSpecularity(entryData->models[i].material);
+
 			if(entryData->models[i].material->surfaceProps.ambient>1.0)
 				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(paintColor);
 			else
@@ -196,7 +199,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 		// Setup texture
 		if (entryData->models[i].material->texture) {
 			if (entryData->models[i].material->texture->raster != nullptr) {
-				bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
+				//bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
 				g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
 			}
 		}

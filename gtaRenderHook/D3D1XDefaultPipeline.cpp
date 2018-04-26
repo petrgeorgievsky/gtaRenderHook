@@ -95,6 +95,7 @@ void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8
 	{
 		model = &entryData->models[i];
 		material = model->material;
+		if (material->color.alpha == 0) continue;
 		alphaBlend = material->color.alpha!=255 || model->vertexAlpha;
 
 		// set albedo(diffuse) color
