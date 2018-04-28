@@ -22,6 +22,10 @@ public:
 	*/
 	bool Instance	(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance) const;
 	/*!
+		Converts object verticies into GPU-compatible format, generates vertex layout and normals from indicies
+	*/
+	bool Instance	(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance, const std::vector<RxVertexIndex> &indexBuffer) const;
+	/*!
 		Renders resource entry
 	*/
 	void Render		(RwResEntry *repEntry, void *object, RwUInt8 type, RwUInt32 flags);
@@ -29,7 +33,11 @@ private:
 	/*!
 		Generates normals for verticies 
 	*/
-	static void GenerateNormals(SimpleVertex* verticles, unsigned int vertexCount, RpTriangle* triangles, unsigned int triangleCount);
+	static void GenerateNormals(SimpleVertex* verticles, unsigned int vertexCount, RpTriangle* triangles, unsigned int triangleCount, bool isTriStrip);
+	/*!
+		Generates normals for verticies using indicies
+	*/
+	static void GenerateNormals(SimpleVertex* verticles, unsigned int vertexCount, const std::vector<RxVertexIndex> &indexBuffer);
 };
 #endif // D3D1XDefaultPipeline_h__
 

@@ -154,14 +154,14 @@ void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, float 
 	
 	RwCameraBeginUpdate(m_pReflCamera);
 
-	float ClearColor[4] = { 0.0, 0.0, 0.0, 0.4 };
+	float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.4f };
 	context->ClearRenderTargetView(g_apEnvMapOneRTV[id], ClearColor);
 	context->ClearDepthStencilView(g_pEnvMapOneDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
 	ID3D11RenderTargetView* aRTViews[1] = { g_apEnvMapOneRTV[id] };
 	context->OMSetRenderTargets(1, aRTViews, g_pEnvMapOneDSV);
 	D3D11_VIEWPORT vp{};
-	vp.Width = m_nCubemapSize;
-	vp.Height = m_nCubemapSize;
+	vp.Width = (FLOAT)m_nCubemapSize;
+	vp.Height = (FLOAT)m_nCubemapSize;
 	vp.MaxDepth = 1.0;
 	g_pStateMgr->SetViewport(vp);
 	g_pStateMgr->FlushStates();

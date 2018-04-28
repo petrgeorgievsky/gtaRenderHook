@@ -15,6 +15,7 @@
 #include "CubemapReflectionRenderer.h"
 #include "D3D1XShaderDefines.h"
 #include <game_sa\CScene.h>
+#include <game_sa\CGame.h>
 /// voxel stuff
 struct CB_Raycasting {
 	RwMatrix m_QuadToVoxel;
@@ -28,7 +29,7 @@ CDeferredRenderer::CDeferredRenderer()
 	m_aDeferredRasters[0] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_aDeferredRasters[1] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_aDeferredRasters[2] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE);
-	m_pReflectionRaster = RwRasterCreate(RsGlobal.maximumWidth*gDeferredSettings.SSRScale, RsGlobal.maximumHeight*gDeferredSettings.SSRScale, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
+	m_pReflectionRaster = RwRasterCreate((int)(RsGlobal.maximumWidth*gDeferredSettings.SSRScale),(int)(RsGlobal.maximumHeight*gDeferredSettings.SSRScale), 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_pLightingRaster = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE| rwRASTERFORMAT1555);
 	// We use 2 final rasters to have one for rendering effects that use full lighted image texture for example SSR
 	m_pFinalRasters[0] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
@@ -126,7 +127,7 @@ void CDeferredRenderer::RenderOutput()
 	m_pShadowRenderer->SetShadowBuffer();
 
 	// Render sun directional light if required
-	if (g_shaderRenderStateBuffer.vSunDir.w > 0&&CGame__currArea==0) 
+	if (g_shaderRenderStateBuffer.vSunDir.w > 0&&CGame::currArea==0) 
 	{
 		m_pSunLightingPS->Set();
 		g_pDebug->printMsg("Sun light rendering.", 1);
@@ -227,8 +228,8 @@ void CDeferredRenderer::QueueTextureReload()
 	m_pShadowRenderer->QueueTextureReload();
 	
 	if (m_bRequiresReloading || dxEngine->m_bScreenSizeChanged) {
-		m_pReflectionRaster->width = RsGlobal.maximumWidth*gDeferredSettings.SSRScale;
-		m_pReflectionRaster->height = RsGlobal.maximumHeight*gDeferredSettings.SSRScale;
+		m_pReflectionRaster->width = (int)(RsGlobal.maximumWidth*gDeferredSettings.SSRScale);
+		m_pReflectionRaster->height = (int)(RsGlobal.maximumHeight*gDeferredSettings.SSRScale);
 		dxEngine->m_pRastersToReload.push_back(m_pReflectionRaster);
 	}
 

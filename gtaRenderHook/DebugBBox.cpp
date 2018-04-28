@@ -36,21 +36,21 @@ USHORT	DebugBBox::m_aIndices[24] = {
 	2,6,
 	3,7
 };
-ID3D11InputLayout*      DebugBBox::m_pVertexLayout = nullptr;
-ID3D11Buffer*           DebugBBox::m_pVertexBuffer = nullptr;
-ID3D11Buffer*           DebugBBox::m_pIndexBuffer = nullptr;
-CD3D1XShader*           DebugBBox::m_pVS = nullptr;
-CD3D1XShader*           DebugBBox::m_pPS = nullptr;
+CD3D1XVertexDeclaration*	DebugBBox::m_pVertexDecl = nullptr;
+CD3D1XVertexBuffer*			DebugBBox::m_pVertexBuffer = nullptr;
+CD3D1XIndexBuffer*			DebugBBox::m_pIndexBuffer = nullptr;
+CD3D1XShader*				DebugBBox::m_pVS = nullptr;
+CD3D1XShader*				DebugBBox::m_pPS = nullptr;
 
 DebugBBox::DebugBBox(RW::BBox bbox)
 {
 	auto pos = bbox.getCenter().getRWVector();
 	m_WorldMatrix={};
-	m_WorldMatrix.right.x = bbox.getSizeX();
-	m_WorldMatrix.up.y = bbox.getSizeY();
-	m_WorldMatrix.at.z = bbox.getSizeZ();
-	m_WorldMatrix.pos = pos;
-	m_WorldMatrix.pad3 = 0x3F800000;
+	m_WorldMatrix.right.x	= bbox.getSizeX();
+	m_WorldMatrix.up.y		= bbox.getSizeY();
+	m_WorldMatrix.at.z		= bbox.getSizeZ();
+	m_WorldMatrix.pos		= pos;
+	m_WorldMatrix.pad3		= 0x3F800000;
 }
 
 DebugBBox::DebugBBox(RW::BBox bbox, RW::Matrix rotationMatrix)
@@ -68,17 +68,21 @@ DebugBBox::~DebugBBox()
 
 void DebugBBox::Render()
 {
-	g_pRenderBuffersMgr->UpdateWorldMatrix(&m_WorldMatrix);
-
-	g_pStateMgr->SetInputLayout(m_pVertexLayout);
+	// Set mesh info
+	g_pStateMgr->SetInputLayout(m_pVertexDecl->getInputLayout());
 	g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	g_pStateMgr->SetVertexBuffer(m_pVertexBuffer->getBuffer(), sizeof(RwV3d), 0);
+	g_pStateMgr->SetIndexBuffer(m_pIndexBuffer->getBuffer());
 
-	g_pStateMgr->SetVertexBuffer(m_pVertexBuffer, sizeof(RwV3d), 0);
-	g_pStateMgr->SetIndexBuffer(m_pIndexBuffer);
+	// Set transformation info
+	g_pRenderBuffersMgr->UpdateWorldMatrix(&m_WorldMatrix);
 	g_pRenderBuffersMgr->SetMatrixBuffer();
+
+	// Set shaders
 	m_pVS->Set();
 	m_pPS->Set();
 
+	// Flush states and draw on screen
 	g_pStateMgr->FlushStates();
 	GET_D3D_RENDERER->DrawIndexed(24, 0, 0);
 }
@@ -91,49 +95,27 @@ void DebugBBox::Initialize()
 	m_pVS = new CD3D1XVertexShader(shader_path, "VS");
 
 	ID3D11Device* pd3dDevice = GET_D3D_DEVICE;
-	D3D11_INPUT_ELEMENT_DESC layout[] =
+	std::vector<D3D11_INPUT_ELEMENT_DESC> layout =
 	{
 		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
-	UINT numElements = ARRAYSIZE(layout);
-	ID3DBlob* vsBlob = m_pVS->getBlob();
-	// Create the input layout
-	if (FAILED(pd3dDevice->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &m_pVertexLayout)))
-		g_pDebug->printError("Failed to create input layout");
 
-
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = 8*sizeof(RwV3d);
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-	bd.MiscFlags = 0;
-	bd.StructureByteStride = 0;
+	m_pVertexDecl = new CD3D1XVertexDeclaration(layout, 12, m_pVS);
+	
 	D3D11_SUBRESOURCE_DATA initData{};
 	initData.pSysMem = m_aVerticles;
-	if (FAILED(pd3dDevice->CreateBuffer(&bd, &initData, &m_pVertexBuffer)))
-		g_pDebug->printError("Failed to create vertex buffer");
+	m_pVertexBuffer = new CD3D1XVertexBuffer(8 * sizeof(RwV3d), &initData);
 
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = 24*sizeof(USHORT);
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-	bd.MiscFlags = 0;
-	bd.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA initDataIB{};
-	initDataIB.pSysMem = m_aIndices;
-
-	if (FAILED(pd3dDevice->CreateBuffer(&bd, &initDataIB, &m_pIndexBuffer)))
-		g_pDebug->printError("Failed to create index buffer");
+	initData={};
+	initData.pSysMem = m_aIndices;
+	m_pIndexBuffer = new CD3D1XIndexBuffer(24, &initData);
 }
 
 void DebugBBox::Shutdown()
 {
-	if (m_pVertexLayout) m_pVertexLayout->Release();
-	if (m_pVertexBuffer) m_pVertexBuffer->Release();
-	if (m_pIndexBuffer)  m_pIndexBuffer->Release();
+	if (m_pVertexDecl) delete m_pVertexDecl;
+	if (m_pVertexBuffer) delete m_pVertexBuffer;
+	if (m_pIndexBuffer) delete m_pIndexBuffer;
 	if (m_pPS) delete m_pPS;
 	if (m_pVS) delete m_pVS;
 }

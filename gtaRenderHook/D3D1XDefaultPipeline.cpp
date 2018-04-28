@@ -43,7 +43,7 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 	
 	bool	hasNormals = geom->morphTarget[0].normals != nullptr,
 			hasTexCoords = geom->texCoords[0] != nullptr,
-			hasColors = geom->preLitLum&&geom->flags&rpGEOMETRYPRELIT;
+			hasColors = geom->preLitLum && geom->flags&rpGEOMETRYPRELIT;
 
 	for (RwUInt32 i = 0; i < resEntryHeader->totalNumVertex; i++)
 	{
@@ -54,7 +54,7 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 	}
 	// if mesh doesn't have normals generate them on the fly
 	if (!hasNormals)
-		GenerateNormals(vertexData, resEntryHeader->totalNumVertex, geom->triangles, geom->numTriangles);
+		GenerateNormals(vertexData, resEntryHeader->totalNumVertex, geom->triangles, geom->numTriangles, reinstance==2);
 	
 	D3D11_SUBRESOURCE_DATA InitData;
 
@@ -68,6 +68,52 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 
 	delete[] vertexData;
 	
+	return true;
+}
+
+bool CD3D1XDefaultPipeline::Instance(void * object, RxD3D9ResEntryHeader * resEntryHeader, RwBool reinstance, const std::vector<RxVertexIndex>& indexBuffer) const
+{
+	RpAtomic* atomic = static_cast<RpAtomic*>(object);
+	RpGeometry* geom = atomic->geometry;
+	resEntryHeader->totalNumVertex = geom->numVertices;
+	// create vertex declaration
+	// TODO: add more robust vertex declaration generation
+	auto vdeclPtr = CD3D1XVertexDeclarationManager::AddNew(m_pVS, geom->flags | rpGEOMETRYNORMALS |
+		rpGEOMETRYPRELIT | rpGEOMETRYTEXTURED | rpGEOMETRYPOSITIONS);
+	resEntryHeader->vertexDeclaration = vdeclPtr->getInputLayout();
+
+	// copy vertex data to data structure that represents vertex in shader
+	// TODO: add ability to create custom verticle types on fly,
+	// currently even if mesh doesn't have colors/textures they are still filled, that could be potentional performance hit.
+	SimpleVertex* vertexData = new SimpleVertex[resEntryHeader->totalNumVertex];
+
+	bool	hasNormals = geom->morphTarget[0].normals != nullptr,
+		hasTexCoords = geom->texCoords[0] != nullptr,
+		hasColors = geom->preLitLum && geom->flags&rpGEOMETRYPRELIT;
+
+	for (RwUInt32 i = 0; i < resEntryHeader->totalNumVertex; i++)
+	{
+		vertexData[i].pos = geom->morphTarget[0].verts[i];
+		vertexData[i].normal = hasNormals ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
+		vertexData[i].uv = hasTexCoords ? geom->texCoords[0][i] : RwTexCoords{ 0, 0 };
+		vertexData[i].color = hasColors ? geom->preLitLum[i] : RwRGBA{ 255, 255, 255, 255 };
+	}
+	// if mesh doesn't have normals generate them on the fly
+	if (!hasNormals)
+		GenerateNormals(vertexData, resEntryHeader->totalNumVertex, indexBuffer);
+
+	D3D11_SUBRESOURCE_DATA InitData;
+
+	InitData.SysMemPitch = 0;
+	InitData.SysMemSlicePitch = 0;
+	InitData.pSysMem = vertexData;
+
+	auto buffer = new CD3D1XVertexBuffer(sizeof(SimpleVertex) * resEntryHeader->totalNumVertex, &InitData);
+	resEntryHeader->vertexStream[0].vertexBuffer = buffer;
+	CD3D1XVertexBufferManager::AddNew(buffer);
+
+	delete[] vertexData;
+
 	return true;
 }
 
@@ -93,7 +139,7 @@ void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8
 	RpMaterial* material;
 	for (RwUInt32 i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
-		model = &entryData->models[i];
+		model = &GetModelsData(entryData)[i];
 		material = model->material;
 		if (material->color.alpha == 0) continue;
 		alphaBlend = material->color.alpha!=255 || model->vertexAlpha;
@@ -114,13 +160,21 @@ void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8
 	}
 }
 
-void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned int vertexCount, RpTriangle* triangles, unsigned int triangleCount)
+void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned int vertexCount, RpTriangle* triangles, unsigned int triangleCount, bool isTriStrip)
 {
 	// generate normal for each triangle and vertex in mesh
 	for (RwUInt32 i = 0; i < triangleCount; i++)
 	{
 		auto triangle = triangles[i];
+		bool swapIds = isTriStrip;
 		auto iA = triangle.vertIndex[0], iB = triangle.vertIndex[1], iC = triangle.vertIndex[2];
+		
+		if (swapIds&&i%2==0) {
+			RwUInt16 t = iC;
+			iC = iB;
+			iB = t;
+		}
+
 		auto vA = verticles[iA],
 			 vB = verticles[iB],
 			 vC = verticles[iC];
@@ -136,11 +190,14 @@ void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned i
 			vA.pos.y - vC.pos.y,
 			vA.pos.z - vC.pos.z
 		};
+		// fix for triangle strips
+
+		//float normalDirection = isTriStrip?(i % 2 == 0 ? 1.0f : -1.0f):1.0f;
 		// normal vector as cross product of (tangent X bitangent)
 		RwV3d normal = {
-			tangent.y*bitangent.z - tangent.z*bitangent.y,
-			tangent.z*bitangent.x - tangent.x*bitangent.z,
-			tangent.x*bitangent.y - tangent.y*bitangent.x
+			(tangent.y*bitangent.z - tangent.z*bitangent.y),
+			(tangent.z*bitangent.x - tangent.x*bitangent.z),
+			(tangent.x*bitangent.y - tangent.y*bitangent.x)
 		};
 		// increase normals of each vertex in triangle 
 		verticles[iA].normal = {
@@ -165,4 +222,61 @@ void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned i
 		RwReal length = sqrt(verticles[i].normal.x*verticles[i].normal.x + verticles[i].normal.y*verticles[i].normal.y + verticles[i].normal.z*verticles[i].normal.z);
 		verticles[i].normal = { verticles[i].normal.x / length, verticles[i].normal.y / length, verticles[i].normal.z / length };
 	}
+}
+
+void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned int vertexCount, const std::vector<RxVertexIndex>& indexBuffer)
+{// generate normal for each triangle and vertex in mesh
+	for (RwUInt32 i = 0; i < indexBuffer.size(); i++)
+	{
+		auto iA = indexBuffer[i*3], iB = indexBuffer[i * 3 + 1], iC = indexBuffer[i * 3 + 2];
+		/*if (i % 2 == 0) {
+			RwUInt16 t = iC;
+			iC = iB;
+			iB = t;
+		}*/
+		auto vA = verticles[iA],
+			vB = verticles[iB],
+			vC = verticles[iC];
+		
+		// tangent vector
+		RwV3d tangent = {
+			vB.pos.x - vA.pos.x,
+			vB.pos.y - vA.pos.y,
+			vB.pos.z - vA.pos.z
+		};
+		// bitangent vector
+		RwV3d bitangent = {
+			vA.pos.x - vC.pos.x,
+			vA.pos.y - vC.pos.y,
+			vA.pos.z - vC.pos.z
+		};
+		// normal vector as cross product of (tangent X bitangent)
+		RwV3d normal = {
+			(tangent.y*bitangent.z - tangent.z*bitangent.y),
+			(tangent.z*bitangent.x - tangent.x*bitangent.z),
+			(tangent.x*bitangent.y - tangent.y*bitangent.x)
+		};
+		// increase normals of each vertex in triangle 
+		verticles[iA].normal = {
+			 normal.x,
+			 normal.y,
+			 normal.z
+		};
+		verticles[iB].normal = {
+			 normal.x,
+			 normal.y,
+			 normal.z
+		};
+		verticles[iC].normal = {
+			 normal.x,
+			 normal.y,
+			 normal.z
+		};
+	}
+	// normalize normals
+	/*for (RwUInt32 i = 0; i < vertexCount; i++)
+	{
+		RwReal length = sqrt(verticles[i].normal.x*verticles[i].normal.x + verticles[i].normal.y*verticles[i].normal.y + verticles[i].normal.z*verticles[i].normal.z);
+		verticles[i].normal = { verticles[i].normal.x / length, verticles[i].normal.y / length, verticles[i].normal.z / length };
+	}*/
 }

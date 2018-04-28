@@ -277,7 +277,7 @@ void CD3D1XRenderBuffersManager::Inverse4x4Matrix(RwGraphicsMatrix * a, RwGraphi
 
 	det = b->m[0].x * a->m[0].x + b->m[0].y * a->m[1].x + b->m[0].z * a->m[2].x + b->m[0].w * a->m[3].x;
 
-	det = 1.0 / det;
+	det = 1.0f / det;
 
 	for (i = 0; i < 4; i++) {
 		a->m[i].x = a->m[i].x  * det;

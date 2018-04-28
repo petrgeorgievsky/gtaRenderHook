@@ -755,8 +755,8 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 	RwGraphicsMatrix *viewTransformRef = (RwGraphicsMatrix*)&RwD3D9D3D9ViewTransform;
 	RwGraphicsMatrix *projTransformRef = (RwGraphicsMatrix*)&RwD3D9D3D9ProjTransform;
 #else
-	RwMatrix *viewTransformRef = &viewTransform;
-	RwMatrix *projTransformRef = &projTransform;
+	RwGraphicsMatrix *viewTransformRef = (RwGraphicsMatrix*)&viewTransform;
+	RwGraphicsMatrix *projTransformRef = (RwGraphicsMatrix*)&projTransform;
 #endif
 	// rw used inverse of camera frame matrix with negative column-vector
 	RwMatrixInvert((RwMatrix*)viewTransformRef, RwFrameGetLTM(static_cast<RwFrame*>(camera->object.object.parent)));
@@ -1039,7 +1039,7 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * owner,
 	if ((mesh->flags & rpMESHHEADERUNINDEXED)==0) {
 
 		for (auto i = 0; i < mesh->numMeshes; i++)
-			entry->header.totalNumIndex += mesh->meshes[i].numIndices;
+			entry->header.totalNumIndex += GetMeshesData(mesh)[i].numIndices;
 
 		if (entry->header.totalNumIndex > 0) {
 			createIndexBuffer = true;
@@ -1091,29 +1091,29 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * owner,
 		unsigned int currentIndexOffset = 0;
 		for (unsigned int i = 0; i < mesh->numMeshes; i++)
 		{
-			meshData = &entry->models[i];
-
+			meshData = &GetModelsData(entry)[i];
+			auto meshData2 = GetMeshesData(mesh)[i];
 			RwUInt32	minVert = 0, numVert = 0;
 			if (mesh->flags & rpMESHHEADERPOINTLIST)
 			{
-				numVert = mesh->meshes[i].numIndices;
+				numVert = meshData2.numIndices;
 				minVert = currentIndexOffset;
 			}
-			else if (mesh->meshes[i].numIndices > 0)
+			else if (meshData2.numIndices > 0)
 			{
 				minVert = UINT_MAX;
 				UINT maxIndex = 0;
-				for (unsigned int j = 0; j < mesh->meshes[i].numIndices; j++)
+				for (unsigned int j = 0; j < meshData2.numIndices; j++)
 				{
-					minVert = min(minVert, mesh->meshes[i].indices[j]);
-					maxIndex = max(maxIndex, mesh->meshes[i].indices[j]);
+					minVert = min(minVert, meshData2.indices[j]);
+					maxIndex = max(maxIndex, meshData2.indices[j]);
 				}
 				numVert = maxIndex - minVert + 1;
 			}
 
 			meshData->numVertices = numVert;
 			meshData->minVert = minVert;			
-			meshData->material = mesh->meshes[i].material;
+			meshData->material = meshData2.material;
 			meshData->vertexShader = nullptr;
 			meshData->vertexAlpha = false;
 
@@ -1123,18 +1123,18 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * owner,
 				meshData->startIndex = 0;
 			}
 			else {
-				meshData->numIndex = mesh->meshes[i].numIndices;
+				meshData->numIndex = meshData2.numIndices;
 				meshData->startIndex = currentIndexOffset;
 				if (convertToTriList) {
-					meshData->numIndex = rwD3D9ConvertToTriList(&indexBufferData[currentIndexOffset], mesh->meshes[i].indices, mesh->meshes[i].numIndices, meshData->minVert);
+					meshData->numIndex = rwD3D9ConvertToTriList(&indexBufferData[currentIndexOffset], meshData2.indices, meshData2.numIndices, meshData->minVert);
 				}
 				else if (meshData->minVert > 0)
 				{
-					for (size_t j = 0; j < mesh->meshes[i].numIndices; j++)
-						indexBufferData[currentIndexOffset + j] = mesh->meshes[i].indices[j] - meshData->minVert;
+					for (size_t j = 0; j < meshData2.numIndices; j++)
+						indexBufferData[currentIndexOffset + j] = meshData2.indices[j] - meshData->minVert;
 				}
 				else
-					memcpy(&indexBufferData[currentIndexOffset], mesh->meshes[i].indices, mesh->meshes[i].numIndices * sizeof(RxVertexIndex));
+					memcpy(&indexBufferData[currentIndexOffset], meshData2.indices, meshData2.numIndices * sizeof(RxVertexIndex));
 				if (entry->header.primType == rwPRIMTYPETRILIST)
 					qsort(&indexBufferData[currentIndexOffset], meshData->numIndex / 3, 6u, SortTriangles);
 				currentIndexOffset += static_cast<size_t>(meshData->numIndex);
@@ -1143,17 +1143,17 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * owner,
 			switch (entry->header.primType)
 			{
 			case rwPRIMTYPEPOLYLINE:
-				meshData->numPrimitives = mesh->meshes[i].numIndices >> 1;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices >> 1;// numPrimitives
 				break;
 			case rwPRIMTYPETRILIST:
-				meshData->numPrimitives = mesh->meshes[i].numIndices - 1;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices - 1;// numPrimitives
 				break;
 			case rwPRIMTYPETRISTRIP:
-				meshData->numPrimitives = mesh->meshes[i].numIndices / 3;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices / 3;// numPrimitives
 				break;
 			case rwPRIMTYPETRIFAN:
 			case rwPRIMTYPEPOINTLIST:
-				meshData->numPrimitives = mesh->meshes[i].numIndices - 2;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices - 2;// numPrimitives
 				break;
 			default:
 				meshData->numPrimitives = 0;          // numPrimitives
@@ -1171,7 +1171,11 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * owner,
 	else
 		entry->header.indexBuffer = nullptr;
 
-	if (!instanceCallback || instanceCallback(object, &entry->header, 0))
+	if (instanceCallback==nullptr)
+		return entry;
+	if (instanceCallback != _rxD3D9DefaultInstanceCallback && instanceCallback(object, &entry->header, 0))
+		return entry;
+	if (instanceCallback == _rxD3D9DefaultInstanceCallback && _rxD3D9DefaultInstanceCallback(object, &entry->header,0))
 		return entry;
 	else if (allocateNative)
 		_RwFree(entry);
@@ -1195,7 +1199,7 @@ RxInstanceData * CRwD3D1XEngine::m_D3DSkinInstance(void * object, void * instanc
 	entry->header.indexBuffer = 0;
 	entry->header.totalNumIndex = 0;
 	for (auto i = 0; i < mesh->numMeshes; i++)
-		entry->header.totalNumIndex += mesh->meshes[i].numIndices;
+		entry->header.totalNumIndex += GetMeshesData(mesh)[i].numIndices;
 	if (entry->header.totalNumIndex > 0)
 		createIndexBuffer = true;
 	if ((mesh->flags & rpMESHHEADERPRIMMASK) == rpMESHHEADERTRISTRIP&&atomic->geometry->numTriangles * 3 > 0) {
@@ -1230,29 +1234,30 @@ RxInstanceData * CRwD3D1XEngine::m_D3DSkinInstance(void * object, void * instanc
 		size_t currentIndexOffset = 0;
 		for (size_t i = 0; i < mesh->numMeshes; i++)
 		{
-			meshData = &entry->models[i];
+			meshData = &GetModelsData(entry)[i];
+			auto meshData2 = GetMeshesData(mesh)[i];
 			RwUInt32	minVert = 0,
 				numVert = 0;
 			if (mesh->flags & rpMESHHEADERPOINTLIST)
 			{
-				numVert = mesh->meshes[i].numIndices;
+				numVert = meshData2.numIndices;
 				minVert = static_cast<UINT>(currentIndexOffset);
 			}
-			else if (mesh->meshes[i].numIndices > 0)
+			else if (meshData2.numIndices > 0)
 			{
 				minVert = UINT_MAX;
 				UINT maxIndex = 0;
-				for (size_t j = 0; j < static_cast<size_t>(mesh->meshes[i].numIndices); j++)
+				for (size_t j = 0; j < static_cast<size_t>(meshData2.numIndices); j++)
 				{
-					minVert = min(minVert, mesh->meshes[i].indices[j]);
-					maxIndex = max(maxIndex, mesh->meshes[i].indices[j]);
+					minVert = min(minVert, meshData2.indices[j]);
+					maxIndex = max(maxIndex, meshData2.indices[j]);
 				}
 				numVert = maxIndex - minVert + 1;
 			}
 			meshData->numVertices = numVert;
 			meshData->minVert = minVert;
 			meshData->vertexShader = nullptr;
-			meshData->material = mesh->meshes[i].material;
+			meshData->material = meshData2.material;
 			meshData->vertexAlpha = false;
 			if (&indexBufferData[currentIndexOffset] == nullptr)
 			{
@@ -1260,18 +1265,18 @@ RxInstanceData * CRwD3D1XEngine::m_D3DSkinInstance(void * object, void * instanc
 				meshData->startIndex = 0;
 			}
 			else {
-				meshData->numIndex = mesh->meshes[i].numIndices;
+				meshData->numIndex = meshData2.numIndices;
 				meshData->startIndex = static_cast<RwUInt32>(currentIndexOffset);
 				if (convertToTriList) {
-					meshData->numIndex = rwD3D9ConvertToTriList(&indexBufferData[currentIndexOffset], mesh->meshes[i].indices, mesh->meshes[i].numIndices, meshData->minVert);
+					meshData->numIndex = rwD3D9ConvertToTriList(&indexBufferData[currentIndexOffset], meshData2.indices, meshData2.numIndices, meshData->minVert);
 				}
 				else if (meshData->minVert > 0)
 				{
-					for (size_t j = 0; j < static_cast<size_t>(mesh->meshes[i].numIndices); j++)
-						indexBufferData[currentIndexOffset + j] = mesh->meshes[i].indices[j] - static_cast<RwUInt16>(meshData->minVert);
+					for (size_t j = 0; j < static_cast<size_t>(meshData2.numIndices); j++)
+						indexBufferData[currentIndexOffset + j] = meshData2.indices[j] - static_cast<RwUInt16>(meshData->minVert);
 				}
 				else
-					memcpy(&indexBufferData[currentIndexOffset], mesh->meshes[i].indices, static_cast<size_t>(mesh->meshes[i].numIndices) * sizeof(RxVertexIndex));
+					memcpy(&indexBufferData[currentIndexOffset], meshData2.indices, static_cast<size_t>(meshData2.numIndices) * sizeof(RxVertexIndex));
 				if (entry->header.primType == rwPRIMTYPETRILIST)
 					qsort(&indexBufferData[currentIndexOffset], meshData->numIndex / 3, 6u, SortTriangles);
 				currentIndexOffset += static_cast<size_t>(meshData->numIndex);
@@ -1280,17 +1285,17 @@ RxInstanceData * CRwD3D1XEngine::m_D3DSkinInstance(void * object, void * instanc
 			switch (entry->header.primType)
 			{
 			case rwPRIMTYPEPOLYLINE:
-				meshData->numPrimitives = mesh->meshes[i].numIndices >> 1;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices >> 1;// numPrimitives
 				break;
 			case rwPRIMTYPETRILIST:
-				meshData->numPrimitives = mesh->meshes[i].numIndices - 1;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices - 1;// numPrimitives
 				break;
 			case rwPRIMTYPETRISTRIP:
-				meshData->numPrimitives = mesh->meshes[i].numIndices / 3;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices / 3;// numPrimitives
 				break;
 			case rwPRIMTYPETRIFAN:
 			case rwPRIMTYPEPOINTLIST:
-				meshData->numPrimitives = mesh->meshes[i].numIndices - 2;// numPrimitives
+				meshData->numPrimitives = meshData2.numIndices - 2;// numPrimitives
 				break;
 			default:
 				meshData->numPrimitives = 0;          // numPrimitives
@@ -1418,8 +1423,8 @@ void CRwD3D1XEngine::SetRenderTargets(RwRaster ** rasters, RwRaster* zBuffer, Rw
 			pRTVs.push_back(nullptr);
 	}
 	D3D11_VIEWPORT vp;
-	vp.Width = rasters[0]->width;
-	vp.Height = rasters[0]->height;
+	vp.Width = (float)rasters[0]->width;
+	vp.Height = (float)rasters[0]->height;
 	vp.MaxDepth = 1;
 	vp.MinDepth = 0;
 	vp.TopLeftX = 0;vp.TopLeftY = 0;

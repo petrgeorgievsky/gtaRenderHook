@@ -54,7 +54,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 	g_pStateMgr->SetAlphaBlendEnable(true);
 	for (auto mesh: m_aAlphaMeshList)
 	{
-		auto curmesh = mesh->entryptr->models[mesh->meshID];
+		auto curmesh = GetModelsData(mesh->entryptr)[mesh->meshID];
 		g_pStateMgr->SetInputLayout((ID3D11InputLayout*)mesh->entryptr->header.vertexDeclaration);
 		g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)mesh->entryptr->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
 
@@ -158,14 +158,15 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 	// Render each material in model
 	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
+		auto mesh = GetModelsData(entryData)[i];
 		bAlphaEnable = 0;
 		// Setup material properties
 		if (m_uiDeferredStage != 2) {
 			RwRGBA paintColor;
-			paintColor.red = entryData->models[i].material->color.red;
-			paintColor.green = entryData->models[i].material->color.green;
-			paintColor.blue = entryData->models[i].material->color.blue;
-			paintColor.alpha = entryData->models[i].material->color.alpha;
+			paintColor.red = mesh.material->color.red;
+			paintColor.green = mesh.material->color.green;
+			paintColor.blue = mesh.material->color.blue;
+			paintColor.alpha = mesh.material->color.alpha;
 			UINT colorHEX = (*(UINT*)&paintColor) & 0xFFFFFF;
 			
 			if (colorHEX < 0xAF00FF)
@@ -184,23 +185,23 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 				paintColor.red = 0;
 			}
 
-			float fShininess = 1.0f - RpMaterialGetFxEnvShininess(entryData->models[i].material);
-			float fSpec = CCustomCarEnvMapPipeline__GetFxSpecSpecularity(entryData->models[i].material);
+			float fShininess = 1.0f - RpMaterialGetFxEnvShininess(mesh.material);
+			float fSpec = CCustomCarEnvMapPipeline__GetFxSpecSpecularity(mesh.material);
 
-			if(entryData->models[i].material->surfaceProps.ambient>1.0)
+			if(mesh.material->surfaceProps.ambient>1.0)
 				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(paintColor);
 			else
 				g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(paintColor);
 			g_pRenderBuffersMgr->UpdateMaterialSpecularInt(fSpec);
 			g_pRenderBuffersMgr->UpdateMaterialGlossiness(fShininess);
 		}
-		bAlphaEnable |= entryData->models[i].material->color.alpha != 255 || entryData->models[i].vertexAlpha;
+		bAlphaEnable |= mesh.material->color.alpha != 255 || mesh.vertexAlpha;
 		g_pRenderBuffersMgr->UpdateHasSpecTex(0);
 		// Setup texture
-		if (entryData->models[i].material->texture) {
-			if (entryData->models[i].material->texture->raster != nullptr) {
+		if (mesh.material->texture) {
+			if (mesh.material->texture->raster != nullptr) {
 				//bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
-				g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
+				g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
 			}
 		}
 
@@ -209,7 +210,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 			g_pStateMgr->SetAlphaBlendEnable(bAlphaEnable>0);
 		else {
 			g_pStateMgr->SetAlphaBlendEnable(FALSE);			
-			if (bAlphaEnable > 0 && entryData->models[i].material->color.alpha!=0)// If mesh has alpha chanel and it's not hiden than we need to add it to alpha render list  
+			if (bAlphaEnable > 0 && mesh.material->color.alpha!=0)// If mesh has alpha chanel and it's not hiden than we need to add it to alpha render list  
 			{
 				m_aAlphaMeshList.push_back(new AlphaMesh{ entryData, RwFrameGetLTM(static_cast<RwFrame*>(atomic->object.object.parent)), (int)i });
 				continue;
@@ -218,7 +219,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 		// Draw mesh
 		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
-		GET_D3D_RENDERER->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
+		GET_D3D_RENDERER->DrawIndexed(mesh.numIndex, mesh.startIndex, mesh.minVert);
 	}
 	if (m_uiDeferredStage == 3 || m_uiDeferredStage == 4)
 		m_pVoxelGS->ReSet();

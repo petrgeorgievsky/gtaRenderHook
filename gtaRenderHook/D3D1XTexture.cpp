@@ -68,7 +68,7 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 		m_type = eD3D1XTextureType::TT_Texture;
 		{
 			// base texture buffer
-			desc.MipLevels = mipMaps ? max(log2(min(desc.Width, desc.Height))-2,0) : 1;
+			desc.MipLevels = mipMaps ? max((int)log2(min(desc.Width, desc.Height))-2,0) : 1;
 			desc.SampleDesc.Quality = 0;
 			desc.SampleDesc.Count = 1;
 			desc.Usage = D3D11_USAGE_DEFAULT;

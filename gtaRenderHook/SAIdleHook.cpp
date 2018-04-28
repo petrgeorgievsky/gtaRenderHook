@@ -181,15 +181,12 @@ void CSAIdleHook::RenderInGame()
 										CTimeCycle::m_CurrentColours.m_fPostFx2Blue / 255.0f,
 										CTimeCycle::m_CurrentColours.m_fPostFx2Alpha / 255.0f };
 	g_shaderRenderStateBuffer.fFarClip = Scene.m_pRwCamera->farPlane;
-	g_shaderRenderStateBuffer.fTimeStep += 0.08f * CTimer__ms_fTimeStep * 0.04f;
-	if (g_shaderRenderStateBuffer.fTimeStep > 3.14f * 2)
-		g_shaderRenderStateBuffer.fTimeStep -= 3.14f * 2;
 
 	// First forward pass(clouds, sky etc.)
 	RenderForwardBeforeDeferred();
 	
 	g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered = false;
-	if (sunDirs && !CGame__currArea && (m_fShadowDNBalance < 1.0))
+	if (sunDirs && !CGame::currArea && (m_fShadowDNBalance < 1.0))
 		PrepareRealTimeShadows(sunDirs[curr_sun_dir]);
 	
 	DebugRendering::ResetList();
@@ -212,7 +209,7 @@ void CSAIdleHook::RenderInGame()
 
 	shadowTimer.Start();
 
-	if (sunDirs && !CGame__currArea&&m_fShadowDNBalance < 1.0) // Render shadows only if we are not inside interiors
+	if (sunDirs && !CGame::currArea&&m_fShadowDNBalance < 1.0) // Render shadows only if we are not inside interiors
 		RenderRealTimeShadows(sunDirs[curr_sun_dir]);
 
 	shadowTimer.Stop();
@@ -313,7 +310,7 @@ void CSAIdleHook::RenderDeferred()
 {
 	CVisibilityPluginsRH::ClearWeaponPedsList();
 	
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
 	CRenderer::RenderRoads();
 	CRenderer::RenderEverythingBarRoads();
 	RenderFadingInUnderwaterEntities();

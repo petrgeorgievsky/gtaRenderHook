@@ -25,7 +25,7 @@ CShadowRenderer::CShadowRenderer()
 	RwCameraSetRaster(m_pShadowCamera, nullptr);
 	int maxTexSize;
 	if (g_pRwCustomEngine->GetMaxTextureSize(maxTexSize))
-		gShadowSettings.Size = min(gShadowSettings.Size, maxTexSize / gShadowSettings.ShadowCascadeCount);
+		gShadowSettings.Size =(UINT) min((int)gShadowSettings.Size, maxTexSize / gShadowSettings.ShadowCascadeCount);
 	RwCameraSetZRaster(m_pShadowCamera, RwRasterCreate(gShadowSettings.Size * gShadowSettings.ShadowCascadeCount, gShadowSettings.Size, 32, rwRASTERTYPEZBUFFER));
 	vw.x = vw.y = 40;
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
@@ -195,7 +195,7 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 	vp.Height = static_cast<FLOAT>(gShadowSettings.Size);
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = (gShadowSettings.Size * cascade);
+	vp.TopLeftX = (float)(gShadowSettings.Size * cascade);
 	vp.TopLeftY = 0;
 	g_pStateMgr->SetViewport(vp);
 

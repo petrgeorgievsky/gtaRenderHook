@@ -167,6 +167,7 @@ CD3D1XPixelShader::CD3D1XPixelShader(std::string fileName, std::string entryPoin
 		m_pBlob->Release();
 		m_pBlob = nullptr;
 	}
+	g_pDebug->SetD3DName(m_pShaderDC, fileName + "/" + entryPoint);
 }
 
 void CD3D1XPixelShader::Set()

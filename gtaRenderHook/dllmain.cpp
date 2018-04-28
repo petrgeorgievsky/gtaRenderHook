@@ -82,6 +82,7 @@ char GTARwInit() {
 }
 char GTARwShutdown() {
 	DebugBBox::Shutdown();
+	DebugRendering::Shutdown();
 	//CVoxelOctreeRenderer::Shutdown();
 	CLightManager::Shutdown();
 	if(g_pCustomWaterPipe)
@@ -134,6 +135,14 @@ void _rxD3D9DefaultRenderCallback(RwResEntry *repEntry, void *object, RwUInt8 ty
 }
 void _rxD3D9SkinRenderCallback(RwResEntry *repEntry, void *object, RwUInt8 type, RwUInt32 flags) {
 	//g_pRwCustomEngine->SkinRenderCallback(repEntry, object, type, flags);
+}
+RxD3D9InstanceData* GetModelsData(RxInstanceData * data)
+{
+	return reinterpret_cast<RxD3D9InstanceData*>(data + 1);
+}
+RpMesh * GetMeshesData(RpD3DMeshHeader * data)
+{
+	return reinterpret_cast<RpMesh*>(data + 1);
 }
 RwBool _rxD3D9DefaultInstanceCallback(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance) {
 	return g_pRwCustomEngine->DefaultInstanceCallback(object, resEntryHeader, reinstance);

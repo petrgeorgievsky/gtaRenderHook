@@ -1,8 +1,5 @@
 #ifndef GTA_SA_PTRS_H
 #define GTA_SA_PTRS_H
-//#include <game_sa\rw\rwcore.h>
-//#include <game_sa\rw\rpworld.h>
-//#include <game_sa\rw\rpskin.h>
 #include <game_sa\RenderWare.h>
 
 /*
@@ -179,13 +176,21 @@ struct _rwD3DRaster {
 struct RxInstanceData : RwResEntry
 {
 	RxD3D9ResEntryHeader	header;
-	RxD3D9InstanceData		models[];
 };
+
+/*!
+*	Returns model list for RxInstanceData.
+*/
+RxD3D9InstanceData* GetModelsData(RxInstanceData * data);
 
 struct RpD3DMeshHeader : RpMeshHeader
 {
-	RpMesh meshes[];
 };
+
+/*!
+*	Returns model list for RxInstanceData.
+*/
+RpMesh* GetMeshesData(RpD3DMeshHeader * data);
 
 struct RxD3D9Pipelines
 {
@@ -470,7 +475,7 @@ struct CBaseModelInfo {
 *	Global Variables
 */
 
-#define RwEngineInstance((void *)			0x661228)
+#define RwEngineInstance ((void *)0x661228)
 #define RpSkinGlobals	(*(rpSkinGlobals *)	0x663C8C)
 #define RpResModule		(*(RwModuleInfo *)	0x732A18)
 #define dgGGlobals		(*(RwCamera**)		0x6F1D08)
@@ -521,12 +526,6 @@ struct CBaseModelInfo {
 /*
 *	RenderWare macros defines
 */
-#define BYTEn(x, n)   (*((BYTE*)&(x)+n))
-#define LOBYTE(x)   (*((BYTE*)&(x)))
-#define BYTE1(x)   BYTEn(x,  1)         // byte 1 (counting from 0)
-#define BYTE2(x)   BYTEn(x,  2)
-#define BYTE3(x)   BYTEn(x,  3)
-#define BYTE4(x)   BYTEn(x,  4)
 
 #define _RWPLUGINOFFSET(_type,_base,_offset) \
 	*(_type**)((UINT)_base + (_offset))
@@ -564,4 +563,6 @@ struct CBaseModelInfo {
 #define GetD3D1XRaster(r)\
         (&((_rwD3D1XRaster*)r)->dr)
 
+
+RwBool _rxD3D9DefaultInstanceCallback(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance);
 #endif

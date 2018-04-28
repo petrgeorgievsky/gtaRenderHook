@@ -61,8 +61,6 @@ CD3DRenderer::~CD3DRenderer()
 {
 	for (auto pAdapter : m_vAdapters)
 		pAdapter->Release();
-	if (m_pdxgiFactory)
-		m_pdxgiFactory->Release();
 }
 
 bool CD3DRenderer::InitDevice()

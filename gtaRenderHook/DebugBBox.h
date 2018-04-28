@@ -1,6 +1,9 @@
 #pragma once
 #include "DebugRenderObject.h"
 #include "RwVectorMath.h"
+#include "D3D1XVertexBuffer.h"
+#include "D3D1XIndexBuffer.h"
+#include "D3D1XVertexDeclaration.h"
 class CD3D1XShader;
 class DebugBBox :
 	public DebugRenderObject
@@ -20,8 +23,8 @@ private:
 	static CD3D1XShader*		m_pPS;
 	static RwV3d					m_aVerticles[8];
 	static USHORT					m_aIndices[24];
-	static ID3D11InputLayout*      m_pVertexLayout;
-	static ID3D11Buffer*           m_pVertexBuffer;
-	static ID3D11Buffer*           m_pIndexBuffer;
+	static CD3D1XVertexDeclaration*		m_pVertexDecl;
+	static CD3D1XVertexBuffer*			m_pVertexBuffer;
+	static CD3D1XIndexBuffer*			m_pIndexBuffer;
 };
 

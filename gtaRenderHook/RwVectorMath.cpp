@@ -270,10 +270,10 @@ Matrix Matrix::inverse()
 RwMatrix RW::Matrix::getRWMatrix()
 {
 	RwMatrix mat;
-	RwUInt32 rightW = right_.getW();
-	RwUInt32 upW = up_.getW();
-	RwUInt32 atW = at_.getW();
-	RwUInt32 posW = pos_.getW();
+	float rightW = right_.getW();
+	float upW = up_.getW();
+	float atW = at_.getW();
+	float posW = pos_.getW();
 	mat.right = right_.getRW3Vector();
 	mat.flags = reinterpret_cast<RwUInt32&>(rightW);
 	mat.up = up_.getRW3Vector();

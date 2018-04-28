@@ -57,7 +57,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 	g_pStateMgr->SetAlphaBlendEnable(true);
 	for (auto mesh : m_aAlphaMeshList)
 	{
-		auto curmesh = mesh->entryptr->models[mesh->meshID];
+		auto curmesh = GetModelsData(mesh->entryptr)[mesh->meshID];
 		if (curmesh.material->color.alpha == 0) continue;
 		g_pStateMgr->SetInputLayout((ID3D11InputLayout*)mesh->entryptr->header.vertexDeclaration);
 		g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)mesh->entryptr->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
@@ -130,24 +130,25 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 	RwUInt8 bAlphaEnable = 0;
 	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
-		if (entryData->models[i].material->color.alpha == 0) continue;
+		auto mesh = GetModelsData(entryData)[i];
+		if (mesh.material->color.alpha == 0) continue;
 		bAlphaEnable = 0;
 		if (m_uiDeferredStage != 2) {
-			if (entryData->models[i].material->surfaceProps.ambient>1.0 || CRenderer::TOBJpass == true)
-				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(entryData->models[i].material->color);
+			if (mesh.material->surfaceProps.ambient>1.0 || CRenderer::TOBJpass == true)
+				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(mesh.material->color);
 			else
-				g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(entryData->models[i].material->color);
-			float fShininess = 1.0f - RpMaterialGetFxEnvShininess(entryData->models[i].material);
+				g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(mesh.material->color);
+			float fShininess = 1.0f - RpMaterialGetFxEnvShininess(mesh.material);
 			float fGloss = 0.5f;//1.0f - RpMaterialGetFxEnvShininess(entryData->models[i].material);
 			g_pRenderBuffersMgr->UpdateMaterialSpecularInt(fShininess);
 			g_pRenderBuffersMgr->UpdateMaterialGlossiness(fGloss);
 		}
-		bAlphaEnable |= entryData->models[i].material->color.alpha != 255 || entryData->models[i].vertexAlpha;
+		bAlphaEnable |= mesh.material->color.alpha != 255 || mesh.vertexAlpha;
 
-		if (entryData->models[i].material->texture) {
-			bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
-			g_pRwCustomEngine->SetTexture(entryData->models[i].material->texture, 0);
-			CPBSMaterial* mat = CPBSMaterialMgr::materials[entryData->models[i].material->texture->name];
+		if (mesh.material->texture) {
+			bAlphaEnable |= GetD3D1XRaster(mesh.material->texture->raster)->alpha;
+			g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
+			CPBSMaterial* mat = CPBSMaterialMgr::materials[mesh.material->texture->name];
 			if (mat != nullptr) {
 				g_pStateMgr->SetRaster(mat->m_tSpecRoughness->raster, 1);
 				g_pRenderBuffersMgr->UpdateHasSpecTex(1);
@@ -165,7 +166,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 		drawCallCount++;
 		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
-		GET_D3D_RENDERER->DrawIndexed(entryData->models[i].numIndex, entryData->models[i].startIndex, entryData->models[i].minVert);
+		GET_D3D_RENDERER->DrawIndexed(mesh.numIndex, mesh.startIndex, mesh.minVert);
 		g_pRenderBuffersMgr->UpdateHasSpecTex(0);
 	}
 	if (m_uiDeferredStage == 3 || m_uiDeferredStage == 4)

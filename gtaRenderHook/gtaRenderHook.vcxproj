@@ -105,8 +105,8 @@
     <OutDir>D:\Program Files (x86)\Rockstar Games\Grand Theft Auto III</OutDir>
     <TargetExt>.asi</TargetExt>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>C:\Program Files %28x86%29\RW\Graphics\rwsdk\include\d3d9;C:\Users\peter\Documents\GitHub\sa-render\Render\game;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\tinyxml2-master\tinyxml2\Release-Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_iii\;$(TINY_XML)\..\;$(PLUGIN_SDK_DIR)\plugin_sa\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(TINY_XML)\Debug-Lib;$(ANT_TWEAKBAR)\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -183,7 +183,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>user32.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AntTweakBar.lib;user32.lib;dxgi.lib;d3d11.lib;d3dcompiler.lib;tinyxml2.lib;plugin_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>

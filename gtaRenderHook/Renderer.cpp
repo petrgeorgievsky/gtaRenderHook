@@ -448,7 +448,7 @@ RendererVisibility CRenderer::SetupEntityVisibility(CEntity * entity, float * re
 			// Don't render object if entity doesn't have rwObject or is invisible or vehicle inside interior?
 			if (!entity->m_pRwObject
 				|| !entity->m_bIsVisible && (/*!CMirrors__TypeOfMirror || */entity->m_nModelIndex) // is invisible and has model index
-				|| !(entity->m_nAreaCode != CGame__currArea && entity->m_nAreaCode != 13) && (entity->m_nType) == eEntityType::ENTITY_TYPE_VEHICLE)
+				|| !(entity->m_nAreaCode != CGame::currArea && entity->m_nAreaCode != 13) && (entity->m_nType) == eEntityType::ENTITY_TYPE_VEHICLE)
 			{
 				return RendererVisibility::INVISIBLE;
 			}
@@ -930,7 +930,7 @@ void CRenderer::ScanBigBuildingList(int x, int y)
 	//CRenderer__ScanBigBuildingList(x, y);
 	//return;
 	bool loadIfRequired = false;
-	if (x < 0 || y < 0 | x >= 30 || y >= 30)
+	if (x < 0 || y < 0 || x >= 30 || y >= 30)
 		return;
 	
 	auto lodPtrList = GetLodPtrList(x,y);
@@ -1221,14 +1221,14 @@ void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart
 	float maxX = ms_vecCameraPosition.x+ farPlane;
 	float minY = ms_vecCameraPosition.y- farPlane;
 	float maxY = ms_vecCameraPosition.y+ farPlane;
-	sector[0].x = minX * 0.02 + 60.0;
-	sector[0].y = minY * 0.02 + 60.0;
-	sector[1].x = minX * 0.02 + 60.0;
-	sector[1].y = maxY * 0.02 + 60.0;
-	sector[2].x = maxX * 0.02 + 60.0;
-	sector[2].y = minY * 0.02 + 60.0;
-	sector[3].x = maxX * 0.02 + 60.0;
-	sector[3].y = maxY * 0.02 + 60.0;
+	sector[0].x = minX * 0.02f + 60.0f;
+	sector[0].y = minY * 0.02f + 60.0f;
+	sector[1].x = minX * 0.02f + 60.0f;
+	sector[1].y = maxY * 0.02f + 60.0f;
+	sector[2].x = maxX * 0.02f + 60.0f;
+	sector[2].y = minY * 0.02f + 60.0f;
+	sector[3].x = maxX * 0.02f + 60.0f;
+	sector[3].y = maxY * 0.02f + 60.0f;
 	CWorldScan__ScanWorld(sector, 4, CRenderer::ScanSectorListForShadowCasters);
 
 
@@ -1337,8 +1337,8 @@ void CRenderer::ScanWorld()
 		ms_aVisibleShadowCasters[i].clear();
 	for (auto i = 0; i < 4; i++)
 		CalculateShadowBoundingPlanes(i);
-	int currentSectorX = ceil((ms_vecCameraPosition.x - 25.0f) / 50.0f + 60.0f);
-	int currentSectorY = ceil((ms_vecCameraPosition.y - 25.0f) / 50.0f + 60.0f);
+	int currentSectorX = (int)ceil((ms_vecCameraPosition.x - 25.0f) / 50.0f + 60.0f);
+	int currentSectorY = (int)ceil((ms_vecCameraPosition.y - 25.0f) / 50.0f + 60.0f);
 	// TODO: Add reflections culling
 	// Resets scan codes if it exceeds 2^16
 	SetNextScanCode();
@@ -1380,7 +1380,6 @@ void CRenderer::ScanWorld()
 	float maxX = ms_vecCameraPosition.x + farPlane / 2;
 	float minY = ms_vecCameraPosition.y - farPlane / 2;
 	float maxY = ms_vecCameraPosition.y + farPlane / 2;
-	RwV2d shadowSector[8];
 	sector[0].x = points[13].x * 0.005f + 15.0f;
 	sector[0].y = points[13].y * 0.005f + 15.0f;
 	sector[1].x = points[1].x * 0.005f + 15.0f;
@@ -1392,7 +1391,7 @@ void CRenderer::ScanWorld()
 	sector[4].x = points[4].x * 0.005f + 15.0f;
 	sector[4].y = points[4].y * 0.005f + 15.0f;
 	
-	if (CGame__currArea || (CSAIdleHook::m_fShadowDNBalance >= 1.0) || !gShadowSettings.ScanShadowsBehindPlayer)
+	if (CGame::currArea || (CSAIdleHook::m_fShadowDNBalance >= 1.0) || !gShadowSettings.ScanShadowsBehindPlayer)
 		return;
 	
 	

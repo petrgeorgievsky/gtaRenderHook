@@ -155,8 +155,8 @@ void CVoxelOctreeRenderer::SetVoxelTex(RwRGBA &color) {
 void CVoxelOctreeRenderer::SetVoxelLODSize(const int & lod)
 {
 	RwV2d vw;
-	vw.x = vw.y = (voxelTreeSize / 2) / (1 << (3 - lod));
-	m_pVoxelCB->data.voxelGridScale = (1 << (3 - lod));
+	vw.x = vw.y = (float)((voxelTreeSize / 2) / (1 << (3 - lod)));
+	m_pVoxelCB->data.voxelGridScale =(float) (1 << (3 - lod));
 	m_pVoxelCB->Update();
 	RwCameraSetViewWindow(m_pVoxelCamera, &vw);
 }

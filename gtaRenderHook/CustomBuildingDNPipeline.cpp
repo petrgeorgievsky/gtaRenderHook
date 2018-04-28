@@ -83,9 +83,9 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	//for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	//	meshList.push_back(entryData->models[i]);
 	//meshList.sort([](const RxD3D9InstanceData &a, const RxD3D9InstanceData &b) {return a.material->texture > b.material->texture; });
-	for (int i=0; i<entryData->header.numMeshes;i++)
+	for (RwUInt32 i=0; i<entryData->header.numMeshes;i++)
 	{
-		auto mesh = entryData->models[i];
+		auto mesh = GetModelsData(entryData)[i];
 		bAlphaEnable = 0;
 		if (mesh.material->color.alpha == 0) continue;
 		if (m_uiDeferredStage != 2) {

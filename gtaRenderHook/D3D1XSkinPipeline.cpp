@@ -150,7 +150,7 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 	RpMaterial* material;
 	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
-		model = &entryData->models[i];
+		model = &GetModelsData(entryData)[i];
 		material = model->material;
 		alphaBlend = material->color.alpha!=255 || model->vertexAlpha;
 		// set texture

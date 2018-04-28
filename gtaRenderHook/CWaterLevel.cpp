@@ -99,7 +99,7 @@ void CWaterLevel::RenderWater()
 	// water quads
 	if (m_nNumOfWaterQuads > 0)
 	{
-		for(int i=0;i<m_nNumOfWaterQuads;i++){
+		for(UINT i=0;i<m_nNumOfWaterQuads;i++){
 			if (m_aQuads[i].m_flags & 1)
 			{
 				/*if (byte_C228DC != v0)
@@ -129,7 +129,7 @@ void CWaterLevel::RenderWater()
 		}
 	}
 	// water rectangles
-	for (int k = 0; k < m_NumBlocksOutsideWorldToBeRendered; ++k)
+	for (UINT k = 0; k < m_NumBlocksOutsideWorldToBeRendered; ++k)
 	{
 
 		if (m_BlocksToBeRenderedOutsideWorldX[k] >= 0 && m_BlocksToBeRenderedOutsideWorldX[k] < 12) {
@@ -137,11 +137,11 @@ void CWaterLevel::RenderWater()
 				continue;
 		}
 
-		float x = m_BlocksToBeRenderedOutsideWorldX[k];
-		float y = m_BlocksToBeRenderedOutsideWorldY[k];
+		USHORT x = m_BlocksToBeRenderedOutsideWorldX[k];
+		USHORT y = m_BlocksToBeRenderedOutsideWorldY[k];
 
 		RenderWaterRectangle(
-			(x * 500.0f - 3000.0f), ((x + 1) * 500.0f - 3000.0f), (y * 500.0f - 3000.0), ((y + 1) * 500.0f - 3000.0),
+			(x * 500 - 3000), ((x + 1) * 500 - 3000), (y * 500 - 3000), ((y + 1) * 500 - 3000),
 			{ 0.0,	1.0,	0.0,	0,0,0 }, { 0.0,	1.0,	0.0,	0,0,0 },
 			{ 0.0,	1.0,	0.0,	0,0,0 }, { 0.0,	1.0,	0.0,	0,0,0 });
 
@@ -186,10 +186,10 @@ void CWaterLevel::SetCameraRange()
 {
 	CVector camPos = TheCamera.GetPosition();
 
-	CameraRangeMinX = 2 * floor((camPos.x - DETAILEDWATERDIST) * 0.5);
-	CameraRangeMaxX = 2 * ceil((DETAILEDWATERDIST + camPos.x) * 0.5);
-	CameraRangeMinY = 2 * floor((camPos.y - DETAILEDWATERDIST) * 0.5);
-	CameraRangeMaxY = 2 * ceil((DETAILEDWATERDIST + camPos.y) * 0.5);
+	CameraRangeMinX = 2 * (int)floorf((camPos.x - DETAILEDWATERDIST) * 0.5f);
+	CameraRangeMaxX = 2 * (int)ceilf((DETAILEDWATERDIST + camPos.x) * 0.5f);
+	CameraRangeMinY = 2 * (int)floorf((camPos.y - DETAILEDWATERDIST) * 0.5f);
+	CameraRangeMaxY = 2 * (int)ceilf((DETAILEDWATERDIST + camPos.y) * 0.5f);
 }
 
 void CWaterLevel::RenderBoatWakes()
@@ -315,16 +315,16 @@ void CWaterLevel::RenderDetailedSeaBedSegment(int x, int y, float a, float b, fl
 	UINT  color = 0xFF505050;
 
 	float uvDist = b - a;
-	float v7 = (uvDist * 4.0);
+	float v7 = (uvDist * 4.0f);
 	int v8 = 1;
 	float v39 = 1;
 	if (v7 >= 1)
 		v39 = v7;
 
 	float uvDist2 = d - c;
-	float v10 = (uvDist2 * 4.0);
+	float v10 = (uvDist2 * 4.0f);
 	if (v10 >= 1)
-		v8 = v10;
+		v8 = (int)v10;
 
 	int v34 = v8;
 	int v35 = 0;
@@ -350,15 +350,15 @@ void CWaterLevel::RenderDetailedSeaBedSegment(int x, int y, float a, float b, fl
 				float v26 = v38 * uvDist2 / v34 + c;
 				float v27 = v14 * uvDist2 / v34 + c;
 				
-				TempVertexBuffer[vertexId].objVertex.x = (x + v18) * 500.0 - 3000.0;
-				TempVertexBuffer[vertexId].objVertex.y = (y + v26) * 500.0 - 3000.0;
+				TempVertexBuffer[vertexId].objVertex.x = (x + v18) * 500.0f - 3000.0f;
+				TempVertexBuffer[vertexId].objVertex.y = (y + v26) * 500.0f - 3000.0f;
 				TempVertexBuffer[vertexId].objVertex.z = height;
 				TempVertexBuffer[vertexId].color = color;
 				TempVertexBuffer[vertexId].v = v26 * UVScale;
 				TempVertexBuffer[vertexId].u = v18 * UVScale;
 				
-				TempVertexBuffer[vertexId + 1].objVertex.x = (x + v18) * 500.0 - 3000.0;
-				TempVertexBuffer[vertexId + 1].objVertex.y = (y + v27) * 500.0 - 3000.0;
+				TempVertexBuffer[vertexId + 1].objVertex.x = (x + v18) * 500.0f - 3000.0f;
+				TempVertexBuffer[vertexId + 1].objVertex.y = (y + v27) * 500.0f - 3000.0f;
 				TempVertexBuffer[vertexId + 1].objVertex.z = height;
 				TempVertexBuffer[vertexId + 1].color = color;
 				TempVertexBuffer[vertexId + 1].u = v18 * UVScale;
@@ -366,15 +366,15 @@ void CWaterLevel::RenderDetailedSeaBedSegment(int x, int y, float a, float b, fl
 
 				TempVertexBuffer[vertexId + 2].u = v19 * UVScale;
 				TempVertexBuffer[vertexId + 2].v = v26 * UVScale;
-				TempVertexBuffer[vertexId + 2].objVertex.x = (x + v19) * 500.0 - 3000.0;
-				TempVertexBuffer[vertexId + 2].objVertex.y = (y + v26) * 500.0 - 3000.0;
+				TempVertexBuffer[vertexId + 2].objVertex.x = (x + v19) * 500.0f - 3000.0f;
+				TempVertexBuffer[vertexId + 2].objVertex.y = (y + v26) * 500.0f - 3000.0f;
 				TempVertexBuffer[vertexId + 2].objVertex.z = height;
 				TempVertexBuffer[vertexId + 2].color	   = color;
 
 				TempVertexBuffer[vertexId + 3].u = v19 * UVScale;
 				TempVertexBuffer[vertexId + 3].v = v27 * UVScale;
-				TempVertexBuffer[vertexId + 3].objVertex.x = (x + v19) * 500.0 - 3000.0;
-				TempVertexBuffer[vertexId + 3].objVertex.y = (y + v27) * 500.0 - 3000.0;
+				TempVertexBuffer[vertexId + 3].objVertex.x = (x + v19) * 500.0f - 3000.0f;
+				TempVertexBuffer[vertexId + 3].objVertex.y = (y + v27) * 500.0f - 3000.0f;
 				TempVertexBuffer[vertexId + 3].objVertex.z = height;
 				TempVertexBuffer[vertexId + 3].color = color;
 
@@ -405,32 +405,32 @@ void CWaterLevel::RenderSeaBedSegment(int x, int y, float xOffset0, float xOffse
 	float height = -70.0f;
 	TempVertexBuffer[vertexId].u = xOffset0 * UVScale;
 	TempVertexBuffer[vertexId].v = yOffset0 * UVScale;
-	TempVertexBuffer[vertexId].objVertex.x = (x + xOffset0) * 500.0 - 3000.0;
-	TempVertexBuffer[vertexId].objVertex.y = (y + yOffset0) * 500.0 - 3000.0;
+	TempVertexBuffer[vertexId].objVertex.x = (x + xOffset0) * 500.0f - 3000.0f;
+	TempVertexBuffer[vertexId].objVertex.y = (y + yOffset0) * 500.0f - 3000.0f;
 	TempVertexBuffer[vertexId].objVertex.z = height;
 	TempVertexBuffer[vertexId].objNormal.z = 1.0;
 	TempVertexBuffer[vertexId].color = color;
 
 	TempVertexBuffer[vertexId + 1].u = xOffset0 * UVScale;
 	TempVertexBuffer[vertexId + 1].v = yOffset1 * UVScale;
-	TempVertexBuffer[vertexId + 1].objVertex.x = (x + xOffset0) * 500.0 - 3000.0;
-	TempVertexBuffer[vertexId + 1].objVertex.y = (y + yOffset1) * 500.0 - 3000.0;
+	TempVertexBuffer[vertexId + 1].objVertex.x = (x + xOffset0) * 500.0f - 3000.0f;
+	TempVertexBuffer[vertexId + 1].objVertex.y = (y + yOffset1) * 500.0f - 3000.0f;
 	TempVertexBuffer[vertexId + 1].objVertex.z = height;
 	TempVertexBuffer[vertexId + 1].objNormal.z = 1.0;
 	TempVertexBuffer[vertexId + 1].color = color;
 
 	TempVertexBuffer[vertexId + 2].u = xOffset1 * UVScale;
 	TempVertexBuffer[vertexId + 2].v = yOffset0 * UVScale;
-	TempVertexBuffer[vertexId + 2].objVertex.x = (x + xOffset1) * 500.0 - 3000.0;
-	TempVertexBuffer[vertexId + 2].objVertex.y = (y + yOffset0) * 500.0 - 3000.0;
+	TempVertexBuffer[vertexId + 2].objVertex.x = (x + xOffset1) * 500.0f - 3000.0f;
+	TempVertexBuffer[vertexId + 2].objVertex.y = (y + yOffset0) * 500.0f - 3000.0f;
 	TempVertexBuffer[vertexId + 2].objVertex.z = height;
 	TempVertexBuffer[vertexId + 2].objNormal.z = 1.0;
 	TempVertexBuffer[vertexId + 2].color = color;
 
 	TempVertexBuffer[vertexId + 3].u = xOffset1 * UVScale;
 	TempVertexBuffer[vertexId + 3].v = yOffset1 * UVScale;
-	TempVertexBuffer[vertexId + 3].objVertex.x = (x + xOffset1) * 500.0 - 3000.0;
-	TempVertexBuffer[vertexId + 3].objVertex.y = (y + yOffset1) * 500.0 - 3000.0;
+	TempVertexBuffer[vertexId + 3].objVertex.x = (x + xOffset1) * 500.0f - 3000.0f;
+	TempVertexBuffer[vertexId + 3].objVertex.y = (y + yOffset1) * 500.0f - 3000.0f;
 	TempVertexBuffer[vertexId + 3].objVertex.z = height;
 	TempVertexBuffer[vertexId + 3].objNormal.z = 1.0;
 	TempVertexBuffer[vertexId + 3].color = color;
@@ -451,15 +451,15 @@ void CWaterLevel::RenderSeaBed()
 	TempBufferVerticesStored = 0;
 	TempBufferIndicesStored = 0;
 
-	for (int i = 0; i < m_NumBlocksOutsideWorldToBeRendered; ++i)
+	for (UINT i = 0; i < m_NumBlocksOutsideWorldToBeRendered; ++i)
 	{
 		USHORT x = m_BlocksToBeRenderedOutsideWorldX[i];
 		USHORT y = m_BlocksToBeRenderedOutsideWorldY[i];
 
 		CVector camPos= TheCamera.GetPosition();
 
-		float xDistToCam = camPos.x - ((x + 0.5) * 500.0 - 3000.0);
-		float yDistToCam = camPos.y - ((y + 0.5) * 500.0 - 3000.0);
+		float xDistToCam = camPos.x - ((x + 0.5f) * 500.0f - 3000.0f);
+		float yDistToCam = camPos.y - ((y + 0.5f) * 500.0f - 3000.0f);
 
 		int renderDetailed = 1;
 		if (sqrt(yDistToCam * yDistToCam + xDistToCam * xDistToCam) >= 600.0f)
@@ -484,27 +484,27 @@ void CWaterLevel::RenderSeaBed()
 		if (m_BlocksToBeRenderedOutsideWorldX[i])
 		{
 			if (x == 11) {
-				uvA = 0.96;
-				uvB = 1.0;
+				uvA = 0.96f;
+				uvB = 1.0f;
 				v8 = 1;
 			}
 		}
 		else
 		{
-			uvB = 0.04;
+			uvB = 0.04f;
 			v8 = 1;
 		}
 		if (m_BlocksToBeRenderedOutsideWorldY[i])
 		{
 			if (y == 11) {
-				uvC = 0.96;
-				uvD = 1.0;
+				uvC = 0.96f;
+				uvD = 1.0f;
 				v43 = 1;
 			}
 		}
 		else
 		{
-			uvD = 0.04;
+			uvD = 0.04f;
 			v43 = 1;
 		}
 
@@ -547,7 +547,7 @@ void CWaterLevel::RenderAndEmptyRenderBuffer()
 
 void CWaterLevel::GenerateNormals()
 {
-	for (int i = 0; i < TempBufferIndicesStored /3; i++)
+	for (UINT i = 0; i < TempBufferIndicesStored /3; i++)
 	{
 		RwV3d firstvec = {
 			TempVertexBuffer[TempBufferRenderIndexList[i * 3 + 1]].objVertex.x - TempVertexBuffer[TempBufferRenderIndexList[i * 3 + 0]].objVertex.x,
@@ -609,7 +609,7 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 		tV = tcV;//- floor(tcV);
 
 
-		v27 = 0.079999998;
+		v27 = 0.08f;
 		//LOBYTE(a21) = dword_8D3808;
 		height = 0.0;
 	}
@@ -619,7 +619,7 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 		float tcV = /*z * 0.039999999 +*/ TextureShiftSecondV;
 		tU = tcU;//- floor(tcU);
 		tV = tcV;//- floor(tcV);
-		v27 = 0.039999999;
+		v27 = 0.04f;
 		//LOBYTE(a21) = dword_8D380C;
 		height = 0.0;
 	}
@@ -627,19 +627,19 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 	{
 		//v13 = a21;
 	}
-	tU = tU - 7.0;
+	tU = tU - 7.0f;
 	//v28 = a4 - a3;
 	if (y1 - y0 <= 0)
-		tV = tV + 7.0;
+		tV = tV + 7.0f;
 	else
-		tV = tV - 7.0;
+		tV = tV - 7.0f;
 	float diffuse, sunGlare;
 	height = a.baseHeight;
 	CalculateWavesForCoordinate(x0, y0, a.wave0Height, a.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex].objNormal);
 	TempVertexBuffer[startVertex].u = 0;
 	TempVertexBuffer[startVertex].v = 0;
-	TempVertexBuffer[startVertex].objVertex.x = x0;
-	TempVertexBuffer[startVertex].objVertex.y = y0;
+	TempVertexBuffer[startVertex].objVertex.x = (float)x0;
+	TempVertexBuffer[startVertex].objVertex.y = (float)y0;
 	TempVertexBuffer[startVertex].objVertex.z = height;
 	//TempVertexBuffer[startVertex].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex].color = 0xFFFFFFFF;
@@ -649,8 +649,8 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 	CalculateWavesForCoordinate(x1, y0, b.wave0Height, b.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+1].objNormal);
 	TempVertexBuffer[startVertex + 1].u = 1;
 	TempVertexBuffer[startVertex + 1].v = 0;
-	TempVertexBuffer[startVertex + 1].objVertex.x = x1;
-	TempVertexBuffer[startVertex + 1].objVertex.y = y0;
+	TempVertexBuffer[startVertex + 1].objVertex.x = (float)x1;
+	TempVertexBuffer[startVertex + 1].objVertex.y = (float)y0;
 	TempVertexBuffer[startVertex + 1].objVertex.z = height;
 	//TempVertexBuffer[startVertex + 1].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex + 1].color = 0xFFFFFFFF;
@@ -659,8 +659,8 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 	CalculateWavesForCoordinate(x0, y1, c.wave0Height, c.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+2].objNormal);
 	TempVertexBuffer[startVertex + 2].u = 0;
 	TempVertexBuffer[startVertex + 2].v = 1;
-	TempVertexBuffer[startVertex + 2].objVertex.x = x0;
-	TempVertexBuffer[startVertex + 2].objVertex.y = y1;
+	TempVertexBuffer[startVertex + 2].objVertex.x = (float)x0;
+	TempVertexBuffer[startVertex + 2].objVertex.y = (float)y1;
 	TempVertexBuffer[startVertex + 2].objVertex.z = height;
 	//TempVertexBuffer[startVertex + 2].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex + 2].color = 0xFFFFFFFF;
@@ -669,8 +669,8 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 	CalculateWavesForCoordinate(x1, y1, d.wave0Height, d.wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[startVertex+3].objNormal);
 	TempVertexBuffer[startVertex + 3].u = 1;
 	TempVertexBuffer[startVertex + 3].v = 1;
-	TempVertexBuffer[startVertex + 3].objVertex.x = x1;
-	TempVertexBuffer[startVertex + 3].objVertex.y = y1;
+	TempVertexBuffer[startVertex + 3].objVertex.x = (float)x1;
+	TempVertexBuffer[startVertex + 3].objVertex.y = (float)y1;
 	TempVertexBuffer[startVertex + 3].objVertex.z = height;
 	//TempVertexBuffer[startVertex + 3].objNormal.z = 1.0;
 	TempVertexBuffer[startVertex + 3].color = 0xFFFFFFFF;
@@ -710,26 +710,26 @@ void CWaterLevel::CalculateWavesForCoordinate(int x, int y, float a3, float a4, 
 	float wave2Phi = (wave2Freq + y / 10.0f);
 
 	
-	float sin0 = sin(wave0Phi*M_PI);//CMaths::ms_SinTable[lookUpID0 + 1];
-	float cos0 = cos(wave0Phi*M_PI);//CMaths::ms_SinTable[(lookUpID0 + 64) + 1];
-	float sin1 = sin(wave1Phi*M_PI);//CMaths::ms_SinTable[lookUpID1 + 1];
-	float cos1 = cos(wave1Phi*M_PI);//CMaths::ms_SinTable[(lookUpID1 + 64) + 1];
-	float sin2 = sin(wave2Phi*M_PI);//CMaths::ms_SinTable[lookUpID2 + 1];
-	float cos2 = cos(wave2Phi*M_PI);//CMaths::ms_SinTable[(lookUpID2 + 64) + 1];
+	float sin0 = (float)sin(wave0Phi*M_PI);//CMaths::ms_SinTable[lookUpID0 + 1];
+	float cos0 = (float)cos(wave0Phi*M_PI);//CMaths::ms_SinTable[(lookUpID0 + 64) + 1];
+	float sin1 = (float)sin(wave1Phi*M_PI);//CMaths::ms_SinTable[lookUpID1 + 1];
+	float cos1 = (float)cos(wave1Phi*M_PI);//CMaths::ms_SinTable[(lookUpID1 + 64) + 1];
+	float sin2 = (float)sin(wave2Phi*M_PI);//CMaths::ms_SinTable[lookUpID2 + 1];
+	float cos2 = (float)cos(wave2Phi*M_PI);//CMaths::ms_SinTable[(lookUpID2 + 64) + 1];
 
-	*resHeight = sin0 * 2.0 * waveIntensity * a3 + *resHeight;
-	float wave0 = -(cos0 * 2.0 * waveIntensity * a3 * M_PI / 32.0f);
+	*resHeight = sin0 * 2.0f * waveIntensity * a3 + *resHeight;
+	float wave0 = -(cos0 * 2.0f * waveIntensity * a3 * (float)M_PI / 32.0f);
 	resNormal->x = wave0;
 	resNormal->y = wave0;
 	resNormal->z = 1.0f;
 
 	*resHeight = sin1 * waveIntensity * a4 + *resHeight;
-	float wave1 = cos1 * waveIntensity * a4 * M_PI / 13.0f;
+	float wave1 = cos1 * waveIntensity * a4 * (float)M_PI / 13.0f;
 	resNormal->x += wave1;
 	resNormal->y += wave1;
 
 	*resHeight = sin2 * 0.5f * waveIntensity * a4 + *resHeight;
-	resNormal->x += waveIntensity * (cos2 * 0.5f) * a4 * M_PI / 10.0f;
+	resNormal->x += waveIntensity * (cos2 * 0.5f) * a4 * (float)M_PI / 10.0f;
 
 	resNormal->Normalise();
 
@@ -740,16 +740,16 @@ void CWaterLevel::CalculateWavesForCoordinate(int x, int y, float a3, float a4, 
 	*diffuse = diffuseCoeff * g_fWaterDiffuseIntensity + g_fWaterAmbientIntensity;
 
 	*sunGlare = cosA;
-	float sunGlareCoeff = cosA * 8.0 - 5.0;
+	float sunGlareCoeff = cosA * 8.0f - 5.0f;
 
-	if (sunGlareCoeff >= 0.0)
+	if (sunGlareCoeff >= 0.0f)
 	{
 		sunGlareCoeff = min(sunGlareCoeff, 0.99f);
 		*sunGlare = sunGlareCoeff * CWeather::SunGlare;
 	}
 	else
 	{
-		*sunGlare = 0.0;
+		*sunGlare = 0.0f;
 	}
 }
 
@@ -784,7 +784,7 @@ void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x0, int x1, int y0, 
 	//uBaseOffset = uBaseOffset - floorf(uBaseOffset);
 	//vBaseOffset = vBaseOffset - floorf(vBaseOffset);
 
-	int tessFactor = 16;
+	UINT tessFactor = 16;
 	float xSize = (x1 - x0)/ (float)tessFactor;
 	float ySize = (y1 - y0)/ (float)tessFactor;
 	float wave0avgHeight = (a.wave0Height + b.wave0Height + c.wave0Height + d.wave0Height) / 4.0f;
@@ -800,29 +800,29 @@ void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x0, int x1, int y0, 
 			int currVertID = startVertex + x_offset * (tessFactor+1) + y_offset;
 			float diffuse;
 			float sunGlare;
-			int x = x0 + xSize * x_offset;
-			int y = y0 + ySize * y_offset;
+			int x = x0 + (int)(xSize * x_offset);
+			int y = y0 + (int)(ySize * y_offset);
 			float detailScale = sqrtf(((camPos.y - y) * (camPos.y - y)) + ((camPos.x - x) * (camPos.x - x))) / DETAILEDWATERDIST;
 
-			float waterHeightScale = 1.0;
-			if (detailScale <= 1.0)
+			float waterHeightScale = 1.0f;
+			if (detailScale <= 1.0f)
 			{
-				if (detailScale > 0.75)
-					waterHeightScale = (1.0 - detailScale) * 4.0;
+				if (detailScale > 0.75f)
+					waterHeightScale = (1.0f - detailScale) * 4.0f;
 			}
 			else
-				waterHeightScale = 0.0;
+				waterHeightScale = 0.0f;
 			
-			height = BilinearInterp(a.baseHeight, b.baseHeight, c.baseHeight, d.baseHeight, x, y, x0, x1, y0, y1);//wave0avgHeight;
-			float wave0Height = BilinearInterp(a.wave0Height, b.wave0Height, c.wave0Height, d.wave0Height, x, y, x0, x1, y0, y1)*waterHeightScale;
-			float wave1Height = BilinearInterp(a.wave1Height, b.wave1Height, c.wave1Height, d.wave1Height, x, y, x0, x1, y0, y1)*waterHeightScale;
+			height = BilinearInterp(a.baseHeight, b.baseHeight, c.baseHeight, d.baseHeight, (float)x, (float)y, (float)x0, (float)x1, (float)y0, (float)y1);//wave0avgHeight;
+			float wave0Height = BilinearInterp(a.wave0Height, b.wave0Height, c.wave0Height, d.wave0Height, (float)x, (float)y, (float)x0, (float)x1, (float)y0, (float)y1)*waterHeightScale;
+			float wave1Height = BilinearInterp(a.wave1Height, b.wave1Height, c.wave1Height, d.wave1Height, (float)x, (float)y, (float)x0, (float)x1, (float)y0, (float)y1)*waterHeightScale;
 			CalculateWavesForCoordinate(x, y, wave0Height, wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[currVertID].objNormal);
 			float u = x_offset * layerTCScale + uBaseOffset;
 			float v = y_offset * layerTCScale + vBaseOffset;
 			TempVertexBuffer[currVertID].u = u-floorf(u);
 			TempVertexBuffer[currVertID].v = v-floorf(v);
-			TempVertexBuffer[currVertID].objVertex.x = x;
-			TempVertexBuffer[currVertID].objVertex.y = y;
+			TempVertexBuffer[currVertID].objVertex.x = (float)x;
+			TempVertexBuffer[currVertID].objVertex.y = (float)y;
 			TempVertexBuffer[currVertID].objVertex.z = height;
 			TempVertexBuffer[currVertID].color = 0xFFFFFFFF;
 			vertCount++;
@@ -850,30 +850,30 @@ void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x0, int x1, int y0, 
 void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int layer, int xToYHalfRatio, int a23, signed int halfXSize, signed int halfYSize)
 {
 	CWaterLevel::RenderAndEmptyRenderBuffer();
-	float xScale = 1.0 / (float)halfXSize;
-	float yScale = 1.0 / (float)halfYSize;
+	float xScale = 1.0f / (float)halfXSize;
+	float yScale = 1.0f / (float)halfYSize;
 
-	float xDecr = (x1 - x0) / halfXSize;
-	float yDecr = (y1 - y0) / halfYSize;
+	float xDecr = (float)(x1 - x0) / (float)halfXSize;
+	float yDecr = (float)(y1 - y0) / (float)halfYSize;
 	float yBaseHeightIncr = (float)(c.baseHeight - a.baseHeight) * yScale;
 	float yWave0Incr = (float)(c.wave0Height - a.wave0Height) * yScale;
 	float yWave1Incr = (float)(c.wave1Height - a.wave1Height) * yScale;
 
-	float xIncr = (x0 - x1) / halfXSize;
-	float yIncr = (y0 - y1) / halfYSize;
+	float xIncr = (float)(x0 - x1) / (float)halfXSize;
+	float yIncr = (float)(y0 - y1) / (float)halfYSize;
 	float yBaseHeightDecr = (float)(b.baseHeight - d.baseHeight) * yScale;
 	float yWave0Decr = (float)(b.wave0Height - d.wave0Height) * yScale;
 	float yWave1Decr = (float)(b.wave1Height - d.wave1Height) * yScale;
 	float texScale, texShiftU, texShiftV;
 	if (layer)
 	{
-		texScale = 0.04;
+		texScale = 0.04f;
 		texShiftU = TextureShiftSecondU;
 		texShiftV = TextureShiftSecondV;
 	}
 	else
 	{
-		texScale = 0.08;
+		texScale = 0.08f;
 		texShiftU = TextureShiftU;
 		texShiftV = TextureShiftV;
 	}
@@ -893,14 +893,14 @@ void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer(int x0, int x1, int y0
 		int yd = 0;
 		int yc = 0;
 
-		int yi = y1 + halfYSize * yIncr;
+		int yi = y1 + (int)(halfYSize * yIncr);
 		do
 		{
 			if (halfXSize >= 0)
 			{
 				int xc = 0;
 				int xd = 0;
-				int xi = x1 + halfXSize * xIncr;
+				int xi = x1 + (int)(halfXSize * xIncr);
 				int ycinv = halfYSize - yc;
 				do
 				{
@@ -924,15 +924,15 @@ void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer(int x0, int x1, int y0
 					}
 					float detailScale = sqrtf(((camPosY - y) * (camPosY - y)) + ((camPosX - x) * (camPosX - x))) / DETAILEDWATERDIST;
 
-					float waterHeightScale = 1.0;
-					if (detailScale <= 1.0)
+					float waterHeightScale = 1.0f;
+					if (detailScale <= 1.0f)
 					{
-						if (detailScale > 0.75)
-							waterHeightScale = (1.0 - detailScale) * 4.0;
+						if (detailScale > 0.75f)
+							waterHeightScale = (1.0f - detailScale) * 4.0f;
 					}
 					else
 					{
-						waterHeightScale = 0.0;
+						waterHeightScale = 0.0f;
 					}
 					if (layer == 1)
 					{
@@ -942,10 +942,10 @@ void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer(int x0, int x1, int y0
 						float diffuse, sunGlare;
 						CWaterLevel::CalculateWavesForCoordinate(x, y,
 							wave0Height * waterHeightScale, wave1Height * waterHeightScale, &baseHeight, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[TempBufferVerticesStored].objNormal);
-						TempVertexBuffer[TempBufferVerticesStored].u = xd * 0.08 + uBaseOffset;
-						TempVertexBuffer[TempBufferVerticesStored].v = xd * 0.08 + vBaseOffset;
-						TempVertexBuffer[TempBufferVerticesStored].objVertex.x = x;
-						TempVertexBuffer[TempBufferVerticesStored].objVertex.y = y;
+						TempVertexBuffer[TempBufferVerticesStored].u = xd * 0.08f + uBaseOffset;
+						TempVertexBuffer[TempBufferVerticesStored].v = xd * 0.08f + vBaseOffset;
+						TempVertexBuffer[TempBufferVerticesStored].objVertex.x = (float)x;
+						TempVertexBuffer[TempBufferVerticesStored].objVertex.y = (float)y;
 						TempVertexBuffer[TempBufferVerticesStored].objVertex.z = baseHeight;
 						TempVertexBuffer[TempBufferVerticesStored].color = 0xFFFFFFFF;
 					}
@@ -960,14 +960,14 @@ void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer(int x0, int x1, int y0
 						TempBufferIndicesStored = TempBufferIndicesStored + 6;
 					}
 					++xc;
-					xd += xDecr;
-					xi -= xIncr;
+					xd += (int)xDecr;
+					xi -= (int)xIncr;
 					TempBufferVerticesStored++;
 				} while (halfXSize >= xc);
 			}
 			++yc;
-			yd += yDecr;
-			yi -= yIncr;
+			yd += (int)yDecr;
+			yi -= (int)yIncr;
 		} while (halfYSize >= yc);
 	}
 }
