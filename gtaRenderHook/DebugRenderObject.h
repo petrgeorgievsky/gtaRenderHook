@@ -1,5 +1,9 @@
 #pragma once
-// Base debug visualization class.
+/*!
+	\class DebugRenderObject
+
+	Base class for rendering debug objects.
+*/
 class DebugRenderObject
 {
 public:

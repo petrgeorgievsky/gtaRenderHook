@@ -39,7 +39,7 @@
 #define RenderCoronasReflections() ((void (__cdecl *)())0x6FB630)()
 #define CRenderer__RenderEverythingBarRoads() ((void (__cdecl *)())0x553AA0)()
 #define BreakManager_c__Render(unk1, unk2) ((void (__thiscall *)(void *, int))0x59E6A0)(unk1, unk2)
-#define RenderFadingInUnderwaterEntities() ((void (__cdecl *)())0x553220)()
+//#define RenderFadingInUnderwaterEntities() ((void (__cdecl *)())0x553220)()
 
 #define CRenderer__RenderFadingInEntities() ((void (__cdecl *)())0x5531E0)()
 #define CVisibilityPlugins__RenderFadingInEntities() ((void (__cdecl *)())0x733F10)()

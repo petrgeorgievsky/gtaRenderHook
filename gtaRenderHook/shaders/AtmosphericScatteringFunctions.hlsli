@@ -74,7 +74,7 @@ float3 GetSkyColor(float3 ViewDir, float3 LightDir, float3 FullScattering)
 
     // Compute sky color at skydome by blending scattering with sun disk
     float3 SunDiskColor = max(FullScattering, vSunColor.rgb * vSunColor.a);
-    float SunDiskCoeff = CosPhi>0.9995f?1.0f:0.0f;
+    float SunDiskCoeff = CosPhi>0.9999f?1.0f:0.0f;
     
     return lerp(FullScattering, SunDiskColor, SunDiskCoeff);
 }

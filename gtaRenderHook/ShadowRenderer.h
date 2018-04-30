@@ -13,6 +13,12 @@ struct CBShadows
 	float	ShadowBias[4];
 };
 
+/*!
+	\class CShadowRenderer
+	\brief Cascaded shadow map renderer.
+
+	This class responsible for rendering shadow maps.
+*/
 class CShadowRenderer
 {
 public:

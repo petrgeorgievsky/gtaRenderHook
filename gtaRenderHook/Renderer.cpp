@@ -20,33 +20,33 @@
 #include "D3D1XStateManager.h"
 #include "SAIdleHook.h"
 #include "DebugBBox.h"
-bool		&CRenderer::ms_bRenderTunnels = *(bool*)0xB745C0;
-bool		&CRenderer::ms_bRenderOutsideTunnels = *(bool*)0xB745C1;
-bool&		CRenderer::ms_bInTheSky = *(bool*)0xB76851;
-UINT&		CRenderer::ms_nNoOfVisibleEntities = *(UINT*)0xB76844;
-UINT&		CRenderer::ms_nNoOfVisibleLods = *(UINT*)0xB76840;
-UINT&		CRenderer::ms_nNoOfInVisibleEntities = *(UINT*)0xB7683C;
-UINT&		CRenderer::m_loadingPriority = *(UINT*)0xB76850;
-CEntity*	CRenderer::m_pFirstPersonVehicle = (CEntity*)0xB745D4;
-RwPlane CRenderer::ms_aShadowCasterBoundingPlanes[4][5] = { {}, {}, {}, {} };
+bool		&CRendererRH::ms_bRenderTunnels = *(bool*)0xB745C0;
+bool		&CRendererRH::ms_bRenderOutsideTunnels = *(bool*)0xB745C1;
+bool&		CRendererRH::ms_bInTheSky = *(bool*)0xB76851;
+UINT&		CRendererRH::ms_nNoOfVisibleEntities = *(UINT*)0xB76844;
+UINT&		CRendererRH::ms_nNoOfVisibleLods = *(UINT*)0xB76840;
+UINT&		CRendererRH::ms_nNoOfInVisibleEntities = *(UINT*)0xB7683C;
+UINT&		CRendererRH::m_loadingPriority = *(UINT*)0xB76850;
+CEntity*	CRendererRH::m_pFirstPersonVehicle = (CEntity*)0xB745D4;
+RwPlane CRendererRH::ms_aShadowCasterBoundingPlanes[4][5] = { {}, {}, {}, {} };
 
-sLodListEntry*&	CRenderer::ms_pLodRenderList = *(sLodListEntry**)0xB745D0;
-sLodListEntry*&	CRenderer::ms_pLodDontRenderList = *(sLodListEntry**)0xB745CC;
+sLodListEntry*&	CRendererRH::ms_pLodRenderList = *(sLodListEntry**)0xB745D0;
+sLodListEntry*&	CRendererRH::ms_pLodDontRenderList = *(sLodListEntry**)0xB745CC;
 
-CEntity**	CRenderer::ms_aVisibleEntityPtrs = (CEntity**)0xB75898;
-CEntity**	CRenderer::ms_aInVisibleEntityPtrs = (CEntity**)0xB745D8;
+CEntity**	CRendererRH::ms_aVisibleEntityPtrs = (CEntity**)0xB75898;
+CEntity**	CRendererRH::ms_aInVisibleEntityPtrs = (CEntity**)0xB745D8;
 
-CEntity**	CRenderer::ms_aVisibleLodPtrs = (CEntity**)0xB748F8;
+CEntity**	CRendererRH::ms_aVisibleLodPtrs = (CEntity**)0xB748F8;
 //CBaseModelInfo**	CRenderer::ms_modelInfoPtrs = (CBaseModelInfo**)0xA9B0C8;
-CVector&			CRenderer::ms_vecCameraPosition = *(CVector*)0xB76870;
-float&				CRenderer::ms_fCameraHeading = *(float*)0xB7684C;
-float&				CRenderer::ms_lowLodDistScale = *(float*)0x8CD804;
-float&				CRenderer::ms_fFarClipPlane = *(float*)0xB76848;
-bool CRenderer::TOBJpass = false;
-std::list<CEntity*> CRenderer::ms_aVisibleEntities{};
-std::list<CEntity*> CRenderer::ms_aVisibleLods{};
-std::vector<CEntity*> CRenderer::ms_aVisibleShadowCasters[4] = { {}, {},{},{} };
-std::vector<CEntity*> CRenderer::ms_aVisibleReflectionObjects{};
+CVector&			CRendererRH::ms_vecCameraPosition = *(CVector*)0xB76870;
+float&				CRendererRH::ms_fCameraHeading = *(float*)0xB7684C;
+float&				CRendererRH::ms_lowLodDistScale = *(float*)0x8CD804;
+float&				CRendererRH::ms_fFarClipPlane = *(float*)0xB76848;
+bool CRendererRH::TOBJpass = false;
+std::list<CEntity*> CRendererRH::ms_aVisibleEntities{};
+std::list<CEntity*> CRendererRH::ms_aVisibleLods{};
+std::vector<CEntity*> CRendererRH::ms_aVisibleShadowCasters[4] = { {}, {},{},{} };
+std::vector<CEntity*> CRendererRH::ms_aVisibleReflectionObjects{};
 
 //9654B0     ; CStreaming::ms_disableStreaming
 #define CStreaming__ms_disableStreaming (*(unsigned char *)0x9654B0)
@@ -63,7 +63,7 @@ std::vector<CEntity*> CRenderer::ms_aVisibleReflectionObjects{};
 #define CVehicle__ResetAfterRender(veh) ((void(__thiscall *)(void*))0x6D0E20)(veh)
 //56E0D0     ; CVehicle *__cdecl FindPlayerVehicle(int playerNum, char includeRemote)
 #define FindPlayerVehicle(playerNum, includeRemote) ((CVehicle* (__cdecl *)(int, bool))0x56E0D0)(playerNum,includeRemote)
-void CRenderer::RenderRoads()
+void CRendererRH::RenderRoads()
 {
 	// Set road render-states.
 	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEFOGENABLE, 1);
@@ -95,14 +95,15 @@ void CRenderer::RenderRoads()
 	}
 }
 
-void CRenderer::RenderCubemapEntities()
+void CRendererRH::RenderCubemapEntities()
 {
 	g_pStateMgr->SetAlphaTestEnable(true);
+	g_pStateMgr->SetAlphaTestRef(0.8f);
 	for (auto entity : ms_aVisibleReflectionObjects)
 		RenderReflectionEntity(entity);
 }
 
-void CRenderer::RenderEverythingBarRoads()
+void CRendererRH::RenderEverythingBarRoads()
 {
 	//for (size_t i = 0; i < ms_nNoOfVisibleEntities; ++i)
 	//	RenderOneNonRoad(ms_aVisibleEntityPtrs[i]);
@@ -111,7 +112,7 @@ void CRenderer::RenderEverythingBarRoads()
 	// Draw non-roads.
 }
 
-void CRenderer::RenderTOBJs()
+void CRendererRH::RenderTOBJs()
 {
 	TOBJpass = true;
 	for (size_t i = 0; i < ms_nNoOfVisibleEntities; ++i) {
@@ -131,14 +132,14 @@ void CRenderer::RenderTOBJs()
 	TOBJpass = false;
 }
 
-void CRenderer::RenderShadowCascade(int i)
+void CRendererRH::RenderShadowCascade(int i)
 {
 	for (auto shadowEntity : ms_aVisibleShadowCasters[gShadowSettings.CullPerCascade ? i : 0])
 		RenderShadowCasterEntity(shadowEntity);//shadowEntity->Render();
 	
 }
 
-void CRenderer::ConstructShadowList()
+void CRendererRH::ConstructShadowList()
 {
 	// First get true BBox depth
 	/*for (int i = 0; i < ms_nNoOfVisibleEntities; i++)
@@ -222,7 +223,7 @@ void CRenderer::ConstructShadowList()
 }
 
 
-void CRenderer::ConstructRenderList()
+void CRendererRH::ConstructRenderList()
 {
 	// auto cullzoneattribs=CCullZones::FindTunnelAttributesForCoors(cameraPos);
 	ms_bRenderTunnels = true;
@@ -247,13 +248,13 @@ void CRenderer::ConstructRenderList()
 	CStreaming::StartRenderEntities();
 }
 
-void CRenderer::RenderFadingInEntities()
+void CRendererRH::RenderFadingInEntities()
 {
 	// Set fading entity render-states.
 	// Draw fading entities.
 }
 
-void CRenderer::AddEntityToRenderList(CEntity * entity, float renderDistance)
+void CRendererRH::AddEntityToRenderList(CEntity * entity, float renderDistance)
 {
 	/*if (ms_nNoOfVisibleEntities < 1000) {
 		ms_aVisibleEntityPtrs[ms_nNoOfVisibleEntities] = entity;
@@ -265,7 +266,7 @@ void CRenderer::AddEntityToRenderList(CEntity * entity, float renderDistance)
 	CRenderer__AddEntityToRenderList(entity, renderDistance);
 }
 
-void CRenderer::AddEntityToReflectionList(CEntity * entity, float renderDistance)
+void CRendererRH::AddEntityToReflectionList(CEntity * entity, float renderDistance)
 {
 	// Make lod everything >50 units away and cull everything >100 units away
 	if (renderDistance < 50) 
@@ -274,13 +275,13 @@ void CRenderer::AddEntityToReflectionList(CEntity * entity, float renderDistance
 		ms_aVisibleReflectionObjects.push_back(entity->m_pLod);
 }
 
-char CRenderer::AddEntityToShadowCasterList(CEntity * entity, float renderDistance, int shadowCascade)
+char CRendererRH::AddEntityToShadowCasterList(CEntity * entity, float renderDistance, int shadowCascade)
 {
 	ms_aVisibleShadowCasters[shadowCascade].push_back(entity);
 	return true;
 }
 
-char CRenderer::AddToLodRenderList(CEntity * entity, float renderDistance)
+char CRendererRH::AddToLodRenderList(CEntity * entity, float renderDistance)
 {
 	/*for (int i = 0; i < 4; i++)
 	{
@@ -315,7 +316,7 @@ char CRenderer::AddToLodRenderList(CEntity * entity, float renderDistance)
 	return CRenderer__AddToLodRenderList(entity, renderDistance);
 }
 
-void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBoundBox)
+void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBoundBox)
 {
 	// TODO: cleanup, improve performance, improve culling heuristics, perhaps add occlusion checks
 	int modelID = entity->m_nModelIndex;
@@ -374,7 +375,7 @@ void CRenderer::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkBou
 	}
 }
 
-bool CRenderer::IsAABBInsideBoundingVolume(RwPlane * boundingPlanes, int planeCount, 
+bool CRendererRH::IsAABBInsideBoundingVolume(RwPlane * boundingPlanes, int planeCount, 
 											const RW::BBox& b)
 {
 
@@ -394,7 +395,7 @@ bool CRenderer::IsAABBInsideBoundingVolume(RwPlane * boundingPlanes, int planeCo
 	return true;
 }
 
-RendererVisibility CRenderer::SetupEntityVisibility(CEntity * entity, float * renderDistance)
+RendererVisibility CRendererRH::SetupEntityVisibility(CEntity * entity, float * renderDistance)
 {
 	return (RendererVisibility)CRenderer__SetupEntityVisibility(entity, renderDistance);
 
@@ -464,7 +465,7 @@ RendererVisibility CRenderer::SetupEntityVisibility(CEntity * entity, float * re
 			float yDist = ms_vecCameraPosition.y - pos.y;
 			float zDist = ms_vecCameraPosition.z - pos.z;
 
-			CRenderer::AddEntityToRenderList(entity, sqrt(xDist*xDist + yDist*yDist + zDist*zDist));
+			CRendererRH::AddEntityToRenderList(entity, sqrt(xDist*xDist + yDist*yDist + zDist*zDist));
 			return RendererVisibility::INVISIBLE;
 		}
 		goto LABEL_49;
@@ -534,7 +535,7 @@ RendererVisibility CRenderer::SetupEntityVisibility(CEntity * entity, float * re
 	return RendererVisibility::INVISIBLE;
 }
 
-RendererVisibility CRenderer::SetupBigBuildingVisibility(CEntity * entity, float * renderDistance)
+RendererVisibility CRendererRH::SetupBigBuildingVisibility(CEntity * entity, float * renderDistance)
 {
 	return (RendererVisibility)CRenderer__SetupBigBuildingVisibility(entity, renderDistance);
 	auto modelInfo = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex];
@@ -598,7 +599,7 @@ RendererVisibility CRenderer::SetupBigBuildingVisibility(CEntity * entity, float
 	return RendererVisibility::NOT_LOADED;
 }
 
-RendererVisibility CRenderer::SetupMapEntityVisibility(CEntity * entity, CBaseModelInfo * mapInfo, float renderDistance, char a4)
+RendererVisibility CRendererRH::SetupMapEntityVisibility(CEntity * entity, CBaseModelInfo * mapInfo, float renderDistance, char a4)
 {
 	//return CRenderer__SetupMapEntityVisibility(entity,mapInfo,renderDistance,a4);
 	CEntity* pLOD_Object = entity->m_pLod;
@@ -628,7 +629,7 @@ RendererVisibility CRenderer::SetupMapEntityVisibility(CEntity * entity, CBaseMo
 	{
 		if (pLOD_Object && pLOD_Object->m_nNumLodChildren > 1u && distance + renderDistance - 20.0 < drawDist)
 		{
-			CRenderer::AddToLodRenderList(entity, renderDistance);
+			CRendererRH::AddToLodRenderList(entity, renderDistance);
 			return RendererVisibility::NOT_LOADED;
 		}
 		goto LABEL_39;
@@ -694,7 +695,7 @@ RendererVisibility CRenderer::SetupMapEntityVisibility(CEntity * entity, CBaseMo
 		if (pLOD_Object->m_nNumLodChildren <= 1u)
 			return RendererVisibility::VISIBLE;
 		//CRenderer::AddEntityToRenderList(entity, renderDistance);
-		CRenderer::AddToLodRenderList(entity, renderDistance);
+		CRendererRH::AddToLodRenderList(entity, renderDistance);
 		return RendererVisibility::INVISIBLE;
 	//}
 	if (!(mapInfo->m_nFlags & 1))
@@ -703,7 +704,7 @@ RendererVisibility CRenderer::SetupMapEntityVisibility(CEntity * entity, CBaseMo
 	return RendererVisibility::OFFSCREEN;
 }
 
-void CRenderer::RenderOneRoad(CEntity * entity)
+void CRendererRH::RenderOneRoad(CEntity * entity)
 {
 	if (entity->m_nType == eEntityType::ENTITY_TYPE_VEHICLE)
 		((CVehicle*)entity)->SetupRender();
@@ -715,7 +716,7 @@ void CRenderer::RenderOneRoad(CEntity * entity)
 }
 
 //6D64F0     ; void __thiscall CVehicle::SetupRender(CVehicle *this)
-void CRenderer::RenderOneNonRoad(CEntity * entity)
+void CRendererRH::RenderOneNonRoad(CEntity * entity)
 {
 	if ((entity->m_nType) == eEntityType::ENTITY_TYPE_VEHICLE) {
 		CVehicle__SetupRender(entity);
@@ -726,13 +727,13 @@ void CRenderer::RenderOneNonRoad(CEntity * entity)
 	}
 }
 
-bool CRenderer::IsCulledByTunnel(CEntity * entity)
+bool CRendererRH::IsCulledByTunnel(CEntity * entity)
 {
 	return  (!CRenderer__ms_bRenderTunnels		 &&	 entity->m_bTunnel ||
 			!CRenderer__ms_bRenderOutsideTunnels && !entity->m_bTunnel);
 }
 
-void CRenderer::ScanSectorList(int x, int y)
+void CRendererRH::ScanSectorList(int x, int y)
 {
 	// Currently standard version is used, to many bugs so far
 	//CRenderer__ScanSectorList(x, y);
@@ -772,7 +773,7 @@ void CRenderer::ScanSectorList(int x, int y)
 }
 
 // Scans entity pointer list, and adds models to render list.
-void CRenderer::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
+void CRendererRH::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 {
 	// If entity list is empty, than return. 
 	if (ptrList == nullptr)
@@ -881,7 +882,7 @@ void CRenderer::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 	}
 }
 // Scans entity pointer list, and adds models to render list.
-void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
+void CRendererRH::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 {
 	// If entity list is empty, than return. 
 	if (ptrList == nullptr)
@@ -903,7 +904,7 @@ void CRenderer::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 	}
 }
 
-void CRenderer::ScanPtrListForReflections(CPtrList * ptrList, bool loadIfRequired)
+void CRendererRH::ScanPtrListForReflections(CPtrList * ptrList, bool loadIfRequired)
 {
 	// If entity list is empty, than return. 
 	if (ptrList == nullptr)
@@ -919,13 +920,20 @@ void CRenderer::ScanPtrListForReflections(CPtrList * ptrList, bool loadIfRequire
 			continue;
 		}
 		entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
-		if(entity->m_nType == eEntityType::ENTITY_TYPE_BUILDING || entity->m_nType == eEntityType::ENTITY_TYPE_OBJECT)
-			AddEntityToReflectionList(entity, true);
+		if (entity->m_nType == eEntityType::ENTITY_TYPE_BUILDING || entity->m_nType == eEntityType::ENTITY_TYPE_OBJECT) {
+			CVector entityPos = entity->m_pLod != nullptr ? entity->m_pLod->GetPosition() : entity->GetPosition();
+
+			auto xDist = entityPos.x - ms_vecCameraPosition.x;
+			auto yDist = entityPos.y - ms_vecCameraPosition.y;
+			auto zDist = entityPos.z - ms_vecCameraPosition.z;
+			float renderDistance = sqrt(xDist * xDist + yDist * yDist + zDist * zDist);
+			AddEntityToReflectionList(entity, renderDistance);
+		}
 		current = current->pNext;
 	}
 }
 
-void CRenderer::ScanBigBuildingList(int x, int y)
+void CRendererRH::ScanBigBuildingList(int x, int y)
 {
 	//CRenderer__ScanBigBuildingList(x, y);
 	//return;
@@ -972,7 +980,7 @@ void CRenderer::ScanBigBuildingList(int x, int y)
 	
 }
 
-void CRenderer::ScanSectorListForReflections(int x, int y)
+void CRendererRH::ScanSectorListForReflections(int x, int y)
 {
 	CSector*	  sector = GetSector(x, y);
 	CRepeatSector* repeatSector = GetRepeatSector(x, y);
@@ -981,7 +989,7 @@ void CRenderer::ScanSectorListForReflections(int x, int y)
 	ScanPtrListForReflections(&repeatSector->m_lists[REPEATSECTOR_OBJECTS], false);
 }
 
-void CRenderer::ScanSectorListForShadowCasters(int x, int y)
+void CRendererRH::ScanSectorListForShadowCasters(int x, int y)
 {
 	bool dontRenderSectorEntities = false; 
 	bool loadIfRequired = false;
@@ -1013,7 +1021,7 @@ void CRenderer::ScanSectorListForShadowCasters(int x, int y)
 	//	ScanPtrListForShadows(sector->m_dummies, loadIfRequired);
 }
 
-void CRenderer::PreRender()
+void CRendererRH::PreRender()
 {
 	//if (ms_nNoOfVisibleEntities == 0) {
 		for (auto entity : ms_aVisibleEntities)
@@ -1030,7 +1038,7 @@ void CRenderer::PreRender()
 	
 }
 
-void CRenderer::ProcessLodRenderLists()
+void CRendererRH::ProcessLodRenderLists()
 {
 	if (ms_pLodRenderList == GetLodRenderListBase())
 		return;
@@ -1105,7 +1113,7 @@ void CRenderer::ProcessLodRenderLists()
 
 static RwIm3DVertex LineList[14];
 
-void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart, float shadowEnd)
+void CRendererRH::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart, float shadowEnd)
 {
 	CRenderer__ScanWorld();
 	return;
@@ -1196,7 +1204,7 @@ void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart
 	/*for (int x = 0; x < 120; x++)
 		for (int y = 0; y < 120; y++)
 			CRenderer::ScanSectorList(camera, camera->frustumBoundBox, 0, CRenderer__ms_fFarClipPlane,x, y);*/
-	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanSectorList);
+	CWorldScan__ScanWorld(sector, 5, CRendererRH::ScanSectorList);
 
 	sector[0].x = points[0].x * 0.005f + 15.0f;
 	sector[0].y = points[0].y * 0.005f + 15.0f;
@@ -1208,7 +1216,7 @@ void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart
 	sector[3].y = points[3].y * 0.005f + 15.0f;
 	sector[4].x = points[4].x * 0.005f + 15.0f;
 	sector[4].y = points[4].y * 0.005f + 15.0f;
-	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanBigBuildingList);
+	CWorldScan__ScanWorld(sector, 5, CRendererRH::ScanBigBuildingList);
 	// Resets scan codes if it exceeds 2^16
 	if (CWorld__ms_nCurrentScanCode >= 0xFFFF)
 	{
@@ -1229,7 +1237,7 @@ void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart
 	sector[2].y = minY * 0.02f + 60.0f;
 	sector[3].x = maxX * 0.02f + 60.0f;
 	sector[3].y = maxY * 0.02f + 60.0f;
-	CWorldScan__ScanWorld(sector, 4, CRenderer::ScanSectorListForShadowCasters);
+	CWorldScan__ScanWorld(sector, 4, CRendererRH::ScanSectorListForShadowCasters);
 
 
 	/*for (int x = 0; x < 120; x++)
@@ -1248,7 +1256,7 @@ void CRenderer::ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart
 	}*/
 }
 
-void CRenderer::ScanWorld()
+void CRendererRH::ScanWorld()
 {
 	RwV3d points[17];
 	auto viewWindow = TheCamera.m_pRwCamera->viewWindow;
@@ -1342,7 +1350,14 @@ void CRenderer::ScanWorld()
 	// TODO: Add reflections culling
 	// Resets scan codes if it exceeds 2^16
 	SetNextScanCode();
-	CRenderer::ScanSectorListForReflections(currentSectorX, currentSectorY);
+	// TODO: replace to reflection settings
+	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer + 1; x++)
+	{
+		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer + 1; y++) {
+			CRendererRH::ScanSectorListForReflections(currentSectorX+x, currentSectorY+y);
+		}
+	}
+	
 
 	// Resets scan codes if it exceeds 2^16
 	SetNextScanCode();
@@ -1359,7 +1374,7 @@ void CRenderer::ScanWorld()
 	sector[4].x = points[10].x * 0.02f + 60.0f;
 	sector[4].y = points[10].y * 0.02f + 60.0f;
 
-	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanSectorList);
+	CWorldScan__ScanWorld(sector, 5, CRendererRH::ScanSectorList);
 
 	sector[0].x = points[0].x * 0.005f + 15.0f;
 	sector[0].y = points[0].y * 0.005f + 15.0f;
@@ -1372,7 +1387,7 @@ void CRenderer::ScanWorld()
 	sector[4].x = points[4].x * 0.005f + 15.0f;
 	sector[4].y = points[4].y * 0.005f + 15.0f;
 
-	CWorldScan__ScanWorld(sector, 5, CRenderer::ScanBigBuildingList);
+	CWorldScan__ScanWorld(sector, 5, CRendererRH::ScanBigBuildingList);
 	// Scan for shadowcasters
 	
 	//SetNextScanCode();
@@ -1414,7 +1429,7 @@ void CRenderer::ScanWorld()
 				isInsideLightBBox = isInsideLightBBox || IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, sectorBBox);
 			}
 			if (isInsideLightBBox) {
-				CRenderer::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
+				CRendererRH::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
 			}
 		}
 	}
@@ -1438,13 +1453,13 @@ void CRenderer::ScanWorld()
 	//m_loadingPriority = 0;
 }
 
-void CRenderer::ResetLodRenderLists()
+void CRendererRH::ResetLodRenderLists()
 {
 	ms_pLodRenderList = GetLodRenderListBase();
 	ms_pLodDontRenderList = GetLodDontRenderListBase();
 }
 
-void CRenderer::RenderShadowCasterEntity(CEntity *entity)
+void CRendererRH::RenderShadowCasterEntity(CEntity *entity)
 {
 	if (entity->m_pRwObject == nullptr)
 		return;
@@ -1458,7 +1473,7 @@ void CRenderer::RenderShadowCasterEntity(CEntity *entity)
 	entity->m_bImBeingRendered = false;
 }
 
-void CRenderer::RenderReflectionEntity(CEntity *entity)
+void CRendererRH::RenderReflectionEntity(CEntity *entity)
 {
 	if (entity->m_pRwObject == nullptr)
 		return;
@@ -1470,17 +1485,17 @@ void CRenderer::RenderReflectionEntity(CEntity *entity)
 	entity->m_bImBeingRendered = false;
 }
 
-sLodListEntry *CRenderer::GetLodRenderListBase()
+sLodListEntry *CRendererRH::GetLodRenderListBase()
 {
 	return &(*(sLodListEntry *)0xC8E0E0);
 }
 
-sLodListEntry *CRenderer::GetLodDontRenderListBase()
+sLodListEntry *CRendererRH::GetLodDontRenderListBase()
 {
 	return &(*(sLodListEntry *)0xC900C8);
 }
 
-void CRenderer::CalculateShadowBoundingPlanes(int shadowCascade)
+void CRendererRH::CalculateShadowBoundingPlanes(int shadowCascade)
 {
 	auto lightSpaceFrustum = g_pDeferredRenderer->m_pShadowRenderer->m_LightSpaceMatrix[0];
 	RW::V3d  LightAABBCenter = { g_pDeferredRenderer->m_pShadowRenderer->m_LightPos[0] };

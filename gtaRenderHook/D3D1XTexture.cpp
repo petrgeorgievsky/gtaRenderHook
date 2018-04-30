@@ -80,6 +80,7 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 			g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::Texture");
 
 			// staging texture buffer used for texture copying
+			// TODO: reduce staging texture buffers count by creating sets of staging textures for each size(in runtime)
 			desc.Usage = D3D11_USAGE_STAGING;
 			desc.BindFlags = 0;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;

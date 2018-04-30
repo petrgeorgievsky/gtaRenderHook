@@ -5,15 +5,39 @@
 #include "D3D1XIndexBuffer.h"
 #include "D3D1XVertexDeclaration.h"
 class CD3D1XShader;
+/*!
+	\class DebugBBox
+	\brief Axis-Aligned bounding box rendering object.
+
+	This class is used to debug AABB-s in game scene.
+*/
 class DebugBBox :
 	public DebugRenderObject
 {
 public:
+	/*!
+		Basic constructor, calculates world-space transform matrix for bounding box.
+	*/
 	DebugBBox(RW::BBox bbox);
+	/*!
+		Constructor with axis transform matrix, calculates world-space transform matrix for oriented bounding box.
+	*/
 	DebugBBox(RW::BBox bbox, RW::Matrix rotationMatrix);
+	/*!
+		Destructor, empty. Remove?
+	*/
 	~DebugBBox();
+	/*!
+		Renders this Bounding Box.
+	*/
 	void Render();
+	/*!
+		Initializes box geometry, shaders and vertex buffers.
+	*/
 	static void Initialize();
+	/*!
+		Releases allocated resources.
+	*/
 	static void Shutdown();
 private:
 	RwMatrix m_WorldMatrix;

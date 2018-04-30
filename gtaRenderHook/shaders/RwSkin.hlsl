@@ -55,7 +55,7 @@ PS_DEFERRED_IN VS(VS_SKIN_IN i)
     float4 PositionWS = mul(OutPos, mWorld);
 	
     OutPos = mul(PositionWS, mView);
-    vsout.vNormalDepth  = float4(mul(float4(mul(i.vInNormal, (float3x3) BoneToLocal), 0.0f), mWorld).xyz, OutPos.z);
+    vsout.vNormalDepth = float4(mul(mWorldInv, float4(mul(i.vInNormal, (float3x3) BoneToLocal), 0.0f)).xyz, OutPos.z);
 	vsout.vTexCoord     = float4(i.vTexCoord,0,0);
 	vsout.vColor        = i.vInColor;
     OutPos = mul(OutPos, mProjection);

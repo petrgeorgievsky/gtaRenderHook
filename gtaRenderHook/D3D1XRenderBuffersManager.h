@@ -14,6 +14,7 @@ struct PerFrameMatrixBuffer
 struct PerObjectMatrixBuffer
 {
 	RwMatrix mWorld;
+	RwMatrix mWorldInv;
 };
 /*!
 	

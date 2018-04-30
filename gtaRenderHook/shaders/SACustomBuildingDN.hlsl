@@ -52,7 +52,7 @@ PS_DEFERRED_DN_IN VS(VS_INPUT i)
     o.vWorldPos = outPos;
 			outPos		= mul( outPos, mView );
     o.vPosition 	    = mul( outPos, mProjection );
-	o.vNormalDepth  = float4(mul( i.vInNormal,(float3x3)mWorld), outPos.z);
+    o.vNormalDepth  = float4(mul((float3x3) mWorldInv, i.vInNormal), outPos.z);
 	o.vTexCoord     = float4(i.vTexCoord, 0, 0);
 	o.vColor		= i.vInColor;
 	

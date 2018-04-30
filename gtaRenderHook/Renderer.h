@@ -41,7 +41,7 @@ struct sLodListEntry {
 	float distance;
 };
 
-class CRenderer
+class CRendererRH
 {
 public:
 	/*!

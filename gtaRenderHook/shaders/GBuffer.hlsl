@@ -38,7 +38,7 @@ inline float3 DecodeNormals(float2 v)
 {
 	float3 n;
 	n.xy = v * 2 - 1;
-	n.z = sqrt(1.01 - dot(n.xy, n.xy));// added 0.01 to avoid z-fighting(or sqrt(0) to be more precise)
+	n.z = -sqrt(1.01 - dot(n.xy, n.xy));// added 0.01 to avoid z-fighting(or sqrt(0) to be more precise)
 	return n;
 }
 
@@ -86,6 +86,8 @@ struct PS_DEFERRED_IN
 */
 void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float ViewZ, float4 Params)
 {
+    // transform normals to view-space
+    Normals = mul(Normals, (float3x3) mView);
 	output.vColor = Color;
     output.vNormalDepth = float4(EncodeNormals(Normals.xy), EncodeFloatRG(ViewZ / fFarClip));
 	output.vParameters = Params;
@@ -101,6 +103,8 @@ void GetNormalsAndDepth(Texture2D TexBuffer, SamplerState Sampler, float2 TexCoo
     ViewDepth = DecodeFloatRG(NormalSpec.zw);
     ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;
     Normals = DecodeNormals(NormalSpec.xy);
+    // transform normals back to world-space
+    Normals = mul(Normals, (float3x3) mViewInv);
 }
 
 #endif

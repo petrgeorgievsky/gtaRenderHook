@@ -124,7 +124,7 @@ float SampleShadowMapCompute(Texture2D txShadow, float3 LightViewPos) {
 	projectTexCoord = LightViewPos;
 	float2	ShadowTexC = 0.5 * projectTexCoord.xy + float2(0.5, 0.5);
 	ShadowTexC.y = 1.0f - ShadowTexC.y;
-    float sSample = txShadow.Load(int3(ShadowTexC.x * ShadowSize, ShadowTexC.y * ShadowSize, 0));
+    float sSample = txShadow.Load(int3(ShadowTexC.x * ShadowSize, ShadowTexC.y * ShadowSize, 0)).r;
 	return (LightViewPos.z - sSample < ShadowBias[0]*8);
 }
 
@@ -150,7 +150,7 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
     float blendFactor;
     float far, near;
     float4 WorldPos = float4(worldPos.xyz, 1);
-    uint i;
+    int i;
     for (i = 0; i < CascadeCount; i++)
     {        
         float3 LightViewPos = mul(WorldPos, DirLightViewProj[i]).xyz;
@@ -175,34 +175,31 @@ float SampleShadowCascadesUnfiltered(Texture2D txShadow, SamplerComparisonState 
     const float blendDistance = 6;
 	// Shift view depth by blend distance, optimization for static blend distance
     viewZ += blendDistance;
-    static const float2 shadowTCOffsets[] =
+    const float LFadeDistances[] =
     {
-        float2(0.0f, 0.0f),
-		float2(0.5f, 0.0f),
-		float2(0.0f, 0.5f),
-		float2(0.5f, 0.5f)
+        FadeDistances.x,
+        FadeDistances.y,
+        FadeDistances.z,
+        FadeDistances.w,
+        FadeDistanceMax
     };
     float Shadow = 1;
     float blendFactor;
     float far, near;
-    uint i;
-    for (i = 0; i < 3; i++)
+    float4 WorldPos = float4(worldPos.xyz, 1);
+    int i;
+    for (i = 0; i < CascadeCount; i++)
     {
-        float4 LightViewPos = mul(float4(worldPos.xyz, 1), DirLightViewProj[i]);
-        far = FadeDistances[i + 1];
-        near = FadeDistances[i];
+        float3 LightViewPos = mul(WorldPos, DirLightViewProj[i]).xyz;
+        far = LFadeDistances[i + 1];
+        near = LFadeDistances[i];
 		// Cascade blending factor
         blendFactor = min(max(viewZ - near, 0) / blendDistance, 1.0);
-        Shadow = lerp(Shadow, SampleShadowMapUnfiltered(txShadow, samShadow, samShadowNonComp, LightViewPos.xyz, shadowTCOffsets[i], i), blendFactor);
+        float2 shadowTCOffset = float2((float) i / CascadeCount, 0.0f);
+        Shadow = lerp(Shadow, SampleShadowMapUnfiltered(txShadow, samShadow, samShadowNonComp, LightViewPos, shadowTCOffset, i), blendFactor);
     }
-	// Last cascade
-    float4 LightViewPos = mul(float4(worldPos.xyz, 1), DirLightViewProj[3]);
-    far = FadeDistanceMax;
-    near = FadeDistances[3];
-    blendFactor = min(max(viewZ - near, 0) / blendDistance, 1.0);
-	
-    Shadow = lerp(Shadow, SampleShadowMapUnfiltered(txShadow, samShadow, samShadowNonComp, LightViewPos.xyz, shadowTCOffsets[3], 3), blendFactor);
+    blendFactor = min(max(viewZ - far, 0) / blendDistance, 1.0);
 
-    return max(Shadow, 1 - vSunLightDir.w);
+    return max(lerp(Shadow, 1.0, blendFactor), 1 - vSunLightDir.w);
 }
 #endif

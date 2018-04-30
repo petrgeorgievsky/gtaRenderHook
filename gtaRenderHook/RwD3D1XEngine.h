@@ -101,7 +101,7 @@ private://Virtual methods.
 public:
 	void SetRenderTargetsAndUAVs(RwRaster ** rasters, RwRaster ** uavs, RwRaster *zBuffer, RwUInt32 rasterCount, RwUInt32 uavCount,RwUInt32 uavStart);
 	void ReloadTextures();
-
+	RwRaster * CreateD3D9Raster(RwInt32 width, RwInt32 height, D3DFORMAT format, RwInt32 flags);
 	std::list<RwRaster*> m_pRastersToReload{};
 	bool m_bScreenSizeChanged=false;
 	bool m_bAntTweakBarAvaliable = false;

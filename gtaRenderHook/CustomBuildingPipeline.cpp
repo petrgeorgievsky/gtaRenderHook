@@ -68,7 +68,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 		g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)mesh->entryptr->header.primType));
 		m_pVS->Set();
 		m_pPS->Set();
-		if (curmesh.material->surfaceProps.ambient>1.0 || CRenderer::TOBJpass == true)
+		if (curmesh.material->surfaceProps.ambient>1.0 || CRendererRH::TOBJpass == true)
 			g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(curmesh.material->color);
 		else
 			g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(curmesh.material->color);
@@ -134,7 +134,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 		if (mesh.material->color.alpha == 0) continue;
 		bAlphaEnable = 0;
 		if (m_uiDeferredStage != 2) {
-			if (mesh.material->surfaceProps.ambient>1.0 || CRenderer::TOBJpass == true)
+			if (mesh.material->surfaceProps.ambient>1.0 || CRendererRH::TOBJpass == true)
 				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(mesh.material->color);
 			else
 				g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(mesh.material->color);

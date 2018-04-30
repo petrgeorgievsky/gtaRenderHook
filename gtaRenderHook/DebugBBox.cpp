@@ -57,7 +57,7 @@ DebugBBox::DebugBBox(RW::BBox bbox, RW::Matrix rotationMatrix)
 {
 	auto pos = bbox.getCenter();
 	RW::Matrix wsMatrix = { RW::V4d{ bbox.getSizeX(),0.0,0.0,0.0 }, RW::V4d{ 0.0,bbox.getSizeY(),0.0,0.0 },
-						RW::V4d{ 0.0,0.0,bbox.getSizeZ(),0.0 }, RW::V4d{ pos, 1.0 } };
+							RW::V4d{ 0.0,0.0,bbox.getSizeZ(),0.0 }, RW::V4d{ pos, 1.0 } };
 	m_WorldMatrix = (wsMatrix*rotationMatrix).getRWMatrix();
 }
 
@@ -68,6 +68,7 @@ DebugBBox::~DebugBBox()
 
 void DebugBBox::Render()
 {
+	// TODO: replace all API-specific calls to engine-specific.
 	// Set mesh info
 	g_pStateMgr->SetInputLayout(m_pVertexDecl->getInputLayout());
 	g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
@@ -94,7 +95,6 @@ void DebugBBox::Initialize()
 	m_pPS = new CD3D1XPixelShader(shader_path, "PS");
 	m_pVS = new CD3D1XVertexShader(shader_path, "VS");
 
-	ID3D11Device* pd3dDevice = GET_D3D_DEVICE;
 	std::vector<D3D11_INPUT_ELEMENT_DESC> layout =
 	{
 		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, 0,	D3D11_INPUT_PER_VERTEX_DATA, 0 }

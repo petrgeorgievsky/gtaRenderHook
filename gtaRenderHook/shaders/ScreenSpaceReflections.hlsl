@@ -113,6 +113,7 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float3 cameraSpacePos = DepthToViewPos(ViewZ, input.texCoordOut.xy).xyz;
     float3 worldSpacePos = DepthToWorldPos(ViewZ, input.texCoordOut.xy).xyz;
     float3 NormalsVS = DecodeNormals(NormalSpec.xy);
+    NormalsVS = mul(float4(NormalsVS, 0.0f), mViewInv);
     float2 Parameters = txGB2.Sample(samLinear, input.texCoordOut.xy).xy;
     float Roughness = 1 - Parameters.y;
 

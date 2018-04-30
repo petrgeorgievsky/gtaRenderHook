@@ -468,21 +468,23 @@ bool CRwD3D1XEngine::RasterCreate(RwRaster *raster, UINT flags)
 
 	RwUInt32 rasterPixelFmt = flags & rwRASTERFORMATPIXELFORMATMASK;
 	raster->cFormat = static_cast<RwUInt8>(rasterPixelFmt >> 8);
-
-	CD3D1XEnumParser::ConvertRasterFormat(raster, flags);
-
+	
 	int maxTextureSize;
 	GetMaxTextureSize(maxTextureSize);
 
 	// If raster size exceeds maximum for current feature level we shouldn't create it.
 	if (raster->width >  maxTextureSize || raster->height > maxTextureSize)
 		return false;
+	// Some rasters don't need to be allocated, skip these
+	//if (flags & rwRASTERDONTALLOCATE)
+	//	return true;
+	CD3D1XEnumParser::ConvertRasterFormat(raster, flags);
 	// If somehow after format conversion, raster format is still unknown, and it isn't camera raster we shouldn't create it.
 	if (d3dRaster->format == DXGI_FORMAT_UNKNOWN && raster->cType != rwRASTERTYPECAMERA)
 		return false;
 
 	if (raster->cType == rwRASTERTYPETEXTURE || raster->cType == rwRASTERTYPENORMAL)
-		d3dRaster->resourse = new CD3D1XTexture(raster, (flags&rwRASTERFORMATMIPMAP)!=0,(flags&rwRASTERFORMATPAL8)!=0);	
+		d3dRaster->resourse = new CD3D1XTexture(raster, (flags&rwRASTERFORMATMIPMAP)!=0,(flags&rwRASTERFORMATPAL8)!=0);
 	else if(raster->cType == rwRASTERTYPEZBUFFER || raster->cType == rwRASTERTYPECAMERA)
 		d3dRaster->resourse = new CD3D1XTexture(raster, false);
 	else if (raster->cType == rwRASTERTYPECAMERATEXTURE)
@@ -539,9 +541,6 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 		{
 			if (!rasterInfo.cubeTexture)
 			{
-				if (rasterInfo.d3dFormat == D3DFORMAT::D3DFMT_DXT5) {
-					rasterInfo.rasterFormat = rwRASTERFORMAT8888;
-				}
 				raster = RwRasterCreate(rasterInfo.width, rasterInfo.height, rasterInfo.depth, rasterInfo.rasterFormat | rasterInfo.rasterType | (rasterInfo.numLevels>1 ? rwRASTERFORMATMIPMAP : 0));
 				if (raster == nullptr)
 					return false;
@@ -1491,4 +1490,14 @@ void CRwD3D1XEngine::ReloadTextures()
 		}
 		m_pRastersToReload.clear();
 	}
+}
+
+RwRaster * CRwD3D1XEngine::CreateD3D9Raster(RwInt32 width, RwInt32 height, D3DFORMAT format, RwInt32 flags)
+{
+	RwRaster* raster = RwRasterCreate(width, height, 32, flags | rwRASTERDONTALLOCATE);
+	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
+	CD3D1XEnumParser::ConvertRasterFormat(raster, flags);
+	if (raster->cType == rwRASTERTYPETEXTURE || raster->cType == rwRASTERTYPENORMAL)
+		d3dRaster->resourse = new CD3D1XTexture(raster, (flags&rwRASTERFORMATMIPMAP) != 0, (flags&rwRASTERFORMATPAL8) != 0);
+	return raster;
 }

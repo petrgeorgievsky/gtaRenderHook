@@ -434,9 +434,6 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\AtmosphericScattering.hlsl">
-      <Filter>Source\Shaders</Filter>
-    </None>
     <None Include="shaders\debug.hlsl">
       <Filter>Source\Shaders</Filter>
     </None>
@@ -507,6 +504,12 @@
       <Filter>Source\Shaders</Filter>
     </None>
     <None Include="shaders\ReflectionFunctions.hlsli">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\VolumetricLighting.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\AtmosphericScattering.hlsl">
       <Filter>Source\Shaders</Filter>
     </None>
   </ItemGroup>

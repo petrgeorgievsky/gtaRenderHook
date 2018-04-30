@@ -45,6 +45,7 @@ cbuffer PerFrameMatrixBuffer : register(b1)
 cbuffer PerObjectBuffer : register(b2)
 {
     row_major matrix mWorld;
+    row_major matrix mWorldInv;
 }
 /*!
     Matrices updated for each material

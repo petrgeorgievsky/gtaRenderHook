@@ -15,6 +15,7 @@ RwV3d	CShadowRenderer::m_LightPos[4];
 RW::Matrix	CShadowRenderer::m_LightSpaceMatrix[4];
 RW::Matrix	CShadowRenderer::m_InvLightSpaceMatrix[4];
 ShadowSettingsBlock gShadowSettings;
+
 CShadowRenderer::CShadowRenderer()
 {
 	RwV2d vw;

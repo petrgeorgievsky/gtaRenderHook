@@ -1,17 +1,6 @@
-#include "GBuffer.hlsl"
 #include "Shadows.hlsl"
-#include "AtmosphericScatteringFunctions.hlsli"
-#ifndef ATMOPHERIC_SCATTERING
-#define ATMOPHERIC_SCATTERING
-
-//****** Atmospheric light scattering. Not physically corrected just plausible to look at scattering
-
-struct PS_QUAD_IN
-{
-    float4 vPosition : SV_Position;
-    float4 vTexCoord : TEXCOORD0;
-};
-
+#include "GBuffer.hlsl"
+#include "GameMath.hlsl"
 Texture2D txScreen : register(t0);
 Texture2D txGB1 : register(t1);
 Texture2D txShadow : register(t3);
@@ -20,6 +9,13 @@ Texture2D txShadow : register(t3);
 SamplerState samLinear : register(s0);
 #endif
 SamplerComparisonState samShadow : register(s1);
+
+struct PS_QUAD_IN
+{
+    float4 vPosition : SV_Position;
+    float4 vTexCoord : TEXCOORD0;
+};
+
 float3 ComputeSunRays(float3 ViewPos, float3 WorldPos, float Length)
 {
     const int SunRaySampleCount = 64;
@@ -34,9 +30,12 @@ float3 ComputeSunRays(float3 ViewPos, float3 WorldPos, float Length)
     return ResultColor / (float) SunRaySampleCount;
 }
 
-float4 AtmosphericScatteringPS(PS_QUAD_IN i) : SV_Target
+float4 VolumetricSunlightPS(PS_QUAD_IN i) : SV_TARGET
 {
     float4 OutLighting;
+    const float SunRaysMaxDistance = 40.0f;
+    const float SunRaysColorIntensity = 0.25f;
+    const float SunRaysBlendOffset = 0.2f;
 
     const float3 ViewPos = mViewInv[3].xyz;
 
@@ -53,22 +52,12 @@ float4 AtmosphericScatteringPS(PS_QUAD_IN i) : SV_Target
     float3 ViewDir = normalize(WorldPos - ViewPos);
     float3 LightDir = normalize(vSunLightDir.xyz);
 
-    // Some coefficients used in fog computation
-    float Height = ViewPos.z;
-    
-    float3 FullScattering;
-    float3 ObjectColor = CalculateFogColor(ScreenColor.rgb, ViewDir, LightDir, ViewZ, Height, FullScattering);
-    
-    float3 SkyColor = GetSkyColor(ViewDir, LightDir, FullScattering);
-    
-    // TODO: Remove if operation to improve performance, or maybe not
-    if (ScreenColor.a <= 0)
-        OutLighting.xyz = SkyColor;
-    else
-        OutLighting.xyz = ObjectColor;
+    float SunRaysIntensity = min(max(dot(ViewDir, LightDir) + SunRaysBlendOffset, 0.0f), 1.0f) * SunRaysColorIntensity;
+
+    float3 SunRays = ComputeSunRays(ViewPos, WorldPos, min(length(WorldPos - ViewPos), SunRaysMaxDistance)) * SunRaysIntensity * SunRaysIntensity;
+
+    OutLighting.rgb = ScreenColor.rgb + SunRays * vSunColor.rgb * vSunColor.a;
     OutLighting.a = 1;
 
     return OutLighting;
 }
-
-#endif

@@ -41,7 +41,7 @@ float4 PS(PS_IM3D_IN i) : SV_Target
 {
 	float4 OutColor;
 	if(bHasTexture!=0)
-        OutColor = float4(txDiffuse.Sample(samLinear, i.vTexCoord).zyxw * i.cColor);
+        OutColor = float4(txDiffuse.Sample(samLinear, i.vTexCoord) * i.cColor);
 	else
         OutColor = float4(i.cColor);
 	

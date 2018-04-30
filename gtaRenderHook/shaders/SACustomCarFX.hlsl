@@ -55,7 +55,7 @@ PS_DEFERRED_CF_IN VS(VS_CAR_INPUT i)
 
 	Out.vPosition = mul(outPos, mProjection);
 
-	Out.vNormalDepth = float4(mul(i.vNormal, (float3x3)mWorld), outPos.z);
+    Out.vNormalDepth = float4(mul((float3x3) mWorldInv, i.vNormal), outPos.z);
 	Out.vTexCoord = float4(i.vTexCoord, 0, 0);
 	Out.vColor = i.vColor;
 

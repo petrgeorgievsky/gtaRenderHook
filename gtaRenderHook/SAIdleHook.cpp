@@ -33,6 +33,7 @@
 #include <game_sa\CVisibilityPlugins.h>
 #include <game_sa\CBirds.h>
 #include <game_sa\CRopes.h>
+#include <game_sa\CRenderer.h>
 //#include <game_sa\CGlass.h>
 //#include <game_sa\CSkidmarks.h>
 
@@ -199,7 +200,7 @@ void CSAIdleHook::RenderInGame()
 	m_uiDeferredStage = 5;
 	//
 	scanTimer.Start();
-	CRenderer::ConstructRenderList();
+	CRendererRH::ConstructRenderList();
 	scanTimer.Stop();
 
 	CRenderer__PreRender();
@@ -261,9 +262,9 @@ void CSAIdleHook::RenderInGame()
 
 		
 		CFont::PrintString(FontXPos, FontYPos - 450.0f, (char*)("Draw call count: " + to_string(drawCallCount)).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 400.0f, (char*)("Visible Entity count: " + to_string(CRenderer::ms_nNoOfVisibleEntities)).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 350.0f, (char*)("SC 0 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[0].size())).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 300.0f, (char*)("SC 1 Entity count: " + to_string(CRenderer::ms_aVisibleShadowCasters[1].size())).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 400.0f, (char*)("Visible Entity count: " + to_string(CRendererRH::ms_nNoOfVisibleEntities)).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 350.0f, (char*)("SC 0 Entity count: " + to_string(CRendererRH::ms_aVisibleShadowCasters[0].size())).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 300.0f, (char*)("SC 1 Entity count: " + to_string(CRendererRH::ms_aVisibleShadowCasters[1].size())).c_str());
 		
 		CFont::PrintString(FontXPos, FontYPos - 150.0f, (char*)scanTimer.GetTimerResult().c_str());
 		CFont::PrintString(FontXPos, FontYPos - 100.0f, (char*)shadowTimer.GetTimerResult().c_str());
@@ -303,7 +304,8 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	DefinedState();
 	RenderEffects();
 	DefinedState();
-	//RenderGrass();
+	RenderGrass();
+	DefinedState();
 }
 
 void CSAIdleHook::RenderDeferred()
@@ -311,9 +313,9 @@ void CSAIdleHook::RenderDeferred()
 	CVisibilityPluginsRH::ClearWeaponPedsList();
 	
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
-	CRenderer::RenderRoads();
-	CRenderer::RenderEverythingBarRoads();
-	RenderFadingInUnderwaterEntities();
+	CRendererRH::RenderRoads();
+	CRendererRH::RenderEverythingBarRoads();
+	CRenderer::RenderFadingInUnderwaterEntities();
 	CVisibilityPlugins__RenderFadingInEntities();
 	BreakManager_c__Render(g_breakMan, 0);
 	 // CRenderer::RenderFadingInUnderwaterEntities
@@ -325,7 +327,7 @@ void CSAIdleHook::RenderDeferred()
 void CSAIdleHook::RenderForward()
 {
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
-	CRenderer::RenderCubemapEntities();
+	CRendererRH::RenderCubemapEntities();
 }
 
 void CSAIdleHook::RenderEffects()
@@ -364,7 +366,7 @@ void CSAIdleHook::RenderEffects()
 	CSpecialFX::Render();
 	//CVehicleRecording::Render();
 	//CPointLights::RenderFogEffect();
-	//CRenderer::RenderFirstPersonVehicle();
+	CRenderer::RenderFirstPersonVehicle();
 	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 1);
 	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZWRITEENABLE, 1);
 	//CVisibilityPlugins__RenderWeaponPedsForPC();
@@ -395,7 +397,7 @@ void CSAIdleHook::RenderRealTimeShadows(const RwV3d &sundir)
 	// Render cascades
 	for (int i = 0; i < gShadowSettings.ShadowCascadeCount; i++) {
 		shadowRenderer->RenderShadowToBuffer(i, [](int k) { 
-			CRenderer::RenderShadowCascade(k);
+			CRendererRH::RenderShadowCascade(k);
 		});
 	}
 	shadowRenderer->m_bShadowsRendered = true;
@@ -439,25 +441,13 @@ void CSAIdleHook::RenderVoxelGI()
 	{
 		m_uiDeferredStage = 3;
 		CVoxelOctreeRenderer::SetVoxelLODSize(i);
-		/*CopyViewMatrix(&CVoxelOctreeRenderer::cb_voxel.View[0], RwCameraGetFrame(CVoxelOctreeRenderer::m_pVoxelCamera));
-		CameraRotate(CVoxelOctreeRenderer::m_pVoxelCamera, nullptr, 180);
-		CopyViewMatrix(&CVoxelOctreeRenderer::cb_voxel.View[1], RwCameraGetFrame(CVoxelOctreeRenderer::m_pVoxelCamera));
-		CameraRotate(CVoxelOctreeRenderer::m_pVoxelCamera, nullptr, -90);
-		CopyViewMatrix(&CVoxelOctreeRenderer::cb_voxel.View[2], RwCameraGetFrame(CVoxelOctreeRenderer::m_pVoxelCamera));
-		CameraRotate(CVoxelOctreeRenderer::m_pVoxelCamera, nullptr, 180);
-		CopyViewMatrix(&CVoxelOctreeRenderer::cb_voxel.View[3], RwCameraGetFrame(CVoxelOctreeRenderer::m_pVoxelCamera));
-		CameraRotate2(CVoxelOctreeRenderer::m_pVoxelCamera, nullptr, 90);
-		CopyViewMatrix(&CVoxelOctreeRenderer::cb_voxel.View[4], RwCameraGetFrame(CVoxelOctreeRenderer::m_pVoxelCamera));
-		CameraRotate2(CVoxelOctreeRenderer::m_pVoxelCamera, nullptr, 180);
-		CopyViewMatrix(&CVoxelOctreeRenderer::cb_voxel.View[5], RwCameraGetFrame(CVoxelOctreeRenderer::m_pVoxelCamera));
-		*/
 		CVoxelOctreeRenderer::RenderToVoxelOctree(RenderDeferred, i);
 
 		g_pDeferredRenderer->m_pShadowRenderer->SetShadowBuffer();
 		CLightManager::SortByDistance(*campos);
 
 		m_uiDeferredStage = 4;
-		CVoxelOctreeRenderer::InjectRadiance(g_pDeferredRenderer->m_pShadowRenderer->m_pShadowCamera->zBuffer, CRenderer::RenderTOBJs, i-1);
+		CVoxelOctreeRenderer::InjectRadiance(g_pDeferredRenderer->m_pShadowRenderer->m_pShadowCamera->zBuffer, CRendererRH::RenderTOBJs, i-1);
 
 	}
 	CVoxelOctreeRenderer::FilterVoxelOctree();

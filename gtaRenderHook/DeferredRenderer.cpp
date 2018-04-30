@@ -175,6 +175,7 @@ void CDeferredRenderer::RenderOutput()
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetRaster(m_pFinalRasters[m_uiCurrentFinalRaster], 0);
 	g_pStateMgr->SetRaster(m_aDeferredRasters[1], 1);
+	//m_pShadowRenderer->SetShadowBuffer();
 	m_pAtmospherePassPS->Set();
 	CFullscreenQuad::Draw();
 	

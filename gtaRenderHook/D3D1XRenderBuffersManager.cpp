@@ -71,6 +71,7 @@ void CD3D1XRenderBuffersManager::UpdateWorldMatrix(RwMatrix *ltm)
 	m_pPerObjectMatrixBuffer->data.mWorld.pad1 = 0;
 	m_pPerObjectMatrixBuffer->data.mWorld.pad2 = 0;
 	m_pPerObjectMatrixBuffer->data.mWorld.pad3 = 0x3F800000;
+	RwMatrixInvert(&m_pPerObjectMatrixBuffer->data.mWorldInv, &m_pPerObjectMatrixBuffer->data.mWorld);
 }
 
 void CD3D1XRenderBuffersManager::Multipy4x4Matrices(RwGraphicsMatrix * res, RwGraphicsMatrix * a, RwGraphicsMatrix * b)
