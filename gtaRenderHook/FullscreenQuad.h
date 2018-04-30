@@ -14,10 +14,13 @@ public:
 	static void Init();
 	static void Shutdown();
 	static void Draw();
+	static void Copy(RwRaster* from, RwRaster* zBuffer);
+	static RwRaster*	m_pBlitRaster;
 private:
 	static CD3D1XVertexBuffer* m_quadVB;
 	static CD3D1XIndexBuffer* m_quadIB;
 	static CD3D1XShader* m_quadVS;
+	static CD3D1XShader* m_BlitPS;
 	static CD3D1XVertexDeclaration* m_pVertexDecl;
 };
 

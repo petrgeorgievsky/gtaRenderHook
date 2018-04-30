@@ -12,12 +12,15 @@
 CD3D1XVertexBuffer* CFullscreenQuad::m_quadVB = nullptr;
 CD3D1XIndexBuffer* CFullscreenQuad::m_quadIB = nullptr;
 CD3D1XShader* CFullscreenQuad::m_quadVS = nullptr;
+CD3D1XShader* CFullscreenQuad::m_BlitPS = nullptr;
 CD3D1XVertexDeclaration* CFullscreenQuad::m_pVertexDecl = nullptr;
+RwRaster*	CFullscreenQuad::m_pBlitRaster = nullptr;
 
 void CFullscreenQuad::Init()
 {
 	ID3D11Device* device = GET_D3D_DEVICE;
 	m_quadVS = new CD3D1XVertexShader("shaders/Quad.hlsl", "VS");
+	m_BlitPS = new CD3D1XPixelShader("shaders/Quad.hlsl", "BlitPS");
 	
 	std::vector<D3D11_INPUT_ELEMENT_DESC> layout =
 	{
@@ -43,6 +46,7 @@ void CFullscreenQuad::Init()
 	
 	initData.pSysMem = indices;
 	m_quadIB = new CD3D1XIndexBuffer(6, &initData);
+	m_pBlitRaster = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 }
 
 void CFullscreenQuad::Shutdown()
@@ -51,6 +55,7 @@ void CFullscreenQuad::Shutdown()
 	if (m_quadIB) delete m_quadIB;
 	if (m_pVertexDecl) delete m_pVertexDecl;
 	delete m_quadVS;
+	if (m_pBlitRaster) RwRasterDestroy(m_pBlitRaster);
 }
 
 void CFullscreenQuad::Draw()
@@ -74,4 +79,13 @@ void CFullscreenQuad::Draw()
 
 	// Draw quad
 	GET_D3D_RENDERER->DrawIndexed(6, 0, 0);
+}
+
+void CFullscreenQuad::Copy(RwRaster * from, RwRaster* zBuffer)
+{
+	g_pRwCustomEngine->SetRenderTargets(&m_pBlitRaster, zBuffer, 1);
+	g_pStateMgr->FlushRenderTargets();
+	g_pStateMgr->SetRaster(from, 0);
+	m_BlitPS->Set();
+	Draw();
 }

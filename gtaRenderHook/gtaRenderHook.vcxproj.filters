@@ -36,36 +36,6 @@
     <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\RwPipelines">
       <UniqueIdentifier>{b9ee86dc-d171-4183-851f-7803a7656f56}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\GTA_SA">
-      <UniqueIdentifier>{5e11a709-0c5d-46fc-95fc-31f2c5ba833b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\GTA_SA\GTAPipelines">
-      <UniqueIdentifier>{e8009381-1bd1-412f-abe3-1b79a10f60e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\DeferredRendering">
-      <UniqueIdentifier>{ae836f44-aef6-4e29-93fe-3344aff9d17a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\GTA_SA\GTAClasses">
-      <UniqueIdentifier>{6e384abd-24fb-43d0-afd7-c8b6e0bae9cb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\DeferredRendering\Shadows">
-      <UniqueIdentifier>{6dcfac2d-b603-4abe-b238-f7826ee6ebad}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\DeferredRendering\VoxelGI">
-      <UniqueIdentifier>{69677b8a-e38e-4bbb-ad7b-a0c2c36a41ff}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\PostProcessing">
-      <UniqueIdentifier>{f9458c85-ceb3-4759-85d7-13b189e87810}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\DebugUtility">
-      <UniqueIdentifier>{e2af3242-a2c3-4af8-ae06-72caebc660c8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\External">
-      <UniqueIdentifier>{6dd2d506-16af-4a29-8d2f-70668e3e04bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\RenderWareCPPWrappers">
-      <UniqueIdentifier>{4ff0fb53-0220-42f2-8b48-007bac2a0d37}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Shaders">
       <UniqueIdentifier>{423d9031-fa34-4578-bd1d-6f4e79c6b9d3}</UniqueIdentifier>
     </Filter>
@@ -74,6 +44,51 @@
     </Filter>
     <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Shaders">
       <UniqueIdentifier>{f01e738b-b037-4361-8bd8-ac740990051f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms">
+      <UniqueIdentifier>{198c5ac5-1fa7-42f9-a61f-f60ebfed0a5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\Pipelines">
+      <UniqueIdentifier>{1d8a598d-b568-4c0a-b114-90c7b4acf155}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\Deferred">
+      <UniqueIdentifier>{8494bd5e-d562-4fec-b044-e548bf8c64c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\Materials">
+      <UniqueIdentifier>{4ba34f51-ca2c-4631-8a11-656341e8e87b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\Lighting">
+      <UniqueIdentifier>{ff47eb4e-2213-44d2-b53e-700d983ba831}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\Lighting\Shadows">
+      <UniqueIdentifier>{6dcfac2d-b603-4abe-b238-f7826ee6ebad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\Lighting\Reflections">
+      <UniqueIdentifier>{4c51e0be-3f07-4318-bf8e-d1a0b80718ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\PostProcessing">
+      <UniqueIdentifier>{f9458c85-ceb3-4759-85d7-13b189e87810}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\Lighting\VoxelGI">
+      <UniqueIdentifier>{69677b8a-e38e-4bbb-ad7b-a0c2c36a41ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RenderWareCPPWrappers">
+      <UniqueIdentifier>{4ff0fb53-0220-42f2-8b48-007bac2a0d37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Alghorithms\DebugUtility">
+      <UniqueIdentifier>{e2af3242-a2c3-4af8-ae06-72caebc660c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Games">
+      <UniqueIdentifier>{4f378deb-9f9d-4daa-be04-c1a14bcb7923}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Games\GTA_SA">
+      <UniqueIdentifier>{5e11a709-0c5d-46fc-95fc-31f2c5ba833b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Games\GTA_SA\GTAPipelines">
+      <UniqueIdentifier>{e8009381-1bd1-412f-abe3-1b79a10f60e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Games\GTA_SA\GTAClasses">
+      <UniqueIdentifier>{6e384abd-24fb-43d0-afd7-c8b6e0bae9cb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -135,94 +150,76 @@
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
     </ClInclude>
     <ClInclude Include="SAIdleHook.h">
-      <Filter>Source\GTA_SA</Filter>
+      <Filter>Source\Games\GTA_SA</Filter>
     </ClInclude>
     <ClInclude Include="CustomBuildingPipeline.h">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClInclude>
     <ClInclude Include="CustomBuildingDNPipeline.h">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
-    </ClInclude>
-    <ClInclude Include="DeferredPipeline.h">
-      <Filter>Source\DeferredRendering</Filter>
-    </ClInclude>
-    <ClInclude Include="DeferredRenderer.h">
-      <Filter>Source\DeferredRendering</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClInclude>
     <ClInclude Include="Renderer.h">
-      <Filter>Source\GTA_SA\GTAClasses</Filter>
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
     </ClInclude>
     <ClInclude Include="VoxelOctreeRenderer.h">
-      <Filter>Source\DeferredRendering\VoxelGI</Filter>
+      <Filter>Source\Alghorithms\Lighting\VoxelGI</Filter>
     </ClInclude>
     <ClInclude Include="VoxelPipeline.h">
-      <Filter>Source\DeferredRendering\VoxelGI</Filter>
-    </ClInclude>
-    <ClInclude Include="ShadowPipeline.h">
-      <Filter>Source\DeferredRendering\Shadows</Filter>
+      <Filter>Source\Alghorithms\Lighting\VoxelGI</Filter>
     </ClInclude>
     <ClInclude Include="ShadowRenderer.h">
-      <Filter>Source\DeferredRendering\Shadows</Filter>
+      <Filter>Source\Alghorithms\Lighting\Shadows</Filter>
     </ClInclude>
     <ClInclude Include="CustomCarFXPipeline.h">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClInclude>
     <ClInclude Include="D3D1XRenderBuffersManager.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
-    </ClInclude>
-    <ClInclude Include="LightManager.h">
-      <Filter>Source\DeferredRendering</Filter>
-    </ClInclude>
-    <ClInclude Include="PBSMaterial.h">
-      <Filter>Source\DeferredRendering</Filter>
     </ClInclude>
     <ClInclude Include="D3D1XTextureMemoryManager.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
     </ClInclude>
     <ClInclude Include="PostProcessEffect.h">
-      <Filter>Source\PostProcessing</Filter>
+      <Filter>Source\Alghorithms\PostProcessing</Filter>
     </ClInclude>
     <ClInclude Include="HDRTonemapping.h">
-      <Filter>Source\PostProcessing</Filter>
+      <Filter>Source\Alghorithms\PostProcessing</Filter>
     </ClInclude>
     <ClInclude Include="FullscreenQuad.h">
-      <Filter>Source\PostProcessing</Filter>
+      <Filter>Source\Alghorithms\PostProcessing</Filter>
     </ClInclude>
     <ClInclude Include="DebugRendering.h">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClInclude>
     <ClInclude Include="DebugRenderObject.h">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClInclude>
     <ClInclude Include="DebugLine.h">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClInclude>
     <ClInclude Include="SettingsHolder.h">
       <Filter>Source\Headers</Filter>
     </ClInclude>
     <ClInclude Include="CWaterLevel.h">
-      <Filter>Source\GTA_SA\GTAClasses</Filter>
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
     </ClInclude>
     <ClInclude Include="CustomSeabedPipeline.h">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClInclude>
     <ClInclude Include="CustomWaterPipeline.h">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
-    </ClInclude>
-    <ClInclude Include="CubemapReflectionRenderer.h">
-      <Filter>Source\DeferredRendering</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClInclude>
     <ClInclude Include="RwMethods.h">
-      <Filter>Source\RenderWareCPPWrappers</Filter>
+      <Filter>Source\RwRenderEngine\RenderWareCPPWrappers</Filter>
     </ClInclude>
     <ClInclude Include="RwVectorMath.h">
-      <Filter>Source\RenderWareCPPWrappers</Filter>
+      <Filter>Source\RwRenderEngine\RenderWareCPPWrappers</Filter>
     </ClInclude>
     <ClInclude Include="D3D1XVertexBufferManager.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
     </ClInclude>
     <ClInclude Include="DebugBBox.h">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClInclude>
     <ClInclude Include="D3D1XBuffer.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
@@ -252,7 +249,28 @@
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
     </ClInclude>
     <ClInclude Include="CVisibilityPluginsRH.h">
-      <Filter>Source\GTA_SA\GTAClasses</Filter>
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="DeferredPipeline.h">
+      <Filter>Source\Alghorithms\Pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowPipeline.h">
+      <Filter>Source\Alghorithms\Pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="DeferredRenderer.h">
+      <Filter>Source\Alghorithms\Deferred</Filter>
+    </ClInclude>
+    <ClInclude Include="CubemapReflectionRenderer.h">
+      <Filter>Source\Alghorithms\Lighting\Reflections</Filter>
+    </ClInclude>
+    <ClInclude Include="PBSMaterial.h">
+      <Filter>Source\Alghorithms\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="LightManager.h">
+      <Filter>Source\Alghorithms\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="VolumetricLighting.h">
+      <Filter>Source\Alghorithms\Lighting</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -305,94 +323,76 @@
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
     </ClCompile>
     <ClCompile Include="SAIdleHook.cpp">
-      <Filter>Source\GTA_SA</Filter>
+      <Filter>Source\Games\GTA_SA</Filter>
     </ClCompile>
     <ClCompile Include="CustomBuildingPipeline.cpp">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClCompile>
     <ClCompile Include="CustomBuildingDNPipeline.cpp">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
-    </ClCompile>
-    <ClCompile Include="DeferredPipeline.cpp">
-      <Filter>Source\DeferredRendering</Filter>
-    </ClCompile>
-    <ClCompile Include="DeferredRenderer.cpp">
-      <Filter>Source\DeferredRendering</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClCompile>
     <ClCompile Include="Renderer.cpp">
-      <Filter>Source\GTA_SA\GTAClasses</Filter>
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
     </ClCompile>
     <ClCompile Include="VoxelOctreeRenderer.cpp">
-      <Filter>Source\DeferredRendering\VoxelGI</Filter>
+      <Filter>Source\Alghorithms\Lighting\VoxelGI</Filter>
     </ClCompile>
     <ClCompile Include="VoxelPipeline.cpp">
-      <Filter>Source\DeferredRendering\VoxelGI</Filter>
-    </ClCompile>
-    <ClCompile Include="ShadowPipeline.cpp">
-      <Filter>Source\DeferredRendering\Shadows</Filter>
+      <Filter>Source\Alghorithms\Lighting\VoxelGI</Filter>
     </ClCompile>
     <ClCompile Include="ShadowRenderer.cpp">
-      <Filter>Source\DeferredRendering\Shadows</Filter>
+      <Filter>Source\Alghorithms\Lighting\Shadows</Filter>
     </ClCompile>
     <ClCompile Include="CustomCarFXPipeline.cpp">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XRenderBuffersManager.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="LightManager.cpp">
-      <Filter>Source\DeferredRendering</Filter>
-    </ClCompile>
-    <ClCompile Include="PBSMaterial.cpp">
-      <Filter>Source\DeferredRendering</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XTextureMemoryManager.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
     </ClCompile>
     <ClCompile Include="PostProcessEffect.cpp">
-      <Filter>Source\PostProcessing</Filter>
+      <Filter>Source\Alghorithms\PostProcessing</Filter>
     </ClCompile>
     <ClCompile Include="HDRTonemapping.cpp">
-      <Filter>Source\PostProcessing</Filter>
+      <Filter>Source\Alghorithms\PostProcessing</Filter>
     </ClCompile>
     <ClCompile Include="FullscreenQuad.cpp">
-      <Filter>Source\PostProcessing</Filter>
+      <Filter>Source\Alghorithms\PostProcessing</Filter>
     </ClCompile>
     <ClCompile Include="DebugRendering.cpp">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClCompile>
     <ClCompile Include="DebugRenderObject.cpp">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClCompile>
     <ClCompile Include="DebugLine.cpp">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClCompile>
     <ClCompile Include="SettingsHolder.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="CWaterLevel.cpp">
-      <Filter>Source\GTA_SA\GTAClasses</Filter>
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
     </ClCompile>
     <ClCompile Include="CustomSeabedPipeline.cpp">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClCompile>
     <ClCompile Include="CustomWaterPipeline.cpp">
-      <Filter>Source\GTA_SA\GTAPipelines</Filter>
-    </ClCompile>
-    <ClCompile Include="CubemapReflectionRenderer.cpp">
-      <Filter>Source\DeferredRendering</Filter>
+      <Filter>Source\Games\GTA_SA\GTAPipelines</Filter>
     </ClCompile>
     <ClCompile Include="RwMethods.cpp">
-      <Filter>Source\RenderWareCPPWrappers</Filter>
+      <Filter>Source\RwRenderEngine\RenderWareCPPWrappers</Filter>
     </ClCompile>
     <ClCompile Include="RwVectorMath.cpp">
-      <Filter>Source\RenderWareCPPWrappers</Filter>
+      <Filter>Source\RwRenderEngine\RenderWareCPPWrappers</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XVertexBufferManager.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\Managers</Filter>
     </ClCompile>
     <ClCompile Include="DebugBBox.cpp">
-      <Filter>Source\DebugUtility</Filter>
+      <Filter>Source\Alghorithms\DebugUtility</Filter>
     </ClCompile>
     <ClCompile Include="D3D1XBuffer.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses</Filter>
@@ -419,7 +419,28 @@
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine</Filter>
     </ClCompile>
     <ClCompile Include="CVisibilityPluginsRH.cpp">
-      <Filter>Source\GTA_SA\GTAClasses</Filter>
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="DeferredPipeline.cpp">
+      <Filter>Source\Alghorithms\Pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowPipeline.cpp">
+      <Filter>Source\Alghorithms\Pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="DeferredRenderer.cpp">
+      <Filter>Source\Alghorithms\Deferred</Filter>
+    </ClCompile>
+    <ClCompile Include="CubemapReflectionRenderer.cpp">
+      <Filter>Source\Alghorithms\Lighting\Reflections</Filter>
+    </ClCompile>
+    <ClCompile Include="PBSMaterial.cpp">
+      <Filter>Source\Alghorithms\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="LightManager.cpp">
+      <Filter>Source\Alghorithms\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="VolumetricLighting.cpp">
+      <Filter>Source\Alghorithms\Lighting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

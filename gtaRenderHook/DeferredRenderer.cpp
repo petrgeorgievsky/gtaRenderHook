@@ -14,6 +14,7 @@
 #include "LightManager.h"
 #include "CubemapReflectionRenderer.h"
 #include "D3D1XShaderDefines.h"
+#include "VolumetricLighting.h"
 #include <game_sa\CScene.h>
 #include <game_sa\CGame.h>
 /// voxel stuff
@@ -201,6 +202,8 @@ void CDeferredRenderer::RenderToCubemap(void(*renderCB)())
 
 void CDeferredRenderer::RenderTonemappedOutput()
 {
+	CVolumetricLighting::RenderVolumetricEffects(m_aDeferredRasters[1],
+		m_pShadowRenderer->m_pShadowCamera->zBuffer, m_pFinalRasters[m_uiCurrentFinalRaster]);
 	m_pTonemapping->Render(m_pFinalRasters[m_uiCurrentFinalRaster]);
 	m_uiCurrentFinalRaster = 1-m_uiCurrentFinalRaster;
 	for (auto i = 0; i < 7; i++)

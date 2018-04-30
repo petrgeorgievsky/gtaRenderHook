@@ -29,6 +29,7 @@
 #include <game_sa\CRadar.h>
 #include <game_sa\CGame.h>
 #include "DebugRendering.h"
+#include "VolumetricLighting.h"
 
 #define CGame__InitialiseRenderWare() ((char(__cdecl *)())0x5BD600)()
 #define CGame__ShutdownRenderWare() ((char(__cdecl *)())0x53BB80)()
@@ -75,6 +76,7 @@ char GTARwInit() {
 	if(GET_D3D_FEATURE_LVL >= D3D_FEATURE_LEVEL_11_0)
 		g_pCustomWaterPipe = new CCustomWaterPipeline();
 	CLightManager::Init();
+	CVolumetricLighting::Init();
 	//CVoxelOctreeRenderer::Init();
 	DebugBBox::Initialize();
 	CPBSMaterialMgr::LoadMaterials();
@@ -84,6 +86,7 @@ char GTARwShutdown() {
 	DebugBBox::Shutdown();
 	DebugRendering::Shutdown();
 	//CVoxelOctreeRenderer::Shutdown();
+	CVolumetricLighting::Shutdown();
 	CLightManager::Shutdown();
 	if(g_pCustomWaterPipe)
 		delete g_pCustomWaterPipe;
@@ -368,6 +371,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SettingsHolder::Instance.AddSettingBlock(&gShadowSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gDeferredSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gWaterSettings);
+		SettingsHolder::Instance.AddSettingBlock(&gVolumetricLightingSettings);
 		SettingsHolder::Instance.ReloadFile();
 		g_pDebug = new CDebug("debug.log");
 		g_pRwCustomEngine = new CRwD3D1XEngine(g_pDebug);

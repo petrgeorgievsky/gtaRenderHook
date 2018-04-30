@@ -81,6 +81,13 @@ cbuffer DeferredRendering : register(b6)
     float fMaxShadowBlur;
     float fMinShadowBlur;
 }
+cbuffer VolumetricLighting : register(b7)
+{
+    float RaymarchingDistance;
+    float SunlightBlendOffset;
+    float SunlightIntensity;
+    float padding___;
+}
 static const float voxelGridScale2 = 1.0f;
 static const int	voxelGridSize = 32;
 // Luminance vector
