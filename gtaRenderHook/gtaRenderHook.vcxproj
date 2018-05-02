@@ -193,6 +193,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AmbientOcclusion.h" />
     <ClInclude Include="CVisibilityPluginsRH.h" />
     <ClInclude Include="D3D1XShaderDefines.h" />
     <ClInclude Include="D3D1XIndexBuffer.h" />
@@ -255,6 +256,7 @@
     <ClInclude Include="VoxelPipeline.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AmbientOcclusion.cpp" />
     <ClCompile Include="CVisibilityPluginsRH.cpp" />
     <ClCompile Include="D3D1XShaderDefines.cpp" />
     <ClCompile Include="D3D1XIndexBuffer.cpp" />
@@ -432,6 +434,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\VolumetricLighting.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\AmbientOcclusion.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>

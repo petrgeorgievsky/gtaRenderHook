@@ -15,6 +15,7 @@
 #include "CubemapReflectionRenderer.h"
 #include "D3D1XShaderDefines.h"
 #include "VolumetricLighting.h"
+#include "AmbientOcclusion.h"
 #include <game_sa\CScene.h>
 #include <game_sa\CGame.h>
 /// voxel stuff
@@ -56,7 +57,6 @@ CDeferredRenderer::CDeferredRenderer()
 	}
 	gDebugSettings.DebugRenderTargetList.push_back(m_pLightingRaster);
 	gDebugSettings.DebugRenderTargetList.push_back(m_pReflectionRaster);
-	gDebugSettings.DebugRenderTargetList.push_back(m_pFinalRasters[0]);
 
 	m_pShadowRenderer	= new CShadowRenderer();
 	m_pReflRenderer = new CCubemapReflectionRenderer(gDeferredSettings.CubemapSize);
@@ -117,9 +117,9 @@ void CDeferredRenderer::RenderOutput()
 	m_pDeferredBuffer->data.MinShadowBlur = gDeferredSettings.MinShadowBlur;
 	m_pDeferredBuffer->Update();
 	g_pStateMgr->SetConstantBufferPS(m_pDeferredBuffer, 6);
+	CAmbientOcclusion::RenderAO(m_aDeferredRasters[1]);
 	g_pRwCustomEngine->SetRenderTargets(&m_pLightingRaster, Scene.m_pRwCamera->zBuffer, 1);
 	g_pStateMgr->FlushRenderTargets();
-
 	// Set deferred textures
 	g_pStateMgr->SetRaster(m_aDeferredRasters[0]);
 	for (auto i = 1; i < 3; i++)
@@ -164,6 +164,7 @@ void CDeferredRenderer::RenderOutput()
 	g_pStateMgr->SetRaster(m_pLightingRaster, 4);
 	g_pStateMgr->SetRaster(m_pFinalRasters[1 - m_uiCurrentFinalRaster], 5);
 	g_pStateMgr->SetRaster(m_pReflectionRaster, 6);
+	g_pStateMgr->SetRaster(CAmbientOcclusion::GetAORaster(), 7);
 	
 	m_pFinalPassPS->Set(); 
 	CFullscreenQuad::Draw();

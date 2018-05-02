@@ -47,6 +47,7 @@ void CFullscreenQuad::Init()
 	initData.pSysMem = indices;
 	m_quadIB = new CD3D1XIndexBuffer(6, &initData);
 	m_pBlitRaster = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
+
 }
 
 void CFullscreenQuad::Shutdown()
@@ -88,4 +89,14 @@ void CFullscreenQuad::Copy(RwRaster * from, RwRaster* zBuffer)
 	g_pStateMgr->SetRaster(from, 0);
 	m_BlitPS->Set();
 	Draw();
+}
+
+void CFullscreenQuad::QueueTextureReload()
+{
+	CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
+	if (dxEngine->m_bScreenSizeChanged) {
+		m_pBlitRaster->width = RsGlobal.maximumWidth;
+		m_pBlitRaster->height = RsGlobal.maximumHeight;
+		dxEngine->m_pRastersToReload.push_back(m_pBlitRaster);
+	}
 }

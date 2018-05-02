@@ -30,10 +30,7 @@
 #include <game_sa\CGame.h>
 #include "DebugRendering.h"
 #include "VolumetricLighting.h"
-
-#define CGame__InitialiseRenderWare() ((char(__cdecl *)())0x5BD600)()
-#define CGame__ShutdownRenderWare() ((char(__cdecl *)())0x53BB80)()
-#define CRadar__DrawRadarMask() ((void(__cdecl *)())0x585700)()
+#include "AmbientOcclusion.h"
 
 CDebug*				g_pDebug;
 CIRwRenderEngine*	g_pRwCustomEngine;
@@ -77,14 +74,16 @@ char GTARwInit() {
 		g_pCustomWaterPipe = new CCustomWaterPipeline();
 	CLightManager::Init();
 	CVolumetricLighting::Init();
+	CAmbientOcclusion::Init();
 	//CVoxelOctreeRenderer::Init();
 	DebugBBox::Initialize();
 	CPBSMaterialMgr::LoadMaterials();
 	return c;
 }
-char GTARwShutdown() {
+void GTARwShutdown() {
 	DebugBBox::Shutdown();
 	DebugRendering::Shutdown();
+	CAmbientOcclusion::Shutdown();
 	//CVoxelOctreeRenderer::Shutdown();
 	CVolumetricLighting::Shutdown();
 	CLightManager::Shutdown();
@@ -96,7 +95,7 @@ char GTARwShutdown() {
 	delete g_pCustomCarFXPipe;
 	delete g_pDeferredRenderer;
 	CFullscreenQuad::Shutdown();
-	return CGame__ShutdownRenderWare();
+	CGame::ShutdownRenderWare();
 }
 
 bool psNativeTextureSupport() {
@@ -372,6 +371,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SettingsHolder::Instance.AddSettingBlock(&gDeferredSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gWaterSettings);
 		SettingsHolder::Instance.AddSettingBlock(&gVolumetricLightingSettings);
+		SettingsHolder::Instance.AddSettingBlock(&gAmbientOcclusionSettings);
 		SettingsHolder::Instance.ReloadFile();
 		g_pDebug = new CDebug("debug.log");
 		g_pRwCustomEngine = new CRwD3D1XEngine(g_pDebug);

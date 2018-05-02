@@ -922,10 +922,10 @@ void CRendererRH::ScanPtrListForReflections(CPtrList * ptrList, bool loadIfRequi
 		entity->m_nScanCode = CWorld__ms_nCurrentScanCode;
 		if (entity->m_nType == eEntityType::ENTITY_TYPE_BUILDING || entity->m_nType == eEntityType::ENTITY_TYPE_OBJECT) {
 			CVector entityPos = entity->m_pLod != nullptr ? entity->m_pLod->GetPosition() : entity->GetPosition();
-
-			auto xDist = entityPos.x - ms_vecCameraPosition.x;
-			auto yDist = entityPos.y - ms_vecCameraPosition.y;
-			auto zDist = entityPos.z - ms_vecCameraPosition.z;
+			CVector playerPos = FindPlayerCoors(0);
+			auto xDist = entityPos.x - playerPos.x;
+			auto yDist = entityPos.y - playerPos.y;
+			auto zDist = entityPos.z - playerPos.z;
 			float renderDistance = sqrt(xDist * xDist + yDist * yDist + zDist * zDist);
 			AddEntityToReflectionList(entity, renderDistance);
 		}
@@ -1284,7 +1284,7 @@ void CRendererRH::ScanWorld()
 	
 	RwMatrix* m = &(RwCameraGetFrame(TheCamera.m_pRwCamera)->modelling);
 	m_pFirstPersonVehicle = nullptr;
-	CVisibilityPlugins__InitAlphaEntityList();
+	CVisibilityPlugins::InitAlphaEntityList();
 	
 	points[5].x = -(viewWindow.x) * 300.0f;
 	points[5].y = viewWindow.y * 300.0f;
@@ -1361,7 +1361,7 @@ void CRendererRH::ScanWorld()
 
 	// Resets scan codes if it exceeds 2^16
 	SetNextScanCode();
-
+	CVisibilityPlugins::InitAlphaEntityList();
 	RwV2d sector[5];
 	sector[0].x = points[0].x * 0.02f + 60.0f;
 	sector[0].y = points[0].y * 0.02f + 60.0f;

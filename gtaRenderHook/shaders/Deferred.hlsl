@@ -15,6 +15,7 @@ Texture2D txShadow 	: register(t3);
 Texture2D txLighting : register(t4);
 Texture2D txPrevFrame : register(t5);
 Texture2D txReflections : register(t6);
+Texture2D txAO : register(t7);
 #ifndef SAMLIN
 #define SAMLIN
 SamplerState samLinear : register(s0);
@@ -196,10 +197,11 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
 	}
 	else
 	{
+        float AmbientOcclusion = txAO.Sample(samLinear, i.vTexCoord.xy).r;
 		// Diffuse term consists of diffuse lighting, and sky ambient
-		float3 DiffuseTerm = (Lighting.xyz + vSkyLightCol.rgb * 0.3f);
+		float3 DiffuseTerm = (Lighting.xyz + vSkyLightCol.rgb * 0.3f) * AmbientOcclusion;
 		// Specular term consists of specular highlights
-		float3 SpecularTerm = (Lighting.w * Lighting.xyz);
+        float3 SpecularTerm = (Lighting.w * Lighting.xyz) * AmbientOcclusion;
 		// Reflection term is computed before deferred
 		float3 ReflectionTerm = txReflections.Sample(samLinear, i.vTexCoord.xy);
         // Fresnel coeff
@@ -207,7 +209,7 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
         // Increase reflection for cars
         if (MaterialType == 1)
         {
-            FresnelCoeff = lerp(1.0f,FresnelCoeff, Parameters.y);
+            //FresnelCoeff = lerp(1.0f,FresnelCoeff, Parameters.y);
             ReflectionTerm *= 1.5f;
         }
 		// Add atmospheric scattering to result

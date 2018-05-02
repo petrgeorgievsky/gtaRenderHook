@@ -81,9 +81,7 @@ void CCustomBuildingPipeline::RenderAlphaList()
 		g_pRenderBuffersMgr->UpdateMaterialGlossiness(fShininess);
 
 		if (curmesh.material->texture) {
-			if (curmesh.material->texture->raster != nullptr) {
-				g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
-			}
+			g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
 		}
 		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();

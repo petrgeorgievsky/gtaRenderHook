@@ -3,15 +3,16 @@
 #include "GBuffer.hlsl"
 #include "VoxelizingHelper.hlsl"
 #include "AtmosphericScatteringFunctions.hlsli"
+#include "Shadows.hlsl"
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 Texture2D txDiffuse : register(t0);
 Texture2D txSpec 	: register(t1);
-Texture2D txShadow 	: register(t4);
+Texture2D txShadow 	: register(t3);
 
 SamplerState samLinear : register(s0);
-
+SamplerComparisonState samShadow : register(s1);
 struct VS_CAR_INPUT
 {
 	float3 vPosition   	: POSITION;
@@ -112,9 +113,14 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
     DiffuseTerm *= vSunLightDir.w;
     float4 albedoSample = txDiffuse.Sample(samLinear, i.vTexCoord.xy) * cDiffuseColor;
     float4 outColor;
+#if SAMPLE_SHADOWS!=1
+    float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, length(WorldPos.xyz - ViewPos));
+#else
+    float ShadowTerm = 1.0;
+#endif
     // todo: add lighting methods for forward renderer
-    outColor.rgb = albedoSample.rgb * (DiffuseTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb;
-    outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm, 1.0f));
+    outColor.rgb = albedoSample.rgb * (DiffuseTerm * ShadowTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb * ShadowTerm;
+    outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm * ShadowTerm, 1.0f));
     float3 FullScattering;
     outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
 	return outColor;

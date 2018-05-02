@@ -15,6 +15,7 @@ public:
 	static void Shutdown();
 	static void Draw();
 	static void Copy(RwRaster* from, RwRaster* zBuffer);
+	static void QueueTextureReload();
 	static RwRaster*	m_pBlitRaster;
 private:
 	static CD3D1XVertexBuffer* m_quadVB;

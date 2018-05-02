@@ -1,6 +1,7 @@
 #include "Shadows.hlsl"
 #include "GBuffer.hlsl"
 #include "GameMath.hlsl"
+#include "AtmosphericScatteringFunctions.hlsli"
 Texture2D txScreen : register(t0);
 Texture2D txGB1 : register(t1);
 Texture2D txVolumetric : register(t2);
@@ -37,6 +38,26 @@ float3 ComputeSunRays(float3 ViewPos, float3 WorldPos, float Length)
     return ResultColor / (float) SunRaySampleCount;
 }
 
+/*!
+    Calculates sun-light volumetric scattering
+    TODO: improve this alghorithm quality and performance, by introducing jittering or maybe something more
+*/
+float3 ComputeSunRaysWithLighting(float3 LightDir, float3 ViewPos, float3 WorldPos, float Length)
+{
+    const int SunRaySampleCount = SUNLIGHT_RM_STEPS;
+    float3 ViewDir = normalize(WorldPos - ViewPos);
+    float3 Step = ViewDir * Length / (float) SunRaySampleCount;
+    float3 CurrentPos = ViewPos;
+    float SunRaysIntensity = min(max(dot(ViewDir, LightDir) + SunlightBlendOffset, 0.0f), 1.0f);
+    float3 ResultColor = float3(0, 0, 0);
+    for (int i = 0; i < SunRaySampleCount; i++)
+    {
+        ResultColor += SampleShadowCascadesUnfiltered(txShadow, samShadow, samLinear, CurrentPos, (Length / (float) SunRaySampleCount) * i) * (SunRaysIntensity * vSunColor.rgb * vSunColor.a * 0.5f + GetRayleighDensity(CurrentPos.z) * vSkyLightCol.rgb * 0.25f + GetMieDensity(CurrentPos.z) * vHorizonCol.rgb * 0.25f);
+        CurrentPos += Step;
+    }
+    return ResultColor / (float) SunRaySampleCount;
+}
+
 float4 VolumetricSunlightPS(PS_QUAD_IN i) : SV_TARGET
 {
     float4 OutLighting;
@@ -56,9 +77,9 @@ float4 VolumetricSunlightPS(PS_QUAD_IN i) : SV_TARGET
 
     float SunRaysIntensity = min(max(dot(ViewDir, LightDir) + SunlightBlendOffset, 0.0f), 1.0f) * SunlightIntensity;
 
-    float3 SunRays = ComputeSunRays(ViewPos, WorldPos, min(length(WorldPos - ViewPos), RaymarchingDistance)) * SunRaysIntensity;
+    float3 SunRays = ComputeSunRaysWithLighting(LightDir, ViewPos, WorldPos, min(length(WorldPos - ViewPos), RaymarchingDistance));
 
-    OutLighting.rgb = SunRays * vSunColor.rgb * vSunColor.a;
+    OutLighting.rgb = SunRays * SunlightIntensity;
     OutLighting.a = 1;
 
     return OutLighting;

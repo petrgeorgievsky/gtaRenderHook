@@ -17,6 +17,7 @@
 #include "D3DRenderer.h"
 #include "DebugBBox.h"
 #include "CVisibilityPluginsRH.h"
+#include "AmbientOcclusion.h"
 #include <game_sa\CPointLights.h>
 #include <game_sa\CFont.h>
 #include <game_sa\CWorld.h>
@@ -35,6 +36,7 @@
 #include <game_sa\CRopes.h>
 #include <game_sa\CRenderer.h>
 #include "VolumetricLighting.h"
+#include "FullscreenQuad.h"
 //#include <game_sa\CGlass.h>
 //#include <game_sa\CSkidmarks.h>
 
@@ -81,6 +83,8 @@ void CSAIdleHook::Idle(void *Data)
 	// reload textures if required
 	g_pDeferredRenderer->QueueTextureReload();
 	CVolumetricLighting::QueueTextureReload();
+	CAmbientOcclusion::QueueTextureReload();
+	CFullscreenQuad::QueueTextureReload();
 	// TODO: move to RwD3D1XEngine
 	CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
 	if (dxEngine->m_bScreenSizeChanged || g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading || 
@@ -90,6 +94,7 @@ void CSAIdleHook::Idle(void *Data)
 		g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = false;
 		g_pDeferredRenderer->m_bRequiresReloading = false;
 		CVolumetricLighting::m_bRequiresReloading = false;
+		CAmbientOcclusion::m_bRequiresReloading = false;
 	}
 
 	if (!Data)
@@ -229,7 +234,7 @@ void CSAIdleHook::RenderInGame()
 	// Reset renderstates and disable Z-Test
 	DefinedState();
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 0);
-
+	
 	// Render deferred shading
 	CD3DRenderer* renderer = static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer();
 	renderer->BeginDebugEvent(L"Deferred composition pass");
@@ -301,6 +306,7 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	CWaterLevel::RenderWater();
 	DefinedState();
 
+	g_pDeferredRenderer->m_pShadowRenderer->SetShadowBuffer();
 	g_pCustomCarFXPipe->RenderAlphaList();
 	g_pCustomBuildingPipe->RenderAlphaList();
 	//CPostEffects__m_bDisableAllPostEffect = true;

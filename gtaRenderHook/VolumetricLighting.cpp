@@ -80,7 +80,7 @@ tinyxml2::XMLElement * VolumetricLightingSettingsBlock::Save(tinyxml2::XMLDocume
 	settingsNode->SetAttribute("SunlightRMSteps", SunlightRaymarchingSteps);
 	settingsNode->SetAttribute("SunlightBlendOffset", SunlightBlendOffset);
 	settingsNode->SetAttribute("SunlightIntensity", SunlightIntensity);
-	settingsNode->SetAttribute("RMDistance", RaymarchingDistance);
+	settingsNode->SetAttribute("RaymarchingDistance", RaymarchingDistance);
 	settingsNode->SetAttribute("VolumetricRenderingScale", VolumetricRenderingScale);
 
 	return settingsNode;
@@ -97,7 +97,7 @@ void VolumetricLightingSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 	SunlightBlendOffset = settingsNode->FloatAttribute("SunlightBlendOffset", 0.25f);
 	SunlightIntensity = settingsNode->FloatAttribute("SunlightIntensity", 0.25f);
 	RaymarchingDistance = settingsNode->FloatAttribute("RaymarchingDistance", 40.0f);
-	VolumetricRenderingScale = settingsNode->FloatAttribute("VolumetricTextureScale", 0.95f);
+	VolumetricRenderingScale = settingsNode->FloatAttribute("VolumetricRenderingScale", 0.95f);
 
 	m_pShaderDefineList = new CD3D1XShaderDefineList();
 	m_pShaderDefineList->AddDefine("SUNLIGHT_RM_STEPS", std::to_string(SunlightRaymarchingSteps));
@@ -124,7 +124,7 @@ void TW_CALL ReloadVolumetricTexturesCallBack(void *value)
 void VolumetricLightingSettingsBlock::InitGUI(TwBar * mainBar)
 {
 	TwAddVarRW(mainBar, "Volumetric sunlight intensity", TwType::TW_TYPE_FLOAT, &SunlightIntensity, "min=0.001 max=5.0 step=0.001 group=VolumetricLighting");
-	TwAddVarRW(mainBar, "Volumetric sunlight blend offset", TwType::TW_TYPE_FLOAT, &SunlightBlendOffset, "min=-0.5 max=0.5 step=0.01 group=VolumetricLighting");
+	TwAddVarRW(mainBar, "Volumetric sunlight blend offset", TwType::TW_TYPE_FLOAT, &SunlightBlendOffset, "min=-1.0 max=1.0 step=0.01 group=VolumetricLighting");
 	TwAddVarRW(mainBar, "Volumetric rendering scale", TwType::TW_TYPE_FLOAT, &VolumetricRenderingScale, "min=0.1 max=1.0 step=0.05 group=VolumetricLighting");
 	TwAddVarRW(mainBar, "Raymarching distance", TwType::TW_TYPE_FLOAT, &RaymarchingDistance, "min=1 max=1000 step=0.5 group=VolumetricLighting");
 	TwAddVarRW(mainBar, "Raymarching steps(Sunlight)", TwType::TW_TYPE_UINT32, &SunlightRaymarchingSteps, "min=2 max=256 step=1 group=VolumetricLighting");
