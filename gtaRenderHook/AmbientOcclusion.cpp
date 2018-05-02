@@ -38,7 +38,7 @@ void CAmbientOcclusion::RenderAO(RwRaster * normalsDepth)
 	m_pAmbientOcclusionCB->data.AOIntensity = gAmbientOcclusionSettings.AOIntesity;
 	m_pAmbientOcclusionCB->Update();
 	g_pRwCustomEngine->SetRenderTargets(&m_pAORaser, Scene.m_pRwCamera->zBuffer, 1);
-	g_pStateMgr->SetConstantBufferPS(m_pAmbientOcclusionCB, 7);
+	g_pStateMgr->SetConstantBufferPS(m_pAmbientOcclusionCB, 8);
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetRaster(normalsDepth, 0);
 	m_pAmbientOcclusionPS->Set();

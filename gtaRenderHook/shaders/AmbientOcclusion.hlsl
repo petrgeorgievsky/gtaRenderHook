@@ -17,6 +17,10 @@ Texture2D txGB1 : register(t0);
 SamplerState samLinear : register(s0);
 #endif
 
+#ifndef AO_SAMPLE_COUNT
+#define AO_SAMPLE_COUNT 16
+#endif
+
 float4 AmbientOcclusionPS(PS_QUAD_IN i) : SV_Target
 {
     float4 OutLighting;

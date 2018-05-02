@@ -88,6 +88,13 @@ cbuffer VolumetricLighting : register(b7)
     float SunlightIntensity;
     float padding___;
 }
+cbuffer AmbientOcclusion : register(b8)
+{
+    float AOIntensity;
+    float AORadius;
+    float AOCurve;
+    float padding__;
+}
 static const float voxelGridScale2 = 1.0f;
 static const int	voxelGridSize = 32;
 // Luminance vector

@@ -185,7 +185,7 @@ bool CD3DRenderer::InitDevice()
 
 		if(CALL_D3D_API(dxgiFactory2->CreateSwapChainForHwnd(m_pd3dDevice, m_hWnd, &sd, &fsd, nullptr, &m_pSwapChain1),
 			"Failed to create swap chain using DX11.1 API."))
-			m_pSwapChain1->QueryInterface(__uuidof(IDXGISwapChain), reinterpret_cast<void**>(&m_pSwapChain));
+			m_pSwapChain1->QueryInterface(__uuidof(IDXGISwapChain1), reinterpret_cast<void**>(&m_pSwapChain));
 		
 
 		dxgiFactory2->Release();
@@ -225,8 +225,7 @@ void CD3DRenderer::DeInitDevice()
 	if (m_pSwapChain1) { 
 		m_pSwapChain1->Release();
 		m_pSwapChain1 = nullptr;
-	}
-	if (m_pSwapChain) { 
+	}else if (m_pSwapChain) { 
 		m_pSwapChain->Release();
 		m_pSwapChain = nullptr;
 	}
