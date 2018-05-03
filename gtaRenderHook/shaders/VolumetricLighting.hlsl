@@ -27,15 +27,29 @@ struct PS_QUAD_IN
 float3 ComputeSunRays(float3 ViewPos, float3 WorldPos, float Length)
 {
     const int SunRaySampleCount = SUNLIGHT_RM_STEPS;
-    float3 Step = normalize(WorldPos - ViewPos) * Length / (float) SunRaySampleCount;
+    float3 Step = normalize(WorldPos - ViewPos) * Length / (float)SunRaySampleCount;
     float3 CurrentPos = ViewPos;
     float3 ResultColor = float3(0, 0, 0);
-    for (int i = 0; i < SunRaySampleCount; i++)
+    for(int i = 0; i < SunRaySampleCount; i++)
     {
-        ResultColor += SampleShadowCascadesUnfiltered(txShadow, samShadow, samLinear, CurrentPos, (Length / (float) SunRaySampleCount) * i);
+        ResultColor += SampleShadowCascadesUnfiltered(txShadow, samShadow, samLinear, CurrentPos, (Length / (float)SunRaySampleCount) * i);
         CurrentPos += Step;
     }
-    return ResultColor / (float) SunRaySampleCount;
+    return ResultColor / (float)SunRaySampleCount;
+}
+
+float Bayer4x4(int2 index)
+{
+    static const float Bayer[16] = { 1, 13, 4, 16, 9, 5, 12, 8, 3, 15, 2, 14, 11, 7, 10, 6 };
+    int2 MatIndex = index % 4;
+
+    return Bayer[MatIndex.x + 4 * MatIndex.y] * 0.0625;
+}
+
+//expects integer-stepped values (e.g. position)
+float InterleavedGradientNoise(float2 index)
+{
+    return frac(frac(dot(index.xy, float2(0.06711056, 0.00583715))) * 52.9829189);
 }
 
 /*!
@@ -46,14 +60,10 @@ float3 ComputeSunRaysWithLighting(PS_QUAD_IN i, float3 LightDir, float3 ViewPos,
 {
     const int SunRaySampleCount = SUNLIGHT_RM_STEPS;
     float3 ViewDir = normalize(WorldPos - ViewPos);
-    float StepLength = Length / (float) SunRaySampleCount;
+    float StepLength = Length / (float)SunRaySampleCount;
 
     float3 Step = ViewDir * StepLength;
-    //float Jitter =  frac(frac(dot(vPosition.xy, float2(0.06711056,0.00583715))) * 52.9829189); //interleaved gradient noise
-
-    static const float Bayer[16] = {0,12,3,15,8,4,11,7,2,14,1,13,10,6,9,5}; 
-    int2 MatIndex = i.vPosition.xy % 4;
-    float Jitter = (Bayer[MatIndex.x + 4*MatIndex.y] + 1) / 16.0;
+    float Jitter = Bayer4x4(i.vPosition.xy);
 
     float3 CurrentPos = ViewPos + Step * Jitter;
     float3 ResultColor = 0.0;
@@ -61,19 +71,19 @@ float3 ComputeSunRaysWithLighting(PS_QUAD_IN i, float3 LightDir, float3 ViewPos,
     float SunBlend = saturate(dot(ViewDir, LightDir) + SunlightBlendOffset);
     SunBlend = SunBlend * SunBlend * 2.0;
 
-                 float3 SunRayContrib = SunBlend  * vSunColor.rgb * vSunColor.a * 0.5f;
+    float3 SunRayContrib = SunBlend * vSunColor.rgb * vSunColor.a * 0.5f;
     static const float3 RayleighContrib = vSkyLightCol.rgb * 0.25f;
     static const float3 MieContrib = vHorizonCol.rgb * 0.25f;
 
-    for (int index = 0; index < SunRaySampleCount; index++)
+    for(int index = 0; index < SunRaySampleCount; index++)
     {
         float3 CurrentRay = SampleShadowCascadesUnfiltered(txShadow, samShadow, samLinear, CurrentPos, StepLength * (index + Jitter));
-        ResultColor += CurrentRay * (SunRayContrib 
-                                   + RayleighContrib * GetRayleighDensity(CurrentPos.z)  
+        ResultColor += CurrentRay * (SunRayContrib
+                                   + RayleighContrib * GetRayleighDensity(CurrentPos.z)
                                    + GetMieDensity(CurrentPos.z) * MieContrib);
         CurrentPos += Step;
     }
-    return ResultColor / (float) SunRaySampleCount;
+    return ResultColor / (float)SunRaySampleCount;
 }
 
 float4 VolumetricSunlightPS(PS_QUAD_IN i) : SV_TARGET
@@ -108,6 +118,7 @@ float4 VolumetricCombinePS(PS_QUAD_IN i) : SV_TARGET
     float4 OutLighting;
 
     float4 ScreenColor = txScreen.Sample(samLinear, i.vTexCoord.xy);
+
     
     OutLighting.rgb = ScreenColor.rgb + txVolumetric.Sample(samLinear, i.vTexCoord.xy).rgb;
     OutLighting.a = 1;
