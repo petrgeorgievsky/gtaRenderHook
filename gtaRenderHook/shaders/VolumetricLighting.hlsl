@@ -56,7 +56,7 @@ float InterleavedGradientNoise(float2 index)
     Calculates sun-light volumetric scattering
     TODO: improve this alghorithm quality and performance, by introducing jittering or maybe something more
 */
-float3 ComputeSunRaysWithLighting(PS_QUAD_IN i, float3 LightDir, float3 ViewPos, float3 WorldPos, float Length)
+float3 ComputeSunRaysWithLighting(float3 LightDir, float3 ViewPos, float3 WorldPos, float Length)
 {
     const int SunRaySampleCount = SUNLIGHT_RM_STEPS;
     float3 ViewDir = normalize(WorldPos - ViewPos);
@@ -105,7 +105,7 @@ float4 VolumetricSunlightPS(PS_QUAD_IN i) : SV_TARGET
 
     float SunRaysIntensity = min(max(dot(ViewDir, LightDir) + SunlightBlendOffset, 0.0f), 1.0f) * SunlightIntensity;
 
-    float3 SunRays = ComputeSunRaysWithLighting(i, LightDir, ViewPos, WorldPos, min(length(WorldPos - ViewPos), RaymarchingDistance));
+    float3 SunRays = ComputeSunRaysWithLighting(LightDir, ViewPos, WorldPos, min(length(WorldPos - ViewPos), RaymarchingDistance));
 
     OutLighting.rgb = SunRays * SunlightIntensity;
     OutLighting.a = 1;
