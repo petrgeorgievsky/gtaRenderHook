@@ -42,28 +42,28 @@ public:
 	static void RenderWater();
 	static void SetCameraRange();
 	static void RenderBoatWakes();
-	static void RenderWaterRectangle(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d);
-	static void RenderFlatWaterRectangle(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d);
-	static void SplitWaterRectangleAlongYLine(int m, int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d);
-	static void SplitWaterRectangleAlongXLine(int m,int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d);
+	static void RenderWaterRectangle(int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d);
+	static void RenderFlatWaterRectangle(int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d);
+	static void SplitWaterRectangleAlongYLine(int m, int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d);
+	static void SplitWaterRectangleAlongXLine(int m,int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d);
 	
 	static void CalculateWavesForCoordinate(int x, int y, float a3, float a4, float *resHeight, float *diffuse, float *sunGlare, CVector *resNormal);
 
 	static void RenderDetailedSeaBedSegment(int x, int y, float a, float b, float c, float d);
 	static void RenderSeaBedSegment(int x, int y, float a, float b, float c, float d);
 	static void RenderSeaBed();
-	static void RenderWaterTriangle(CWaterVertice a, CWaterVertice b, CWaterVertice c);
+	static void RenderWaterTriangle(const CWaterVertice & a, const CWaterVertice & b, const CWaterVertice & c);
 	static void RenderAndEmptyRenderBuffer();
 	
 	static void GenerateNormals();
-	static void RenderFlatWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e);
-	static void RenderDetailedWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e);
-	static void RenderHighDetailWaterRectangle_OneLayer(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e, int xToYHalfRatio, int a23, signed int halfXSize, signed int halfYSize);
+	static void RenderFlatWaterRectangle_OneLayer(int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d, int e);
+	static void RenderDetailedWaterRectangle_OneLayer(int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d, int e);
+	static void RenderHighDetailWaterRectangle_OneLayer(int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d, int e, int xToYHalfRatio, int a23, signed int halfXSize, signed int halfYSize);
 	static UINT	&m_NumBlocksOutsideWorldToBeRendered;
 	static UINT	&m_nNumOfWaterTriangles;
 	static UINT	&m_nNumOfWaterQuads;
-	static USHORT* m_BlocksToBeRenderedOutsideWorldX;
-	static USHORT* m_BlocksToBeRenderedOutsideWorldY;
+	static SHORT* m_BlocksToBeRenderedOutsideWorldX;
+	static SHORT* m_BlocksToBeRenderedOutsideWorldY;
 	static float &m_CurrentFlowX;
 	static float &m_CurrentFlowY;
 	static float *g_aFlowIntensity;

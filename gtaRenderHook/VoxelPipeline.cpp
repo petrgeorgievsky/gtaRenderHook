@@ -1,10 +1,12 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "VoxelPipeline.h"
 #include "D3D1XShader.h"
 
 
 #ifndef DebuggingShaders
-CVoxelPipeline::CVoxelPipeline(std::string pipeName,bool useVoxelPipe):useVoxelPipe{ useVoxelPipe }
+CVoxelPipeline::CVoxelPipeline(std::string pipeName,bool useVoxelPipe):m_bUseVoxelPipe{ useVoxelPipe }
 #else
 CVoxelPipeline::CVoxelPipeline(std::wstring pipeName)
 #endif // !DebuggingShaders
@@ -25,7 +27,7 @@ CVoxelPipeline::CVoxelPipeline(std::wstring pipeName)
 
 CVoxelPipeline::~CVoxelPipeline()
 {
-	if (useVoxelPipe) {
+	if (m_bUseVoxelPipe) {
 		delete m_pVoxelPS;
 		delete m_pVoxelEmmissivePS;
 		delete m_pVoxelVS;

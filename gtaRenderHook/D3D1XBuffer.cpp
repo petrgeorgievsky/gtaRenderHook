@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XBuffer.h"
 #include "RwD3D1XEngine.h"
@@ -37,7 +39,7 @@ void CD3D1XBuffer::Update(void * data, int size)
 	context->Unmap(m_pBuffer, 0);
 }
 
-void CD3D1XBuffer::SetDebugName(std::string name)
+void CD3D1XBuffer::SetDebugName(const std::string &name)
 {
 	g_pDebug->SetD3DName(m_pBuffer, name + "(D3D1XBuffer)");
 }

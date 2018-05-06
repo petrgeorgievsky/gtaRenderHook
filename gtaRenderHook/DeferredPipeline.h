@@ -8,9 +8,9 @@ class CDeferredPipeline:public CShadowPipeline,public CVoxelPipeline
 {
 public:
 #ifndef DebuggingShaders
-	CDeferredPipeline(std::string pipeName,bool useVoxelPipe = true);
+	CDeferredPipeline(const std::string &pipeName,bool useVoxelPipe = true);
 #else
-	CDeferredPipeline(std::wstring pipeName);
+	CDeferredPipeline(const std::wstring &pipeName);
 #endif // !DebuggingShaders
 	~CDeferredPipeline();
 protected:

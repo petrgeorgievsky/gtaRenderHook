@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include "stdafx.h"
 #include "D3D1XRenderBuffersManager.h"
 #include "D3D1XStateManager.h"
@@ -305,7 +308,7 @@ void CD3D1XRenderBuffersManager::SetMatrixBuffer()
 	}
 }
 
-void CD3D1XRenderBuffersManager::UpdateMaterialDiffuseColor(RwRGBA &color)
+void CD3D1XRenderBuffersManager::UpdateMaterialDiffuseColor(const RwRGBA &color)
 {
 	auto currentColor= m_pPerMaterialBuffer->data.diffuseColor;
 
@@ -318,7 +321,7 @@ void CD3D1XRenderBuffersManager::UpdateMaterialDiffuseColor(RwRGBA &color)
 	}
 }
 
-void CD3D1XRenderBuffersManager::UpdateMaterialEmmissiveColor(RwRGBA & color)
+void CD3D1XRenderBuffersManager::UpdateMaterialEmmissiveColor(const RwRGBA & color)
 {
 	auto currentColor = m_pPerMaterialBuffer->data.diffuseColor;
 	if (RWRGBALONG((byte)(currentColor.red / 16.0f * 255),
@@ -335,7 +338,7 @@ void CD3D1XRenderBuffersManager::UpdateMaterialEmmissiveColor(RwRGBA & color)
 	}
 }
 
-void CD3D1XRenderBuffersManager::UpdateMaterialSpecularInt(float & intensity)
+void CD3D1XRenderBuffersManager::UpdateMaterialSpecularInt(const float & intensity)
 {
 	if (abs(m_pPerMaterialBuffer->data.specularIntensity - intensity)> 0.001) {
 		m_pPerMaterialBuffer->data.specularIntensity = intensity;
@@ -343,7 +346,7 @@ void CD3D1XRenderBuffersManager::UpdateMaterialSpecularInt(float & intensity)
 	}
 }
 
-void CD3D1XRenderBuffersManager::UpdateMaterialGlossiness(float & intensity)
+void CD3D1XRenderBuffersManager::UpdateMaterialGlossiness(const float & intensity)
 {
 	if (abs(m_pPerMaterialBuffer->data.glossiness - intensity)> 0.001) {
 		m_pPerMaterialBuffer->data.glossiness = intensity;
@@ -351,7 +354,7 @@ void CD3D1XRenderBuffersManager::UpdateMaterialGlossiness(float & intensity)
 	}
 }
 
-void CD3D1XRenderBuffersManager::UpdateMaterialMetalness(float & intensity)
+void CD3D1XRenderBuffersManager::UpdateMaterialMetalness(const float & intensity)
 {
 	if (abs(m_pPerMaterialBuffer->data.metallness - intensity)> 0.001) {
 		m_pPerMaterialBuffer->data.metallness = intensity;

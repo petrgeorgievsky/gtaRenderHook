@@ -22,6 +22,7 @@ class WaterSettingsBlock : public SettingsBlock {
 public:
 	WaterSettingsBlock() {
 		m_sName = "WaterSettings";
+		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);

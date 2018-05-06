@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "RwD3D1XEngine.h"
 #include "D3D1XStateManager.h"
@@ -269,7 +271,7 @@ bool CRwD3D1XEngine::RenderStateSet(RwRenderState rs, UINT data)
 	switch (rs)
 	{
 	case rwRENDERSTATETEXTURERASTER:	// Sets texture raster renderstate, try to avoid using it 
-		g_pStateMgr->SetRaster((RwRaster*)data);
+		g_pStateMgr->SetRaster(reinterpret_cast<RwRaster*>(data));
 		break;
 	case rwRENDERSTATETEXTUREADDRESS:
 		g_pStateMgr->SetTextureAdressUV(static_cast<RwTextureAddressMode>((int)data));
@@ -698,9 +700,9 @@ bool CRwD3D1XEngine::RasterLock(RwRaster *raster, UINT flags, void** data)
 
 	// Calculate stride (bytes per line) for BC1 compression we have 8 byte blocks, for BC2+ 16 byte blocks.
 	if (d3dRaster->format == DXGI_FORMAT_BC1_UNORM)
-		raster->stride = max(1, ((raster->width + 3) / 4)) * 8; 
+		raster->stride = ((raster->width + 3) / 4) * 8; 
 	else if (d3dRaster->format == DXGI_FORMAT_BC2_UNORM || d3dRaster->format == DXGI_FORMAT_BC3_UNORM)
-		raster->stride = max(1, ((raster->width + 3) / 4)) * 16;
+		raster->stride = (((raster->width + 3) / 4)) * 16;
 	else
 		raster->stride = (raster->width * 32 + 7) / 8;
 
@@ -809,8 +811,7 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 			auto swapChain = m_pRenderer->getSwapChain();
 			g_pStateMgr->SetScreenSize(static_cast<float>(currModeDesc.Width), static_cast<float>(currModeDesc.Height));
 			m_pRastersToReload.push_back(camera->zBuffer);
-			if (camera->frameBuffer)
-				RwRasterDestroy(camera->frameBuffer);
+			RwRasterDestroy(camera->frameBuffer);
 			swapChain->ResizeTarget(&currModeDesc);
 			swapChain->ResizeBuffers(1, currModeDesc.Width, currModeDesc.Height, currModeDesc.Format, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
 			camera->frameBuffer = RwRasterCreate(currModeDesc.Width, currModeDesc.Height, 32, rwRASTERDONTALLOCATE | rwRASTERTYPECAMERA);
@@ -821,9 +822,10 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 		if (m_bScreenSizeChanged)
 			ReloadTextures();
 	}
-	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
-	if (camera->frameBuffer && camera->frameBuffer->cType == rwRASTERTYPECAMERATEXTURE)
+	if (camera->frameBuffer && camera->frameBuffer->cType == rwRASTERTYPECAMERATEXTURE) {
+		RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
 		d3dRaster->resourse->BeginRendering();
+	}
 
 	m_pRenderer->BeginUpdate(camera);
 	return true;
@@ -1170,17 +1172,16 @@ RxInstanceData * CRwD3D1XEngine::m_D3DInstance(void * object, void * owner,
 	else
 		entry->header.indexBuffer = nullptr;
 
-	if (instanceCallback==nullptr)
-		return entry;
-	if (instanceCallback != _rxD3D9DefaultInstanceCallback && instanceCallback(object, &entry->header, 0))
-		return entry;
-	if (instanceCallback == _rxD3D9DefaultInstanceCallback && _rxD3D9DefaultInstanceCallback(object, &entry->header,0))
-		return entry;
-	else if (allocateNative)
-		_RwFree(entry);
-	else
-		_RwResourcesFreeResEntry(entry);
-	return nullptr;
+	if (instanceCallback != nullptr) {
+		if (!instanceCallback(object, &entry->header, 0)) {
+			if (allocateNative)
+				_RwFree(entry);
+			else
+				_RwResourcesFreeResEntry(entry);
+			return nullptr;
+		}
+	}
+	return entry;
 }
 
 RxInstanceData * CRwD3D1XEngine::m_D3DSkinInstance(void * object, void * instanceObject, RwResEntry ** repEntry, RpD3DMeshHeader * mesh)
@@ -1331,7 +1332,7 @@ RxInstanceData * CRwD3D1XEngine::m_D3DSkinInstance(void * object, void * instanc
 void CRwD3D1XEngine::SetTexture(RwTexture * tex, int Stage)
 {
 	if (tex == nullptr) {
-		g_pStateMgr->SetTextureEnable(false);
+		g_pStateMgr->SetRaster(nullptr);
 		return;
 	}
 
@@ -1480,11 +1481,11 @@ void CRwD3D1XEngine::SetRenderTargetsAndUAVs(RwRaster ** rasters, RwRaster ** ua
 
 void CRwD3D1XEngine::ReloadTextures()
 {
-	if (m_pRastersToReload.size() > 0) {
+	if (!m_pRastersToReload.empty()) {
 		for (auto raster: m_pRastersToReload)
 		{
 			if (raster) {
-				int flags = raster->cType | raster->cFlags | (raster->cFormat << 8);
+				//int flags = raster->cType | raster->cFlags | (raster->cFormat << 8);
 				GetD3D1XRaster(raster)->resourse->Reload();
 			}
 		}

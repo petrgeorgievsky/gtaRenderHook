@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "AmbientOcclusion.h"
 #include "D3D1XShader.h"
@@ -25,10 +27,8 @@ void CAmbientOcclusion::Shutdown()
 {
 	if (m_pAORaser)
 		RwRasterDestroy(m_pAORaser);
-	if (m_pAmbientOcclusionPS)
-		delete m_pAmbientOcclusionPS;
-	if (m_pAmbientOcclusionCB)
-		delete m_pAmbientOcclusionCB;
+	delete m_pAmbientOcclusionPS;
+	delete m_pAmbientOcclusionCB;
 }
 
 void CAmbientOcclusion::RenderAO(RwRaster * normalsDepth)

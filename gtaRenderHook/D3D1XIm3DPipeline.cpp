@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XIm3DPipeline.h"
 #include "CDebug.h"
@@ -31,15 +33,15 @@ CD3D1XIm3DPipeline::CD3D1XIm3DPipeline():
 
 CD3D1XIm3DPipeline::~CD3D1XIm3DPipeline()
 {
-	if (m_pVertexDeclaration) delete m_pVertexDeclaration;
-	if (m_pIndexBuffer) delete m_pIndexBuffer;
-	if (m_pVertexBuffer) delete m_pVertexBuffer;
+	delete m_pVertexDeclaration;
+	delete m_pIndexBuffer;
+	delete m_pVertexBuffer;
 }
 
 RwBool CD3D1XIm3DPipeline::SubmitNode()
 {
 	ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
-	rwIm3DPool* pool = rwD3D9ImmPool;
+	//rwIm3DPool* pool = rwD3D9ImmPool;
 	auto im3dPoolStash = rwD3D9ImmPool->stash;
 
 	if (im3dPoolStash.primType!=rwPRIMTYPETRIFAN)

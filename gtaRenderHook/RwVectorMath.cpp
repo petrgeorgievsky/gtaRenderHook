@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "RwVectorMath.h"
 
@@ -71,9 +73,12 @@ V3d V3d::cross(const V3d & b)
 
 V3d V3d::operator*(const Matrix & mat)
 {
-	V3d col_0 = { mat.getRight().getX(), mat.getUp().getX(),mat.getAt().getX() };
-	V3d col_1 = { mat.getRight().getY(), mat.getUp().getY(),mat.getAt().getY() };
-	V3d col_2 = { mat.getRight().getZ(), mat.getUp().getZ(),mat.getAt().getZ() };
+	auto right = mat.getRight();
+	auto up = mat.getUp();
+	auto at = mat.getAt();
+	V3d col_0 = { right.getX(), up.getX(), at.getX() };
+	V3d col_1 = { right.getY(), up.getY(), at.getY() };
+	V3d col_2 = { right.getZ(), up.getZ(), at.getZ() };
 	return V3d(dot(col_0), dot(col_1), dot(col_2));
 }
 
@@ -169,10 +174,14 @@ float V4d::dot(const V4d & b)
 
 V4d V4d::operator*(const Matrix & mat)
 {
-	V4d col_0 = { mat.getRight().getX(), mat.getUp().getX(),mat.getAt().getX(),mat.getPos().getX() };
-	V4d col_1 = { mat.getRight().getY(), mat.getUp().getY(),mat.getAt().getY(),mat.getPos().getY() };
-	V4d col_2 = { mat.getRight().getZ(), mat.getUp().getZ(),mat.getAt().getZ(),mat.getPos().getZ() };
-	V4d col_3 = { mat.getRight().getW(), mat.getUp().getW(),mat.getAt().getW(),mat.getPos().getW() };
+	auto right = mat.getRight();
+	auto up = mat.getUp();
+	auto at = mat.getAt();
+	auto pos = mat.getPos();
+	V4d col_0 = { right.getX(), up.getX(),at.getX(),pos.getX() };
+	V4d col_1 = { right.getY(), up.getY(),at.getY(),pos.getY() };
+	V4d col_2 = { right.getZ(), up.getZ(),at.getZ(),pos.getZ() };
+	V4d col_3 = { right.getW(), up.getW(),at.getW(),pos.getW() };
 	return V4d(dot(col_0), dot(col_1), dot(col_2), dot(col_3));
 }
 
@@ -228,12 +237,8 @@ Matrix::Matrix(const RwMatrix & mat)
 	pos_ = { mat.pos.x,mat.pos.y,mat.pos.z,reinterpret_cast<float &>(posW) };
 }
 
-Matrix::Matrix(const V4d & right, const V4d & up, const V4d & at, const V4d & pos)
+Matrix::Matrix(const V4d & right, const V4d & up, const V4d & at, const V4d & pos):right_(right), up_(up), at_(at), pos_(pos)
 {
-	right_ = right;
-	up_ = up;
-	at_ = at;
-	pos_ = pos;
 }
 
 Matrix Matrix::operator*(const Matrix & mat)
@@ -297,10 +302,8 @@ BBox::BBox(const RwBBox & bbox)
 	max_ = { bbox.sup };
 }
 
-BBox::BBox(const V3d & min, const V3d & max)
+BBox::BBox(const V3d & min, const V3d & max):min_(min), max_(max)
 {
-	min_ = min;
-	max_ = max;
 }
 
 BBox::BBox(const V3d * points, UINT count)

@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XSkinPipeline.h"
 #include "D3DRenderer.h"
@@ -38,8 +40,8 @@ CD3D1XSkinPipeline::CD3D1XSkinPipeline():
 
 CD3D1XSkinPipeline::~CD3D1XSkinPipeline()
 {
-	if (m_pSkinningDataBuffer) delete m_pSkinningDataBuffer;
-	if (m_pVertexDeclaration) delete m_pVertexDeclaration;
+	delete m_pSkinningDataBuffer;
+	delete m_pVertexDeclaration;
 }
 
 bool CD3D1XSkinPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance)
@@ -145,11 +147,12 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 	g_pStateMgr->SetConstantBufferVS(m_pSkinningDataBuffer, 3);
 
 	// iterate over materials and draw them
-	RwUInt8 alphaBlend;
+	
 	RxD3D9InstanceData* model;
 	RpMaterial* material;
 	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
+		RwUInt8 alphaBlend;
 		model = &GetModelsData(entryData)[i];
 		material = model->material;
 		alphaBlend = material->color.alpha!=255 || model->vertexAlpha;

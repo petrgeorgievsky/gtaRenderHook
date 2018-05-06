@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "CustomSeabedPipeline.h"
 #include "D3DRenderer.h"
@@ -52,7 +54,7 @@ CCustomSeabedPipeline::CCustomSeabedPipeline() :
 
 	if (FAILED(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pIndexBuffer)))
 		g_pDebug->printError("Failed to create index buffer");
-	
+	m_pSeaBedTexRaster = (*(RwRaster**)0xC228B0);
 }
 
 CCustomSeabedPipeline::~CCustomSeabedPipeline()
@@ -64,7 +66,6 @@ CCustomSeabedPipeline::~CCustomSeabedPipeline()
 
 void CCustomSeabedPipeline::RenderSeabed(RwIm3DVertex * verticles, UINT vertexCount, USHORT * indices, UINT indexCount)
 {
-	m_pSeaBedTexRaster = (*(RwRaster**)0xC228B0);
 	RwMatrix identity{};
 	identity.right.x = 1.0f;
 	identity.up.y = 1.0f;

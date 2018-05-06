@@ -32,6 +32,14 @@ inline float2 EncodeNormals(float2 v)
 	return v*0.5+0.5;
 }
 /*!
+    Encodes normals via SM.
+*/
+inline float2 EncodeNormalsSphereMap(float3 v)
+{
+    float p = sqrt(v.z * 8 + 8);
+    return v.xy / p + 0.5f;
+}
+/*!
     Decodes normals.
 */
 inline float3 DecodeNormals(float2 v)
@@ -41,13 +49,25 @@ inline float3 DecodeNormals(float2 v)
 	n.z = -sqrt(1.01 - dot(n.xy, n.xy));// added 0.01 to avoid z-fighting(or sqrt(0) to be more precise)
 	return n;
 }
-
+/*!
+    Decodes normals via SM.
+*/
+inline float3 DecodeNormalsSphereMap(float2 v)
+{
+    float2 fenc = v * 4 - 2;
+    float f = dot(fenc, fenc);
+    float g = sqrt(1 - f / 4);
+    float3 n;
+    n.xy = fenc * g;
+    n.z = 1 - f / 2;
+    return n;
+}
 /*!
     Encodes material type to float in 0..1 range.
 */
 inline float ConvertFromMatType(float p)
 {
-    return p / 255.0;
+    return p / 255.0f;
 }
 /*!
     Decodes material type from float. Simply restores it to 0..255 range.
@@ -87,7 +107,7 @@ struct PS_DEFERRED_IN
 void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float ViewZ, float4 Params)
 {
     // transform normals to view-space
-    Normals = mul(Normals, (float3x3) mView);
+    Normals = mul(normalize(Normals), (float3x3) mView);
 	output.vColor = Color;
     output.vNormalDepth = float4(EncodeNormals(Normals.xy), EncodeFloatRG(ViewZ / fFarClip));
 	output.vParameters = Params;

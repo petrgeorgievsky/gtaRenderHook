@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XTexture.h"
 #include "D3DRenderer.h"
@@ -11,10 +13,17 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 	m_pTexture			= nullptr;
 	m_shaderRV			= nullptr;
 	m_pStagingTexture	= nullptr;
+	m_dataPtr = nullptr;
+	m_nWidth = m_pParent->width;
+	m_nHeight = m_pParent->height;
+	m_mappedSubRes = {};
+	for (int i = 0; i < 256; i++)
+		m_palette[i] = { 255,255,255,255 };
+	
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(m_pParent);
 	ID3D11Device* dev = GET_D3D_DEVICE;
 	// Hardcoded 3D texture initialization
-	// TODO: Move somewhere else
+	// TODO: Move somewhere else 
 	if (d3dRaster->textureFlags == 64) 
 	{
 		m_type = eD3D1XTextureType::TT_3DTexture;
@@ -235,6 +244,10 @@ CD3D1XTexture::~CD3D1XTexture()
 	if (m_pTexture) {
 		m_pTexture->Release();
 		m_pTexture = nullptr;
+	}
+	if (m_dataPtr) {
+		free(m_dataPtr);
+		m_dataPtr = nullptr;
 	}
 }
 

@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "CWaterLevel.h"
 #include "CustomWaterPipeline.h"
@@ -16,8 +18,8 @@ UINT &CWaterLevel::m_NumBlocksOutsideWorldToBeRendered = *(UINT*)0xC215EC;
 UINT &CWaterLevel::m_nNumOfWaterTriangles = *(UINT*)0xC22884;
 UINT &CWaterLevel::m_nNumOfWaterQuads = *(UINT*)0xC22888;
 
-USHORT* CWaterLevel::m_BlocksToBeRenderedOutsideWorldX = (USHORT*)0xC21560;
-USHORT* CWaterLevel::m_BlocksToBeRenderedOutsideWorldY = (USHORT*)0xC214D0;
+SHORT* CWaterLevel::m_BlocksToBeRenderedOutsideWorldX = (SHORT*)0xC21560;
+SHORT* CWaterLevel::m_BlocksToBeRenderedOutsideWorldY = (SHORT*)0xC214D0;
 
 CWaterVertice* CWaterLevel::m_aVertices = (CWaterVertice*)0xC22910;
 CWaterTriangle* CWaterLevel::m_aTriangles = (CWaterTriangle*)0xC22854;
@@ -137,8 +139,8 @@ void CWaterLevel::RenderWater()
 				continue;
 		}
 
-		USHORT x = m_BlocksToBeRenderedOutsideWorldX[k];
-		USHORT y = m_BlocksToBeRenderedOutsideWorldY[k];
+		SHORT x = m_BlocksToBeRenderedOutsideWorldX[k];
+		SHORT y = m_BlocksToBeRenderedOutsideWorldY[k];
 
 		RenderWaterRectangle(
 			(x * 500 - 3000), ((x + 1) * 500 - 3000), (y * 500 - 3000), ((y + 1) * 500 - 3000),
@@ -199,7 +201,7 @@ void CWaterLevel::RenderBoatWakes()
 
 
 
-CRenPar * __cdecl CRenPar_Lerp(CRenPar *a1, CRenPar a, CRenPar b, float t)
+CRenPar * __cdecl CRenPar_Lerp(CRenPar *a1, const CRenPar &a, const CRenPar &b, float t)
 {
 	float invT = 1.0f - t;
 	
@@ -211,7 +213,7 @@ CRenPar * __cdecl CRenPar_Lerp(CRenPar *a1, CRenPar a, CRenPar b, float t)
 	return a1;
 }
 
-void CWaterLevel::RenderWaterRectangle(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
+void CWaterLevel::RenderWaterRectangle(int x0, int x1, int y0, int y1, const CRenPar &a, const CRenPar &b, const CRenPar &c, const CRenPar &d)
 {
 	/*int maxY, minY;
 	if (y0 < y1) {
@@ -255,17 +257,17 @@ void CWaterLevel::RenderWaterRectangle(int x0, int x1, int y0, int y1, CRenPar a
 	}
 }
 
-void CWaterLevel::RenderFlatWaterRectangle(int x, int y, int z, int w, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
+void CWaterLevel::RenderFlatWaterRectangle(int x, int y, int z, int w, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d)
 {
 	RenderFlatWaterRectangle_OneLayer(x, y, z, w, a, b, c, d, 0);
 	//RenderFlatWaterRectangle_OneLayer(x, y, z, w, a, b, c, d, 1);
 	//CWaterLevel_RenderFlatWaterRectangle(x, y, z, w, a, b, c, d);
 }
 
-void CWaterLevel::SplitWaterRectangleAlongYLine(int m, int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
+void CWaterLevel::SplitWaterRectangleAlongYLine(int m, int x0, int x1, int y0, int y1, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d)
 {
 	CRenPar b_d, a_c;
-	float blendFactor = (m - y0) / (y1 - y0) * 1.0f;
+	float blendFactor = (float)(m - y0) / (y1 - y0);
 
 	// First split part
 	CRenPar_Lerp(&b_d, b, d, blendFactor);
@@ -280,10 +282,10 @@ void CWaterLevel::SplitWaterRectangleAlongYLine(int m, int x0, int x1, int y0, i
 	RenderWaterRectangle(x0, x1, m, y1, a_c, b_d, c, d);
 }
 
-void CWaterLevel::SplitWaterRectangleAlongXLine(int m, int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d)
+void CWaterLevel::SplitWaterRectangleAlongXLine(int m, int x0, int x1, int y0, int y1, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d)
 {
 	CRenPar c_d, a_b;
-	float blendFactor = (m - x0) / (x1 - x0) * 1.0f;
+	float blendFactor = (float)(m - x0) / (x1 - x0);
 
 	// First split part
 	CRenPar_Lerp(&c_d, c, d, blendFactor);
@@ -453,8 +455,8 @@ void CWaterLevel::RenderSeaBed()
 
 	for (UINT i = 0; i < m_NumBlocksOutsideWorldToBeRendered; ++i)
 	{
-		USHORT x = m_BlocksToBeRenderedOutsideWorldX[i];
-		USHORT y = m_BlocksToBeRenderedOutsideWorldY[i];
+		SHORT x = m_BlocksToBeRenderedOutsideWorldX[i];
+		SHORT y = m_BlocksToBeRenderedOutsideWorldY[i];
 
 		CVector camPos= TheCamera.GetPosition();
 
@@ -529,7 +531,7 @@ void CWaterLevel::RenderSeaBed()
 	TempBufferVerticesStored = 0;
 }
 
-void CWaterLevel::RenderWaterTriangle(CWaterVertice a, CWaterVertice b, CWaterVertice c)
+void CWaterLevel::RenderWaterTriangle(const CWaterVertice &a, const CWaterVertice & b, const CWaterVertice & c)
 {
 	CWaterLevel_RenderWaterTriangle(a.posX, a.posY, a.renPar, b.posX, b.posY, b.renPar, c.posX, c.posY, c.renPar);
 }
@@ -591,7 +593,7 @@ void CWaterLevel::GenerateNormals()
 }
 
 
-void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int e)
+void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d, int e)
 {
 	int startIndex, startVertex;
 	if (TempBufferIndicesStored >= 4090 || TempBufferVerticesStored >= 2044)
@@ -611,7 +613,6 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 
 		v27 = 0.08f;
 		//LOBYTE(a21) = dword_8D3808;
-		height = 0.0;
 	}
 	else if (e == 1)
 	{
@@ -621,10 +622,10 @@ void CWaterLevel::RenderFlatWaterRectangle_OneLayer(int x0, int x1, int y0, int 
 		tV = tcV;//- floor(tcV);
 		v27 = 0.04f;
 		//LOBYTE(a21) = dword_8D380C;
-		height = 0.0;
 	}
 	else
 	{
+		v27 = 0.08f;
 		//v13 = a21;
 	}
 	tU = tU - 7.0f;
@@ -754,7 +755,7 @@ void CWaterLevel::CalculateWavesForCoordinate(int x, int y, float a3, float a4, 
 }
 
 
-void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int layer)
+void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d, int layer)
 {
 	
 	int startIndex, startVertex;
@@ -847,7 +848,7 @@ void CWaterLevel::RenderDetailedWaterRectangle_OneLayer(int x0, int x1, int y0, 
 	//TempBufferIndicesStored = startIndex + 4 * (tessFactor - 1) * (tessFactor - 1);
 }
 
-void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, CRenPar a, CRenPar b, CRenPar c, CRenPar d, int layer, int xToYHalfRatio, int a23, signed int halfXSize, signed int halfYSize)
+void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer(int x0, int x1, int y0, int y1, const CRenPar & a, const CRenPar & b, const CRenPar & c, const CRenPar & d, int layer, int xToYHalfRatio, int a23, signed int halfXSize, signed int halfYSize)
 {
 	CWaterLevel::RenderAndEmptyRenderBuffer();
 	float xScale = 1.0f / (float)halfXSize;

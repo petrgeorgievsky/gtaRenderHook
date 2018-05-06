@@ -232,7 +232,7 @@ public:
 	/*!
 		Changes current viewport.
 	*/
-	void SetViewport(D3D11_VIEWPORT vp);
+	void SetViewport(const D3D11_VIEWPORT &vp);
 	/*!
 		Flushes all state changes.
 	*/

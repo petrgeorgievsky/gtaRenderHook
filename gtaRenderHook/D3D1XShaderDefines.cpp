@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XShaderDefines.h"
 CD3D1XShaderDefineList* g_pGlobalShaderDefines;
@@ -9,7 +11,6 @@ CD3D1XShaderDefineList::CD3D1XShaderDefineList()
 
 void CD3D1XShaderDefineList::AddDefine(const std::string & defineName, const std::string & defineValue)
 {
-
 	m_aDefines.emplace_back( defineName , defineValue);
 }
 

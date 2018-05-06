@@ -54,6 +54,7 @@ class AmbientOcclusionSettingsBlock : public SettingsBlock {
 public:
 	AmbientOcclusionSettingsBlock() {
 		m_sName = "AmbientOcclusionSettings";
+		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);

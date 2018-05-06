@@ -15,8 +15,7 @@ private:
 	int		m_maxCount			= 0;
 	string	m_Name{ NULL };
 public:
-	explicit CCounter(const string name) {
-		m_Name = name;
+	explicit CCounter(const string& name) :m_Name{ name } {
 	}
 	// Increase count.
 	void Increase() {
@@ -53,8 +52,7 @@ private:
 	__int64 msCount = -1;
 	string	m_Name{ NULL };
 public:
-	CTimer(string Name) {
-		m_Name = Name;
+	explicit CTimer(const string &Name) : m_Name{ Name } {
 	}
 	// Begin counting
 	void Start() {
@@ -76,7 +74,7 @@ public:
 class CDebug
 {
 public:
-	CDebug(std::string acFileName) :
+	explicit CDebug(const std::string &acFileName) :
 		pLogStream { new ofstream(acFileName) },
 		m_fileName{ acFileName }
 	{
@@ -107,7 +105,7 @@ public:
 		throw std::runtime_error(msg);
 	}
 
-	void SetD3DName(ID3D11DeviceChild* dc, std::string c_szName) {
+	void SetD3DName(ID3D11DeviceChild* dc, const std::string& c_szName) {
 		dc->SetPrivateData(WKPDID_D3DDebugObjectName, c_szName.length(), c_szName.data());
 	}
 

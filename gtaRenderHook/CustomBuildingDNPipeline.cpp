@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "CustomBuildingDNPipeline.h"
 #include "CDebug.h"
@@ -51,8 +53,10 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	g_pStateMgr->SetInputLayout((ID3D11InputLayout*)entryData->header.vertexDeclaration);
 	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), sizeof(SimpleVertex), 0);
 
-	if (!entryData->header.indexBuffer)
-		g_pDebug->printMsg("CustomBuildingDNPipeline: empty index buffer found", 2);
+	if (!entryData->header.indexBuffer) {
+		g_pDebug->printMsg("CustomBuildingDNPipeline: empty index buffer found", 0);
+		return;
+	}
 
 	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
 
@@ -76,8 +80,8 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 		m_pPS->Set();
 		
 	BOOL oldBlendState = g_pStateMgr->GetAlphaBlendEnable();
-	RwUInt8 bAlphaEnable = 0;
-	set<RpMaterial*> materialSet{};
+	
+	//set<RpMaterial*> materialSet{};
 	// To improve preformance we try to reduce texture set calls, to do that we need to sort every object by texture pointer.
 	//list<RxD3D9InstanceData> meshList{};
 	//for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
@@ -85,6 +89,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	//meshList.sort([](const RxD3D9InstanceData &a, const RxD3D9InstanceData &b) {return a.material->texture > b.material->texture; });
 	for (RwUInt32 i=0; i<entryData->header.numMeshes;i++)
 	{
+		RwUInt8 bAlphaEnable = 0;
 		auto mesh = GetModelsData(entryData)[i];
 		bAlphaEnable = 0;
 		//if (mesh.material->color.alpha == 0) continue;
@@ -116,6 +121,8 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 				}
 			}
 		}
+		else
+			g_pRwCustomEngine->SetTexture(nullptr, 0);
 		if (m_uiDeferredStage != 1)
 			g_pStateMgr->SetAlphaBlendEnable(bAlphaEnable>0);
 		else

@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "CustomCarFXPipeline.h"
 #include "CDebug.h"
@@ -73,7 +75,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 
 		if (colorHEX < 0xAF00FF)
 		{
-			if (colorHEX < 0xFF3C || colorHEX == 0xFFB9 || colorHEX == 0xFF3C || colorHEX == 0x3CFF || colorHEX == 0xAFFF)
+			if (colorHEX < 0xFF3C || colorHEX == 0xFFB9 || colorHEX == 0xFF3C)
 			{
 				paintColor.blue = 0;
 				paintColor.green = 0;
@@ -101,11 +103,11 @@ void CCustomCarFXPipeline::RenderAlphaList()
 		g_pRenderBuffersMgr->UpdateMaterialGlossiness(fShininess);
 		g_pRenderBuffersMgr->UpdateMaterialMetalness(fMetal);
 
-		if (curmesh.material->texture) {
-			if (curmesh.material->texture->raster != nullptr) {
-				g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
-			}
-		}
+		if (curmesh.material->texture && curmesh.material->texture->raster != nullptr)
+			g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
+		else
+			g_pRwCustomEngine->SetTexture(nullptr, 0);
+
 		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(curmesh.numIndex, curmesh.startIndex, curmesh.minVert);
@@ -121,8 +123,10 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 
 	if (entryData->header.totalNumIndex == 0)
 		return;
-	if (!entryData->header.indexBuffer)
-		g_pDebug->printMsg("CCustomCarFXPipeline: empty index buffer found", 2);
+	if (!entryData->header.indexBuffer) {
+		g_pDebug->printMsg("CCustomCarFXPipeline: empty index buffer found", 0);
+		return;
+	}
 
 	UINT stride = sizeof(SimpleVertex);
 	UINT offset = 0;
@@ -153,11 +157,12 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 		m_pPS->Set();
 
 
-	RwUInt8 bAlphaEnable = 0;
+	
 
 	// Render each material in model
 	for (size_t i = 0; i < static_cast<size_t>(entryData->header.numMeshes); i++)
 	{
+		RwUInt8 bAlphaEnable = 0;
 		auto mesh = GetModelsData(entryData)[i];
 		bAlphaEnable = 0;
 		// Setup material properties
@@ -171,7 +176,7 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 			
 			if (colorHEX < 0xAF00FF)
 			{
-				if (colorHEX < 0xFF3C || colorHEX == 0xFFB9 || colorHEX == 0xFF3C || colorHEX == 0x3CFF || colorHEX == 0xAFFF)
+				if (colorHEX < 0xFF3C || colorHEX == 0xFFB9 || colorHEX == 0xFF3C)
 				{
 					paintColor.blue = 0;
 					paintColor.green = 0;
@@ -198,12 +203,10 @@ void CCustomCarFXPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 
 		bAlphaEnable |= mesh.material->color.alpha != 255 || mesh.vertexAlpha;
 		g_pRenderBuffersMgr->UpdateHasSpecTex(0);
 		// Setup texture
-		if (mesh.material->texture) {
-			if (mesh.material->texture->raster != nullptr) {
-				//bAlphaEnable |= GetD3D1XRaster(entryData->models[i].material->texture->raster)->alpha;
-				g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
-			}
-		}
+		if (mesh.material->texture && mesh.material->texture->raster != nullptr)
+			g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
+		else
+			g_pRwCustomEngine->SetTexture(nullptr, 0);
 
 		// Setup alpha blending
 		if (m_uiDeferredStage != 1 && m_uiDeferredStage != 2)

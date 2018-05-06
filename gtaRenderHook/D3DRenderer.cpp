@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3DRenderer.h"
 #include "D3D1XTexture.h"
@@ -68,8 +70,7 @@ bool CD3DRenderer::InitDevice()
 	HRESULT hr = S_OK;
 	// return if something is wrong, e.g. we have set some wrong parameters.
 	// TODO: try to avoid these errors, for example reset current adapter mode to 0 or something like that, but perhaps this is just a garbage thought
-	if (m_vAdapterModes.size() <= 1 || 
-		m_uiCurrentAdapterMode < 0 || 
+	if (m_vAdapterModes.size() <= 1 ||
 		m_uiCurrentAdapterMode > m_vAdapterModes.size())
 		return false;
 
@@ -125,8 +126,8 @@ bool CD3DRenderer::InitDevice()
 	// loop over each driver type to find supported one
 	for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++)
 	{
-		m_driverType = D3D_DRIVER_TYPE_UNKNOWN;//driverTypes[driverTypeIndex];
-		hr = D3D11CreateDevice(currentAdapter, m_driverType, nullptr, createDeviceFlags, featureLevels, numFeatureLevels,
+		m_driverType = driverTypes[driverTypeIndex];
+		hr = D3D11CreateDevice(m_driverType== D3D_DRIVER_TYPE_HARDWARE? nullptr : currentAdapter, m_driverType, nullptr, createDeviceFlags, featureLevels, numFeatureLevels,
 			D3D11_SDK_VERSION, &m_pd3dDevice, &m_featureLevel, &m_pImmediateContext);
 		// if we failed to create device with invalid arg error, 
 		// probably it's because current feature level is not supported by GPU,
@@ -308,8 +309,9 @@ void CD3DRenderer::Clear(RwCamera *camera,RwRGBA& color, RwInt32 flags)
 {
 	RwD3D1XRaster* pd3dDepthRaster = GetD3D1XRaster(camera->zBuffer);
 	RwD3D1XRaster* pd3dRTRaster = GetD3D1XRaster(camera->frameBuffer);
-	float clearColor[] = { color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f, color.alpha / 255.0f };
+
 	if (flags&rwCAMERACLEARIMAGE) {
+		float clearColor[] = { color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f, color.alpha / 255.0f };
 		m_pImmediateContext->ClearRenderTargetView(pd3dRTRaster->resourse->GetRTRV(), clearColor);
 	}
 	if ((flags&rwCAMERACLEARZ || flags&rwCAMERACLEARSTENCIL)&& camera->zBuffer) {
@@ -348,8 +350,9 @@ const char* CD3DRenderer::getAdapterInfo(UINT n)
 	DXGI_ADAPTER_DESC desc;
 
 	if(!CALL_D3D_API(m_vAdapters[n]->GetDesc(&desc),"Failed to retrieve adapter description."))
-		return "no info";
-	wcstombs(info, desc.Description, 80);
+		wcstombs(info, L"no info", 80);
+	else
+		wcstombs(info, desc.Description, 80);
 
 	return info;
 }

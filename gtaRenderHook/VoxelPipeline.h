@@ -15,6 +15,6 @@ protected:
 	CD3D1XShader*		m_pVoxelEmmissivePS = nullptr;
 	CD3D1XShader*		m_pVoxelGS = nullptr;
 	CD3D1XShader*		m_pVoxelVS = nullptr;
-	bool useVoxelPipe = true;
+	bool m_bUseVoxelPipe = true;
 };
 

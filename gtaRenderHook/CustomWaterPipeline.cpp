@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "CustomWaterPipeline.h"
 #include "D3DRenderer.h"
@@ -54,15 +56,15 @@ CCustomWaterPipeline::CCustomWaterPipeline() :
 		g_pDebug->printError("Failed to create index buffer");
 	m_pDS = new CD3D1XDomainShader("shaders/SACustomWater.hlsl", "DS");
 	m_pHS = new CD3D1XHullShader("shaders/SACustomWater.hlsl", "HS");
-
-	
+	m_pWaterRaster = (*(RwRaster**)0xC228A8);
+	m_pWaterWakeRaster = (*(RwRaster**)0xC228B8);
 }
 
 
 CCustomWaterPipeline::~CCustomWaterPipeline()
 {
-	if (m_pDS) delete m_pDS;
-	if (m_pHS) delete m_pHS;	
+	delete m_pDS;
+	delete m_pHS;	
 	if (m_pIndexBuffer) m_pIndexBuffer->Release();
 	if (m_pVertexBuffer) m_pVertexBuffer->Release();
 	if (m_pVertexLayout) m_pVertexLayout->Release();
@@ -70,8 +72,6 @@ CCustomWaterPipeline::~CCustomWaterPipeline()
 
 void CCustomWaterPipeline::RenderWater(RwIm3DVertex * verticles, UINT vertexCount, USHORT * indices, UINT indexCount)
 {
-	m_pWaterRaster = (*(RwRaster**)0xC228A8);
-	m_pWaterWakeRaster = (*(RwRaster**)0xC228B8);
 	RwMatrix identity{};
 	identity.right.x = 1.0f;
 	identity.up.y = 1.0f;

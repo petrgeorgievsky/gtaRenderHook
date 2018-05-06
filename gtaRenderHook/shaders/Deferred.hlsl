@@ -130,7 +130,8 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
 
 	float3 FinalDiffuseTerm = float3(0, 0, 0);
 	float FinalSpecularTerm = 0;
-	for (uint i = 0; i < uiLightCount; i++)
+    //[unroll(128)]
+    for (uint i = 0; i < uiLightCount; i++)
 	{
 		float3 LightDir = -normalize(WorldPos.xyz - sbLightInfo[i].vPosition.xyz);
         float LightDistance = length(WorldPos.xyz - sbLightInfo[i].vPosition.xyz);
@@ -199,7 +200,7 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
 	{
         float AmbientOcclusion = txAO.Sample(samLinear, i.vTexCoord.xy).r;
 		// Diffuse term consists of diffuse lighting, and sky ambient
-		float3 DiffuseTerm = (Lighting.xyz + vSkyLightCol.rgb * 0.3f) * AmbientOcclusion;
+        float3 DiffuseTerm = (Lighting.xyz + vSkyLightCol.rgb * 0.3f * AmbientOcclusion);
 		// Specular term consists of specular highlights
         float3 SpecularTerm = (Lighting.w * Lighting.xyz) * AmbientOcclusion;
 		// Reflection term is computed before deferred

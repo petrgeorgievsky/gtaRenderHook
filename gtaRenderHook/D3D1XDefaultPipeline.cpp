@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XDefaultPipeline.h"
 #include "CDebug.h"
@@ -119,7 +121,7 @@ bool CD3D1XDefaultPipeline::Instance(void * object, RxD3D9ResEntryHeader * resEn
 
 void CD3D1XDefaultPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 type, RwUInt32 flags)
 {
-	RpAtomic* atomic = static_cast<RpAtomic*>(object);
+	//RpAtomic* atomic = static_cast<RpAtomic*>(object);
 	RxInstanceData* entryData = static_cast<RxInstanceData*>(repEntry);
 	// early return
 	if (entryData->header.totalNumIndex == 0)

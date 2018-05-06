@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include "stdafx.h"
 #include "D3D1XStateManager.h"
 #include "D3DRenderer.h"
@@ -437,7 +440,7 @@ void CD3D1XStateManager::SetAlphaTestFunc(RwAlphaTestFunction func)
 
 void CD3D1XStateManager::SetAlphaTestRef(float ref)
 {
-	if (g_shaderRenderStateBuffer.fAlphaTestRef != ref) {
+	if (fabs(g_shaderRenderStateBuffer.fAlphaTestRef - ref)>0.001f){
 		g_shaderRenderStateBuffer.fAlphaTestRef = ref;
 		m_bGlobalValuesReqUpdate = true;
 	}
@@ -479,7 +482,7 @@ void CD3D1XStateManager::SetIndexBuffer(ID3D11Buffer * buffer)
 
 void CD3D1XStateManager::SetScreenSize(float w, float h)
 {
-	if (g_shaderRenderStateBuffer.fScreenWidth != w || g_shaderRenderStateBuffer.fScreenHeight != h) {
+	if (fabs(g_shaderRenderStateBuffer.fScreenWidth- w) > 0.001f || fabs(g_shaderRenderStateBuffer.fScreenHeight - h) > 0.001f) {
 		g_shaderRenderStateBuffer.fScreenWidth = w;
 		g_shaderRenderStateBuffer.fScreenHeight = h;
 		m_bGlobalValuesReqUpdate = true;
@@ -574,7 +577,7 @@ void CD3D1XStateManager::SetRenderTargets(unsigned int count, ID3D11RenderTarget
 	}
 }
 
-void CD3D1XStateManager::SetViewport(D3D11_VIEWPORT vp)
+void CD3D1XStateManager::SetViewport(const D3D11_VIEWPORT &vp)
 {
 	m_viewport = vp;
 }
@@ -754,7 +757,7 @@ bool CD3D1XStateManager::IsDepthDescRequiresUpdate()
 		m_depthStencilDescOld.FrontFace.StencilFailOp		!= m_depthStencilDesc.FrontFace.StencilFailOp ||
 		m_depthStencilDescOld.StencilEnable					!= m_depthStencilDesc.StencilEnable ||
 		m_depthStencilDescOld.DepthWriteMask				!= m_depthStencilDesc.DepthWriteMask ||
-		m_depthStencilDescOld.DepthEnable					!= m_depthStencilDesc.DepthEnable;
+		m_depthStencilDescOld.DepthFunc						!= m_depthStencilDesc.DepthFunc;
 }
 bool CD3D1XStateManager::IsRasterDescRequiresUpdate()
 {

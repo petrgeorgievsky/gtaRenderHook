@@ -32,7 +32,7 @@ public:
 	/*!
 		Sets debugging info for this buffer
 	*/
-	void SetDebugName(std::string name);
+	void SetDebugName(const std::string& name);
 
 	/*!
 		Returns d3d buffer pointer

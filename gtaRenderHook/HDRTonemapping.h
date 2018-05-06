@@ -27,7 +27,6 @@ private:
 	CD3D1XShader* m_pAdaptationPass;
 	CD3D1XShader* m_pDownScale3x3_BrightPass;
 	RwRaster*	m_pAdaptationRaster[2];
-	RwRaster*	m_pBrightPassRaster;
 	RwRaster*	m_pToneMapRaster[NUM_TONEMAP_TEXTURES];
 	UINT m_nCurrentAdaptationRaster=0;
 	CD3D1XConstantBuffer<CBPostProcess>* m_pPostFXBuffer;
@@ -38,6 +37,7 @@ class TonemapSettingsBlock : public SettingsBlock {
 public:
 	TonemapSettingsBlock() {
 		m_sName = "TonemapSettings";
+		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);

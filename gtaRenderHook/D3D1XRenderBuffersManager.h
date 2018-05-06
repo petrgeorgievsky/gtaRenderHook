@@ -85,23 +85,23 @@ public:
 	/*!
 		Updates current diffuse color for material
 	*/
-	void UpdateMaterialDiffuseColor(RwRGBA &color);
+	void UpdateMaterialDiffuseColor(const RwRGBA &color);
 	/*!
 		Updates current emmissive color for material
 	*/
-	void UpdateMaterialEmmissiveColor(RwRGBA &color);
+	void UpdateMaterialEmmissiveColor(const RwRGBA &color);
 	/*!
 		Updates current specular intensity for material
 	*/
-	void UpdateMaterialSpecularInt(float &intensity);
+	void UpdateMaterialSpecularInt(const float &intensity);
 	/*!
 		Updates current glossiness for material
 	*/
-	void UpdateMaterialGlossiness(float &intensity);
+	void UpdateMaterialGlossiness(const float &intensity);
 	/*!
 		Updates current metallness for material
 	*/
-	void UpdateMaterialMetalness(float &intensity);
+	void UpdateMaterialMetalness(const float &intensity);
 	/*!
 		Updates current value of specular texture avaliablity
 	*/

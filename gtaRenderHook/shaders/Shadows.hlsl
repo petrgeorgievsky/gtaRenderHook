@@ -138,7 +138,7 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
 	// TODO: make blend distance customizible, perhaps different for each cascade.
     const float blendDistance = 6;
 	// Shift view depth by blend distance, optimization for static blend distance
-    viewZ += blendDistance;
+    //viewZ += blendDistance;
     const float LFadeDistances[] =
     {
         FadeDistances.x,

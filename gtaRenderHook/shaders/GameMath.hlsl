@@ -87,4 +87,16 @@ float GetLuminance(float3 Color)
     return dot(g_vLuminance, Color);
 }
 
+float Bayer4x4(float2 index)
+{
+    const float4x4 Bayer = { float4(1, 13, 4, 16), float4(9, 5, 12, 8), float4(3, 15, 2, 14), float4(11, 7, 10, 6) };
+    return Bayer[index.x % 4][index.y % 4] * 0.0625;
+}
+
+//expects integer-stepped values (e.g. position)
+float InterleavedGradientNoise(float2 index)
+{
+    return frac(frac(dot(index.xy, float2(0.06711056, 0.00583715))) * 52.9829189);
+}
+
 #endif

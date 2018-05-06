@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "Renderer.h"
 #include "RwD3D1XEngine.h"
@@ -269,6 +271,8 @@ void CRendererRH::AddEntityToRenderList(CEntity * entity, float renderDistance)
 void CRendererRH::AddEntityToReflectionList(CEntity * entity, float renderDistance)
 {
 	// Make lod everything >50 units away and cull everything >100 units away
+	if (ms_aVisibleReflectionObjects.size() > 500)
+		return;
 	if (renderDistance < 50) 
 		ms_aVisibleReflectionObjects.push_back(entity);
 	else if(entity->m_pLod!=nullptr&&renderDistance < 100)
@@ -277,6 +281,8 @@ void CRendererRH::AddEntityToReflectionList(CEntity * entity, float renderDistan
 
 char CRendererRH::AddEntityToShadowCasterList(CEntity * entity, float renderDistance, int shadowCascade)
 {
+	if (ms_aVisibleShadowCasters[shadowCascade].size() > 1000)
+		return true;
 	ms_aVisibleShadowCasters[shadowCascade].push_back(entity);
 	return true;
 }
@@ -330,7 +336,7 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkB
 	CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
 	auto shadowEntity = entity;
 	// We add entity to render list only if it has bbox, because we need to cull entities that don't affect objects on screen
-	if (modelInfo != nullptr && modelInfo->m_pColModel != nullptr) {
+	if (shadowEntity!=nullptr && modelInfo != nullptr && modelInfo->m_pColModel != nullptr) {
 		// Use lods if entity is not road and it's outside of lod rendering distance
 		//if (renderDistance > lodStartDist && !modelInfo->bIsRoad&&shadowEntity->m_pLod!=nullptr)
 		//	shadowEntity = shadowEntity->m_pLod;
@@ -448,8 +454,8 @@ RendererVisibility CRendererRH::SetupEntityVisibility(CEntity * entity, float * 
 			}*/
 			// Don't render object if entity doesn't have rwObject or is invisible or vehicle inside interior?
 			if (!entity->m_pRwObject
-				|| !entity->m_bIsVisible && (/*!CMirrors__TypeOfMirror || */entity->m_nModelIndex) // is invisible and has model index
-				|| !(entity->m_nAreaCode != CGame::currArea && entity->m_nAreaCode != 13) && (entity->m_nType) == eEntityType::ENTITY_TYPE_VEHICLE)
+				|| (!entity->m_bIsVisible && (/*!CMirrors__TypeOfMirror || */entity->m_nModelIndex!=0)) // is invisible and has model index
+				|| (!(entity->m_nAreaCode != CGame::currArea && entity->m_nAreaCode != 13) && (entity->m_nType) == eEntityType::ENTITY_TYPE_VEHICLE))
 			{
 				return RendererVisibility::INVISIBLE;
 			}
@@ -764,8 +770,8 @@ void CRendererRH::ScanSectorList(int x, int y)
 		ScanPtrList(&sector->m_buildings, loadIfRequired);
 
 	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_OBJECTS], loadIfRequired);
-	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_PEDS], loadIfRequired);
 	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_VEHICLES], loadIfRequired);
+	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_PEDS], loadIfRequired);
 
 	if (!dontRenderSectorEntities)
 		ScanPtrList(&sector->m_dummies, loadIfRequired);
@@ -796,7 +802,7 @@ void CRendererRH::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 		entity->m_bOffscreen = false;
 			
 		RendererVisibility visibility = SetupEntityVisibility(entity, &renderDistance);
-		if(visibility!= RendererVisibility::INVISIBLE&&visibility != RendererVisibility::NOT_LOADED)
+		if(visibility!= RendererVisibility::INVISIBLE && visibility != RendererVisibility::NOT_LOADED)
 			AddEntityToShadowCastersIfNeeded(entity, false);
 		int modelID = entity->m_nModelIndex;
 		
@@ -888,10 +894,9 @@ void CRendererRH::ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired)
 	if (ptrList == nullptr)
 		return;
 	auto current = ptrList->GetNode();
-	CEntity* entity;
 	while (current != nullptr)
 	{
-		entity = (CEntity*)current->pItem;
+		CEntity* entity = (CEntity*)current->pItem;
 		// If this entity has the same scan code as current, than we could skip it
 		if (entity->m_nScanCode == CWorld__ms_nCurrentScanCode) {
 			current = current->pNext;
@@ -991,8 +996,7 @@ void CRendererRH::ScanSectorListForReflections(int x, int y)
 
 void CRendererRH::ScanSectorListForShadowCasters(int x, int y)
 {
-	bool dontRenderSectorEntities = false; 
-	bool loadIfRequired = false;
+	bool dontRenderSectorEntities = false;
 	// If sector id is wrong than quit scanning.
 	if (x < 0 || y < 0 || x >= 120 || y >= 120)
 		dontRenderSectorEntities = true;
@@ -1011,7 +1015,7 @@ void CRendererRH::ScanSectorListForShadowCasters(int x, int y)
 	CRepeatSector* repeatSector = GetRepeatSector(x, y);
 	// TODO: Add sector skip to improve performance
 	if (!dontRenderSectorEntities)
-		ScanPtrListForShadows(&sector->m_buildings, loadIfRequired);
+		ScanPtrListForShadows(&sector->m_buildings, false);
 
 	//ScanPtrListForShadows(&repeatSector->m_lists[0], loadIfRequired);
 	//ScanPtrListForShadows(&repeatSector->m_lists[1], loadIfRequired);
@@ -1361,6 +1365,7 @@ void CRendererRH::ScanWorld()
 
 	// Resets scan codes if it exceeds 2^16
 	SetNextScanCode();
+	m_loadingPriority = 0;
 	CVisibilityPlugins::InitAlphaEntityList();
 	RwV2d sector[5];
 	sector[0].x = points[0].x * 0.02f + 60.0f;
@@ -1409,7 +1414,7 @@ void CRendererRH::ScanWorld()
 	if (CGame::currArea || (CSAIdleHook::m_fShadowDNBalance >= 1.0) || !gShadowSettings.ScanShadowsBehindPlayer)
 		return;
 	
-	
+	m_loadingPriority = 0;
 	
 	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
 	{

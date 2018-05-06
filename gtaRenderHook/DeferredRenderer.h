@@ -55,6 +55,7 @@ class DeferredSettingsBlock : public SettingsBlock {
 public:
 	DeferredSettingsBlock() {
 		m_sName = "DeferredSettings";
+		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);

@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XVertexDeclaration.h"
 #include "D3D1XShader.h"
@@ -31,11 +33,11 @@ CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(CD3D1XShader* pVS,UINT flags)
 		"Failed to create Input Layout");
 }
 
-CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(std::vector<D3D11_INPUT_ELEMENT_DESC> elements, UINT stride, CD3D1XShader * pVS)
+CD3D1XVertexDeclaration::CD3D1XVertexDeclaration(const std::vector<D3D11_INPUT_ELEMENT_DESC> &elements, UINT stride, CD3D1XShader * pVS):m_elements{ elements }
 {
 	m_pShader = pVS;
 	m_stride = stride;
-	m_elements = elements;
+	m_inputInfo = 0;
 	auto blob = m_pShader->getBlob();
 	CALL_D3D_API(GET_D3D_DEVICE->CreateInputLayout(m_elements.data(), m_elements.size(), blob->GetBufferPointer(), blob->GetBufferSize(), &m_inputLayout),
 		"Failed to create input layout for vertex shader");

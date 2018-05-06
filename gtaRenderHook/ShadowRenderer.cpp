@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "ShadowRenderer.h"
 #include "D3DRenderer.h"
@@ -38,6 +40,8 @@ CShadowRenderer::CShadowRenderer()
 	m_pLightCB = new CD3D1XConstantBuffer<CBShadows>();
 	m_pLightCB->SetDebugName("ShadowsCB");
 	m_aShadowObjectCacheList = {};
+	for (int i = 0; i < 5; i++)
+		m_fShadowDistances[i] = 0.0f;
 }
 
 

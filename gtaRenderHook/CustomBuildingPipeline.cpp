@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "CustomBuildingPipeline.h"
 #include "CDebug.h"
@@ -80,9 +82,8 @@ void CCustomBuildingPipeline::RenderAlphaList()
 		g_pRenderBuffersMgr->UpdateMaterialSpecularInt(fSpec);
 		g_pRenderBuffersMgr->UpdateMaterialGlossiness(fShininess);
 
-		if (curmesh.material->texture) {
-			g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
-		}
+		g_pRwCustomEngine->SetTexture(curmesh.material->texture, 0);
+
 		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();
 		GET_D3D_RENDERER->DrawIndexed(curmesh.numIndex, curmesh.startIndex, curmesh.minVert);
@@ -104,8 +105,10 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 	UINT stride = sizeof(SimpleVertex);
 	UINT offset = 0;
 	g_pStateMgr->SetVertexBuffer(((CD3D1XBuffer*)entryData->header.vertexStream[0].vertexBuffer)->getBuffer(), stride, offset);
-	if (!entryData->header.indexBuffer)
-		g_pDebug->printMsg("CCustomBuildingPipeline: empty index buffer found", 2);
+	if (!entryData->header.indexBuffer) {
+		g_pDebug->printMsg("CCustomBuildingPipeline: empty index buffer found", 0);
+		return;
+	}
 	g_pStateMgr->SetIndexBuffer(((CD3D1XIndexBuffer*)entryData->header.indexBuffer)->getBuffer());
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)entryData->header.primType));
 	if (m_uiDeferredStage == 3|| m_uiDeferredStage == 4) {
@@ -143,9 +146,10 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 		}
 		bAlphaEnable |= mesh.material->color.alpha != 255 || mesh.vertexAlpha;
 
+		g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
+
 		if (mesh.material->texture) {
 			bAlphaEnable |= GetD3D1XRaster(mesh.material->texture->raster)->alpha;
-			g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);
 			CPBSMaterial* mat = CPBSMaterialMgr::materials[mesh.material->texture->name];
 			if (mat != nullptr) {
 				g_pStateMgr->SetRaster(mat->m_tSpecRoughness->raster, 1);

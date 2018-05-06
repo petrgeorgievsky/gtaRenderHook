@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "SAIdleHook.h"
 #include "DeferredRenderer.h"
@@ -196,7 +198,7 @@ void CSAIdleHook::RenderInGame()
 	RenderForwardBeforeDeferred();
 	
 	g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered = false;
-	if (sunDirs && !CGame::currArea && (m_fShadowDNBalance < 1.0))
+	if (!CGame::currArea && (m_fShadowDNBalance < 1.0))
 		PrepareRealTimeShadows(sunDirs[curr_sun_dir]);
 	
 	DebugRendering::ResetList();
@@ -219,7 +221,7 @@ void CSAIdleHook::RenderInGame()
 
 	shadowTimer.Start();
 
-	if (sunDirs && !CGame::currArea&&m_fShadowDNBalance < 1.0) // Render shadows only if we are not inside interiors
+	if (!CGame::currArea&&m_fShadowDNBalance < 1.0) // Render shadows only if we are not inside interiors
 		RenderRealTimeShadows(sunDirs[curr_sun_dir]);
 
 	shadowTimer.Stop();
@@ -269,11 +271,16 @@ void CSAIdleHook::RenderInGame()
 		float FontXPos = Scene.m_pRwCamera->frameBuffer->width - 20.0f;
 		float FontYPos = Scene.m_pRwCamera->frameBuffer->height - 20.0f;
 
-		
+		CFont::PrintString(FontXPos, FontYPos - 600.0f, (char*)("Visible refl entities count: " + to_string(CRendererRH::ms_aVisibleReflectionObjects.size())).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 550.0f, (char*)("CameraHeading: " + to_string(CRendererRH::ms_fCameraHeading)).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 500.0f, (char*)("Visible Entity count: " + to_string(CRendererRH::ms_nNoOfVisibleEntities)).c_str());
 		CFont::PrintString(FontXPos, FontYPos - 450.0f, (char*)("Draw call count: " + to_string(drawCallCount)).c_str());
-		CFont::PrintString(FontXPos, FontYPos - 400.0f, (char*)("Visible Entity count: " + to_string(CRendererRH::ms_nNoOfVisibleEntities)).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 400.0f, (char*)("Visible Lod Entity count: " + to_string(CRendererRH::ms_nNoOfVisibleLods)).c_str());
 		CFont::PrintString(FontXPos, FontYPos - 350.0f, (char*)("SC 0 Entity count: " + to_string(CRendererRH::ms_aVisibleShadowCasters[0].size())).c_str());
 		CFont::PrintString(FontXPos, FontYPos - 300.0f, (char*)("SC 1 Entity count: " + to_string(CRendererRH::ms_aVisibleShadowCasters[1].size())).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 250.0f, (char*)("SC 2 Entity count: " + to_string(CRendererRH::ms_aVisibleShadowCasters[2].size())).c_str());
+		CFont::PrintString(FontXPos, FontYPos - 200.0f, (char*)("SC 3 Entity count: " + to_string(CRendererRH::ms_aVisibleShadowCasters[3].size())).c_str());
+		//CFont::PrintString(FontXPos, FontYPos - 150.0f, (char*)("SC 3 Entity count: " + to_string(CRendererRH::ms_aVisibleShadowCasters[3].size())).c_str());
 		
 		CFont::PrintString(FontXPos, FontYPos - 150.0f, (char*)scanTimer.GetTimerResult().c_str());
 		CFont::PrintString(FontXPos, FontYPos - 100.0f, (char*)shadowTimer.GetTimerResult().c_str());

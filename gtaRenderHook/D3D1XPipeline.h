@@ -14,7 +14,7 @@ public:
 	/*!
 		Initializes pixel and vertex shaders
 	*/
-	CD3D1XPipeline(std::string pipeName);
+	CD3D1XPipeline(const std::string &pipeName);
 	/*!
 		Releases shader resources
 	*/

@@ -6,9 +6,9 @@ class CShadowPipeline :
 {
 public:
 #ifndef DebuggingShaders
-	CShadowPipeline(std::string pipeName);
+	CShadowPipeline(const std::string &pipeName);
 #else
-	CShadowPipeline(std::wstring pipeName);
+	CShadowPipeline(const std::wstring &pipeName);
 #endif // !DebuggingShaders
 	~CShadowPipeline();
 protected:

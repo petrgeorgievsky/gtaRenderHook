@@ -1,4 +1,6 @@
 
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "PBSMaterial.h"
 
 #include <experimental\filesystem>
@@ -9,14 +11,15 @@ bool has_suffix(const std::string& s, const std::string& suffix)
 {
 	return (s.size() >= suffix.size()) && std::equal(suffix.rbegin(), suffix.rend(), s.rbegin());
 }
-CPBSMaterial::CPBSMaterial(const std::string & fname)
+CPBSMaterial::CPBSMaterial(const std::string & fname):m_sName(fname)
 {
-	auto file= fopen((std::string("materials\\")+ fname+".mat").c_str(), "rt");
+	auto file= fopen((std::string("materials\\")+ m_sName +".mat").c_str(), "rt");
 	char specFileName[80];
-	fscanf(file, "%s", specFileName);
-	fclose(file);
-	m_sName = fname;
-	m_tSpecRoughness = _RwTexDictionaryFindNamedTexture(CPBSMaterialMgr::materialsTXD, specFileName);
+	if (file) {
+		fscanf(file, "%79s", specFileName);
+		fclose(file);	
+		m_tSpecRoughness = _RwTexDictionaryFindNamedTexture(CPBSMaterialMgr::materialsTXD, specFileName);
+	}
 	//m_tSpecRoughness
 }
 

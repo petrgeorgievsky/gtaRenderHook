@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "VolumetricLighting.h"
 #include "D3D1XShader.h"
@@ -30,12 +32,9 @@ void CVolumetricLighting::Init()
 
 void CVolumetricLighting::Shutdown()
 {
-	if (m_pVolumeLightingCB)
-		delete m_pVolumeLightingCB;
-	if (m_pVolumetricSunlightPS)
-		delete m_pVolumetricSunlightPS;
-	if (m_pVolumetricCombinePS)
-		delete m_pVolumetricCombinePS;
+	delete m_pVolumeLightingCB;
+	delete m_pVolumetricSunlightPS;
+	delete m_pVolumetricCombinePS;
 	if (m_pVolumeLightingRaster)
 		RwRasterDestroy(m_pVolumeLightingRaster);
 }

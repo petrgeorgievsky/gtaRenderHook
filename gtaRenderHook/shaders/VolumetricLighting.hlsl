@@ -38,25 +38,10 @@ float3 ComputeSunRays(float3 ViewPos, float3 WorldPos, float Length)
     return ResultColor / (float)SunRaySampleCount;
 }
 
-float Bayer4x4(int2 index)
-{
-    static const float Bayer[16] = { 1, 13, 4, 16, 9, 5, 12, 8, 3, 15, 2, 14, 11, 7, 10, 6 };
-    int2 MatIndex = index % 4;
-
-    return Bayer[MatIndex.x + 4 * MatIndex.y] * 0.0625;
-}
-
-//expects integer-stepped values (e.g. position)
-float InterleavedGradientNoise(float2 index)
-{
-    return frac(frac(dot(index.xy, float2(0.06711056, 0.00583715))) * 52.9829189);
-}
-
 /*!
-    Calculates sun-light volumetric scattering
-    TODO: improve this alghorithm quality and performance, by introducing jittering or maybe something more
+    Calculates sun-light volumetric scattering.
 */
-float3 ComputeSunRaysWithLighting(float3 LightDir, float3 ViewPos, float3 WorldPos, float Length)
+float3 ComputeSunRaysWithLighting(PS_QUAD_IN i, float3 LightDir, float3 ViewPos, float3 WorldPos, float Length)
 {
     const int SunRaySampleCount = SUNLIGHT_RM_STEPS;
     float3 ViewDir = normalize(WorldPos - ViewPos);
@@ -72,8 +57,8 @@ float3 ComputeSunRaysWithLighting(float3 LightDir, float3 ViewPos, float3 WorldP
     SunBlend = SunBlend * SunBlend * 2.0;
 
     float3 SunRayContrib = SunBlend * vSunColor.rgb * vSunColor.a * 0.5f;
-    static const float3 RayleighContrib = vSkyLightCol.rgb * 0.25f;
-    static const float3 MieContrib = vHorizonCol.rgb * 0.25f;
+    const float3 RayleighContrib = vSkyLightCol.rgb * 0.25f;
+    const float3 MieContrib      = vHorizonCol.rgb * 0.25f;
 
     for(int index = 0; index < SunRaySampleCount; index++)
     {
@@ -105,7 +90,7 @@ float4 VolumetricSunlightPS(PS_QUAD_IN i) : SV_TARGET
 
     float SunRaysIntensity = min(max(dot(ViewDir, LightDir) + SunlightBlendOffset, 0.0f), 1.0f) * SunlightIntensity;
 
-    float3 SunRays = ComputeSunRaysWithLighting(LightDir, ViewPos, WorldPos, min(length(WorldPos - ViewPos), RaymarchingDistance));
+    float3 SunRays = ComputeSunRaysWithLighting(i, LightDir, ViewPos, WorldPos, min(length(WorldPos - ViewPos), RaymarchingDistance));
 
     OutLighting.rgb = SunRays * SunlightIntensity;
     OutLighting.a = 1;

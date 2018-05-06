@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "DebugBBox.h"
 #include "D3D1XShader.h"
@@ -113,9 +115,9 @@ void DebugBBox::Initialize()
 
 void DebugBBox::Shutdown()
 {
-	if (m_pVertexDecl) delete m_pVertexDecl;
-	if (m_pVertexBuffer) delete m_pVertexBuffer;
-	if (m_pIndexBuffer) delete m_pIndexBuffer;
-	if (m_pPS) delete m_pPS;
-	if (m_pVS) delete m_pVS;
+	delete m_pVertexDecl;
+	delete m_pVertexBuffer;
+	delete m_pIndexBuffer;
+	delete m_pPS;
+	delete m_pVS;
 }

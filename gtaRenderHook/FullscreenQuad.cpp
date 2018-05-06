@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "FullscreenQuad.h"
 #include "RwRenderEngine.h"
@@ -18,7 +20,6 @@ RwRaster*	CFullscreenQuad::m_pBlitRaster = nullptr;
 
 void CFullscreenQuad::Init()
 {
-	ID3D11Device* device = GET_D3D_DEVICE;
 	m_quadVS = new CD3D1XVertexShader("shaders/Quad.hlsl", "VS");
 	m_BlitPS = new CD3D1XPixelShader("shaders/Quad.hlsl", "BlitPS");
 	
@@ -52,9 +53,9 @@ void CFullscreenQuad::Init()
 
 void CFullscreenQuad::Shutdown()
 {
-	if (m_quadVB) delete m_quadVB;
-	if (m_quadIB) delete m_quadIB;
-	if (m_pVertexDecl) delete m_pVertexDecl;
+	delete m_quadVB;
+	delete m_quadIB;
+	delete m_pVertexDecl;
 	delete m_quadVS;
 	if (m_pBlitRaster) RwRasterDestroy(m_pBlitRaster);
 }

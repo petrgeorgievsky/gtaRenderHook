@@ -19,7 +19,7 @@ public:
 	/*!
 		Releases shader resource.
 	*/
-	~CD3D1XShader();
+	virtual ~CD3D1XShader();
 	/*!
 		Sets shader to a D3D context.
 	*/

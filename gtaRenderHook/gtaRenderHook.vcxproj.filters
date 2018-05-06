@@ -278,6 +278,9 @@
     <ClInclude Include="AmbientOcclusion.h">
       <Filter>Source\Algorithms\Lighting\AmbientOcclusion</Filter>
     </ClInclude>
+    <ClInclude Include="BlurAlgorithms.h">
+      <Filter>Source\Algorithms\PostProcessing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -450,6 +453,9 @@
     </ClCompile>
     <ClCompile Include="AmbientOcclusion.cpp">
       <Filter>Source\Algorithms\Lighting\AmbientOcclusion</Filter>
+    </ClCompile>
+    <ClCompile Include="BlurAlgorithms.cpp">
+      <Filter>Source\Algorithms\PostProcessing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

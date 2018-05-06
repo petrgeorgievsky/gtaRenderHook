@@ -3,7 +3,7 @@
 #include <AntTweakBar.h>
 class SettingsBlock;
 class CD3D1XShader;
-class CD3D1XShaderDefineList;
+#include "D3D1XShaderDefines.h"
 /*! 
 	Render Hook settings holder singleton
 */
@@ -42,10 +42,13 @@ public:
 	CD3D1XShaderDefineList* m_pShaderDefineList;
 
 	bool m_bShaderReloadRequired=false;
-	SettingsBlock() { }
+	SettingsBlock() {
+		m_pShaderDefineList = new CD3D1XShaderDefineList();
+		Reset();
+	}
 	virtual tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc) = 0;
 	virtual void Load(const tinyxml2::XMLDocument &doc) = 0;
-	virtual void Reset() = 0;
+	virtual void Reset();
 	virtual void InitGUI(TwBar* guiholder) = 0;
 	virtual void ReloadShaders();
 };
@@ -54,6 +57,7 @@ class ShaderDefinesSettingsBlock : public SettingsBlock {
 public:
 	ShaderDefinesSettingsBlock() {
 		m_sName = "ShaderSettings";
+		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);
@@ -67,6 +71,7 @@ class DebugSettingsBlock: public SettingsBlock {
 public:
 	DebugSettingsBlock() {
 		m_sName = "DebugSettings";
+		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);

@@ -111,7 +111,9 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
     // clamp to avoid unrealisticly high values
     //SpecularTerm = min(SpecularTerm, 16.0f);
     DiffuseTerm *= vSunLightDir.w;
-    float4 albedoSample = txDiffuse.Sample(samLinear, i.vTexCoord.xy) * cDiffuseColor;
+    float4 albedoSample = cDiffuseColor;
+    if (bHasTexture != 0)
+        albedoSample *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     float4 outColor;
 #if SAMPLE_SHADOWS!=1
     float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, length(WorldPos.xyz - ViewPos));
@@ -134,7 +136,9 @@ void ShadowPS(PS_DEFERRED_IN i)
 PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
-    float4 baseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy) * cDiffuseColor;
+    float4 baseColor = cDiffuseColor;
+    if (bHasTexture != 0)
+        baseColor *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     if (baseColor.a < 0.3)
         discard;
     FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness, fMetallness, 1));

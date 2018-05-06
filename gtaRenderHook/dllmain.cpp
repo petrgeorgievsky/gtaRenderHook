@@ -1,5 +1,5 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
-
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "CDebug.h"
 //#include "RwRenderEngine.h"
 //#include "RwVulkanEngine.h"
@@ -87,8 +87,7 @@ void GTARwShutdown() {
 	//CVoxelOctreeRenderer::Shutdown();
 	CVolumetricLighting::Shutdown();
 	CLightManager::Shutdown();
-	if(g_pCustomWaterPipe)
-		delete g_pCustomWaterPipe;
+	delete g_pCustomWaterPipe;
 	delete g_pCustomSeabedPipe;
 	delete g_pCustomBuildingDNPipe;
 	delete g_pCustomBuildingPipe;
@@ -403,7 +402,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		//RedirectCall(0x53C812, TidyUpTextures);
 		RedirectCall(0x746310, GetBestRR);
 		SetPointer(0x4C9AB5, destructRwD3D11Raster);
-		RedirectCall(0x47B0D8, AddLight);
+		RedirectJump(0x7000E0, AddLight);
+		/*RedirectCall(0x47B0D8, AddLight);
 		RedirectCall(0x48ED76, AddLight);
 		RedirectCall(0x49DF47, AddLight);
 		RedirectCall(0x53632D, AddLight);
@@ -422,10 +422,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		RedirectCall(0x7378C1, AddLight);
 		RedirectCall(0x73AF74, AddLight);
 		RedirectCall(0x73CCFD, AddLight);
-		RedirectCall(0x740D68, AddLight);
-		RedirectCall(0x6A2EDA, AddSpotLight);
-		RedirectCall(0x6A2EF2, AddSpotLight);//
-		RedirectCall(0x6BDE80, AddSpotLight);//
+		RedirectCall(0x740D68, AddLight);*/
+		//RedirectCall(0x6A2EDA, AddSpotLight);
+		//RedirectCall(0x6A2EF2, AddSpotLight);//
+		//RedirectCall(0x6BDE80, AddSpotLight);//
+		RedirectJump(0x6E0E20, AddSpotLight);
 		RedirectCall(0x586887, RenderRadarSA);
 		RedirectJump(0x586D4E, RenderRadarSAPrimHook);
 		
