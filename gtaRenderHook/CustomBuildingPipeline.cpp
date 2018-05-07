@@ -134,7 +134,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 		auto mesh = GetModelsData(entryData)[i];
 		if (mesh.material->color.alpha == 0) continue;
 		bAlphaEnable = 0;
-		if (m_uiDeferredStage != 2) {
+		//if (m_uiDeferredStage != 2) {
 			if (mesh.material->surfaceProps.ambient>1.0 || CRendererRH::TOBJpass == true)
 				g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(mesh.material->color);
 			else
@@ -143,7 +143,7 @@ void CCustomBuildingPipeline::Render(RwResEntry * repEntry, void * object, RwUIn
 			float fGloss = 0.5f;//1.0f - RpMaterialGetFxEnvShininess(entryData->models[i].material);
 			g_pRenderBuffersMgr->UpdateMaterialSpecularInt(fShininess);
 			g_pRenderBuffersMgr->UpdateMaterialGlossiness(fGloss);
-		}
+		//}
 		bAlphaEnable |= mesh.material->color.alpha != 255 || mesh.vertexAlpha;
 
 		g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);

@@ -8,8 +8,8 @@ public:
 	CCustomWaterPipeline();
 	~CCustomWaterPipeline();
 	void RenderWater(RwIm3DVertex * verticles, UINT vertexCount, USHORT* indices, UINT indexCount);
-	RwRaster* m_pWaterRaster;
-	RwRaster* m_pWaterWakeRaster;
+	RwRaster* m_pWaterRaster = nullptr;
+	RwRaster* m_pWaterWakeRaster = nullptr;
 	ID3D11InputLayout*      m_pVertexLayout = nullptr;
 	ID3D11Buffer*           m_pVertexBuffer = nullptr;
 	ID3D11Buffer*           m_pIndexBuffer = nullptr;

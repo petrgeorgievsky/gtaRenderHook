@@ -84,7 +84,7 @@ VS_OUTPUT_HS_INPUT VS(VS_INPUT i)
 	//Out.vPosition = mul(outPos, Projection);
 
 	Out.vNormal = i.vInNormal;//float4(mul(i.vInNormal, (float3x3)World), outPos.z);
-	Out.vTexCoord = float4(i.inTexCoord, 0, 0);
+    Out.vTexCoord = i.inTexCoord;
 	Out.vColor = i.vInColor;
     // Min and max distance should be chosen according to scene quality requirements
     const float fMinDistance = 2.0f;
@@ -295,7 +295,7 @@ float4 PS(PS_INPUT i) : SV_Target
 
     float ReflectionFallback;
     float3 ReflectionColor = lerp(SSR(txGB0, txGB1, samLinear, i.vWorldPos, ReflectDir, 0.5f, ReflectionFallback), vSkyLightCol.rgb, ReflectionFallback);
-    float3 RefractionColor = txGB0.Sample(samLinear, ScreenCoords);
+    float3 RefractionColor = txGB0.Sample(samLinear, ScreenCoords).rgb;
     RefractionColor = lerp(DiffuseTerm, RefractionColor, min(1, exp(-WaterDepth / 8.0))) * vWaterColor.rgb;
 
     OutColor.rgb = lerp(lerp(RefractionColor, ReflectionColor, FresnelCoeff), waterWake.rrr * min(DiffuseLighting + 0.5, 1.0f), min(exp(-WaterDepth), 1) * waterWake.g);

@@ -90,7 +90,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
     float4 BaseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
-    BaseColor.a = BaseColor.a > 0.5f ? BaseColor.a : Bayer4x4(i.vPosition.xy) * BaseColor.a;
+    BaseColor.a = BaseColor.a > 0.9f ? BaseColor.a : InterleavedGradientNoise(i.vPosition.xy) * BaseColor.a;
     float4 params = bHasSpecTex != 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness, 0.2f, 2);
     if (BaseColor.a < 0.3)
         discard;

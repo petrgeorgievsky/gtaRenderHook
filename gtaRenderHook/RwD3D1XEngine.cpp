@@ -18,10 +18,10 @@
 #include "D3D1XRenderBuffersManager.h"
 #include "D3D1XTextureMemoryManager.h"
 #include "CustomSeabedPipeline.h"
-#include "CustomWaterPipeline.h"
+#include "CustomWaterPipeline.h" 
 #include "D3D1XVertexBufferManager.h"
 #include "D3D1XIndexBuffer.h"
-#include "D3D1XShaderDefines.h"
+#include "D3D1XShaderDefines.h" 
 #ifdef USE_ANTTWEAKBAR
 #include <AntTweakBar.h>
 #endif
@@ -946,9 +946,9 @@ bool CRwD3D1XEngine::AtomicAllInOneNode(RxPipelineNode *self, const RxPipelineNo
 		}
 		else {
 			if (geom->numMorphTargets == 1)
-				entryData = m_D3DInstance(atomic, geom, 1, &geom->repEntry, mesh, callbacks->instance, false);
+				entryData = m_D3DInstance(atomic, geom, 1, &geom->repEntry, mesh, callbacks->instance, (rpGEOMETRYNATIVEINSTANCE & flags) != 0);
 			else
-				entryData = m_D3DInstance(atomic, atomic, 1, &atomic->repEntry, mesh, callbacks->instance, false);
+				entryData = m_D3DInstance(atomic, atomic, 1, &atomic->repEntry, mesh, callbacks->instance, (rpGEOMETRYNATIVEINSTANCE & flags) != 0);
 			if (entryData == nullptr)
 				return false;
 			geom->lockedSinceLastInst = 0;
@@ -957,14 +957,14 @@ bool CRwD3D1XEngine::AtomicAllInOneNode(RxPipelineNode *self, const RxPipelineNo
 	else
 		entryData = static_cast<RxInstanceData*>(geom->repEntry);
 
-	if ((flags & rpGEOMETRYNATIVEFLAGSMASK) == rpGEOMETRYNATIVEINSTANCE)
+	if (flags & rpGEOMETRYNATIVEINSTANCE)
 		return true;
 	{
 		auto ltm = RwFrameGetLTM(static_cast<RwFrame*>(atomic->object.object.parent));
 		g_pRenderBuffersMgr->UpdateWorldMatrix(ltm);
 		g_pRenderBuffersMgr->SetMatrixBuffer();
 		if (callbacks->render)
-			callbacks->render(entryData, atomic, 1, geom->flags);
+			callbacks->render(entryData, atomic, rpATOMIC, geom->flags);
 	}
 
 	return true;

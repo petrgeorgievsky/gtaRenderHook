@@ -59,9 +59,26 @@ void SetRR(RwUInt32 refreshRate) {
 void SetVM(RwUInt32 videomode) {
 	g_pRwCustomEngine->UseMode(videomode);
 }
+HHOOK hookHandle;
 
+LRESULT CALLBACK MessageProc(int code, WPARAM wParam, LPARAM lParam) {
+	if (lParam & 0x80000000 || lParam & 0x40000000)
+	{
+		return CallNextHookEx(hookHandle, code, wParam, lParam);
+	}
+
+	if (code >= 0) {
+		if (TwEventWin(((LPMSG)lParam)->hwnd, ((LPMSG)lParam)->message, ((LPMSG)lParam)->wParam, ((LPMSG)lParam)->lParam)) {
+			return FALSE;
+		}
+	}
+	return CallNextHookEx(hookHandle, code, wParam, lParam);
+}
 // GTA RenderWare Initialization hooks
 char GTARwInit() {
+#ifdef USE_ANTTWEAKBAR
+	hookHandle = SetWindowsHookEx(WH_GETMESSAGE, MessageProc, NULL, GetCurrentThreadId());
+#endif
 	char c = CGame::InitialiseRenderWare();
 	CFullscreenQuad::Init();
 	DebugRendering::Init();
@@ -95,6 +112,9 @@ void GTARwShutdown() {
 	delete g_pDeferredRenderer;
 	CFullscreenQuad::Shutdown();
 	CGame::ShutdownRenderWare();
+#ifdef USE_ANTTWEAKBAR
+	UnhookWindowsHookEx(hookHandle);
+#endif
 }
 
 bool psNativeTextureSupport() {
@@ -165,10 +185,22 @@ RxPipeline * __RxPipelineExecute(RxPipeline *pipeline, void *data, RwBool heapRe
 
 bool AddLight(char type, CVector pos, CVector dir, float radius, float red, float green, float blue, char fogType, char generateExtraShadows, CEntity *entityAffected) {
 	CLight light{};
-	light.m_vPos = pos.ToRwV3d();
+	
 	light.m_fRange = radius;
-	light.m_vDir = { red,green,blue };
+	if (type == 0) {
+		light.m_vDir = { red,green,blue };
+		light.m_vPos = pos.ToRwV3d();
+	}
+	else if (type == 1) {
+		light.m_vDir = { dir.x,dir.y,dir.z };
+		light.m_vPos = { pos.x+dir.x,pos.y + dir.y,pos.z + dir.z };
+	}
+	light.m_nLightType = type;
 	return CLightManager::AddLight(light);
+}
+
+bool AddLightNoSpot(char type, CVector pos, CVector dir, float radius, float red, float green, float blue, char fogType, char generateExtraShadows, CEntity *entityAffected) {
+	return true;
 }
 //6E0E20     ; CVehicle::DoHeadLightBeam(int, CMatrix &, unsigned char)
 #define CVehicle__DoHeadLightBeam(veh,matrix,text) ((void(__cdecl *)(void*, void*, unsigned char))0x6E0E20)(veh,y,text)
@@ -326,21 +358,7 @@ void RenderRadarSAPrimHook(RwPrimitiveType prim, RwIm2DVertex * vert, int count)
 	g_pStateMgr->SetAlphaTestEnable(true);
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, 1);
 }
-HHOOK hookHandle;
 
-LRESULT CALLBACK MessageProc(int code, WPARAM wParam, LPARAM lParam) {
-	if (lParam & 0x80000000 || lParam & 0x40000000)
-	{
-		return CallNextHookEx(hookHandle, code, wParam, lParam);
-	}
-
-	if (code >= 0) {
-		if (TwEventWin(((LPMSG)lParam)->hwnd, ((LPMSG)lParam)->message, ((LPMSG)lParam)->wParam, ((LPMSG)lParam)->lParam)) {
-			return FALSE;
-		}
-	}
-	return CallNextHookEx(hookHandle, code, wParam, lParam);
-}
 
 void InitD3DResourseSystem() {
 
@@ -391,9 +409,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SetPointer(Im2DRenderIndexedPrimPtr, im2DRenderIndexedPrim);
 		SetPointer(Im2DRenderLinePtr, im2DRenderLine);
 		RedirectJump(Im3DOpenPtr, envMapSupport);
-#ifdef USE_ANTTWEAKBAR
-		SetWindowsHookEx(WH_GETMESSAGE, MessageProc, NULL, GetCurrentThreadId());
-#endif
 #if GTA_SA
 		CVisibilityPluginsRH::Patch();
 		//RedirectCall(0x7481CF, ShowCursor_fix);
@@ -403,6 +418,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		RedirectCall(0x746310, GetBestRR);
 		SetPointer(0x4C9AB5, destructRwD3D11Raster);
 		RedirectJump(0x7000E0, AddLight);
+		RedirectCall(0x6E27E6, AddLightNoSpot);// fix for original car spotlights
+		
 		/*RedirectCall(0x47B0D8, AddLight);
 		RedirectCall(0x48ED76, AddLight);
 		RedirectCall(0x49DF47, AddLight);

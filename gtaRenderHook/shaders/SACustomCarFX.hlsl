@@ -10,7 +10,7 @@
 Texture2D txDiffuse : register(t0);
 Texture2D txSpec 	: register(t1);
 Texture2D txShadow 	: register(t3);
-
+TextureCube txCubeMap : register(t4);
 SamplerState samLinear : register(s0);
 SamplerComparisonState samShadow : register(s1);
 struct VS_CAR_INPUT
@@ -120,10 +120,19 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
 #else
     float ShadowTerm = 1.0;
 #endif
-    // todo: add lighting methods for forward renderer
-    outColor.rgb = albedoSample.rgb * (DiffuseTerm * ShadowTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb * ShadowTerm;
-    outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm * ShadowTerm, 1.0f));
+    float3 ReflDir = normalize(reflect(ViewDir, normalize(i.vNormalDepth.xyz)));
     float3 FullScattering;
+    float3 ObjectColor = CalculateFogColor(float3(0, 0, 0), ReflDir, LightDir, 1000, 0, FullScattering);
+    
+    float3 SkyColor = GetSkyColor(ReflDir, LightDir, FullScattering);
+
+    float3 ReflectionFallBack;
+    ReflDir.x *= -1;
+    float4 CubeMap = txCubeMap.Sample(samLinear, ReflDir);
+    ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, CubeMap.a < 0.5);
+    // todo: add lighting methods for forward renderer
+    outColor.rgb = albedoSample.rgb * (DiffuseTerm * ShadowTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb * ShadowTerm + ReflectionFallBack * fSpecularIntensity;
+    outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm * ShadowTerm, 1.0f));
     outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
 	return outColor;
 }

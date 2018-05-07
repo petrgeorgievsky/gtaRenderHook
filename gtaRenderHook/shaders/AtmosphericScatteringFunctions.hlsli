@@ -59,7 +59,7 @@ float3 CalculateFogColor(float3 ScreenColor, float3 ViewDir, float3 LightDir, fl
     float3 RayleighScattering = CalculateRayleighScattering(CosSqPlOne, Height) * vSkyLightCol.rgb;
     
     float3 SunContribution = min(pow(CosPhi, 8.0f), 1.0f) * vSunColor.rgb * vSunLightDir.w;
-    FullScattering = ((RayleighScattering + MieScattering * 0.75f) + SunContribution);
+    FullScattering = ((RayleighScattering*0.5f + MieScattering * 0.75f) + SunContribution*0.5f);
         
     float FogFadeCoeff = saturate(max(ViewDepth - fFogStart, 0) / abs(fFogRange));
     

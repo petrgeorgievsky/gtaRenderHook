@@ -118,7 +118,7 @@ void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float
 */
 void GetNormalsAndDepth(Texture2D TexBuffer, SamplerState Sampler, float2 TexCoords, out float ViewDepth, out float3 Normals)
 {
-    float4 NormalSpec = TexBuffer.Sample(Sampler, TexCoords);
+    float4 NormalSpec = TexBuffer.SampleLevel(Sampler, TexCoords, 0);
 
     ViewDepth = DecodeFloatRG(NormalSpec.zw);
     ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;

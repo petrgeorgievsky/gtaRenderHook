@@ -56,8 +56,6 @@ CCustomWaterPipeline::CCustomWaterPipeline() :
 		g_pDebug->printError("Failed to create index buffer");
 	m_pDS = new CD3D1XDomainShader("shaders/SACustomWater.hlsl", "DS");
 	m_pHS = new CD3D1XHullShader("shaders/SACustomWater.hlsl", "HS");
-	m_pWaterRaster = (*(RwRaster**)0xC228A8);
-	m_pWaterWakeRaster = (*(RwRaster**)0xC228B8);
 }
 
 
@@ -72,6 +70,8 @@ CCustomWaterPipeline::~CCustomWaterPipeline()
 
 void CCustomWaterPipeline::RenderWater(RwIm3DVertex * verticles, UINT vertexCount, USHORT * indices, UINT indexCount)
 {
+	m_pWaterRaster = (*(RwRaster**)0xC228A8);
+	m_pWaterWakeRaster = (*(RwRaster**)0xC228B8);
 	RwMatrix identity{};
 	identity.right.x = 1.0f;
 	identity.up.y = 1.0f;

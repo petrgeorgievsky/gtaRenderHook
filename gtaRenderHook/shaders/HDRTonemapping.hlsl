@@ -33,7 +33,7 @@ float LogLuminancePS(PS_QUAD_IN i) : SV_Target
 
 float4 TonemapPS(PS_QUAD_IN i) : SV_Target
 {
-	float AvgLogLum = txAvgLogLum.Load(int3(0, 0, 0));
+	float AvgLogLum = txAvgLogLum.Load(int3(0, 0, 0)).r;
     float3 ScreenColor = txInputRaster.Sample(samLinear, i.vTexCoord.xy).rgb;
     float Luminance = GetLuminance(ScreenColor);
     float3 White = float3(1, 1, 1);    
@@ -62,13 +62,15 @@ float4 DownScale2x2_LumPS(PS_QUAD_IN i) : SV_TARGET
 {
     float Avg = 0.0f;
     float4 Color = 0.0f;
-    
+
+    [unroll]
     for (int y = -1; y < 1; y++)
     {
+        [unroll]
         for (int x = -1; x < 1; x++)
         {
             // Compute the sum of color values
-            Color = txInputRaster.Sample(samLinear, i.vTexCoord.xy, int2(x, y));
+            Color = txInputRaster.SampleLevel(samLinear, i.vTexCoord.xy, 0, int2(x, y));
                 
             Avg += GetLuminance(Color.rgb);
         }
@@ -85,9 +87,11 @@ float4 DownScale3x3PS(PS_QUAD_IN i) : SV_TARGET
 {
     float Avg = 0.0f;
     float4 vColor = 0.0f;
-    
+
+    [unroll]
     for (int y = -1; y <= 1; y++)
     {
+        [unroll]
         for (int x = -1; x <= 1; x++)
         {
             // Compute sum of color values
@@ -107,8 +111,8 @@ float4 DownScale3x3PS(PS_QUAD_IN i) : SV_TARGET
 */
 float4 AdaptationPassPS(PS_QUAD_IN i) : SV_TARGET
 {
-    float AdaptedLum = txInputRaster.Sample(samLinear, i.vTexCoord.xy).rgb;
-    float CurrentLum = txAvgLogLum.Sample(samLinear, float2(0, 0));
+    float AdaptedLum = txInputRaster.Sample(samLinear, i.vTexCoord.xy).r;
+    float CurrentLum = txAvgLogLum.Sample(samLinear, float2(0, 0)).r;
     
     // The user's adapted luminance level is simulated by closing the gap between
     // adapted luminance and current luminance by 5% every frame, based on a

@@ -356,26 +356,23 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkB
 		
 		
 		// Add entity to shadow caster list if it exists, inside frustum bbox and bigger than minimum shadow caster size
-		if (shadowEntity != nullptr) 
-		{
-			bool isInsideLightBBox=false;
-			if (!gShadowSettings.CullPerCascade) {
-				// Check if entity is inside any of existing light bounding volumes
-				for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
-				{
-					isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
-				}
-				if (isInsideLightBBox)
-					AddEntityToShadowCasterList(shadowEntity, renderDistance, 0);
+		bool isInsideLightBBox=false;
+		if (!gShadowSettings.CullPerCascade) {
+			// Check if entity is inside any of existing light bounding volumes
+			for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
+			{
+				isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
 			}
-			else {
-				for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
-				{
-					// Check if entity is inside light bounding volume 
-					isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
-					if (isInsideLightBBox)
-						AddEntityToShadowCasterList(shadowEntity, renderDistance, i);
-				}
+			if (isInsideLightBBox)
+				AddEntityToShadowCasterList(shadowEntity, renderDistance, 0);
+		}
+		else {
+			for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
+			{
+				// Check if entity is inside light bounding volume 
+				isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
+				if (isInsideLightBBox)
+					AddEntityToShadowCasterList(shadowEntity, renderDistance, i);
 			}
 		}
 	}
@@ -768,7 +765,7 @@ void CRendererRH::ScanSectorList(int x, int y)
 
 	if (!dontRenderSectorEntities) 
 		ScanPtrList(&sector->m_buildings, loadIfRequired);
-
+	
 	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_OBJECTS], loadIfRequired);
 	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_VEHICLES], loadIfRequired);
 	ScanPtrList(&repeatSector->m_lists[REPEATSECTOR_PEDS], loadIfRequired);
@@ -802,7 +799,7 @@ void CRendererRH::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 		entity->m_bOffscreen = false;
 			
 		RendererVisibility visibility = SetupEntityVisibility(entity, &renderDistance);
-		if(visibility!= RendererVisibility::INVISIBLE && visibility != RendererVisibility::NOT_LOADED)
+		if(visibility != RendererVisibility::NOT_LOADED)
 			AddEntityToShadowCastersIfNeeded(entity, false);
 		int modelID = entity->m_nModelIndex;
 		
@@ -861,7 +858,8 @@ void CRendererRH::ScanPtrList(CPtrList* ptrList, bool loadIfRequired)
 						}
 					}
 				}
-			}
+			}else
+				AddEntityToRenderList(entity, renderDistance);
 			break;
 		case RendererVisibility::OFFSCREEN:
 			entity->m_bOffscreen = true;
@@ -1411,7 +1409,7 @@ void CRendererRH::ScanWorld()
 	sector[4].x = points[4].x * 0.005f + 15.0f;
 	sector[4].y = points[4].y * 0.005f + 15.0f;
 	
-	if (CGame::currArea || (CSAIdleHook::m_fShadowDNBalance >= 1.0) || !gShadowSettings.ScanShadowsBehindPlayer)
+	if (CGame::currArea != 0 || (CSAIdleHook::m_fShadowDNBalance >= 1.0) || !gShadowSettings.ScanShadowsBehindPlayer)
 		return;
 	
 	m_loadingPriority = 0;
@@ -1469,8 +1467,14 @@ void CRendererRH::RenderShadowCasterEntity(CEntity *entity)
 	if (entity->m_pRwObject == nullptr)
 		return;
 	entity->m_bImBeingRendered = true;
-	if (entity->m_nType == eEntityType::ENTITY_TYPE_PED)
-		CVisibilityPluginsRH::RenderWeaponsForPed((CPed*)entity);
+	// We need to render some sub-entities for peds
+	if (entity->m_nType == eEntityType::ENTITY_TYPE_PED) {
+		CPed* ped = (CPed*)entity;
+		auto jetPackTask = ped->m_pIntelligence->GetTaskJetPack();
+		if(jetPackTask && jetPackTask->m_pJetPackClump)
+			_RpClumpRender(jetPackTask->m_pJetPackClump);
+		CVisibilityPluginsRH::RenderWeaponsForPed(ped);
+	}
 	if (entity->m_pRwObject->type == rpATOMIC)
 		entity->m_pRwAtomic->renderCallBack(entity->m_pRwAtomic);
 	else

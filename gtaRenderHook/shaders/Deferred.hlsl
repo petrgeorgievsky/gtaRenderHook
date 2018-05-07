@@ -90,7 +90,7 @@ float4 SunLightingPS(PS_QUAD_IN i) : SV_Target
 	CalculateSpecularTerm(Normals, vSunLightDir.xyz, -ViewDir, Roughness, SpecularTerm);
 
 #if SAMPLE_SHADOWS==1
-    float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, Distance) * vSunLightDir.w;
+    float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, ViewZ) * vSunLightDir.w;
 #else
     float ShadowTerm = 1.0;
 #endif
@@ -204,7 +204,7 @@ float4 FinalPassPS(PS_QUAD_IN i) : SV_Target
 		// Specular term consists of specular highlights
         float3 SpecularTerm = (Lighting.w * Lighting.xyz) * AmbientOcclusion;
 		// Reflection term is computed before deferred
-		float3 ReflectionTerm = txReflections.Sample(samLinear, i.vTexCoord.xy);
+		float3 ReflectionTerm = txReflections.Sample(samLinear, i.vTexCoord.xy).rgb;
         // Fresnel coeff
         float FresnelCoeff = MicrofacetFresnel(Normals, -ViewDir, Parameters.y);
         // Increase reflection for cars

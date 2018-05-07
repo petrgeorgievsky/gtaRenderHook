@@ -20,7 +20,7 @@
 #include "DebugBBox.h"
 #include "CVisibilityPluginsRH.h"
 #include "AmbientOcclusion.h"
-#include <game_sa\CPointLights.h>
+#include <game_sa\CPointLights.h> 
 #include <game_sa\CFont.h>
 #include <game_sa\CWorld.h>
 #include <game_sa\CScene.h>
@@ -39,6 +39,7 @@
 #include <game_sa\CRenderer.h>
 #include "VolumetricLighting.h"
 #include "FullscreenQuad.h"
+#include "CubemapReflectionRenderer.h"
 //#include <game_sa\CGlass.h>
 //#include <game_sa\CSkidmarks.h>
 
@@ -168,7 +169,7 @@ void CSAIdleHook::RenderInGame()
 	const auto curr_sun_dir = *reinterpret_cast<int*>(0xB79FD0);	// Current sun direction id
 	const auto curr_sun_dirvec = &sunDirs[curr_sun_dir];			// Current sun direction vector
 
-	g_pStateMgr->SetSunDir(curr_sun_dirvec, m_fShadowDNBalance);
+	g_pStateMgr->SetSunDir(curr_sun_dirvec, (CGame::currArea==0? m_fShadowDNBalance : 1.0f));
 	g_pStateMgr->SetFogStart(CTimeCycle::m_CurrentColours.m_fFogStart);
 	g_pStateMgr->SetFogRange(CTimeCycle::m_CurrentColours.m_fFarClip - CTimeCycle::m_CurrentColours.m_fFogStart);
 	g_shaderRenderStateBuffer.vSkyLightCol = {	CTimeCycle::m_CurrentColours.m_nSkyTopRed / 255.0f,
@@ -314,6 +315,7 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	DefinedState();
 
 	g_pDeferredRenderer->m_pShadowRenderer->SetShadowBuffer();
+	g_pDeferredRenderer->m_pReflRenderer->SetCubemap();
 	g_pCustomCarFXPipe->RenderAlphaList();
 	g_pCustomBuildingPipe->RenderAlphaList();
 	//CPostEffects__m_bDisableAllPostEffect = true;
@@ -332,9 +334,13 @@ void CSAIdleHook::RenderDeferred()
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
 	CRendererRH::RenderRoads();
 	CRendererRH::RenderEverythingBarRoads();
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
 	CRenderer::RenderFadingInUnderwaterEntities();
-	CVisibilityPlugins__RenderFadingInEntities();
+	
 	BreakManager_c__Render(g_breakMan, 0);
+	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
+	CVisibilityPlugins__RenderFadingInEntities();
+	BreakManager_c__Render(g_breakMan, 1);
 	 // CRenderer::RenderFadingInUnderwaterEntities
 	CVisibilityPluginsRH::RenderWeaponPedsNoMuzzleFlash();
 	//CRenderer::RenderTOBJs();

@@ -401,5 +401,5 @@ float3 VoxelGI_GatherLightInfo(float3 pos, float3 normal, out float occl)
 float3 VoxelGI_DebugVoxels(float3 worldPos)
 {
     float3 pos = ConvertToVoxelSpace(worldPos, 4 * voxelGridScale2) / voxelGridSize;
-    return txVGrid.Sample(samLinear, pos);
+    return txVGrid.Sample(samLinear, pos).rgb;
 }
