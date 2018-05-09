@@ -91,7 +91,7 @@ float SampleShadowMap(Texture2D txShadow, SamplerComparisonState samShadow, Samp
     float blurScale;
 #if USE_PCS_SHADOWS==1&&BLUR_SHADOWS==1
 	float avgRecieverDepth 	= txShadow.Sample(samShadowNonComp, ShadowTexCoord).r;
-	float avgCasterDepth   	= AvarageShadowCasterDepth(ShadowTexCoord,avgRecieverDepth,samShadowNonComp,txShadow);
+	float avgCasterDepth   	= AvarageShadowCasterDepth(ShadowTexCoord,LightViewPos.z,samShadowNonComp,txShadow);
     
     blurScale = (LightViewPos.z - avgCasterDepth) / avgCasterDepth;
     blurScale = max(blurScale * fMaxShadowBlur, fMinShadowBlur);

@@ -152,7 +152,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GTARENDERHOOK_EXPORTS;GTA_SA;GTASA;PLUGIN_SGV_10US;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;GTARENDERHOOK_EXPORTS;GTA_SA;GTASA;PLUGIN_SGV_10US;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>StdAfx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
@@ -194,6 +194,8 @@
   <ItemGroup>
     <ClInclude Include="AmbientOcclusion.h" />
     <ClInclude Include="BlurAlgorithms.h" />
+    <ClInclude Include="CRwGameHooks.h" />
+    <ClInclude Include="StreamingRH.h" />
     <ClInclude Include="CVisibilityPluginsRH.h" />
     <ClInclude Include="D3D1XShaderDefines.h" />
     <ClInclude Include="D3D1XIndexBuffer.h" />
@@ -258,6 +260,8 @@
   <ItemGroup>
     <ClCompile Include="AmbientOcclusion.cpp" />
     <ClCompile Include="BlurAlgorithms.cpp" />
+    <ClCompile Include="CRwGameHooks.cpp" />
+    <ClCompile Include="StreamingRH.cpp" />
     <ClCompile Include="CVisibilityPluginsRH.cpp" />
     <ClCompile Include="D3D1XShaderDefines.cpp" />
     <ClCompile Include="D3D1XIndexBuffer.cpp" />

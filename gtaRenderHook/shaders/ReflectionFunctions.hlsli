@@ -22,7 +22,7 @@ float3 SSR(Texture2D ScreenTexture, Texture2D NormalDepth,
     float StepScaling = 1.0f;
     Fallback = 0.0;
 
-    for (int i = 0; i < min(SSR_SAMPLE_COUNT,256); i++)
+    for (int i = 0; i < SSR_SAMPLE_COUNT; i++)
     {
         HitPointWorldPos = WorldPos + ReflectDir * L;
 

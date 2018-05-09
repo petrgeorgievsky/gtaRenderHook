@@ -55,27 +55,16 @@ CShadowRenderer::~CShadowRenderer()
 // Transforms light camera to fit needed camera frustum and look in needed direction.
 void CShadowRenderer::DirectionalLightTransform(RwCamera* mainCam, const RW::V3d & lightDir, int shadowCascade)
 {
-	RwFrame*	shadowCamFrame	= RwCameraGetFrame(m_pShadowCamera);
-	RwMatrix*	shadowCamMatrix	= RwFrameGetMatrix(shadowCamFrame);
-	//
-	m_LightPos[shadowCascade] = CalculateCameraPos(mainCam, lightDir, shadowCascade).getRWVector(); //*RwMatrixGetPos(RwFrameGetMatrix(RwCameraGetFrame(mainCam)));
-
-	
+	m_LightPos[shadowCascade] = CalculateCameraPos(mainCam, lightDir, shadowCascade).getRWVector();
 }
 
 RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & lightDir, int shadowCascade)
 {
 	RW::V3d vLightPos, vLightDir, vFrustrumCenter;
-	vFrustrumCenter = RW::V3d{ 0, 0, 0 };
 	RW::V3d vLightBasis[3];
-	float faMinAABB[3];
-	float faMaxAABB[3];
 
-	for (int i = 0; i < 3; i++)
-	{
-		faMinAABB[i] = FLT_MAX;
-		faMaxAABB[i] = -FLT_MAX;
-	}
+	vFrustrumCenter = RW::V3d{ 0, 0, 0 };
+
 	vLightBasis[2] = -lightDir;
 	vLightBasis[2].normalize();
 	vLightBasis[1] = { 0, 1, 0 };
@@ -105,7 +94,7 @@ RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & l
 	RwV2d vw{ m_LightBBox[shadowCascade].getSizeX()*0.5f , m_LightBBox[shadowCascade].getSizeY()*0.5f };
 	vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
-	float fLightZFar = m_LightBBox[shadowCascade].getSizeZ()*0.5f;//faLightDim[1];
+	//float fLightZFar = m_LightBBox[shadowCascade].getSizeZ()*0.5f;//faLightDim[1];
 	RwCameraSetNearClipPlane(m_pShadowCamera, -1500.0f/*min(-fLightZFar,-1500.0f)*/);
 	RwCameraSetFarClipPlane(m_pShadowCamera, 1500.0f /*max(fLightZFar,1500.0f)*/);
 	RwCameraSync(m_pShadowCamera);
@@ -344,7 +333,7 @@ void TW_CALL SetCascadeCountCallback(const void *value, void *clientData)
 {
 	int maxTexSize;
 	g_pRwCustomEngine->GetMaxTextureSize(maxTexSize);
-	gShadowSettings.ShadowCascadeCount = max(min(*(int*)value, maxTexSize / gShadowSettings.Size),1);
+	gShadowSettings.ShadowCascadeCount = max(min(*(int*)value, maxTexSize / (int)gShadowSettings.Size),1);
 	g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = true;
 }
 void TW_CALL GetCascadeCountCallback(void *value, void *clientData)

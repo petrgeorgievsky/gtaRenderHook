@@ -50,14 +50,14 @@ class CD3D1XVertexDeclaration;
 *	RenderWare structures
 */
 
-struct TextureFormat
+struct _rwNativeTexture
 {
 	unsigned int	platformId;
 	unsigned int	filterMode	: 8;
 	unsigned int	uAddressing	: 4;
 	unsigned int	vAddressing	: 4;
-	char			name[32];
-	char			maskName[32];
+	char			name[32];		/* Texture name */
+	char			mask[32];	/* Texture mask name */
 };
 
 struct RasterFormat
@@ -156,11 +156,12 @@ struct RwD3D9Raster
 		IDirect3DSurface9* surface;
 	};
 	unsigned char*       palette;
-	unsigned char        alpha;
-	unsigned char        cubeTextureFlags; /* 0x01 IS_CUBEMAP_TEX */
-	unsigned char        textureFlags;     /* 0x01 HAS_MIP_MAPS
-										   0x10 IS_COMPRESSED */
-	unsigned char        lockFlags;
+	RwUInt8			alpha;
+	RwUInt8			cube : 4; /* This texture is a cube texture */
+	RwUInt8			face : 4; /* The active face of a cube texture */
+	RwUInt8			automipmapgen : 4; /* This texture uses automipmap generation */
+	RwUInt8			compressed : 4;  /* This texture is compressed */
+	RwUInt8			lockedMipLevel;
 	IDirect3DSurface9*   lockedSurface;
 	D3DLOCKED_RECT       lockedRect;
 	D3DFORMAT            format;
@@ -288,81 +289,6 @@ struct _rwVKRaster {
 };
 #endif
 
-/*
-*	Custom gta structs
-*/
-/*struct CBaseModelInfo;
-typedef CBaseModelInfo* (*AsAtomicModelInfoPtrCB)(CBaseModelInfo*);
-typedef char(*getModelTypeCB)(void*);
-typedef void*(*getTimeInfoCB)(void*);
-struct vmt_CBaseModelInfo {
-	void* Destructor;
-	AsAtomicModelInfoPtrCB AsAtomicModelInfoPtr;
-	void* AsDamageAtomicModelInfoPtr;
-	void* AsLodAtomicModelInfoPtr;
-	getModelTypeCB GetModelType;
-	getTimeInfoCB GetTimeInfo;
-};
-struct CBoundingBox
-{
-	RwBBox m_BBox;
-	RwSphere m_BSphere;
-};
-struct CColModel
-{
-	CBoundingBox m_BBox;
-	int a;
-	void *m_pColData;
-};
-struct CBaseModelInfo {
-	vmt_CBaseModelInfo*	vmt;
-	unsigned int   m_dwKey;
-	unsigned short m_wUsageCount;
-	signed short   m_wTxdIndex;
-	unsigned char  m_nAlpha; // 0 - 255
-	unsigned char  m_n2dfxCount;
-	short          m_w2dfxIndex;
-	short          m_wObjectInfoIndex;
-	union {
-		unsigned short m_wFlags;
-		struct {
-			unsigned char m_bHasBeenPreRendered : 1; // we use this because we need to apply changes only once
-			unsigned char m_bAlphaTransparency : 1;
-			unsigned char m_bIsLod : 1;
-			unsigned char m_bDontCastShadowsOn : 1;
-			unsigned char m_bDontWriteZBuffer : 1;
-			unsigned char m_bDrawAdditive : 1;
-			unsigned char m_bDrawLast : 1;
-			unsigned char m_bDoWeOwnTheColModel : 1;
-			union {
-				struct {
-					unsigned char m_bCarmodIsWheel : 1;
-					unsigned char bUnknownFlag9 : 1;
-					unsigned char bUnknownFlag10 : 1;
-					unsigned char m_bSwaysInWind : 1;
-					unsigned char m_bCollisionWasStreamedWithModel : 1;
-					unsigned char m_bDontCollideWithFlyer : 1;
-					unsigned char m_bHasComplexHierarchy : 1;
-					unsigned char m_bWetRoadReflection : 1;
-				};
-				struct {
-					unsigned char pad0 : 2;
-					unsigned char m_nCarmodId : 5;
-					unsigned char pad1 : 1;
-				};
-			};
-
-		};
-	};
-	CColModel*    		m_pColModel;
-	float             m_fDrawDistance;
-	struct RwObject*  m_pRwObject;
-};*/
-/*struct CPtrList {
-	void* element;
-	CPtrList* next;
-};*/
-
 #if (GTA_SA)
 
 /*
@@ -380,12 +306,6 @@ struct CBaseModelInfo {
 #define RpResModule			(*(RwModuleInfo *)	0xC9BC58)
 #define gColourTop			((RwRGBA *)			0xB72CA0)
 #define dgGGlobals			(*(RwCamera**)		0xC9BCC0)
-#define CTimer__ms_fTimeStep	(*(float *)0xB7CB5C)
-//#define TheCamera				((CCamera *)0xB6F028)
-#define CGame__currArea			(*(UINT *)0xB72914) // Current area 0 - inside interiors
-#define CWeather__WetRoads	(*(float *)0xC81308)
-//A9B0C8     ; CBaseModelInfo *CModelInfo::ms_modelInfoPtrs
-#define CModelInfo__ms_modelInfoPtrs ((CBaseModelInfo **)0xA9B0C8)
 
 /*
 *	RenderWare methods
@@ -563,6 +483,4 @@ struct CBaseModelInfo {
 #define GetD3D1XRaster(r)\
         (&((_rwD3D1XRaster*)r)->dr)
 
-
-RwBool _rxD3D9DefaultInstanceCallback(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance);
 #endif

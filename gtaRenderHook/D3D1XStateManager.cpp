@@ -82,7 +82,7 @@ CD3D1XStateManager::CD3D1XStateManager()
 
 	// default sampler state
 	// TODO: add control for anisotropy as well as lod quality
-	m_sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	m_sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	m_sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	m_sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	m_sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;

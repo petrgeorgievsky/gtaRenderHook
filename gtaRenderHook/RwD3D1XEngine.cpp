@@ -451,16 +451,16 @@ bool CRwD3D1XEngine::Im2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2D
 
 bool CRwD3D1XEngine::RasterCreate(RwRaster *raster, UINT flags)
 {
-	// Init renderware raster data
-	raster->cpPixels = 0;
-	raster->palette = 0;
-	raster->cType = flags & rwRASTERTYPEMASK;
-	raster->cFlags = flags & 0xF8;
-
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
+	// Init renderware raster data
+	raster->cType = flags & rwRASTERTYPEMASK;
+	raster->cFlags = flags & (RwUInt8)~rwRASTERTYPEMASK;
+	raster->cpPixels = nullptr;
+	raster->palette = nullptr;
+
 	// Init directx raster data
 	d3dRaster->resourse = nullptr;
-	d3dRaster->palette = 0;
+	d3dRaster->palette = nullptr;
 	d3dRaster->alpha = 0;
 	d3dRaster->textureFlags = 0;
 	d3dRaster->cubeTextureFlags = 0;
@@ -512,7 +512,7 @@ bool CRwD3D1XEngine::RasterDestroy(RwRaster *raster)
 
 bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 {
-	TextureFormat textureInfo; RasterFormat rasterInfo;
+	_rwNativeTexture textureInfo; RasterFormat rasterInfo;
 	unsigned int lengthOut, versionOut; unsigned char savedFormat;
 	RwRaster *raster=nullptr;
 	RwTexture *texture;
@@ -523,7 +523,7 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 	// TODO: reduce repeated code, improve to support more formats
 	if (versionOut >= 0x34000 && versionOut <= rwLIBRARYVERSION36003) // GTA SA
 	{
-		if (RwStreamRead(stream, &textureInfo, sizeof(TextureFormat)) != sizeof(TextureFormat) || textureInfo.platformId != rwID_PCD3D9 ||
+		if (RwStreamRead(stream, &textureInfo, sizeof(_rwNativeTexture)) != sizeof(_rwNativeTexture) || textureInfo.platformId != rwID_PCD3D9 ||
 			RwStreamRead(stream, &rasterInfo, sizeof(RasterFormat)) != sizeof(RasterFormat)) {
 			g_pDebug->printError("Error while reading native texture");
 			return false;
@@ -605,11 +605,11 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 		RwTextureSetAddressingUMacro(texture, textureInfo.uAddressing);
 		RwTextureSetAddressingVMacro(texture, textureInfo.vAddressing);
 		RwTextureSetName(texture, textureInfo.name);
-		RwTextureSetMaskName(texture, textureInfo.maskName);
+		RwTextureSetMaskName(texture, textureInfo.mask);
 		*tex = texture;
 	}
 	else {
-		if (RwStreamRead(stream, &textureInfo, sizeof(TextureFormat)) != sizeof(TextureFormat) || textureInfo.platformId != rwID_PCD3D8 ||
+		if (RwStreamRead(stream, &textureInfo, sizeof(_rwNativeTexture)) != sizeof(_rwNativeTexture) || textureInfo.platformId != rwID_PCD3D8 ||
 			RwStreamRead(stream, &rasterInfo, sizeof(RasterFormat)) != sizeof(RasterFormat))
 			return false;
 		if (rasterInfo.compression)
@@ -674,7 +674,7 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 		RwTextureSetAddressingUMacro(texture, textureInfo.uAddressing);
 		RwTextureSetAddressingVMacro(texture, textureInfo.vAddressing);
 		RwTextureSetName(texture, textureInfo.name);
-		RwTextureSetMaskName(texture, textureInfo.maskName);
+		RwTextureSetMaskName(texture, textureInfo.mask);
 		*tex = texture;
 	}
 	

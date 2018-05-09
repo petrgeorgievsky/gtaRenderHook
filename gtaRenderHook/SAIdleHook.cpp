@@ -363,7 +363,7 @@ void CSAIdleHook::RenderEffects()
 	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
 	//CCoronas::RenderReflections();
 	//CCoronas::RenderSunReflection();
-	//CCoronas::Render();
+	CCoronas::Render();
 	//g_pStateMgr->SetAlphaTestEnable(true);
 	g_fx.Render(TheCamera.m_pRwCamera, 0);
 	//CWaterCannons::Render();

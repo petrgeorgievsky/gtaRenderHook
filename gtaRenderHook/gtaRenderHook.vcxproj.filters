@@ -281,6 +281,12 @@
     <ClInclude Include="BlurAlgorithms.h">
       <Filter>Source\Algorithms\PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="CRwGameHooks.h">
+      <Filter>Source\Games</Filter>
+    </ClInclude>
+    <ClInclude Include="StreamingRH.h">
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -456,6 +462,12 @@
     </ClCompile>
     <ClCompile Include="BlurAlgorithms.cpp">
       <Filter>Source\Algorithms\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="CRwGameHooks.cpp">
+      <Filter>Source\Games</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamingRH.cpp">
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

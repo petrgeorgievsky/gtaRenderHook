@@ -33,34 +33,11 @@
 #include "AmbientOcclusion.h"
 #include <game_sa\CStreaming.h>
 #include <game_sa\CEntity.h>
-
+#include "CRwGameHooks.h"
+#include "StreamingRH.h"
 CDebug*				g_pDebug;
 CIRwRenderEngine*	g_pRwCustomEngine;
 
-// Main render system hook
-bool RenderSystem(int State, int* a2, void* a3, int a4) {
-	return g_pRwCustomEngine->EventHandlingSystem((RwRenderSystemState)State, a2, a3, a4);
-}
-
-//*************** Render state get/set hooks
-
-bool SetRS(RwRenderState nState, UINT pParam) {
-	return g_pRwCustomEngine->RenderStateSet(nState, pParam);
-}
-
-bool GetRS(RwRenderState nState, UINT* pParam) {
-	UINT rsData;
-	g_pRwCustomEngine->RenderStateGet(nState, rsData);
-	*pParam = rsData;
-	return true;
-}
-
-void SetRR(RwUInt32 refreshRate) {
-	UNREFERENCED_PARAMETER(refreshRate);
-}
-void SetVM(RwUInt32 videomode) {
-	g_pRwCustomEngine->UseMode(videomode);
-}
 HHOOK hookHandle;
 
 LRESULT CALLBACK MessageProc(int code, WPARAM wParam, LPARAM lParam) {
@@ -76,6 +53,7 @@ LRESULT CALLBACK MessageProc(int code, WPARAM wParam, LPARAM lParam) {
 	}
 	return CallNextHookEx(hookHandle, code, wParam, lParam);
 }
+
 // GTA RenderWare Initialization hooks
 char GTARwInit() {
 #ifdef USE_ANTTWEAKBAR
@@ -119,46 +97,6 @@ void GTARwShutdown() {
 #endif
 }
 
-bool psNativeTextureSupport() {
-	return true;
-}
-
-RwBool im2DRenderPrim(RwPrimitiveType primType, RwIm2DVertex *vertices, RwInt32 numVertices) {
-	return g_pRwCustomEngine->Im2DRenderPrimitive(primType, vertices, numVertices);
-}
-RwBool im2DRenderIndexedPrim(RwPrimitiveType primType, RwIm2DVertex *vertices, RwInt32 numVertices, RwImVertexIndex *indices, RwInt32 numIndices) {
-	return g_pRwCustomEngine->Im2DRenderIndexedPrimitive(primType, vertices, numVertices, indices, numIndices);
-}
-RwBool im2DRenderLine(RwIm2DVertex *vertices, RwInt32 numVertices, RwInt32 vert1, RwInt32 vert2) {
-	return true;
-}
-
-void im3DOpen() {
-	//static_cast<CRwVulkanEngine*>(g_pRwCustomEngine)->Im3DRenderOpen();
-}
-
-void CGamma__init(void *p) {
-	UNREFERENCED_PARAMETER(p);
-}
-bool envMapSupport() {
-	return true;
-}
-RwBool im3dSubmit() {
-	return g_pRwCustomEngine->Im3DSubmitNode();
-}
-
-bool _D3D9AtomicAllInOneNode(RxPipelineNode *self, const RxPipelineNodeParam *params) {
-	return g_pRwCustomEngine->AtomicAllInOneNode(self, params);
-}
-bool _D3D9SkinAllInOneNode(RxPipelineNode *self, const RxPipelineNodeParam *params) {
-	return g_pRwCustomEngine->SkinAllInOneNode(self, params);
-}
-void _rxD3D9DefaultRenderCallback(RwResEntry *repEntry, void *object, RwUInt8 type, RwUInt32 flags) {
-	g_pRwCustomEngine->DefaultRenderCallback(repEntry, object, type, flags);
-}
-void _rxD3D9SkinRenderCallback(RwResEntry *repEntry, void *object, RwUInt8 type, RwUInt32 flags) {
-	//g_pRwCustomEngine->SkinRenderCallback(repEntry, object, type, flags);
-}
 RxD3D9InstanceData* GetModelsData(RxInstanceData * data)
 {
 	return reinterpret_cast<RxD3D9InstanceData*>(data + 1);
@@ -166,23 +104,6 @@ RxD3D9InstanceData* GetModelsData(RxInstanceData * data)
 RpMesh * GetMeshesData(RpD3DMeshHeader * data)
 {
 	return reinterpret_cast<RpMesh*>(data + 1);
-}
-RwBool _rxD3D9DefaultInstanceCallback(void *object, RxD3D9ResEntryHeader *resEntryHeader, RwBool reinstance) {
-	return g_pRwCustomEngine->DefaultInstanceCallback(object, resEntryHeader, reinstance);
-}
-
-RwBool  _rwD3D9RWSetRasterStage(RwRaster* raster, int stage) {
-	if (!stage) {
-		return g_pRwCustomEngine->RenderStateSet(rwRENDERSTATETEXTURERASTER, (UINT)raster);
-	}
-	return true;
-}
-
-RwTexture* CopyTex(RwTexture* tex) {
-	return g_pRwCustomEngine->CopyTexture(tex);
-}
-RxPipeline * __RxPipelineExecute(RxPipeline *pipeline, void *data, RwBool heapReset) {
-	return pipeline;
 }
 
 bool AddLight(char type, CVector pos, CVector dir, float radius, float red, float green, float blue, char fogType, char generateExtraShadows, CEntity *entityAffected) {
@@ -261,8 +182,6 @@ CLink<CEntity*> * CStreaming__AddEntity(CEntity *pEntity)
 	}
 	return result;
 }
-//6E0E20     ; CVehicle::DoHeadLightBeam(int, CMatrix &, unsigned char)
-#define CVehicle__DoHeadLightBeam(veh,matrix,text) ((void(__cdecl *)(void*, void*, unsigned char))0x6E0E20)(veh,y,text)
 // TODO: Move this out to lights
 void __fastcall  AddSpotLight(CVehicle* vehicle, void *Unknown, int a,CMatrix* matrix, bool isRight) {
 	CLight light{};
@@ -401,7 +320,7 @@ void RenderRadarSA(RwPrimitiveType prim, RwIm2DVertex * vert, int count) {
 			CRadar::TransformRadarPointToScreenSpace(radarSquareScreenSpace[j], vert);
 		}
 		CSprite2d::SetMaskVertices(8, (float*)radarSquareScreenSpace, CSprite2d::NearScreenZ);
-		im2DRenderPrim(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 8);
+		g_pRwCustomEngine->Im2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 8);
 	}
 
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILFUNCTIONREF, 5);
@@ -434,7 +353,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	LPVOID lpReserved
 )
 {
-	auto val2 = 0x6A01;
 	UNREFERENCED_PARAMETER(lpReserved);
 	UNREFERENCED_PARAMETER(hModule);
 	switch (ul_reason_for_call)
@@ -455,22 +373,10 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		CCustomBuildingDNPipeline::Patch();
 		CCustomCarFXPipeline::Patch();
 		CSAIdleHook::Patch();
-		SetPointer(RenderSystemPtr, RenderSystem);
-		RedirectJump(CGammaInitPtr, CGamma__init);
-		RedirectJump(envMapSupportPtr, envMapSupport);
-		RedirectJump(SetRRPtr, SetRR);
-		RedirectJump(SetVMPtr, SetVM);
-		// fix for mouse hiding when using anttweakbar
-		// TODO: make better
-		//Patch((void*)0x7481CD, (void*)&val2,2);
-		
-		SetPointer(Im2DRenderPrimPtr, im2DRenderPrim);
-		SetPointer(Im2DRenderIndexedPrimPtr, im2DRenderIndexedPrim);
-		SetPointer(Im2DRenderLinePtr, im2DRenderLine);
-		RedirectJump(Im3DOpenPtr, envMapSupport);
+		CRwGameHooks::Patch(CRwGameHooks::ms_rwPointerTableSA);
 #if GTA_SA
 		CVisibilityPluginsRH::Patch();
-		//RedirectCall(0x7481CF, ShowCursor_fix);
+		CStreamingRH::Patch();
 		RedirectJump(0x730830, InitD3DResourseSystem);
 		RedirectJump(0x730A00, InitD3DResourseSystem);// Shutdown
 		//RedirectCall(0x53C812, TidyUpTextures);
@@ -480,7 +386,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		RedirectCall(0x6E27E6, AddLightNoSpot);// fix for original car spotlights
 		/*SetInt(0x5B8E55, 12 * 2000);
 		SetInt(0x5B8EB0, 12 * 2000);*/
-		RedirectJump(0x409650, CStreaming__AddEntity);
 		RedirectJump(0x6E0E20, AddSpotLight);
 		RedirectJump(0x585700, RenderRadarSA);
 		RedirectJump(0x586D4E, RenderRadarSAPrimHook);
@@ -491,24 +396,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SetPointer(0x5A151F, envMapSupport);
 		SetPointer(0x5DB43D, _rxD3D9DefaultRenderCallback);
 #endif
-		RedirectCall(psNativeTextureSupportPtr, psNativeTextureSupport);
-		SetPointer(SetRSPtr, SetRS);
-		SetPointer(GetRSPtr, GetRS);
-		
-		SetPointer(Im3DSubmitPtr, im3dSubmit);//submitnodeNoLight
-		SetPointer(AtomicAllInOneNodePtr, _D3D9AtomicAllInOneNode);//submitnode
-		SetPointer(SkinAllInOneNodePtr, _D3D9SkinAllInOneNode);//skinallinone
-		SetPointer(DefaultInstanceCallbackPtr, _rxD3D9DefaultInstanceCallback);
-
-		
-		//RedirectCall(0x53EA0D, im3DOpen);//shadowrenderUpdate
-
 		// GTA stuff
 		RedirectCall(RwInitPtr, GTARwInit);
 		RedirectCall(RwShutdownPtr, GTARwShutdown);
-		
-		
-		//SetInt(0x7488DB, 5);
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
