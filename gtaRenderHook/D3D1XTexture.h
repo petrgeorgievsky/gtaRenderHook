@@ -112,7 +112,7 @@ private:
 		ID3D11UnorderedAccessView*			m_unorderedAV;
 	};
 	RwRGBA  m_palette[256];
-	byte* m_dataPtr;
+	BYTE* m_dataPtr;
 	bool m_isRendering	= false,
 		 m_isLockedToRead=false,
 		 m_hasPalette   = false;

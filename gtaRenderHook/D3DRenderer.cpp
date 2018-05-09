@@ -100,6 +100,7 @@ bool CD3DRenderer::InitDevice()
 	// TODO: move them to header, or store them in memory, perhaps
 	D3D_DRIVER_TYPE driverTypes[] =
 	{
+		D3D_DRIVER_TYPE_UNKNOWN,
 		D3D_DRIVER_TYPE_HARDWARE,
 		D3D_DRIVER_TYPE_WARP,
 		D3D_DRIVER_TYPE_REFERENCE,
@@ -137,7 +138,7 @@ bool CD3DRenderer::InitDevice()
 			
 			// try to find supported feature level by iterating over whole set and removing one feature level after another until success
 			for (UINT i = 1; i < numFeatureLevels-1; i++) {
-				hr = D3D11CreateDevice(currentAdapter, m_driverType, nullptr, createDeviceFlags, &featureLevels[i], numFeatureLevels - i,
+				hr = D3D11CreateDevice(m_driverType == D3D_DRIVER_TYPE_HARDWARE ? nullptr : currentAdapter, m_driverType, nullptr, createDeviceFlags, &featureLevels[i], numFeatureLevels - i,
 					D3D11_SDK_VERSION, &m_pd3dDevice, &m_featureLevel, &m_pImmediateContext);
 				if (SUCCEEDED(hr))
 					break;

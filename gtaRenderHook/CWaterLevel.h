@@ -8,7 +8,7 @@ struct CRenPar {
 };
 struct CWaterTriangle {
 	short a, b, c;
-	byte d, e;
+	BYTE d, e;
 };
 struct CWaterQuad {
 	short a, b, c, d;

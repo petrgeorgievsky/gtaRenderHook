@@ -31,6 +31,8 @@
 #include "DebugRendering.h"
 #include "VolumetricLighting.h"
 #include "AmbientOcclusion.h"
+#include <game_sa\CStreaming.h>
+#include <game_sa\CEntity.h>
 
 CDebug*				g_pDebug;
 CIRwRenderEngine*	g_pRwCustomEngine;
@@ -202,12 +204,69 @@ bool AddLight(char type, CVector pos, CVector dir, float radius, float red, floa
 bool AddLightNoSpot(char type, CVector pos, CVector dir, float radius, float red, float green, float blue, char fogType, char generateExtraShadows, CEntity *entityAffected) {
 	return true;
 }
+CLink<CEntity*> * rwobjlink_Add(CLinkList<CEntity*> *list, CEntity *entity)
+{
+	CLink<CEntity*>* curr_link = list->freeListHead.next;
+	if (curr_link == &list->freeListTail)
+		return nullptr;
+	else
+	{
+		curr_link->data = entity;
+		curr_link->next->prev = curr_link->prev;
+		curr_link->prev->next = curr_link->next;
+		curr_link->next = list->usedListHead.next;
+		list->usedListHead.next->prev = curr_link;
+		curr_link->prev = &list->freeListHead;
+		list->usedListHead.next = curr_link;
+	}
+	return curr_link;
+}
+#define rw_objlink_Add(a,b) ((CLink<CEntity*> * (__thiscall*)(CLinkList<CEntity*> *, CEntity **))0x408230)(a,b)
+CLink<CEntity*> * CStreaming__AddEntity(CEntity *pEntity)
+{
+	CLink<CEntity*> *result = nullptr; // eax@3
+	CLink<CEntity*> *currLink; // eax@4
+
+	eEntityType entityType = (eEntityType)pEntity->m_nType;
+	if (entityType == eEntityType::ENTITY_TYPE_PED || entityType == eEntityType::ENTITY_TYPE_VEHICLE)
+		return nullptr;
+	else
+	{
+		result = rw_objlink_Add(&CStreaming::ms_rwObjectInstances, &pEntity);
+		if (result==nullptr) // if we fail to add link
+		{
+			currLink = CStreaming::ms_rwObjectInstances.usedListTail.prev;
+
+			if (CStreaming::ms_rwObjectInstances.usedListTail.prev != &CStreaming::ms_rwObjectInstances.usedListHead)
+			{
+				while (true)
+				{
+					if (!(currLink->data->m_bStreamingDontDelete ||	currLink->data->m_bImBeingRendered))
+						break;
+					currLink = currLink->prev;
+					if (currLink == &CStreaming::ms_rwObjectInstances.usedListHead) {
+						pEntity->DeleteRwObject();
+						return nullptr;//rw_objlink_Add(&CStreaming__ms_rwObjectInstances, &pEntity);
+					}
+				}
+				currLink->data->DeleteRwObject();
+				currLink->data = pEntity;
+				//result = rw_objlink_Add(&CStreaming__ms_rwObjectInstances, &pEntity);
+			}
+			else {
+				pEntity->DeleteRwObject();
+				//result = rw_objlink_Add(&CStreaming__ms_rwObjectInstances, &pEntity);
+			}
+		}
+	}
+	return result;
+}
 //6E0E20     ; CVehicle::DoHeadLightBeam(int, CMatrix &, unsigned char)
 #define CVehicle__DoHeadLightBeam(veh,matrix,text) ((void(__cdecl *)(void*, void*, unsigned char))0x6E0E20)(veh,y,text)
 // TODO: Move this out to lights
 void __fastcall  AddSpotLight(CVehicle* vehicle, void *Unknown, int a,CMatrix* matrix, bool isRight) {
 	CLight light{};
-	CVehicleModelInfo* vehicleMI = (CVehicleModelInfo*)CModelInfo::ms_modelInfoPtrs[vehicle->m_nModelIndex];
+	CVehicleModelInfo* vehicleMI = reinterpret_cast<CVehicleModelInfo*>(CModelInfo::ms_modelInfoPtrs[vehicle->m_nModelIndex]);
 	CVector* headlightPos = &vehicleMI->m_pVehicleStruct->m_avDummyPos[a];//reinterpret_cast<CVector*>( reinterpret_cast<UINT>(vehicleMI) + 0x5C);
 	//RwMatrix m = matrix->;
 	light.m_vPos = { 
@@ -240,8 +299,8 @@ void __fastcall  AddSpotLight(CVehicle* vehicle, void *Unknown, int a,CMatrix* m
 #define SkinAllInOneNodePtr 0x8DED0C
 #define DefaultInstanceCallbackPtr 0x757899
 
-#define SetRRPtr 0x74631E
-#define SetVMPtr 0x745C75
+#define SetRRPtr 0x7F8580
+#define SetVMPtr 0x7F8640
 //#define Im3DOpenPtr 0x53EA0D
 
 #define RwInitPtr 0x5BF3A1
@@ -250,8 +309,8 @@ void __fastcall  AddSpotLight(CVehicle* vehicle, void *Unknown, int a,CMatrix* m
 #define psNativeTextureSupportPtr 0x619D40
 #define Im3DOpenPtr 0x80A225
 
-#define CGammaInitPtr 0x748A30
-#define envMapSupportPtr 0x5DA044
+#define CGammaInitPtr 0x747180
+#define envMapSupportPtr 0x5D8980
 #elif (GTA_III)
 #define RenderSystemPtr 0x61948C
 #define SetRSPtr 0x619498
@@ -397,10 +456,10 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		CCustomCarFXPipeline::Patch();
 		CSAIdleHook::Patch();
 		SetPointer(RenderSystemPtr, RenderSystem);
-		RedirectCall(CGammaInitPtr, CGamma__init);
-		RedirectCall(envMapSupportPtr, envMapSupport);
-		RedirectCall(SetRRPtr, SetRR);
-		RedirectCall(SetVMPtr, SetVM);
+		RedirectJump(CGammaInitPtr, CGamma__init);
+		RedirectJump(envMapSupportPtr, envMapSupport);
+		RedirectJump(SetRRPtr, SetRR);
+		RedirectJump(SetVMPtr, SetVM);
 		// fix for mouse hiding when using anttweakbar
 		// TODO: make better
 		//Patch((void*)0x7481CD, (void*)&val2,2);
@@ -412,39 +471,18 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 #if GTA_SA
 		CVisibilityPluginsRH::Patch();
 		//RedirectCall(0x7481CF, ShowCursor_fix);
-		RedirectCall(0x5BD60B, InitD3DResourseSystem);
-		RedirectCall(0x53CAEC, InitD3DResourseSystem);// Shutdown
+		RedirectJump(0x730830, InitD3DResourseSystem);
+		RedirectJump(0x730A00, InitD3DResourseSystem);// Shutdown
 		//RedirectCall(0x53C812, TidyUpTextures);
-		RedirectCall(0x746310, GetBestRR);
+		RedirectJump(0x7460A0, GetBestRR);
 		SetPointer(0x4C9AB5, destructRwD3D11Raster);
 		RedirectJump(0x7000E0, AddLight);
 		RedirectCall(0x6E27E6, AddLightNoSpot);// fix for original car spotlights
-		
-		/*RedirectCall(0x47B0D8, AddLight);
-		RedirectCall(0x48ED76, AddLight);
-		RedirectCall(0x49DF47, AddLight);
-		RedirectCall(0x53632D, AddLight);
-		RedirectCall(0x5364B4, AddLight);
-		RedirectCall(0x53AEAC, AddLight);
-		RedirectCall(0x6AB80F, AddLight);
-		RedirectCall(0x6ABBA6, AddLight);
-		RedirectCall(0x6BD641, AddLight);
-		RedirectCall(0x6D4D14, AddLight);
-		RedirectCall(0x6FD105, AddLight);
-
-		RedirectCall(0x6E28E7, AddLight);
-
-		RedirectCall(0x6FD347, AddLight);
-		RedirectCall(0x737849, AddLight);
-		RedirectCall(0x7378C1, AddLight);
-		RedirectCall(0x73AF74, AddLight);
-		RedirectCall(0x73CCFD, AddLight);
-		RedirectCall(0x740D68, AddLight);*/
-		//RedirectCall(0x6A2EDA, AddSpotLight);
-		//RedirectCall(0x6A2EF2, AddSpotLight);//
-		//RedirectCall(0x6BDE80, AddSpotLight);//
+		/*SetInt(0x5B8E55, 12 * 2000);
+		SetInt(0x5B8EB0, 12 * 2000);*/
+		RedirectJump(0x409650, CStreaming__AddEntity);
 		RedirectJump(0x6E0E20, AddSpotLight);
-		RedirectCall(0x586887, RenderRadarSA);
+		RedirectJump(0x585700, RenderRadarSA);
 		RedirectJump(0x586D4E, RenderRadarSAPrimHook);
 		
 #endif // GTA_SA

@@ -312,8 +312,8 @@ void CD3D1XRenderBuffersManager::UpdateMaterialDiffuseColor(const RwRGBA &color)
 {
 	auto currentColor= m_pPerMaterialBuffer->data.diffuseColor;
 
-	if (RWRGBALONG(	(byte)(currentColor.red*255), (byte)(currentColor.green * 255),
-					(byte)(currentColor.blue * 255), (byte)(currentColor.alpha * 255))
+	if (RWRGBALONG(	(BYTE)(currentColor.red*255), (BYTE)(currentColor.green * 255),
+					(BYTE)(currentColor.blue * 255), (BYTE)(currentColor.alpha * 255))
 		!= RWRGBALONG(color.red, color.green, color.blue, color.alpha))
 	{
 		m_pPerMaterialBuffer->data.diffuseColor = RwRGBAReal{ (float)color.red/255.0f, (float)color.green / 255.0f, (float)color.blue / 255.0f, (float)color.alpha / 255.0f };
@@ -324,10 +324,10 @@ void CD3D1XRenderBuffersManager::UpdateMaterialDiffuseColor(const RwRGBA &color)
 void CD3D1XRenderBuffersManager::UpdateMaterialEmmissiveColor(const RwRGBA & color)
 {
 	auto currentColor = m_pPerMaterialBuffer->data.diffuseColor;
-	if (RWRGBALONG((byte)(currentColor.red / 16.0f * 255),
-		(byte)(currentColor.green / 16.0f * 255),
-		(byte)(currentColor.blue / 16.0f * 255), 
-		(byte)(currentColor.alpha / 16.0f * 255))
+	if (RWRGBALONG((BYTE)(currentColor.red / 16.0f * 255),
+		(BYTE)(currentColor.green / 16.0f * 255),
+		(BYTE)(currentColor.blue / 16.0f * 255),
+		(BYTE)(currentColor.alpha / 16.0f * 255))
 		!= RWRGBALONG(color.red, color.green, color.blue, color.alpha))
 	{
 		m_pPerMaterialBuffer->data.diffuseColor = RwRGBAReal{ (float)color.red / 255.0f*16.0f, 

@@ -360,9 +360,8 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkB
 		if (!gShadowSettings.CullPerCascade) {
 			// Check if entity is inside any of existing light bounding volumes
 			for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
-			{
 				isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
-			}
+			
 			if (isInsideLightBBox)
 				AddEntityToShadowCasterList(shadowEntity, renderDistance, 0);
 		}
@@ -1413,14 +1412,20 @@ void CRendererRH::ScanWorld()
 		return;
 	
 	m_loadingPriority = 0;
+	/*std::thread *tt = new std::thread[gShadowSettings.MaxSectorsAroundPlayer*2-1];
+	for (int i = 0; i < gShadowSettings.MaxSectorsAroundPlayer * 2 - 1; i++)
+	{
+		tt[i] = std::thread(ScanShadowsMT, currentSectorX + i - gShadowSettings.MaxSectorsAroundPlayer, currentSectorY);
+	}*/
 	
 	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
 	{
+		float sectorPosX = ((currentSectorX + x) - 60) * 50.0f + 25.0f;
+		float sectorBoundXMin = min(sectorPosX - 25.0f, sectorPosX + 25.0f);
+		float sectorBoundXMax = max(sectorPosX - 25.0f, sectorPosX + 25.0f);
+
 		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer+1; y++) {
-			float sectorPosX = ((currentSectorX + x) - 60) * 50.0f + 25.0f;
 			float sectorPosY = ((currentSectorY + y) - 60) * 50.0f + 25.0f;
-			float sectorBoundXMin = min(sectorPosX - 25.0f, sectorPosX + 25.0f);
-			float sectorBoundXMax = max(sectorPosX - 25.0f, sectorPosX + 25.0f);
 			float sectorBoundYMin = min(sectorPosY - 25.0f, sectorPosY + 25.0f);
 			float sectorBoundYMax = max(sectorPosY - 25.0f, sectorPosY + 25.0f);
 
@@ -1428,14 +1433,18 @@ void CRendererRH::ScanWorld()
 										{ sectorBoundXMax , sectorBoundYMax, 3000 } };
 			bool isInsideLightBBox = false;
 			for (int i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
-			{
 				isInsideLightBBox = isInsideLightBBox || IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, sectorBBox);
-			}
-			if (isInsideLightBBox) {
+			
+			if (isInsideLightBBox)
 				CRendererRH::ScanSectorListForShadowCasters(currentSectorX + x, currentSectorY + y);
-			}
+			
 		}
 	}
+	/*for (size_t i = 0; i < gShadowSettings.MaxSectorsAroundPlayer * 2 - 1; i++)
+	{
+		tt[i].join();
+	}
+	delete[] tt;*/
 	/*shadowSector[0].x = minX * 0.02 + 60.0;
 	shadowSector[0].y = minY * 0.02 + 60.0;
 	shadowSector[1].x = maxX * 0.02 + 60.0;
@@ -1535,4 +1544,29 @@ void CRendererRH::CalculateShadowBoundingPlanes(int shadowCascade)
 	ms_aShadowCasterBoundingPlanes[shadowCascade][4].normal = (-atAxis).getRWVector();
 	ms_aShadowCasterBoundingPlanes[shadowCascade][4].distance = (LightAABBCenter + atAxis * lightAABBZ).
 		dot(-atAxis);
+}
+
+void CRendererRH::ScanShadowsMT(const int& x, const int& cs_y)
+{
+	int currentSectorX = (int)ceil((ms_vecCameraPosition.x - 25.0f) / 50.0f + 60.0f);
+	int currentSectorY = (int)ceil((ms_vecCameraPosition.y - 25.0f) / 50.0f + 60.0f);
+	float sectorPosX = ((currentSectorX+x) - 60) * 50.0f + 25.0f;
+	float sectorBoundXMin = min(sectorPosX - 25.0f, sectorPosX + 25.0f);
+	float sectorBoundXMax = max(sectorPosX - 25.0f, sectorPosX + 25.0f);
+
+	for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer + 1; y++) {
+		float sectorPosY = ((currentSectorY + y) - 60) * 50.0f + 25.0f;
+		float sectorBoundYMin = min(sectorPosY - 25.0f, sectorPosY + 25.0f);
+		float sectorBoundYMax = max(sectorPosY - 25.0f, sectorPosY + 25.0f);
+
+		RW::BBox	 sectorBBox = { { sectorBoundXMin , sectorBoundYMin, -3000 },
+		{ sectorBoundXMax , sectorBoundYMax, 3000 } };
+		bool isInsideLightBBox = false;
+		for (int i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
+			isInsideLightBBox = isInsideLightBBox || IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, sectorBBox);
+
+		if (isInsideLightBBox)
+			CRendererRH::ScanSectorListForShadowCasters(currentSectorX+x, currentSectorY + y);
+
+	}
 }

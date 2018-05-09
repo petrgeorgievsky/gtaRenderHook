@@ -62,7 +62,7 @@ float AvarageShadowCasterDepth(float2 ShadowCoord, float Depth, SamplerState sam
 				Count++;
 			}
 #else
-                    const float SampleDepth = txShadow.Sample(samShadow, float2(ShadowCoord + float2(i, j) * offsetScale)).r;
+                    const float SampleDepth = txShadow.SampleLevel(samShadow, float2(ShadowCoord + float2(i, j) * offsetScale), 0).r;
                     if (SampleDepth < Depth)
                     {
                         RetValue += SampleDepth;
@@ -91,7 +91,7 @@ float SampleShadowMap(Texture2D txShadow, SamplerComparisonState samShadow, Samp
     float blurScale;
 #if USE_PCS_SHADOWS==1&&BLUR_SHADOWS==1
 	float avgRecieverDepth 	= txShadow.Sample(samShadowNonComp, ShadowTexCoord).r;
-	float avgCasterDepth   	= AvarageShadowCasterDepth(ShadowTexCoord,LightViewPos.z,samShadowNonComp,txShadow);
+	float avgCasterDepth   	= AvarageShadowCasterDepth(ShadowTexCoord,avgRecieverDepth,samShadowNonComp,txShadow);
     
     blurScale = (LightViewPos.z - avgCasterDepth) / avgCasterDepth;
     blurScale = max(blurScale * fMaxShadowBlur, fMinShadowBlur);
@@ -138,7 +138,7 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
 	// TODO: make blend distance customizible, perhaps different for each cascade.
     const float blendDistance = 6;
 	// Shift view depth by blend distance, optimization for static blend distance
-    //viewZ += blendDistance;
+    viewZ += blendDistance;
     const float LFadeDistances[] =
     {
         FadeDistances.x,

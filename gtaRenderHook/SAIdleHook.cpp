@@ -334,12 +334,9 @@ void CSAIdleHook::RenderDeferred()
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
 	CRendererRH::RenderRoads();
 	CRendererRH::RenderEverythingBarRoads();
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
-	CRenderer::RenderFadingInUnderwaterEntities();
-	
+	CVisibilityPlugins::RenderFadingUnderwaterEntities();
 	BreakManager_c__Render(g_breakMan, 0);
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
-	CVisibilityPlugins__RenderFadingInEntities();
+	CVisibilityPlugins::RenderFadingEntities();
 	BreakManager_c__Render(g_breakMan, 1);
 	 // CRenderer::RenderFadingInUnderwaterEntities
 	CVisibilityPluginsRH::RenderWeaponPedsNoMuzzleFlash();

@@ -179,7 +179,7 @@ void CD3D1XSkinPipeline::Render(RwResEntry * repEntry, void * object, RwUInt8 ty
 				g_pRenderBuffersMgr->UpdateHasSpecTex(0);
 		}
 		// set alpha blending
-		g_pStateMgr->SetAlphaBlendEnable(alphaBlend > 0);
+		g_pStateMgr->SetAlphaBlendEnable(m_uiDeferredStage == 1?FALSE:alphaBlend > 0);
 		// flush and draw
 		g_pRenderBuffersMgr->FlushMaterialBuffer();
 		g_pStateMgr->FlushStates();

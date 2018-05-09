@@ -263,7 +263,7 @@ void* CD3D1XTexture::LockToRead()
 		return m_mappedSubRes.pData;
 	}
 	else {
-		m_dataPtr = (byte*)malloc(sizeof(byte)*m_pParent->width*m_pParent->height);
+		m_dataPtr = (BYTE*)malloc(sizeof(BYTE)*m_pParent->width*m_pParent->height);
 		return m_dataPtr;
 	}
 }

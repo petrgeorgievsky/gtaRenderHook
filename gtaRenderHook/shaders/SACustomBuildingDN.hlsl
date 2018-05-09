@@ -113,7 +113,8 @@ float4 PS(PS_DEFERRED_DN_IN i) : SV_Target
 void ShadowPS(PS_DEFERRED_IN i)
 {
 	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
-	if (outColor.a < 0.3)
+    outColor.a = outColor.a > 0.95f ? outColor.a : InterleavedGradientNoise(i.vPosition.xy) * outColor.a;
+	if (outColor.a < 0.2f)
 		discard;
 }
 
@@ -125,9 +126,9 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
         baseColor *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     
     float4 params = bHasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness,0,0);
-    baseColor.a = baseColor.a > 0.9f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
+    baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
     FillGBuffer(Out, baseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params);
-	if (baseColor.a < 0.3f)
+	if (baseColor.a < 0.2f)
 		discard;
     
 	return Out;

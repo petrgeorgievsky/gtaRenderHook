@@ -188,6 +188,10 @@ public:
 	static sLodListEntry *GetLodRenderListBase();
 	static sLodListEntry *GetLodDontRenderListBase();
 	static void CalculateShadowBoundingPlanes(int shadowCascade);
+	/*!
+		Scans for shadows in sector, multithreading experiment. 
+	*/
+	static void ScanShadowsMT(const int& x, const int& cs_y);
 public:
 	// fields
 	static bool		&ms_bRenderTunnels;
