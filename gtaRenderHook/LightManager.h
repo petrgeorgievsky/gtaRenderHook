@@ -11,7 +11,7 @@ struct CLight {
 class CLightManager
 {
 public:
-	static CLight m_aLights[128];
+	static CLight m_aLights[1024];
 	static int m_nLightCount;
 private:
 	static CD3D1XStructuredBuffer<CLight>* m_pLightBuffer;

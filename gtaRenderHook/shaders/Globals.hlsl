@@ -52,13 +52,13 @@ cbuffer PerObjectBuffer : register(b2)
 */
 cbuffer PerMaterialBuffer : register(b3)
 {
-	float4	cDiffuseColor;
-	float	fDiffuseIntensity;
-	float	fSpecularIntensity;
-	float	fGlossiness;
-    float   fMetallness;
-    int     bHasSpecTex;
-    float  ___padding[3];
+    float4 cDiffuseColor : packoffset(c0);
+    float fDiffuseIntensity : packoffset(c1.x);
+    float fSpecularIntensity : packoffset(c1.y);
+    float fGlossiness : packoffset(c1.z);
+    float fMetallness : packoffset(c1.w);
+    float3 ___padding : packoffset(c2);
+    int bHasSpecTex : packoffset(c2.w);
 }
 
 cbuffer VoxelViewMatrices : register(b4)
@@ -72,7 +72,7 @@ cbuffer PostProcessing : register(b5)
 {
     float fLumWhite;
     float fMiddleGray;
-    float __padding[2];
+    float2 __padding;
 }
 cbuffer DeferredRendering : register(b6)
 {

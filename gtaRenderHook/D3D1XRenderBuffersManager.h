@@ -26,8 +26,8 @@ struct MaterialBuffer
 	float		specularIntensity;
 	float		glossiness;
 	float		metallness;
-	int			hasSpecTex;
 	float		padd__[3];
+	int			hasSpecTex;
 };
 struct RwGraphicsMatrix;
 class CD3DRenderer;

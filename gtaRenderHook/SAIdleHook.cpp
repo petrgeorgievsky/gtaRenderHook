@@ -158,6 +158,7 @@ void CSAIdleHook::RenderInGame()
 	PrepareRenderStuff();
 
 	DefinedState();
+	TheCamera.m_mViewMatrix.Update();
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESTENCILENABLE, FALSE);
 
 	RwCameraSetFarClipPlane(Scene.m_pRwCamera, CTimeCycle::m_CurrentColours.m_fFarClip);
@@ -204,7 +205,7 @@ void CSAIdleHook::RenderInGame()
 	
 	DebugRendering::ResetList();
 
-	RwCameraEndUpdate(Scene.m_pRwCamera);
+	//
 	drawCallCount = 0;
 
 	// Render custom preprocess effects - shadows and voxel GI(disabled atm)
@@ -215,9 +216,10 @@ void CSAIdleHook::RenderInGame()
 	CRendererRH::ConstructRenderList();
 	scanTimer.Stop();
 
-	CRenderer__PreRender();
+	CRenderer::PreRender();
 	CWorld::ProcessPedsAfterPreRender();
 
+	RwCameraEndUpdate(Scene.m_pRwCamera);
 	g_pDeferredRenderer->RenderToCubemap(RenderForward);
 
 	shadowTimer.Start();
@@ -248,8 +250,11 @@ void CSAIdleHook::RenderInGame()
 	// Enable Z-Test and render alpha entities
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 1);
 	m_uiDeferredStage = 0;
+
+	renderer->BeginDebugEvent(L"Forward after deferred");
 	RenderForwardAfterDeferred();
-	
+	renderer->EndDebugEvent();
+
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEZTESTENABLE, 0);
 	renderer->BeginDebugEvent(L"Tonemapping pass");
 	g_pDeferredRenderer->RenderTonemappedOutput(); //TODO fix
@@ -318,13 +323,17 @@ void CSAIdleHook::RenderForwardAfterDeferred()
 	g_pDeferredRenderer->m_pReflRenderer->SetCubemap();
 	g_pCustomCarFXPipe->RenderAlphaList();
 	g_pCustomBuildingPipe->RenderAlphaList();
+	CD3DRenderer* renderer = static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer();
+	
 	//CPostEffects__m_bDisableAllPostEffect = true;
 	// Render effects and 2d stuff
 	DefinedState();
+	renderer->BeginDebugEvent(L"Effects rendering pass");
 	RenderEffects();
+	renderer->EndDebugEvent();
 	DefinedState();
-	RenderGrass();
-	DefinedState();
+	//RenderGrass();
+	//DefinedState();
 }
 
 void CSAIdleHook::RenderDeferred()
@@ -352,18 +361,19 @@ void CSAIdleHook::RenderForward()
 
 void CSAIdleHook::RenderEffects()
 {
+	//CClouds::Render();
 	CBirds::Render();
 	//CSkidmarks::Render();
 	CRopes::Render();
 	//CGlass::Render();
 	//CMovingThings::Render();
-	//CVisibilityPlugins::RenderReallyDrawLastObjects();
-	//Scene.m_pRwCamera->frameBuffer->width
-	//g_pStateMgr->SetAlphaTestEnable(false);
-	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLNONE);
+	CVisibilityPlugins::RenderReallyDrawLastObjects();
 	//CCoronas::RenderReflections();
 	//CCoronas::RenderSunReflection();
+	CD3DRenderer* renderer = static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer();
+	renderer->BeginDebugEvent(L"Coronas rendering");
 	CCoronas::Render();
+	renderer->EndDebugEvent();
 	//g_pStateMgr->SetAlphaTestEnable(true);
 	g_fx.Render(TheCamera.m_pRwCamera, 0);
 	//CWaterCannons::Render();
@@ -519,7 +529,7 @@ void CSAIdleHook::PrepareRwCamera()
 {
 	CDraw::CalculateAspectRatio(); // CDraw::CalculateAspectRatio
 	CameraSize(Scene.m_pRwCamera, 0, tanf(CDraw::ms_fFOV*( 3.1415927f / 360.0f)), CDraw::ms_fAspectRatio);
-	CVisibilityPlugins__SetRenderWareCamera(Scene.m_pRwCamera); // CVisibilityPlugins::SetRenderWareCamera
+	CVisibilityPlugins::SetRenderWareCamera(Scene.m_pRwCamera); // CVisibilityPlugins::SetRenderWareCamera
 	RwCameraClear(Scene.m_pRwCamera, gColourTop, rwCAMERACLEARZ);
 }
 

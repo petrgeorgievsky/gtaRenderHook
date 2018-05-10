@@ -231,7 +231,7 @@ void CRendererRH::ConstructRenderList()
 	ms_bRenderTunnels = true;
 	ms_bRenderOutsideTunnels = true;
 	ms_bInTheSky = false;
-	ms_lowLodDistScale = 1.0;
+	ms_lowLodDistScale = 2.0;
 	COcclusion__ProcessBeforeRendering();
 
 	ms_vecCameraPosition = TheCamera.GetPosition();

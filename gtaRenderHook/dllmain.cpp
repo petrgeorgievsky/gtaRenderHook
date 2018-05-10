@@ -125,63 +125,6 @@ bool AddLight(char type, CVector pos, CVector dir, float radius, float red, floa
 bool AddLightNoSpot(char type, CVector pos, CVector dir, float radius, float red, float green, float blue, char fogType, char generateExtraShadows, CEntity *entityAffected) {
 	return true;
 }
-CLink<CEntity*> * rwobjlink_Add(CLinkList<CEntity*> *list, CEntity *entity)
-{
-	CLink<CEntity*>* curr_link = list->freeListHead.next;
-	if (curr_link == &list->freeListTail)
-		return nullptr;
-	else
-	{
-		curr_link->data = entity;
-		curr_link->next->prev = curr_link->prev;
-		curr_link->prev->next = curr_link->next;
-		curr_link->next = list->usedListHead.next;
-		list->usedListHead.next->prev = curr_link;
-		curr_link->prev = &list->freeListHead;
-		list->usedListHead.next = curr_link;
-	}
-	return curr_link;
-}
-#define rw_objlink_Add(a,b) ((CLink<CEntity*> * (__thiscall*)(CLinkList<CEntity*> *, CEntity **))0x408230)(a,b)
-CLink<CEntity*> * CStreaming__AddEntity(CEntity *pEntity)
-{
-	CLink<CEntity*> *result = nullptr; // eax@3
-	CLink<CEntity*> *currLink; // eax@4
-
-	eEntityType entityType = (eEntityType)pEntity->m_nType;
-	if (entityType == eEntityType::ENTITY_TYPE_PED || entityType == eEntityType::ENTITY_TYPE_VEHICLE)
-		return nullptr;
-	else
-	{
-		result = rw_objlink_Add(&CStreaming::ms_rwObjectInstances, &pEntity);
-		if (result==nullptr) // if we fail to add link
-		{
-			currLink = CStreaming::ms_rwObjectInstances.usedListTail.prev;
-
-			if (CStreaming::ms_rwObjectInstances.usedListTail.prev != &CStreaming::ms_rwObjectInstances.usedListHead)
-			{
-				while (true)
-				{
-					if (!(currLink->data->m_bStreamingDontDelete ||	currLink->data->m_bImBeingRendered))
-						break;
-					currLink = currLink->prev;
-					if (currLink == &CStreaming::ms_rwObjectInstances.usedListHead) {
-						pEntity->DeleteRwObject();
-						return nullptr;//rw_objlink_Add(&CStreaming__ms_rwObjectInstances, &pEntity);
-					}
-				}
-				currLink->data->DeleteRwObject();
-				currLink->data = pEntity;
-				//result = rw_objlink_Add(&CStreaming__ms_rwObjectInstances, &pEntity);
-			}
-			else {
-				pEntity->DeleteRwObject();
-				//result = rw_objlink_Add(&CStreaming__ms_rwObjectInstances, &pEntity);
-			}
-		}
-	}
-	return result;
-}
 // TODO: Move this out to lights
 void __fastcall  AddSpotLight(CVehicle* vehicle, void *Unknown, int a,CMatrix* matrix, bool isRight) {
 	CLight light{};
@@ -340,12 +283,6 @@ void RenderRadarSAPrimHook(RwPrimitiveType prim, RwIm2DVertex * vert, int count)
 
 void InitD3DResourseSystem() {
 
-}
-void ShowCursor_fix(UINT show) {
-	
-}
-void TidyUpTextures(int n) {
-	CD3D1XTextureMemoryManager::Shutdown();
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule,

@@ -48,7 +48,6 @@ CShadowRenderer::CShadowRenderer()
 CShadowRenderer::~CShadowRenderer()
 {
 	delete m_pLightCB;
-	//RwRasterDestroy(m_pShadowCamera->frameBuffer);
 	RwRasterDestroy(m_pShadowCamera->zBuffer);
 	RwCameraDestroy(m_pShadowCamera);
 }
@@ -93,12 +92,6 @@ RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & l
 
 	RwV2d vw{ m_LightBBox[shadowCascade].getSizeX()*0.5f , m_LightBBox[shadowCascade].getSizeY()*0.5f };
 	vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
-	RwCameraSetViewWindow(m_pShadowCamera, &vw);
-	//float fLightZFar = m_LightBBox[shadowCascade].getSizeZ()*0.5f;//faLightDim[1];
-	RwCameraSetNearClipPlane(m_pShadowCamera, -1500.0f/*min(-fLightZFar,-1500.0f)*/);
-	RwCameraSetFarClipPlane(m_pShadowCamera, 1500.0f /*max(fLightZFar,1500.0f)*/);
-	RwCameraSync(m_pShadowCamera);
-	//RwCameraEndUpdate(mainCam);
 	RwCameraSetNearClipPlane(mainCam, oldNP);
 	RwCameraSetFarClipPlane(mainCam, oldFP);
 	RwCameraSync(mainCam);
@@ -174,8 +167,9 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 
 	// Move camera back to needed position.
 	RwFrameTranslate(shadowCamFrame, &lightPos, rwCOMBINEPOSTCONCAT);
+	float viewSize = max(m_LightBBox[cascade].getSizeX(), m_LightBBox[cascade].getSizeY());
 	// Set light orthogonal projection parameters.
-	RwV2d vw{ m_LightBBox[cascade].getSizeX() * 0.65f, m_LightBBox[cascade].getSizeY() * 0.65f };
+	RwV2d vw{ viewSize * 0.5f, viewSize * 0.5f };
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	float fLightZFar = m_LightBBox[cascade].getSizeZ()*0.5f;//faLightDim[1];
 	RwCameraSetNearClipPlane(m_pShadowCamera, -500 /*-fLightZFar-25*/);

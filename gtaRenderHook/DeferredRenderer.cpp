@@ -139,6 +139,7 @@ void CDeferredRenderer::RenderOutput()
 
 	// Render point and spot lights
 	if (CLightManager::m_nLightCount > 0) {
+		CLightManager::SortByDistance(TheCamera.GetPosition().ToRwV3d());
 		g_pStateMgr->SetStructuredBufferPS(CLightManager::GetBuffer(), 5);
 		g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, TRUE);
 		g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESRCBLEND, rwBLENDONE);

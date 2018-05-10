@@ -3,3 +3,15 @@
 #include "stdafx.h"
 #include "BlurAlgorithms.h"
 
+void CBlurAlgorithms::Init()
+{
+
+}
+
+void CBlurAlgorithms::Shutdown()
+{
+}
+
+void CBlurAlgorithms::Gaussian(int kernel, RwRaster * tex, bool halfSize)
+{
+}
