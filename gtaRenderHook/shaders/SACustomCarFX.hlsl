@@ -132,7 +132,7 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
     ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, CubeMap.a < 0.5);
     // todo: add lighting methods for forward renderer
     outColor.rgb = albedoSample.rgb * (DiffuseTerm * ShadowTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb * ShadowTerm + ReflectionFallBack * fSpecularIntensity;
-    outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm * ShadowTerm, 1.0f));
+    outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm * fSpecularIntensity * vSunLightDir.w * ShadowTerm, 1.0f));
     outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
 	return outColor;
 }

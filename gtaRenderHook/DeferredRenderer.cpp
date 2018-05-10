@@ -120,7 +120,7 @@ void CDeferredRenderer::RenderOutput()
 	m_pDeferredBuffer->Update();
 	g_pStateMgr->SetConstantBufferPS(m_pDeferredBuffer, 6);
 	CAmbientOcclusion::RenderAO(m_aDeferredRasters[1]);
-	g_pRwCustomEngine->SetRenderTargets(&m_pLightingRaster, Scene.m_pRwCamera->zBuffer, 1);
+	g_pRwCustomEngine->SetRenderTargets(&m_pLightingRaster, nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
 	// Set deferred textures
 	g_pStateMgr->SetRaster(m_aDeferredRasters[0]);
@@ -153,7 +153,7 @@ void CDeferredRenderer::RenderOutput()
 	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEDESTBLEND, rwBLENDINVSRCALPHA);
 
 	// Render reflection pass
-	g_pRwCustomEngine->SetRenderTargets(&m_pReflectionRaster, Scene.m_pRwCamera->zBuffer, 1);
+	g_pRwCustomEngine->SetRenderTargets(&m_pReflectionRaster, nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetRaster(m_pFinalRasters[2], 3);
 	m_pReflRenderer->SetCubemap();
@@ -161,7 +161,7 @@ void CDeferredRenderer::RenderOutput()
 	CFullscreenQuad::Draw();
 
 	// Compose lighting with color and reflections.
-	g_pRwCustomEngine->SetRenderTargets(&m_pFinalRasters[m_uiCurrentFinalRaster], Scene.m_pRwCamera->zBuffer, 1);
+	g_pRwCustomEngine->SetRenderTargets(&m_pFinalRasters[m_uiCurrentFinalRaster], nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetRaster(m_pLightingRaster, 4);
 	g_pStateMgr->SetRaster(m_pFinalRasters[1 - m_uiCurrentFinalRaster], 5);
@@ -175,7 +175,7 @@ void CDeferredRenderer::RenderOutput()
 		g_pStateMgr->SetRaster(nullptr, i);
 
 	// Atmospheric scattering
-	g_pRwCustomEngine->SetRenderTargets(&m_pFinalRasters[2], Scene.m_pRwCamera->zBuffer, 1);
+	g_pRwCustomEngine->SetRenderTargets(&m_pFinalRasters[2], nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetRaster(m_pFinalRasters[m_uiCurrentFinalRaster], 0);
 	g_pStateMgr->SetRaster(m_aDeferredRasters[1], 1);

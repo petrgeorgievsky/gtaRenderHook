@@ -281,8 +281,8 @@ void CRendererRH::AddEntityToReflectionList(CEntity * entity, float renderDistan
 
 char CRendererRH::AddEntityToShadowCasterList(CEntity * entity, float renderDistance, int shadowCascade)
 {
-	if (ms_aVisibleShadowCasters[shadowCascade].size() > 1000)
-		return true;
+	//if (ms_aVisibleShadowCasters[shadowCascade].size() > 1000)
+	//	return true;
 	ms_aVisibleShadowCasters[shadowCascade].push_back(entity);
 	return true;
 }

@@ -384,8 +384,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		SetPointer(0x4C9AB5, destructRwD3D11Raster);
 		RedirectJump(0x7000E0, AddLight);
 		RedirectCall(0x6E27E6, AddLightNoSpot);// fix for original car spotlights
-		/*SetInt(0x5B8E55, 12 * 2000);
-		SetInt(0x5B8EB0, 12 * 2000);*/
+		 
 		RedirectJump(0x6E0E20, AddSpotLight);
 		RedirectJump(0x585700, RenderRadarSA);
 		RedirectJump(0x586D4E, RenderRadarSAPrimHook);

@@ -6,6 +6,9 @@
 
 void CStreamingRH::Patch()
 {
+	// increase ms_rwObjectInstances size to 200*10^2 to allow for more entities streamed at once
+	SetInt(0x5B8E55, 12 * 20000);
+	SetInt(0x5B8EB0, 12 * 20000);
 	RedirectJump(0x409650, AddEntity);
 }
 
@@ -31,17 +34,18 @@ CLink<CEntity*>* CStreamingRH::AddEntity(CEntity * pEntity)
 			// traverse the list from last link to head 
 			while (currLink != &CStreaming::ms_rwObjectInstances.usedListHead)
 			{
-				// if we found some entity that can be deleted - remove it's rwobject and replace link with new entity
+				// if we found some entity that can be deleted - remove it's rwobject
 				if (!currLink->data->m_bStreamingDontDelete && !currLink->data->m_bImBeingRendered)
 				{
-					currLink->data->DeleteRwObject();
-					currLink->data = pEntity;
-					return currLink;
+					if(currLink->data->m_pRwObject)
+						currLink->data->DeleteRwObject();
+					return rw_objlink_Add(&CStreaming::ms_rwObjectInstances, &pEntity);
 				}
 				currLink = currLink->prev;
 			}
 			// if list is full, than we remove rwobject of entity we try to add to it
-			pEntity->DeleteRwObject();
+			if(pEntity->m_pRwObject)
+				pEntity->DeleteRwObject();
 			return nullptr;
 		}
 	}

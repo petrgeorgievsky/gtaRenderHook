@@ -47,7 +47,7 @@ void CVolumetricLighting::RenderVolumetricEffects(RwRaster* normalsDepth,RwRaste
 	m_pVolumeLightingCB->Update();
 	g_pStateMgr->SetConstantBufferPS(m_pVolumeLightingCB, 7);
 	// First render all volumetric lighting(sun light, volume streetlights, clouds etc.)
-	g_pRwCustomEngine->SetRenderTargets(&m_pVolumeLightingRaster, Scene.m_pRwCamera->zBuffer, 1);
+	g_pRwCustomEngine->SetRenderTargets(&m_pVolumeLightingRaster, nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetRaster(cascadeShadowMap, 3);
 	m_pVolumetricSunlightPS->Set();
