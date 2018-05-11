@@ -287,6 +287,9 @@
     <ClInclude Include="StreamingRH.h">
       <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
     </ClInclude>
+    <ClInclude Include="GTASAHooks.h">
+      <Filter>Source\Games\GTA_SA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -468,6 +471,9 @@
     </ClCompile>
     <ClCompile Include="StreamingRH.cpp">
       <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="GTASAHooks.cpp">
+      <Filter>Source\Games\GTA_SA</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

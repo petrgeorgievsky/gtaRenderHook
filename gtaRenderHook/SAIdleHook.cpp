@@ -313,17 +313,22 @@ void CSAIdleHook::RenderForwardBeforeDeferred()
 
 void CSAIdleHook::RenderForwardAfterDeferred()
 {
+	CD3DRenderer* renderer = static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer();
+
+	renderer->BeginDebugEvent(L"Water rendering pass");
 	g_pDeferredRenderer->SetNormalDepthRaster();
 	g_pDeferredRenderer->SetPreviousNonTonemappedFinalRaster();
 	g_pDeferredRenderer->m_pShadowRenderer->SetShadowBuffer();
 	CWaterLevel::RenderWater();
 	DefinedState();
+	renderer->EndDebugEvent();
 
+	renderer->BeginDebugEvent(L"Alpha-blended objects rendering pass");
 	g_pDeferredRenderer->m_pShadowRenderer->SetShadowBuffer();
 	g_pDeferredRenderer->m_pReflRenderer->SetCubemap();
 	g_pCustomCarFXPipe->RenderAlphaList();
 	g_pCustomBuildingPipe->RenderAlphaList();
-	CD3DRenderer* renderer = static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer();
+	renderer->EndDebugEvent();
 	
 	//CPostEffects__m_bDisableAllPostEffect = true;
 	// Render effects and 2d stuff
@@ -528,7 +533,7 @@ void CSAIdleHook::DoRWStuffEndOfFrame()
 void CSAIdleHook::PrepareRwCamera()
 {
 	CDraw::CalculateAspectRatio(); // CDraw::CalculateAspectRatio
-	CameraSize(Scene.m_pRwCamera, 0, tanf(CDraw::ms_fFOV*( 3.1415927f / 360.0f)), CDraw::ms_fAspectRatio);
+	CameraSize(Scene.m_pRwCamera, 0, tanf(CDraw::ms_fFOV * ( 3.1415927f / 360.0f)), CDraw::ms_fAspectRatio);
 	CVisibilityPlugins::SetRenderWareCamera(Scene.m_pRwCamera); // CVisibilityPlugins::SetRenderWareCamera
 	RwCameraClear(Scene.m_pRwCamera, gColourTop, rwCAMERACLEARZ);
 }

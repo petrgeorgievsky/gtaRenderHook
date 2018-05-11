@@ -144,84 +144,6 @@ void CRendererRH::RenderShadowCascade(int i)
 void CRendererRH::ConstructShadowList()
 {
 	// First get true BBox depth
-	/*for (int i = 0; i < ms_nNoOfVisibleEntities; i++)
-	{
-		auto entity = ms_aVisibleEntityPtrs[i];
-
-		int modelID = entity->entity.m_wModelIndex;
-		CBaseModelInfo* modelInfo = CModelInfo__ms_modelInfoPtrs[modelID];
-
-		for (int j = 0; j < 4; j++)
-		{
-			RW::BBox lightSpaceBBox = CShadowRenderer::m_LightBBox[j];
-			RW::V3d entityPos = { entity->entity.placeable.m_pCoords ? entity->entity.placeable.m_pCoords->matrix.pos : entity->entity.placeable.placement.pos };
-
-			RwBBox		entityBBox = modelInfo->m_pColModel->m_BBox.m_BBox;
-			RwSphere entityBSphere = modelInfo->m_pColModel->m_BBox.m_BSphere;
-			RW::V3d sphereOffset = { entityBSphere.center };
-
-			//if (i == 0)
-			//	DebugRendering::AddToRenderList(new DebugBBox(RW::BBox(entityBBox)));
-
-			RW::Matrix entityTransform;
-			if (entity->entity.placeable.m_pCoords)
-				entityTransform = { entity->entity.placeable.m_pCoords->matrix };
-
-			auto entityBBoxVerticles = (RW::BBox(entityBBox)).getVerticles();
-
-			for (int j = 0; j < entityBBoxVerticles.size(); j++) {
-				if (entity->entity.placeable.m_pCoords)
-					entityBBoxVerticles[j] = entityBBoxVerticles[j] * entityTransform;
-				entityBBoxVerticles[j] = entityBBoxVerticles[j] * CShadowRenderer::m_LightSpaceMatrix[j];
-			}
-
-			RW::BBox entityBBox2 = RW::BBox(entityBBoxVerticles.data(), entityBBoxVerticles.size());
-			if (entity->entity.placeable.m_pCoords == nullptr)
-				entityBBox2 += entityPos;
-			// if entity is fully inside bbox than add it to render list
-			if (lightSpaceBBox.intersects2D(entityBBox2)) {
-				// Extend light BBox z, to caputure objects that is far(or not so far) behind
-				CShadowRenderer::m_LightBBox[j].extendZ(entityBBox2.getMin());
-				CShadowRenderer::m_LightBBox[j].extendZ(entityBBox2.getMax());
-			}
-		}
-	}*/
-	/*for (int i = 0; i < ms_nNoOfVisibleEntities; i++)
-	{
-		auto entity = ms_aVisibleEntityPtrs[i];
-		int modelID = entity->m_nModelIndex;
-		CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
-		for (int j = 0; j < 4; j++)
-		{
-			RW::BBox lightSpaceBBox = CShadowRenderer::m_LightBBox[j];
-			RW::V3d entityPos = { entity->GetPosition() };
-
-			RwBBox		entityBBox = modelInfo->m_pColModel->m_boundBox.m_BBox;
-			RwSphere entityBSphere = modelInfo->m_pColModel->m_BBox.m_BSphere;
-
-			RW::Matrix entityTransform;
-			if (entity->entity.placeable.m_pCoords)
-				entityTransform = { entity->entity.placeable.m_pCoords->matrix };
-
-			auto entityBBoxVerticles = (RW::BBox(entityBBox)).getVerticles();
-
-			for (int j = 0; j < entityBBoxVerticles.size(); j++) {
-				if (entity->entity.placeable.m_pCoords)
-					entityBBoxVerticles[j] = entityBBoxVerticles[j] * entityTransform;
-				entityBBoxVerticles[j] = entityBBoxVerticles[j] * CShadowRenderer::m_LightSpaceMatrix[j];
-			}
-
-			RW::BBox entityBBox2 = RW::BBox(entityBBoxVerticles.data(), entityBBoxVerticles.size());
-			if (entity->entity.placeable.m_pCoords == nullptr)
-				entityBBox2 += entityPos;
-			// if entity is fully inside bbox than add it to render list
-			if (lightSpaceBBox.intersects2D(entityBBox2)) {
-				ms_aVisibleShadowCasters[j].push_back(entity);
-			}
-
-		}
-		
-	}*/
 }
 
 
@@ -231,7 +153,7 @@ void CRendererRH::ConstructRenderList()
 	ms_bRenderTunnels = true;
 	ms_bRenderOutsideTunnels = true;
 	ms_bInTheSky = false;
-	ms_lowLodDistScale = 2.0;
+	ms_lowLodDistScale = 1.0;
 	COcclusion__ProcessBeforeRendering();
 
 	ms_vecCameraPosition = TheCamera.GetPosition();
@@ -289,33 +211,6 @@ char CRendererRH::AddEntityToShadowCasterList(CEntity * entity, float renderDist
 
 char CRendererRH::AddToLodRenderList(CEntity * entity, float renderDistance)
 {
-	/*for (int i = 0; i < 4; i++)
-	{
-		int modelID = entity->entity.m_wModelIndex;
-		CBaseModelInfo* modelInfo = CModelInfo__ms_modelInfoPtrs[modelID];
-		RW::BBox lightSpaceBBox = CShadowRenderer::m_LightBBox[i];
-		RW::V3d entityPos = { entity->entity.placeable.m_pCoords ? entity->entity.placeable.m_pCoords->matrix.pos : entity->entity.placeable.placement.pos };
-		RwBBox		entityBBox = modelInfo->m_pColModel->m_BBox.m_BBox;
-		RwSphere	entityBSphere = modelInfo->m_pColModel->m_BBox.m_BSphere;
-		entityBBox.inf = { entityPos.getX() + entityBSphere.center.x + entityBBox.inf.x,
-			entityPos.getY() + entityBSphere.center.y + entityBBox.inf.y,
-			entityPos.getZ() + entityBSphere.center.z + entityBBox.inf.z };
-		entityBBox.sup = { entityPos.getX() + entityBSphere.center.x + entityBBox.sup.x,
-			entityPos.getY() + entityBSphere.center.y + entityBBox.sup.y,
-			entityPos.getZ() + entityBSphere.center.z + entityBBox.sup.z };
-		auto entityBBoxVerticles = (RW::BBox(entityBBox)).getVerticles();
-		for (int j = 0; j<entityBBoxVerticles.size(); j++)
-			entityBBoxVerticles[j] = entityBBoxVerticles[j] * CShadowRenderer::m_LightSpaceMatrix[i];
-		RW::BBox entityBBox2 = RW::BBox(entityBBoxVerticles.data(), entityBBoxVerticles.size());
-		// if entity is fully inside bbox than add it to render list
-		if (lightSpaceBBox.intersects2D(entityBBox2)) {
-			// Extend light BBox z, to caputure objects that is far(or not so far) behind
-			CShadowRenderer::m_LightBBox[i].extendZ(entityBBox2.getMin());
-			CShadowRenderer::m_LightBBox[i].extendZ(entityBBox2.getMax());
-			ms_aVisibleShadowCasters[i].push_back(entity);
-		}
-	}*/
-	
 	//if (ms_aVisibleLods.size()<4000)
 	//	ms_aVisibleLods.push_back(entity);
 	
