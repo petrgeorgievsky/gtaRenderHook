@@ -14,7 +14,7 @@ int CLightManager::m_nLightCount = 0;
 
 void CLightManager::Init()
 {
-	m_pLightBuffer = new CD3D1XStructuredBuffer<CLight>(32);
+	m_pLightBuffer = new CD3D1XStructuredBuffer<CLight>(16);
 }
 
 void CLightManager::Shutdown()
@@ -44,9 +44,13 @@ void CLightManager::SortByDistance(const RwV3d& from)
 	});
 }
 
-CD3D1XStructuredBuffer<CLight> * CLightManager::GetBuffer()
+void CLightManager::Update()
 {
 	m_pLightBuffer->Update(&m_aLights[0]);
-	g_pStateMgr->SetLightCount(min(m_nLightCount,32));
+	g_pStateMgr->SetLightCount(min(m_nLightCount, 16));
+}
+
+CD3D1XStructuredBuffer<CLight> * CLightManager::GetBuffer()
+{
 	return m_pLightBuffer;
 }

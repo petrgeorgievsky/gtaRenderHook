@@ -84,14 +84,14 @@ void CRendererRH::RenderRoads()
 	//else {
 	for (size_t i = 0; i < ms_nNoOfVisibleEntities; ++i) {
 		auto entity = ms_aVisibleEntityPtrs[i];
-		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
+		//auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
 		//if (st != 3)
 			RenderOneNonRoad(ms_aVisibleEntityPtrs[i]);
 	}
 	//}
 	for (size_t i = 0; i < ms_nNoOfVisibleLods; ++i) {
 		auto entity = ms_aVisibleLodPtrs[i];
-		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
+		//auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
 		//if (st != 3)
 			RenderOneNonRoad(ms_aVisibleLodPtrs[i]);
 	}

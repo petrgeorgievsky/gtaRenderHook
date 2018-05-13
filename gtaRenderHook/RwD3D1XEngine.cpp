@@ -1335,10 +1335,12 @@ void CRwD3D1XEngine::SetTexture(RwTexture * tex, int Stage)
 		g_pStateMgr->SetRaster(nullptr);
 		return;
 	}
-
-	//RenderStateSet(rwRENDERSTATETEXTUREFILTER, RwTextureGetFilterMode(tex));
-	//RenderStateSet(rwRENDERSTATETEXTUREADDRESSU, RwTextureGetAddressingU(tex));
-	//RenderStateSet(rwRENDERSTATETEXTUREADDRESSV, RwTextureGetAddressingV(tex));
+	if (Stage == 0) {
+		RenderStateSet(rwRENDERSTATETEXTUREFILTER, RwTextureGetFilterMode(tex));
+		RenderStateSet(rwRENDERSTATETEXTUREADDRESSU, RwTextureGetAddressingU(tex));
+		RenderStateSet(rwRENDERSTATETEXTUREADDRESSV, RwTextureGetAddressingV(tex));
+		g_pStateMgr->SetTextureAnisotropy(RpAnisotTextureGetMaxAnisotropy(tex));
+	}
 	auto raster = RwTextureGetRaster(tex);
 	g_pStateMgr->SetRaster(raster);
 }

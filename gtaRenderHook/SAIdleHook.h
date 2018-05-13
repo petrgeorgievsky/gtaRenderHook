@@ -15,6 +15,7 @@
 #define SetLightsWithTimeOfDayColour(world) ((void (__cdecl *)(RpWorld *))0x7354E0)(world)
 
 #define DefinedState() ((void (__cdecl *)())0x734650)()
+#define DefinedState2d() ((void (__cdecl *)())0x734750)()
 #define CCamera__GetScreenFadeStatus(camera) ((signed int (__thiscall *)(CCamera *))0x50AE20)(camera)
 #define CVisibilityPlugins__SetRenderWareCamera(camera) ((void (__cdecl *)(RwCamera *))0x7328C0)(camera)
 #define RsMouseSetPos(pos) ((int (__cdecl *)(RwV2d *)) 0x6194A0)(pos)

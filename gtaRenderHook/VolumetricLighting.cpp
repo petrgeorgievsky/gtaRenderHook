@@ -28,6 +28,11 @@ void CVolumetricLighting::Init()
 	gVolumetricLightingSettings.m_aShaderPointers.push_back(m_pVolumetricSunlightPS);
 	gVolumetricLightingSettings.m_aShaderPointers.push_back(m_pVolumetricCombinePS);
 	gDebugSettings.DebugRenderTargetList.push_back(m_pVolumeLightingRaster);
+
+	m_pVolumeLightingCB->data.RaymarchingDistance = gVolumetricLightingSettings.RaymarchingDistance;
+	m_pVolumeLightingCB->data.SunlightBlendOffset = gVolumetricLightingSettings.SunlightBlendOffset;
+	m_pVolumeLightingCB->data.SunlightIntensity = gVolumetricLightingSettings.SunlightIntensity;
+	m_pVolumeLightingCB->Update();
 }
 
 void CVolumetricLighting::Shutdown()
@@ -41,10 +46,12 @@ void CVolumetricLighting::Shutdown()
 
 void CVolumetricLighting::RenderVolumetricEffects(RwRaster* normalsDepth,RwRaster* cascadeShadowMap, RwRaster* result)
 {
-	m_pVolumeLightingCB->data.RaymarchingDistance = gVolumetricLightingSettings.RaymarchingDistance;
-	m_pVolumeLightingCB->data.SunlightBlendOffset = gVolumetricLightingSettings.SunlightBlendOffset;
-	m_pVolumeLightingCB->data.SunlightIntensity = gVolumetricLightingSettings.SunlightIntensity;
-	m_pVolumeLightingCB->Update();
+	if (m_bRequiresReloading) {
+		m_pVolumeLightingCB->data.RaymarchingDistance = gVolumetricLightingSettings.RaymarchingDistance;
+		m_pVolumeLightingCB->data.SunlightBlendOffset = gVolumetricLightingSettings.SunlightBlendOffset;
+		m_pVolumeLightingCB->data.SunlightIntensity = gVolumetricLightingSettings.SunlightIntensity;
+		m_pVolumeLightingCB->Update();
+	}
 	g_pStateMgr->SetConstantBufferPS(m_pVolumeLightingCB, 7);
 	// First render all volumetric lighting(sun light, volume streetlights, clouds etc.)
 	g_pRwCustomEngine->SetRenderTargets(&m_pVolumeLightingRaster, nullptr, 1);

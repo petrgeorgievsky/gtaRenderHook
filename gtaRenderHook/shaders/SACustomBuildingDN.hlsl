@@ -121,16 +121,16 @@ void ShadowPS(PS_DEFERRED_IN i)
 PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
-    float4 baseColor = cDiffuseColor * lerp(float4(1.0f, 1.0f, 1.0f, i.vColor.w), exp(i.vColor) + float4(0.5f, 0.5f, 0.5f, 0), 1.0f - vSunLightDir.w);
+    float4 baseColor = cDiffuseColor;
     if (bHasTexture != 0)
         baseColor *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     
-    float4 params = bHasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness,0,0);
+    float4 params = bHasSpecTex > 0 ? float4(txSpec.Sample(samLinear, i.vTexCoord.xy).xyz,3) : float4(fSpecularIntensity, fGlossiness, 0, 3);
     baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
-    FillGBuffer(Out, baseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params);
+    
 	if (baseColor.a < 0.2f)
 		discard;
-    
+    FillGBufferVertexRadiance(Out, baseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params, i.vColor);
 	return Out;
 }
 

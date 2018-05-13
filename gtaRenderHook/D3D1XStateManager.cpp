@@ -379,6 +379,16 @@ void CD3D1XStateManager::SetTextureFilterMode(RwTextureFilterMode mode)
 	}
 }
 
+void CD3D1XStateManager::SetTextureAnisotropy(RwInt8 maxAnisotropy)
+{
+	if (maxAnisotropy>=0 && m_sampDesc.MaxAnisotropy != maxAnisotropy) {
+		m_sampDesc.MaxAnisotropy = maxAnisotropy;
+		if(maxAnisotropy>1)
+			m_sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+		m_bSampDescReqUpdate = true;
+	}
+}
+
 void CD3D1XStateManager::SetTextureBorderColor(RwRGBA color)
 {
 	float borderColor[] = { color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f, color.alpha / 255.0f };
@@ -779,10 +789,10 @@ bool CD3D1XStateManager::IsSamplerDescRequiresUpdate()
 				m_sampDescOld.AddressV		!= m_sampDesc.AddressV ||
 				m_sampDescOld.AddressW		!= m_sampDesc.AddressW ||
 				m_sampDescOld.Filter		!= m_sampDesc.Filter ||
-		m_sampDescOld.BorderColor[0] - m_sampDesc.BorderColor[0] >0.01 ||
-		m_sampDescOld.BorderColor[1] - m_sampDesc.BorderColor[1] >0.01 ||
-		m_sampDescOld.BorderColor[2] - m_sampDesc.BorderColor[2] >0.01 ||
-		m_sampDescOld.BorderColor[3] - m_sampDesc.BorderColor[3] >0.01;
+		fabs(m_sampDescOld.BorderColor[0] - m_sampDesc.BorderColor[0]) >0.01 ||
+		fabs(m_sampDescOld.BorderColor[1] - m_sampDesc.BorderColor[1]) >0.01 ||
+		fabs(m_sampDescOld.BorderColor[2] - m_sampDesc.BorderColor[2]) >0.01 ||
+		fabs(m_sampDescOld.BorderColor[3] - m_sampDesc.BorderColor[3]) >0.01;
 }
 
 bool CD3D1XStateManager::IsViewportRequiresUpdate()

@@ -13,7 +13,7 @@ Texture2D txGB0 	: register(t0);
 Texture2D txGB1 	: register(t1);
 Texture2D txGB2 	: register(t2);
 Texture2D txPrevFrame : register(t3);
-TextureCube txCubeMap : register(t4);
+TextureCube txCubeMap : register(t5);
 #ifndef SAMLIN
 #define SAMLIN
 SamplerState samLinear : register(s0);
@@ -125,6 +125,16 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     // simply return SSR for now, maybe will use DXR someday, but simple cubemap is way more possible 
     float Fallback=0;
     float FresnelCoeff = MicrofacetFresnel(NormalsVS, -ViewDir, Roughness);
+    // Jitter rays with IGN to get glossy / diffuse reflection approximation
+    // TODO: Add ability to cast more rays and some directionality to it, 
+    // e.g. multiply by hemisphere distribution or something like that maybe?
+    // Maybe even some different noise than IGN
+    const float jitterScale = 5000;
+    float3 ScaledWorldPos = worldSpacePos * jitterScale;
+    float3 jitter = float3(InterleavedGradientNoise(ScaledWorldPos.xy) - 0.5f,
+                           InterleavedGradientNoise(ScaledWorldPos.xz) - 0.5f, 
+                           InterleavedGradientNoise(ScaledWorldPos.yz) - 0.5f) * Roughness * 0.5f;
+    ReflDir += jitter;
     float3 SSRColor = SSR(txPrevFrame, txGB1, samLinear, worldSpacePos, ReflDir, Roughness, Fallback);
     
     float3 LightDir = normalize(vSunLightDir.xyz);
@@ -132,12 +142,12 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float3 ObjectColor = CalculateFogColor(float3(0,0,0), ReflDir, LightDir, 1000, 0, FullScattering);
     
     float3 SkyColor = GetSkyColor(ReflDir, LightDir, FullScattering);
-
+    ReflDir = normalize(reflect(ViewDir, NormalsVS));
     float3 ReflectionFallBack;
 #if SAMPLE_CUBEMAP ==1
     ReflDir.x *= -1;
-    float4 CubeMap = txCubeMap.Sample(samLinear, ReflDir);
-    ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, CubeMap.a < 0.5);
+    float4 CubeMap = txCubeMap.SampleLevel(samLinear, ReflDir, Roughness*9.0f);
+    ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, 1 - CubeMap.a);
 #else
     ReflectionFallBack = SkyColor;
 #endif

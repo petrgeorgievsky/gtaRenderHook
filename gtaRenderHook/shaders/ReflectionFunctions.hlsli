@@ -21,7 +21,7 @@ float3 SSR(Texture2D ScreenTexture, Texture2D NormalDepth,
     float L = fSSRStep;
     float StepScaling = 1.0f;
     Fallback = 0.0;
-
+    float found = 1.0f;
     for (int i = 0; i < SSR_SAMPLE_COUNT; i++)
     {
         HitPointWorldPos = WorldPos + ReflectDir * L;
@@ -39,6 +39,11 @@ float3 SSR(Texture2D ScreenTexture, Texture2D NormalDepth,
         float3 RestoredWorldPos = DepthToWorldPos(ViewZ, ClipSpacePos.xy).xyz;
 
         L = length(WorldPos - RestoredWorldPos);
+        if (L < fSSRStep * 1.5f)
+        {
+            found = 0.0f;
+            break;
+        }
        /* if (abs(ViewZ - ClipSpacePos.z) < 0.000001f)
         {
             Fallback = 1.0;
@@ -53,7 +58,7 @@ float3 SSR(Texture2D ScreenTexture, Texture2D NormalDepth,
                    saturate(max(ClipSpacePos.y - ScreenEdgeBlend, 0) / ScreenEdgeBlend * 0.25) *
                    saturate(max(1 - ClipSpacePos.x + ScreenEdgeBlend, 0) / ScreenEdgeBlend * 0.25) *
                    saturate(max(1 - ClipSpacePos.y + ScreenEdgeBlend, 0) / ScreenEdgeBlend * 0.25);
-    Fallback = 1 - Error0 * Error1;
+    Fallback = 1 - Error0 * Error1 * found;
     float3 refsample = ScreenTexture.SampleLevel(Sampler, ClipSpacePos.xy, 0).rgb;
     return refsample; //* error0 * error1;
 }

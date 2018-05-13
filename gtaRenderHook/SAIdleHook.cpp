@@ -59,8 +59,8 @@ float CSAIdleHook::m_fShadowDNBalance = 1.0;
 void CSAIdleHook::Patch()
 {
 	//RedirectCall(0x748D9B, GameLoop);
-	RedirectCall(0x5343B2, RenderEntity2dfx);
-	RedirectCall(0x6FECF0, CreateEntity2dfx);//createroadsign
+	//RedirectCall(0x5343B2, RenderEntity2dfx);
+	//RedirectCall(0x6FECF0, CreateEntity2dfx);//createroadsign
 	RedirectCall(0x53ECBD, Idle);
 }
 
@@ -111,9 +111,12 @@ void CSAIdleHook::Idle(void *Data)
 		if (SettingsHolder::Instance.IsGUIEnabled()) {
 			POINT mousePos;
 			GetCursorPos(&mousePos);
-			FrontEndMenuManager.m_apTextures[23].Draw(
-				CRect{ (float)mousePos.x,(float)mousePos.y,
-				mousePos.x + 16.0f,mousePos.y +16.0f}, 
+			DefinedState2d();
+			//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, TRUE);
+			FrontEndMenuManager.m_apTextures[23].SetRenderState();
+			FrontEndMenuManager.m_apTextures[23].DrawTxRect(
+				{ (float)mousePos.x, (float)mousePos.y,
+				(float)mousePos.x+10.0f, (float)mousePos.y+16.0f },
 				{ 255,255,255,255 });
 		}
 	}

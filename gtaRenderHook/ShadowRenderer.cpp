@@ -89,8 +89,6 @@ RW::V3d CShadowRenderer::CalculateCameraPos(RwCamera* mainCam, const RW::V3d & l
 		vFrustumCorners[i] = vFrustumCorners[i] * m_LightSpaceMatrix[shadowCascade];
 	// Generate light-aligned Bounding Box from frustum corners in light space
 	m_LightBBox[shadowCascade]={ vFrustumCorners, 8 };
-
-	RwV2d vw{ m_LightBBox[shadowCascade].getSizeX()*0.5f , m_LightBBox[shadowCascade].getSizeY()*0.5f };
 	vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
 	RwCameraSetNearClipPlane(mainCam, oldNP);
 	RwCameraSetFarClipPlane(mainCam, oldFP);
@@ -167,7 +165,7 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 
 	// Move camera back to needed position.
 	RwFrameTranslate(shadowCamFrame, &lightPos, rwCOMBINEPOSTCONCAT);
-	float viewSize = max(m_LightBBox[cascade].getSizeX(), m_LightBBox[cascade].getSizeY());
+	float viewSize = m_LightBBox[cascade].getSizeX()*0.5f+ m_LightBBox[cascade].getSizeY()*0.5f;
 	// Set light orthogonal projection parameters.
 	RwV2d vw{ viewSize * 0.5f, viewSize * 0.5f };
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
@@ -196,17 +194,18 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 }
 void CShadowRenderer::SetShadowBuffer() const
 {
+	// If shadow rendering has not ended we don't need to set shadow buffer
+	if (!m_bShadowsRendered)
+		return;
 	m_pLightCB->data.ShadowSize = gShadowSettings.Size;
 	m_pLightCB->data.CascadeCount = gShadowSettings.ShadowCascadeCount;
 	for (auto i = 0; i < 4; i++)
 		m_pLightCB->data.ShadowBias[i] = gShadowSettings.BiasCoefficients[i];
 	m_pLightCB->Update();
 	g_pStateMgr->SetConstantBufferPS(m_pLightCB, 4);
-	g_pStateMgr->SetConstantBufferCS(m_pLightCB, 4);
-	// If shadow rendering has not ended we don't need to set shadow buffer
-	if (!m_bShadowsRendered)
-		return;
-	g_pStateMgr->SetRaster(m_pShadowCamera->zBuffer, 3);
+	//g_pStateMgr->SetConstantBufferCS(m_pLightCB, 4);
+	
+	g_pStateMgr->SetRaster(m_pShadowCamera->zBuffer, 4);
 }
 
 void CShadowRenderer::CalculateShadowDistances(const RwReal fNear, const RwReal fFar)

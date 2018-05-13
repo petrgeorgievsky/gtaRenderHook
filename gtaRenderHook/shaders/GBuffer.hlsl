@@ -86,10 +86,11 @@ struct PS_DEFERRED_OUT
 	float4 vNormalDepth			: SV_Target1; // normals - xy and depth - zw
 	float4 vParameters			: SV_Target2; // x - spec intensity, y - glossiness, 
                                               // z - custom parameter, w - material id
-                                              // for now material id-s is following 0 - simple object, 1 - car object, 2 - ped/skin object
+                                              // for now material id-s is following 0 - simple object, 1 - car object, 2 - ped/skin object, 3 - vertexlit object
                                               // custom param for simple object - metallness or detail tex id or something else?
                                               // custom param for car - metallness or second layer glossiness ?
                                               // custom param for ped/skin - translucency
+    float4 vLighting            : SV_Target3;
 };
 /*!
     Deferred input structure.
@@ -112,6 +113,21 @@ void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float
     output.vNormalDepth = float4(EncodeNormals(Normals.xy), EncodeFloatRG(ViewZ / fFarClip));
 	output.vParameters = Params;
     output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
+    output.vLighting = float4(0, 0, 0, 0);
+}
+
+/*!
+    Deferred output structure.
+*/
+void FillGBufferVertexRadiance(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float ViewZ, float4 Params, float4 lighting)
+{
+    // transform normals to view-space
+    Normals = mul(normalize(Normals), (float3x3) mView);
+    output.vColor = Color;
+    output.vNormalDepth = float4(EncodeNormals(Normals.xy), EncodeFloatRG(ViewZ / fFarClip));
+    output.vParameters = Params;
+    output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
+    output.vLighting = float4(lighting.rgb, 1);
 }
 /*!
     Returns view-space depth and world-space normals from GBuffer

@@ -9,8 +9,8 @@
 //--------------------------------------------------------------------------------------
 Texture2D txDiffuse : register(t0);
 Texture2D txSpec 	: register(t1);
-Texture2D txShadow 	: register(t3);
-TextureCube txCubeMap : register(t4);
+Texture2D txShadow 	: register(t4);
+TextureCube txCubeMap : register(t5);
 SamplerState samLinear : register(s0);
 SamplerComparisonState samShadow : register(s1);
 struct VS_CAR_INPUT
@@ -128,8 +128,8 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
 
     float3 ReflectionFallBack;
     ReflDir.x *= -1;
-    float4 CubeMap = txCubeMap.Sample(samLinear, ReflDir);
-    ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, CubeMap.a < 0.5);
+    float4 CubeMap = txCubeMap.SampleLevel(samLinear, ReflDir, (1 - fGlossiness)*9.0f);
+    ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, 1 - CubeMap.a);
     // todo: add lighting methods for forward renderer
     outColor.rgb = albedoSample.rgb * (DiffuseTerm * ShadowTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb * ShadowTerm + ReflectionFallBack * fSpecularIntensity;
     outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm * fSpecularIntensity * vSunLightDir.w * ShadowTerm, 1.0f));

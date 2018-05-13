@@ -4,8 +4,10 @@
 struct CLight {
 	RwV3d m_vPos;
 	int   m_nLightType;
-	RwV3d m_vDir;
+	RwV3d m_vColor;
 	float m_fRange;
+	RwV3d m_vDir;
+	float m_fPadding;
 };
 
 class CLightManager
@@ -21,6 +23,7 @@ public:
 	static void Reset();
 	static bool AddLight(const CLight &light);
 	static void SortByDistance(const RwV3d& from);
+	static void Update();
 	static CD3D1XStructuredBuffer<CLight>* GetBuffer();
 };
 

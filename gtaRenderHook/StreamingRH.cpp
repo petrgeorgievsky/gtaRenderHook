@@ -39,7 +39,7 @@ CLink<CEntity*>* CStreamingRH::AddEntity(CEntity * pEntity)
 				{
 					if(currLink->data->m_pRwObject)
 						currLink->data->DeleteRwObject();
-					return rw_objlink_Add(&CStreaming::ms_rwObjectInstances, &pEntity);
+					return nullptr;// rw_objlink_Add(&CStreaming::ms_rwObjectInstances, &pEntity);
 				}
 				currLink = currLink->prev;
 			}

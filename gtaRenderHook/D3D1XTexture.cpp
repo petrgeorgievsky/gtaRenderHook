@@ -88,15 +88,6 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 				return;
 			g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::Texture");
 
-			// staging texture buffer used for texture copying
-			// TODO: reduce staging texture buffers count by creating sets of staging textures for each size(in runtime)
-			desc.Usage = D3D11_USAGE_STAGING;
-			desc.BindFlags = 0;
-			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-
-			if (!CALL_D3D_API(dev->CreateTexture2D(&desc, NULL, &m_pStagingTexture), "Failed to create staging texture"))
-				return;
-			g_pDebug->SetD3DName(m_pStagingTexture, "CD3D1XTexture::StagingTexture");
 			// shader resource view
 			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
 			SRVDesc.Format = d3dRaster->format;
@@ -254,6 +245,24 @@ CD3D1XTexture::~CD3D1XTexture()
 void* CD3D1XTexture::LockToRead()
 {
 	m_isLockedToRead = true;
+	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(m_pParent);
+	if (m_pStagingTexture == nullptr) {
+		D3D11_TEXTURE2D_DESC desc{};
+		desc.Width = m_pParent->width;
+		desc.Height = m_pParent->height;
+		desc.Format = d3dRaster->format;
+		desc.MipLevels = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.SampleDesc.Count = 1;
+		desc.ArraySize = 1;
+		desc.Usage = D3D11_USAGE_STAGING;
+		desc.BindFlags = 0;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+
+		if (!CALL_D3D_API(GET_D3D_DEVICE->CreateTexture2D(&desc, NULL, &m_pStagingTexture), "Failed to create staging texture"))
+			return nullptr;
+		g_pDebug->SetD3DName(m_pStagingTexture, "CD3D1XTexture::StagingTexture");
+	}
 	if (!m_hasPalette) {
 		m_mappedSubRes = {};
 		auto context = GET_D3D_CONTEXT;
@@ -289,6 +298,10 @@ void CD3D1XTexture::UnlockFromRead()
 	context->Unmap(m_pStagingTexture, 0);
 	context->CopyResource(m_pTexture, m_pStagingTexture);
 
+	if (m_pStagingTexture) {
+		m_pStagingTexture->Release();
+		m_pStagingTexture = nullptr;
+	}
 	//if (m_pLockTexture)
 	//	m_pLockTexture->Release();
 }

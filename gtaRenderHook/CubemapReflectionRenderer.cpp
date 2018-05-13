@@ -12,7 +12,7 @@
 #include <math.h>
 
 #define ENVMAPSIZE 512
-#define MIPLEVELS 1
+#define MIPLEVELS 7
 
 CCubemapReflectionRenderer::CCubemapReflectionRenderer(int size): m_nCubemapSize(size)
 {
@@ -31,7 +31,7 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer(int size): m_nCubemapSize
 	m_pReflCameraFrame = RwFrameCreate();
 	RwObjectHasFrameSetFrame(m_pReflCamera, m_pReflCameraFrame);
 	RpWorldAddCamera(Scene.m_pRpWorld, m_pReflCamera);
-
+	UINT mipCount = max((UINT)log2(m_nCubemapSize)-1,1);
 	// Create cubic depth stencil texture.
 	D3D11_TEXTURE2D_DESC dstex{};
 	dstex.Width = m_nCubemapSize;
@@ -67,7 +67,7 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer(int size): m_nCubemapSize
 	dstex.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	dstex.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	dstex.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS | D3D11_RESOURCE_MISC_TEXTURECUBE;
-	dstex.MipLevels = MIPLEVELS;
+	dstex.MipLevels = mipCount;
 	if(FAILED(device->CreateTexture2D(&dstex, NULL, &g_pEnvMap)))
 		g_pDebug->printMsg("Failed to create depth env map.", 0);
 
@@ -94,7 +94,7 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer(int size): m_nCubemapSize
 	ZeroMemory(&SRVDesc, sizeof(SRVDesc));
 	SRVDesc.Format = dstex.Format;
 	SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-	SRVDesc.TextureCube.MipLevels = MIPLEVELS;
+	SRVDesc.TextureCube.MipLevels = mipCount;
 	SRVDesc.TextureCube.MostDetailedMip = 0;
 	if(FAILED(device->CreateShaderResourceView(g_pEnvMap, &SRVDesc, &g_pEnvMapSRV)))
 		g_pDebug->printMsg("Failed to create depth env map.", 0);
@@ -139,6 +139,8 @@ void CCubemapReflectionRenderer::RenderToCubemap(void(*renderCB)())
 	RenderOneFace(renderCB, 3, 90, At, 0,  Up, campos); // left
 	RenderOneFace(renderCB, 4, 0, At, 0,  Up, campos); // down
 	RenderOneFace(renderCB, 5, 0, At, 180,  Up, campos);   // up
+	ID3D11DeviceContext* context = GET_D3D_CONTEXT;
+	context->GenerateMips(g_pEnvMapSRV);
 }
 
 void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, float angleA, RwV3d axisA, float angleB, RwV3d axisB, RwV3d camPos /*const RW::V3d&At, const RW::V3d&Up, const RW::V3d&Right, RW::V3d&  Pos*/)
@@ -175,5 +177,5 @@ void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, float 
 void CCubemapReflectionRenderer::SetCubemap()
 {
 	ID3D11DeviceContext* context = GET_D3D_CONTEXT;
-	context->PSSetShaderResources(4, 1, &g_pEnvMapSRV);
+	context->PSSetShaderResources(5, 1, &g_pEnvMapSRV);
 }

@@ -11,8 +11,8 @@
 Texture2D txDiffuse : register(t0);
 Texture2D txGB1     : register(t1);
 Texture2D txGB0     : register(t2);
-Texture2D txShadow 	: register(t3);
-Texture2D txWaterWake : register(t4);
+Texture2D txShadow 	: register(t4);
+Texture2D txWaterWake : register(t5);
 
 SamplerState samLinear : register(s0);
 SamplerComparisonState samShadow : register(s1);

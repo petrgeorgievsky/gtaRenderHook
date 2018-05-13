@@ -182,13 +182,13 @@ bool CGTASAHooks::AddLight(char type, CVector pos, CVector dir, float radius, fl
 	CLight light{};
 
 	light.m_fRange = radius;
-	if (type == 0) {
-		light.m_vDir = { red,green,blue };
+	light.m_vColor = { red,green,blue };
+	if (type == 0) {		
 		light.m_vPos = pos.ToRwV3d();
 	}
 	else if (type == 1) {
 		light.m_vDir = { dir.x,dir.y,dir.z };
-		light.m_vPos = { pos.x + dir.x,pos.y + dir.y,pos.z + dir.z };
+		light.m_vPos = { pos.x - dir.x,pos.y - dir.y,pos.z - dir.z };
 	}
 	light.m_nLightType = type;
 	return CLightManager::AddLight(light);
@@ -215,6 +215,7 @@ void __fastcall  CGTASAHooks::AddSpotLight(CVehicle* vehicle, void *Unknown, int
 	light.m_vPos = { light.m_vPos.x + matrix->up.x*distance , light.m_vPos.y + matrix->up.y*distance, light.m_vPos.z + matrix->up.z*distance };
 	light.m_fRange = 10;
 	light.m_vDir = { matrix->up.x,matrix->up.y,matrix->up.z };
+	light.m_vColor = { 1.0, 1.0, 1.0 };
 	light.m_nLightType = 1;
 	CLightManager::AddLight(light);
 }

@@ -10,8 +10,9 @@
 Texture2D txGB0 	: register(t0);
 Texture2D txGB1 	: register(t1);
 Texture2D txGB2 	: register(t2);
+Texture2D txGB3     : register(t3);
 
-Texture2D txShadow 	: register(t3);
+Texture2D txShadow 	: register(t4);
 Texture2D txLighting : register(t4);
 Texture2D txPrevFrame : register(t5);
 Texture2D txReflections : register(t6);
@@ -24,9 +25,11 @@ SamplerComparisonState samShadow          : register(s1);
 struct Light
 {
 	float3  vPosition;
-	int     nLightType;
+	float   nLightType;
 	float3  cColor;
 	float   fRange;
+    float3  vDir;
+    float   fPadding;
 };
 StructuredBuffer<Light> sbLightInfo : register(t5);
 struct VS_QUAD_IN
@@ -71,6 +74,7 @@ float4 SunLightingPS(PS_QUAD_IN i) : SV_Target
     GetNormalsAndDepth(txGB1, samLinear, i.vTexCoord.xy, ViewZ, Normals);
     Normals = normalize(Normals);
     float4 Parameters = txGB2.Sample(samLinear, i.vTexCoord.xy);
+    float4 Radiance = txGB3.Sample(samLinear, i.vTexCoord.xy);
 
 	float Roughness = 1 - Parameters.y;
     float SpecIntensity = Parameters.x;
@@ -96,7 +100,7 @@ float4 SunLightingPS(PS_QUAD_IN i) : SV_Target
 #endif
 
     float2 Lighting = float2(DiffuseTerm, SpecularTerm * SpecIntensity) * ShadowTerm;
-    OutLighting.xyzw = float4(Lighting.x * vSunColor.rgb, Lighting.y);
+    OutLighting.xyzw = float4(Lighting.x * vSunColor.rgb + Radiance.rgb * saturate(1.0f - vSunLightDir.w+0.2f), Lighting.y);
 	
 	return OutLighting;
 }
@@ -137,7 +141,7 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
         float LightDistance = length(WorldPos.xyz - sbLightInfo[i].vPosition.xyz);
 
         float DiffuseTerm, SpecularTerm;
-		float3 LightColor =  float3(1, 1, 1);
+        float3 LightColor = sbLightInfo[i].cColor;
 		CalculateDiffuseTerm_ViewDependent(Normals.xyz, LightDir, ViewDir, DiffuseTerm, Roughness);
 		CalculateSpecularTerm(Normals.xyz, LightDir, -ViewDir, Roughness, SpecularTerm);
 	
@@ -146,14 +150,10 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
 		
         float Attenuation = 1.0f - saturate((LightDistance - 0.5f) / sbLightInfo[i].fRange);
         Attenuation *= Attenuation;
-        if (sbLightInfo[i].nLightType == 1)
+        if (asint(sbLightInfo[i].nLightType) == 1)
 		{
-            float fSpot = pow(max(dot(-LightDir, sbLightInfo[i].cColor), 0.0f), 5.0f);
+            float fSpot = pow(max(dot(-LightDir, sbLightInfo[i].vDir), 0.0f), 4.0f);
             Attenuation *= fSpot;
-        }
-		else
-		{
-            LightColor = sbLightInfo[i].cColor;
         }
 			
         FinalDiffuseTerm += DiffuseTerm * Attenuation * LightColor;

@@ -107,7 +107,7 @@ void CCustomWaterPipeline::RenderWater(RwIm3DVertex * verticles, UINT vertexCoun
 	g_pStateMgr->SetIndexBuffer(m_pIndexBuffer);
 	g_pStateMgr->SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 	g_pStateMgr->SetRaster(m_pWaterRaster, 0);
-	g_pStateMgr->SetRaster(m_pWaterWakeRaster, 4);
+	g_pStateMgr->SetRaster(m_pWaterWakeRaster, 5);
 	//g_pStateMgr->SetFillMode(D3D11_FILL_WIREFRAME);
 	m_pVS->Set();
 	m_pPS->Set();

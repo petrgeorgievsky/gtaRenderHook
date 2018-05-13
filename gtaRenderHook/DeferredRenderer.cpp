@@ -33,6 +33,7 @@ CDeferredRenderer::CDeferredRenderer()
 	m_aDeferredRasters[0] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_aDeferredRasters[1] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_aDeferredRasters[2] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE);
+	m_aDeferredRasters[3] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE);
 	m_pReflectionRaster = RwRasterCreate((int)(RsGlobal.maximumWidth*gDeferredSettings.SSRScale),(int)(RsGlobal.maximumHeight*gDeferredSettings.SSRScale), 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_pLightingRaster = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE| rwRASTERFORMAT1555);
 	// We use 2 final rasters to have one for rendering effects that use full lighted image texture for example SSR
@@ -53,7 +54,7 @@ CDeferredRenderer::CDeferredRenderer()
 	gDeferredSettings.m_aShaderPointers.push_back(m_pFinalPassPS);
 	gDeferredSettings.m_aShaderPointers.push_back(m_pAtmospherePassPS);
 	gDeferredSettings.m_aShaderPointers.push_back(m_pReflectionPassPS);
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		gDebugSettings.DebugRenderTargetList.push_back(m_aDeferredRasters[i]);
 	}
@@ -86,6 +87,7 @@ CDeferredRenderer::~CDeferredRenderer()
 	RwRasterDestroy(m_pFinalRasters[1]);
 	RwRasterDestroy(m_pFinalRasters[0]);
 	RwRasterDestroy(m_pLightingRaster);
+	RwRasterDestroy(m_aDeferredRasters[3]);
 	RwRasterDestroy(m_aDeferredRasters[2]);
 	RwRasterDestroy(m_aDeferredRasters[1]);
 	RwRasterDestroy(m_aDeferredRasters[0]);
@@ -101,7 +103,7 @@ void CDeferredRenderer::RenderToGBuffer(void(*renderCB)())
 	m_uiDeferredStage = 1;
 
 	renderer->BeginDebugEvent(L"GBuffer pass");
-	g_pRwCustomEngine->SetRenderTargets(m_aDeferredRasters, Scene.m_pRwCamera->zBuffer, 3);
+	g_pRwCustomEngine->SetRenderTargets(m_aDeferredRasters, Scene.m_pRwCamera->zBuffer, 4);
 	renderCB();
 	g_pRwCustomEngine->SetRenderTargets(&Scene.m_pRwCamera->frameBuffer, Scene.m_pRwCamera->zBuffer, 1);
 	
@@ -124,22 +126,23 @@ void CDeferredRenderer::RenderOutput()
 	g_pStateMgr->FlushRenderTargets();
 	// Set deferred textures
 	g_pStateMgr->SetRaster(m_aDeferredRasters[0]);
-	for (auto i = 1; i < 3; i++)
+	for (auto i = 1; i < 4; i++)
 		g_pStateMgr->SetRaster(m_aDeferredRasters[i], i);
 	
 	m_pShadowRenderer->SetShadowBuffer();
 
 	// Render sun directional light if required
-	if (g_shaderRenderStateBuffer.vSunDir.w > 0&&CGame::currArea==0) 
-	{
+	//if (g_shaderRenderStateBuffer.vSunDir.w > 0&&CGame::currArea==0) 
+	//{
 		m_pSunLightingPS->Set();
 		g_pDebug->printMsg("Sun light rendering.", 1);
 		CFullscreenQuad::Draw();
-	}
+	//}
 
 	// Render point and spot lights
 	if (CLightManager::m_nLightCount > 0) {
 		CLightManager::SortByDistance(TheCamera.GetPosition().ToRwV3d());
+		CLightManager::Update();
 		g_pStateMgr->SetStructuredBufferPS(CLightManager::GetBuffer(), 5);
 		g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, TRUE);
 		g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESRCBLEND, rwBLENDONE);
@@ -242,7 +245,7 @@ void CDeferredRenderer::QueueTextureReload()
 	}
 
 	if (dxEngine->m_bScreenSizeChanged) {
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 4; i++) {
 			m_aDeferredRasters[i]->width = RsGlobal.maximumWidth;
 			m_aDeferredRasters[i]->height = RsGlobal.maximumHeight;
 

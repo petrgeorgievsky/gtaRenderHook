@@ -33,7 +33,7 @@ public:
 	CHDRTonemapping* m_pTonemapping;
 	bool	m_bRequiresReloading = false;
 private:
-	RwRaster*	m_aDeferredRasters[3];
+	RwRaster*	m_aDeferredRasters[4];
 	RwRaster*	m_pLightingRaster;
 	RwRaster*	m_pFinalRasters[4];
 	RwRaster*	m_pReflectionRaster;

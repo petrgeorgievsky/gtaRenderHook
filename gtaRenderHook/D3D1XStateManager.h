@@ -132,6 +132,10 @@ public:
 	*/
 	void SetTextureFilterMode		(RwTextureFilterMode  mode);
 	/*!
+		Changes current texture max anisotropy.
+	*/
+	void SetTextureAnisotropy		(RwInt8  maxAnisotropy);
+	/*!
 		Changes current texture border color.
 	*/
 	void SetTextureBorderColor		(RwRGBA color);
