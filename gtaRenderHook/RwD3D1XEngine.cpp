@@ -1401,16 +1401,6 @@ bool CRwD3D1XEngine::SkinAllInOneNode(RxPipelineNode * self, const RxPipelineNod
 	return true;
 }
 
-RwTexture * CRwD3D1XEngine::CopyTexture(RwTexture * tex)
-{
-	RwRaster* raster = tex->raster;
-	RwRaster* rasterTex = RwRasterCreate(raster->width, raster->height, raster->depth, (raster->cFormat & 0x6F) << 8 | 4);
-	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
-	RwD3D1XRaster* d3dRaster2 = GetD3D1XRaster(rasterTex);
-	m_pRenderer->getContext()->CopySubresourceRegion(d3dRaster2->resourse->GetTexture(),0, 0, 0, 0, d3dRaster->resourse->GetTexture(), 0, nullptr);
-	return RwTextureCreate(rasterTex);
-}
-
 void CRwD3D1XEngine::SetRenderTargets(RwRaster ** rasters, RwRaster* zBuffer, RwUInt32 rasterCount)
 {
 	

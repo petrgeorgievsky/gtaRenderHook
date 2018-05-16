@@ -194,7 +194,13 @@
   <ItemGroup>
     <ClInclude Include="AmbientOcclusion.h" />
     <ClInclude Include="BlurAlgorithms.h" />
+    <ClInclude Include="D3D1X2DRenderTarget.h" />
+    <ClInclude Include="CloudsRH.h" />
     <ClInclude Include="CRwGameHooks.h" />
+    <ClInclude Include="D3D1X2DTexture.h" />
+    <ClInclude Include="D3D1XBackBufferTexture.h" />
+    <ClInclude Include="D3D1XBaseTexture.h" />
+    <ClInclude Include="D3D1XDepthStencilTexture.h" />
     <ClInclude Include="GTASAHooks.h" />
     <ClInclude Include="StreamingRH.h" />
     <ClInclude Include="CVisibilityPluginsRH.h" />
@@ -261,7 +267,13 @@
   <ItemGroup>
     <ClCompile Include="AmbientOcclusion.cpp" />
     <ClCompile Include="BlurAlgorithms.cpp" />
+    <ClCompile Include="D3D1X2DRenderTarget.cpp" />
+    <ClCompile Include="CloudsRH.cpp" />
     <ClCompile Include="CRwGameHooks.cpp" />
+    <ClCompile Include="D3D1X2DTexture.cpp" />
+    <ClCompile Include="D3D1XBackBufferTexture.cpp" />
+    <ClCompile Include="D3D1XBaseTexture.cpp" />
+    <ClCompile Include="D3D1XDepthStencilTexture.cpp" />
     <ClCompile Include="GTASAHooks.cpp" />
     <ClCompile Include="StreamingRH.cpp" />
     <ClCompile Include="CVisibilityPluginsRH.cpp" />

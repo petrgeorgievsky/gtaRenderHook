@@ -103,12 +103,12 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 		m_type = eD3D1XTextureType::TT_DepthStencil;
 		{
 
-			desc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+			desc.Format = d3dRaster->format== DXGI_FORMAT_D32_FLOAT? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_R24G8_TYPELESS;
 			desc.MipLevels = 1;
 			desc.SampleDesc.Quality = 0;
 			desc.SampleDesc.Count = 1;
 			desc.Usage = D3D11_USAGE_DEFAULT;
-			desc.BindFlags = D3D11_BIND_DEPTH_STENCIL| D3D11_BIND_SHADER_RESOURCE;
+			desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 			desc.CPUAccessFlags = 0;
 			desc.MiscFlags = 0;
 
@@ -118,7 +118,7 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 			g_pDebug->SetD3DName(m_pTexture, "CD3D1XTexture::DSTexture");
 
 			D3D11_DEPTH_STENCIL_VIEW_DESC descDSV{};
-			descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			descDSV.Format = d3dRaster->format;
 			descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			descDSV.Texture2D.MipSlice = 0;
 
@@ -127,7 +127,7 @@ CD3D1XTexture::CD3D1XTexture(RwRaster* pParent, bool mipMaps,bool hasPalette) : 
 			g_pDebug->SetD3DName(m_depthStencilRV, "CD3D1XTexture::DepthStencilRV");
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
-			SRVDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+			SRVDesc.Format = d3dRaster->format == DXGI_FORMAT_D32_FLOAT ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 			SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			SRVDesc.Texture2D.MipLevels = UINT32_MAX;
 

@@ -93,8 +93,6 @@ private://Virtual methods.
 
 	virtual void SetTexture(RwTexture * tex, int Stage) override;
 	
-	virtual RwTexture * CopyTexture(RwTexture * tex) override;
-
 	// Inherited via CIRwRenderEngine
 	virtual void SetRenderTargets(RwRaster ** rasters, RwRaster *zBuffer, RwUInt32 rasterCount) override;
 

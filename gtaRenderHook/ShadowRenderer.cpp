@@ -29,7 +29,7 @@ CShadowRenderer::CShadowRenderer()
 	int maxTexSize;
 	if (g_pRwCustomEngine->GetMaxTextureSize(maxTexSize))
 		gShadowSettings.Size =(UINT) min((int)gShadowSettings.Size, maxTexSize / gShadowSettings.ShadowCascadeCount);
-	RwCameraSetZRaster(m_pShadowCamera, RwRasterCreate(gShadowSettings.Size * gShadowSettings.ShadowCascadeCount, gShadowSettings.Size, 32, rwRASTERTYPEZBUFFER));
+	RwCameraSetZRaster(m_pShadowCamera, RwRasterCreate(gShadowSettings.Size * gShadowSettings.ShadowCascadeCount, gShadowSettings.Size, 32, rwRASTERTYPEZBUFFER | rwRASTERFORMAT32));
 	vw.x = vw.y = 40;
 	RwCameraSetViewWindow(m_pShadowCamera, &vw);
 	gDebugSettings.DebugRenderTargetList.push_back(m_pShadowCamera->zBuffer);

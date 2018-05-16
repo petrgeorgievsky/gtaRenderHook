@@ -93,6 +93,9 @@
     <Filter Include="Source\Algorithms\Lighting\AmbientOcclusion">
       <UniqueIdentifier>{21e699b8-644f-4f54-830f-a6ee97485e01}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures">
+      <UniqueIdentifier>{02e98621-a168-46e5-bfd3-3e2a00f45e58}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -290,6 +293,24 @@
     <ClInclude Include="GTASAHooks.h">
       <Filter>Source\Games\GTA_SA</Filter>
     </ClInclude>
+    <ClInclude Include="CloudsRH.h">
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XDepthStencilTexture.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XBaseTexture.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1X2DTexture.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1XBackBufferTexture.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D1X2DRenderTarget.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -474,6 +495,24 @@
     </ClCompile>
     <ClCompile Include="GTASAHooks.cpp">
       <Filter>Source\Games\GTA_SA</Filter>
+    </ClCompile>
+    <ClCompile Include="CloudsRH.cpp">
+      <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XDepthStencilTexture.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XBaseTexture.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1X2DTexture.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1XBackBufferTexture.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D1X2DRenderTarget.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

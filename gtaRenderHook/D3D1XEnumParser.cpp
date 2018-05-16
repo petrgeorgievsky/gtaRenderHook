@@ -153,6 +153,31 @@ RwTextureFilterMode CD3D1XEnumParser::ConvertTextureFilterMode(D3D11_FILTER mode
 	}
 }
 
+DXGI_FORMAT CD3D1XEnumParser::ConvertToSRVSupportedFormat(DXGI_FORMAT fmt)
+{
+	switch (fmt) {
+	case DXGI_FORMAT_D32_FLOAT:
+		return DXGI_FORMAT_R32_FLOAT;
+	case DXGI_FORMAT_D24_UNORM_S8_UINT:
+		return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	default:
+		return fmt;
+	}
+}
+
+DXGI_FORMAT CD3D1XEnumParser::ConvertToTextureBufferSupportedFormat(DXGI_FORMAT fmt)
+{
+	// TODO: add 16bit format support
+	switch (fmt) {
+	case DXGI_FORMAT_D32_FLOAT:
+		return DXGI_FORMAT_R32_TYPELESS;
+	case DXGI_FORMAT_D24_UNORM_S8_UINT:
+		return DXGI_FORMAT_R24G8_TYPELESS;
+	default:
+		return fmt;
+	}
+}
+
 void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 {
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
@@ -170,7 +195,7 @@ void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 			d3dRaster->format = DXGI_FORMAT_R16_FLOAT;
 		else if (rasterPixelFmt == rwRASTERFORMAT555)//rg16
 			d3dRaster->format = DXGI_FORMAT_R16G16_FLOAT;
-		else if (rasterPixelFmt == rwRASTERFORMAT888)//3d texture 888
+		else if (rasterPixelFmt == rwRASTERFORMAT888)//3d texture 888 TODO: remove
 		{
 			d3dRaster->format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 			d3dRaster->textureFlags = 64;
@@ -225,7 +250,7 @@ void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 			d3dRaster->format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 			break;
 		case rwRASTERFORMAT32:
-			d3dRaster->format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			d3dRaster->format = DXGI_FORMAT_D32_FLOAT;
 			break;
 		default: ;
 		}

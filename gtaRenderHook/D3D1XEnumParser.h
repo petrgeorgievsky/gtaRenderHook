@@ -54,6 +54,14 @@ public:
 		Converts texture filter mode to rw specific enum
 	*/
 	static RwTextureFilterMode			ConvertTextureFilterMode(D3D11_FILTER mode);
+	/*!
+		Converts from texture buffer / depth stencil buffer format to format that can be used as shader resource view.
+	*/
+	static DXGI_FORMAT	ConvertToSRVSupportedFormat(DXGI_FORMAT fmt);
+	/*!
+		Converts from depth stencil buffer format to format that can be used as texture buffer.
+	*/
+	static DXGI_FORMAT	ConvertToTextureBufferSupportedFormat(DXGI_FORMAT fmt);
 private:
 	static const D3D11_PRIMITIVE_TOPOLOGY m_primConvertTable[];
 };

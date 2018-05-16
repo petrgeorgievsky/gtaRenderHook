@@ -87,7 +87,6 @@ public:
 	virtual RwBool	Im3DSubmitNode				()																														= 0;
 
 	virtual void		SetTexture(RwTexture* tex, int Stage)	= 0;
-	virtual RwTexture*	CopyTexture(RwTexture* tex)		= 0;
 
 	virtual bool AtomicAllInOneNode	(RxPipelineNode *self, const RxPipelineNodeParam *params) = 0;
 	virtual bool SkinAllInOneNode	(RxPipelineNode *self, const RxPipelineNodeParam *params) = 0;
