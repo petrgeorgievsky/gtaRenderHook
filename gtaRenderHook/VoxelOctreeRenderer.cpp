@@ -67,8 +67,8 @@ void CVoxelOctreeRenderer::CleanVoxelOctree()
 	auto context = GET_D3D_CONTEXT;
 	for (size_t i = 0; i < 3; i++)
 	{
-		auto uav = GetD3D1XRaster(voxelClipMap[i])->resourse->GetUAV();
-		context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
+		//auto uav = GetD3D1XRaster(voxelClipMap[i])->resourse->GetUAV();
+		//context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
 		context->Dispatch(voxelTreeSize / 4, voxelTreeSize / 4, voxelTreeSize / 4);
 	}
 
@@ -87,8 +87,8 @@ void CVoxelOctreeRenderer::InjectRadiance(RwRaster * shadow, void(*emmissiveObjR
 	g_pStateMgr->SetRasterCS(shadow, 1);
 	g_pStateMgr->SetStructuredBufferCS(CLightManager::GetBuffer(), 2);
 
-	auto uav = GetD3D1XRaster(voxelRadiance[voxelTextureID])->resourse->GetUAV();
-	context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
+	//auto uav = GetD3D1XRaster(voxelRadiance[voxelTextureID])->resourse->GetUAV();
+	//context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
 	context->Dispatch(voxelTreeSize / 4, voxelTreeSize / 4, voxelTreeSize / 4);
 
 	m_radianceInjectCS->ReSet();
@@ -148,10 +148,10 @@ void CVoxelOctreeRenderer::SetVoxelTex(RwRGBA &color) {
 	g_pRwCustomEngine->RenderStateSet(RwRenderState::rwRENDERSTATETEXTUREADDRESS, rwTEXTUREADDRESSBORDER);
 	g_pRwCustomEngine->RenderStateSet(RwRenderState::rwRENDERSTATETEXTUREFILTER, rwFILTERLINEAR);
 	
-	ID3D11ShaderResourceView* srv[] = { GetD3D1XRaster(voxelRadiance[0])->resourse->GetSRV(), 
+	/*ID3D11ShaderResourceView* srv[] = { GetD3D1XRaster(voxelRadiance[0])->resourse->GetSRV(), 
 										GetD3D1XRaster(voxelRadiance[1])->resourse->GetSRV(), 
 										GetD3D1XRaster(voxelRadiance[2])->resourse->GetSRV(), };
-	GET_D3D_CONTEXT->PSSetShaderResources(6, 3, srv);
+	GET_D3D_CONTEXT->PSSetShaderResources(6, 3, srv);*/
 }
 
 void CVoxelOctreeRenderer::SetVoxelLODSize(const int & lod)

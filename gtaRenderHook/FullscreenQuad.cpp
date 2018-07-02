@@ -92,6 +92,15 @@ void CFullscreenQuad::Copy(RwRaster * from, RwRaster* zBuffer)
 	Draw();
 }
 
+void CFullscreenQuad::Copy(RwRaster * from, RwRaster * zBuffer, RwRaster * to)
+{
+	g_pRwCustomEngine->SetRenderTargets(&to, nullptr, 1);
+	g_pStateMgr->FlushRenderTargets();
+	g_pStateMgr->SetRaster(from, 0);
+	m_BlitPS->Set();
+	Draw();
+}
+
 void CFullscreenQuad::QueueTextureReload()
 {
 	CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;

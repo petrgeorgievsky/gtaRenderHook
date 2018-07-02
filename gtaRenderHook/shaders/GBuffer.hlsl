@@ -113,7 +113,7 @@ void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float
     output.vNormalDepth = float4(EncodeNormals(Normals.xy), EncodeFloatRG(ViewZ / fFarClip));
 	output.vParameters = Params;
     output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
-    output.vLighting = float4(0, 0, 0, 0);
+    output.vLighting = float4(lerp(vSkyLightCol.rgb, vHorizonCol.rgb, Normals.z) * 0.5f, 1);
 }
 
 /*!
@@ -143,4 +143,64 @@ void GetNormalsAndDepth(Texture2D TexBuffer, SamplerState Sampler, float2 TexCoo
     Normals = mul(Normals, (float3x3) mViewInv);
 }
 
+/*!
+    Returns view-space depth from GBuffer
+*/
+void GetDepth(Texture2D TexBuffer, SamplerState Sampler, float2 TexCoords, out float ViewDepth)
+{
+    float4 NormalSpec = TexBuffer.SampleLevel(Sampler, TexCoords, 0);
+
+    ViewDepth = DecodeFloatRG(NormalSpec.zw);
+    ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;
+}
+
+/*!
+    Returns average view-space depth from GBuffer at specific texcoord
+*/
+void GetAvgDepth(Texture2D TexBuffer, SamplerState Sampler, float2 TexCoords, out float AvgDepth)
+{
+    float2 Offset = float2(1.0f / fScreenWidth, 1.0f / fScreenHeight);
+    float2 NeighborPattern[8] = { float2(0, 1), float2(1, 0), float2(0, -1), float2(-1, 0), float2(-1, -1), float2(1, -1), float2(-1, 1), float2(1, 1) };
+    float ViewDepth;
+    float4 NormalSpec = TexBuffer.SampleLevel(Sampler, TexCoords, 0);
+
+    ViewDepth = DecodeFloatRG(NormalSpec.zw);
+    ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;
+    AvgDepth = ViewDepth;
+    for (int k; k < 8; k++)
+    {
+        float4 NormalSpec = TexBuffer.SampleLevel(Sampler, TexCoords + NeighborPattern[k] * Offset, 0);
+
+        ViewDepth = DecodeFloatRG(NormalSpec.zw);
+        ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;
+        AvgDepth += ViewDepth;
+    }
+    AvgDepth /= 9.0f;
+}
+/*!
+    Returns difference between max and min view-space depth from GBuffer at specific texcoord
+*/
+void GetNeighborDepthDiff(Texture2D TexBuffer, SamplerState Sampler, float2 TexCoords, out float DepthDiff)
+{
+    float2 Offset = float2(1.0f / fScreenWidth, 1.0f / fScreenHeight);
+    float2 NeighborPattern[8] = { float2(0, 1), float2(1, 0), float2(0, -1), float2(-1, 0), float2(-1, -1), float2(1, -1), float2(-1, 1), float2(1, 1) };
+    float ViewDepth;
+    float MaxDepth, MinDepth;
+    float4 NormalSpec = TexBuffer.SampleLevel(Sampler, TexCoords, 0);
+
+    ViewDepth = DecodeFloatRG(NormalSpec.zw);
+    ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;
+    MinDepth = ViewDepth;
+    MaxDepth = ViewDepth;
+    for (int k; k < 8; k++)
+    {
+        float4 NormalSpec = TexBuffer.SampleLevel(Sampler, TexCoords + NeighborPattern[k] * Offset, 0);
+
+        ViewDepth = DecodeFloatRG(NormalSpec.zw);
+        ViewDepth = ViewDepth <= 0 ? fFarClip : ViewDepth;
+        MinDepth = min(ViewDepth, MinDepth);
+        MaxDepth = max(ViewDepth, MaxDepth);
+    }
+    DepthDiff = MaxDepth - MinDepth;
+}
 #endif

@@ -1,5 +1,5 @@
 #pragma once
-class CD3D1XTexture;
+class CD3D1XBaseTexture;
 /*!
 	\class CD3D1XTextureMemoryManager
 	\brief Texture management class
@@ -10,15 +10,15 @@ class CD3D1XTextureMemoryManager
 {
 public:
 	// todo: replace with faster structure, pool for example
-	static std::list<CD3D1XTexture*> textureList;
+	static std::list<CD3D1XBaseTexture*> textureList;
 	/*!
 		Adds texture reference to texture list. 
 	*/
-	static void AddNew(CD3D1XTexture* &texture);
+	static void AddNew(CD3D1XBaseTexture* &texture);
 	/*!
 		Removes texture reference from texture list.
 	*/
-	static void Remove(CD3D1XTexture* &texture);
+	static void Remove(CD3D1XBaseTexture* &texture);
 	/*
 		Cleans up all texture references.
 	*/

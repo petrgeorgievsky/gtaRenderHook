@@ -20,6 +20,7 @@
 #include "AmbientOcclusion.h"
 #include <game_sa\CScene.h>
 #include <game_sa\CGame.h>
+#include "TemporalAA.h"
 /// voxel stuff
 struct CB_Raycasting {
 	RwMatrix m_QuadToVoxel;
@@ -30,11 +31,11 @@ DeferredSettingsBlock gDeferredSettings;
 extern UINT m_uiDeferredStage = 0;
 CDeferredRenderer::CDeferredRenderer()
 {
-	m_aDeferredRasters[0] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
+	m_aDeferredRasters[0] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE);
 	m_aDeferredRasters[1] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_aDeferredRasters[2] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE);
-	m_aDeferredRasters[3] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE);
-	m_pReflectionRaster = RwRasterCreate((int)(RsGlobal.maximumWidth*gDeferredSettings.SSRScale),(int)(RsGlobal.maximumHeight*gDeferredSettings.SSRScale), 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
+	m_aDeferredRasters[3] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
+	m_pReflectionRaster = RwRasterCreate((int)(RsGlobal.maximumWidth*gDeferredSettings.GetFloat("SSRScale")),(int)(RsGlobal.maximumHeight*gDeferredSettings.GetFloat("SSRScale")), 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_pLightingRaster = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE| rwRASTERFORMAT1555);
 	// We use 2 final rasters to have one for rendering effects that use full lighted image texture for example SSR
 	m_pFinalRasters[0] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
@@ -62,7 +63,7 @@ CDeferredRenderer::CDeferredRenderer()
 	gDebugSettings.DebugRenderTargetList.push_back(m_pReflectionRaster);
 
 	m_pShadowRenderer	= new CShadowRenderer();
-	m_pReflRenderer = new CCubemapReflectionRenderer(gDeferredSettings.CubemapSize);
+	m_pReflRenderer = new CCubemapReflectionRenderer(gDeferredSettings.GetUInt("CubemapSize"));
 	m_pTonemapping		= new CHDRTonemapping();
 	m_pDeferredBuffer = new CD3D1XConstantBuffer<CBDeferredRendering>();
 	m_pDeferredBuffer->SetDebugName("DeferredCB");
@@ -115,10 +116,10 @@ void CDeferredRenderer::RenderOutput()
 {
 
 	//g_pDebug->printMsg("Start of deffered output.");
-	m_pDeferredBuffer->data.SSRMaxIterations = gDeferredSettings.SSRMaxIterations;
-	m_pDeferredBuffer->data.SSRStep = gDeferredSettings.SSRStep;
-	m_pDeferredBuffer->data.MaxShadowBlur = gDeferredSettings.MaxShadowBlur;
-	m_pDeferredBuffer->data.MinShadowBlur = gDeferredSettings.MinShadowBlur;
+	m_pDeferredBuffer->data.SSRMaxIterations = gDeferredSettings.GetUInt("SSRMaxIterations");
+	m_pDeferredBuffer->data.SSRStep = gDeferredSettings.GetFloat("SSRStep");
+	m_pDeferredBuffer->data.MaxShadowBlur = gDeferredSettings.GetFloat("MaxShadowBlur");
+	m_pDeferredBuffer->data.MinShadowBlur = gDeferredSettings.GetFloat("MinShadowBlur");
 	m_pDeferredBuffer->Update();
 	g_pStateMgr->SetConstantBufferPS(m_pDeferredBuffer, 6);
 	CAmbientOcclusion::RenderAO(m_aDeferredRasters[1]);
@@ -175,7 +176,7 @@ void CDeferredRenderer::RenderOutput()
 	m_pFinalPassPS->Set(); 
 	CFullscreenQuad::Draw();
 
-	for (auto i = 0; i < 7; i++)
+	for (auto i = 0; i < 8; i++)
 		g_pStateMgr->SetRaster(nullptr, i);
 
 	// Atmospheric scattering
@@ -211,7 +212,8 @@ void CDeferredRenderer::RenderTonemappedOutput()
 {
 	CVolumetricLighting::RenderVolumetricEffects(m_aDeferredRasters[1],
 		m_pShadowRenderer->m_pShadowCamera->zBuffer, m_pFinalRasters[m_uiCurrentFinalRaster]);
-	m_pTonemapping->Render(m_pFinalRasters[m_uiCurrentFinalRaster]);
+	CTemporalAA::Render(m_pFinalRasters[m_uiCurrentFinalRaster], m_pFinalRasters[2], m_aDeferredRasters[1], m_aDeferredRasters[2]);
+	m_pTonemapping->Render(m_pFinalRasters[2], Scene.m_pRwCamera->frameBuffer);
 	m_uiCurrentFinalRaster = 1-m_uiCurrentFinalRaster;
 	for (auto i = 0; i < 7; i++)
 		g_pStateMgr->SetRaster(nullptr, i);
@@ -239,8 +241,8 @@ void CDeferredRenderer::QueueTextureReload()
 	m_pShadowRenderer->QueueTextureReload();
 	
 	if (m_bRequiresReloading || dxEngine->m_bScreenSizeChanged) {
-		m_pReflectionRaster->width = (int)(RsGlobal.maximumWidth*gDeferredSettings.SSRScale);
-		m_pReflectionRaster->height = (int)(RsGlobal.maximumHeight*gDeferredSettings.SSRScale);
+		m_pReflectionRaster->width = (int)(RsGlobal.maximumWidth*gDeferredSettings.GetFloat("SSRScale"));
+		m_pReflectionRaster->height = (int)(RsGlobal.maximumHeight*gDeferredSettings.GetFloat("SSRScale"));
 		dxEngine->m_pRastersToReload.push_back(m_pReflectionRaster);
 	}
 
@@ -265,81 +267,31 @@ void CDeferredRenderer::QueueTextureReload()
 	
 }
 
-tinyxml2::XMLElement * DeferredSettingsBlock::Save(tinyxml2::XMLDocument * doc)
-{
-	auto deferredSettingsNode = doc->NewElement(m_sName.c_str());
-	deferredSettingsNode->SetAttribute("MaxReflectionIterations", SSRMaxIterations);
-	deferredSettingsNode->SetAttribute("ReflectionStep", SSRStep);
-	deferredSettingsNode->SetAttribute("ReflectionScale", SSRScale);
-	deferredSettingsNode->SetAttribute("MaxShadowBlur", MaxShadowBlur);
-	deferredSettingsNode->SetAttribute("MinShadowBlur", MinShadowBlur);
-	deferredSettingsNode->SetAttribute("ShadowsBlurKernelSize", ShadowsBlurKernelSize);
-	deferredSettingsNode->SetAttribute("BlurShadows", BlurShadows);
-	deferredSettingsNode->SetAttribute("UsePCSS", UsePCSS);
-	deferredSettingsNode->SetAttribute("SampleShadows", SampleShadows);
-	deferredSettingsNode->SetAttribute("UseSSR", UseSSR);
-	deferredSettingsNode->SetAttribute("SampleCubemap", SampleCubemap);
-	deferredSettingsNode->SetAttribute("CubemapSize", CubemapSize);
-	return deferredSettingsNode;
-}
-
 void DeferredSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
-	auto deferredSettingsNode = doc.FirstChildElement(m_sName.c_str());
-	if (deferredSettingsNode == nullptr) {
-		Reset();
-		return;
-	}
-	// Debug
-	SSRMaxIterations = (unsigned int)deferredSettingsNode->IntAttribute("MaxReflectionIterations", 24);
-	SSRStep = deferredSettingsNode->FloatAttribute("ReflectionStep", 0.0025f);
-	SSRScale = deferredSettingsNode->FloatAttribute("ReflectionScale", 0.75f);
-	MaxShadowBlur = deferredSettingsNode->FloatAttribute("MaxShadowBlur", 4.0f);
-	MinShadowBlur = deferredSettingsNode->FloatAttribute("MinShadowBlur", 0.3f);
-	ShadowsBlurKernelSize = deferredSettingsNode->IntAttribute("ShadowsBlurKernelSize", 2);
-	BlurShadows = deferredSettingsNode->BoolAttribute("BlurShadows", true);
-	UsePCSS = deferredSettingsNode->BoolAttribute("UsePCSS", true);
-	SampleShadows = deferredSettingsNode->BoolAttribute("SampleShadows", true);
-	UseSSR = deferredSettingsNode->BoolAttribute("UseSSR", true);
-	SampleCubemap = deferredSettingsNode->BoolAttribute("SampleCubemap", true);
-	CubemapSize = deferredSettingsNode->IntAttribute("CubemapSize", 128);
+	SettingsBlock::Load(doc);
 
 	gDeferredSettings.m_pShaderDefineList = new CD3D1XShaderDefineList();
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SSR_SAMPLE_COUNT", to_string(SSRMaxIterations));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_SHADOWS", to_string((int)SampleShadows));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)BlurShadows));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)UsePCSS));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(ShadowsBlurKernelSize));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)gDeferredSettings.UseSSR));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)gDeferredSettings.SampleCubemap));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SSR_SAMPLE_COUNT", to_string(GetUInt("SSRMaxIterations")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_SHADOWS", to_string((int)GetToggleField("SampleShadows")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)GetToggleField("BlurShadows")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)GetToggleField("UsePCSS")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(GetUInt("ShadowsBlurKernelSize")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)GetToggleField("UseSSR")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)GetToggleField("SampleCubemap")));
 }
 
-void DeferredSettingsBlock::Reset()
-{
-	SSRMaxIterations = 24;
-	SSRStep = 0.0025f;
-	MaxShadowBlur = 4.0f;
-	MinShadowBlur = 0.3f;
-	SSRScale = 0.75f;
-	ShadowsBlurKernelSize = 2;
-	BlurShadows = true;
-	UsePCSS = true;
-	SampleShadows = true;
-	CubemapSize = 128;
-	UseSSR = true;
-	SampleCubemap = true;
-}
 void TW_CALL ReloadDeferredShadersCallBack(void *value)
 {
 	gDeferredSettings.m_bShaderReloadRequired = true;
 	gDeferredSettings.m_pShaderDefineList->Reset();
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SSR_SAMPLE_COUNT", to_string(gDeferredSettings.SSRMaxIterations));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_SHADOWS", to_string((int)gDeferredSettings.SampleShadows));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)gDeferredSettings.BlurShadows));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)gDeferredSettings.UsePCSS));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(gDeferredSettings.ShadowsBlurKernelSize));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)gDeferredSettings.UseSSR));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)gDeferredSettings.SampleCubemap));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SSR_SAMPLE_COUNT", to_string(gDeferredSettings.GetUInt("SSRMaxIterations")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("SampleShadows")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("BlurShadows")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("UsePCSS")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(gDeferredSettings.GetUInt("ShadowsBlurKernelSize")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)gDeferredSettings.GetToggleField("UseSSR")));
+	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)gDeferredSettings.GetToggleField("SampleCubemap")));
 }
 void TW_CALL ReloadDeferredTexturesCallBack(void *value)
 {
@@ -347,26 +299,7 @@ void TW_CALL ReloadDeferredTexturesCallBack(void *value)
 }
 void DeferredSettingsBlock::InitGUI(TwBar * bar)
 {
-	// Deferred shadow settings
-	TwAddVarRW(bar, "Use Blurring",							TwType::TW_TYPE_BOOL8, &BlurShadows, "group=ShadowBlur");
-	TwAddVarRW(bar, "Shadow Blur Kernel Size",				TwType::TW_TYPE_UINT32, &ShadowsBlurKernelSize, "min=1 max=16 step=1 group=ShadowBlur");
-	TwAddVarRW(bar, "Max Shadow Blur",						TwType::TW_TYPE_FLOAT, &MaxShadowBlur, " min=0 max=10 step=0.005 help='meh' group=ShadowBlur");
-	TwAddVarRW(bar, "Min Shadow Blur",						TwType::TW_TYPE_FLOAT, &MinShadowBlur, " min=0 max=10 step=0.005 help='meh' group=ShadowBlur");
-	TwAddVarRW(bar, "Use Percentage Closer Soft Shadows",	TwType::TW_TYPE_BOOL8, &UsePCSS, "group=ShadowBlur");
-	TwAddVarRW(bar, "Sample Shadows",						TwType::TW_TYPE_BOOL8, &SampleShadows, "group=ShadowBlur");
-	
-	TwDefine("Settings/ShadowBlur   group=Deferred label='Shadow bluring'");
-
-	TwAddVarRW(bar, "Sample Cubemap", TwType::TW_TYPE_BOOL8, &SampleCubemap, "group=Reflections");
-
-	TwDefine("Settings/Reflections   group=Deferred label='Reflections'");
-	// Deferred reflections settings
-	TwAddVarRW(bar, "Maximum iterations", TwType::TW_TYPE_UINT32, &SSRMaxIterations, " min=2 max=512 step=1 help='meh' group=SSR");
-	TwAddVarRW(bar, "Step", TwType::TW_TYPE_FLOAT, &SSRStep, " min=0 max=10 step=0.0001 help='meh' group=SSR");
-	TwAddVarRW(bar, "Reflection scaling", TwType::TW_TYPE_FLOAT, &SSRScale, "min=0.1 max=1.5 step=0.01 group=SSR");
-	TwAddVarRW(bar, "Use SSR", TwType::TW_TYPE_BOOL8, &UseSSR, "group=Reflections");
-	TwDefine("Settings/SSR   group=Deferred label='Screen-Space Reflection'");
-
+	SettingsBlock::InitGUI(bar);
 	TwAddButton(bar, "Reload shaders", ReloadDeferredShadersCallBack, nullptr, "group=Deferred");
 	TwAddButton(bar, "Reload textures", ReloadDeferredTexturesCallBack, nullptr, "group=Deferred");
 }

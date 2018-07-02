@@ -64,7 +64,7 @@ std::vector<CEntity*> CRendererRH::ms_aVisibleReflectionObjects{};
 #define CVehicle__SetupRender(veh) ((void(__thiscall *)(void*))0x6D64F0)(veh)
 #define CVehicle__ResetAfterRender(veh) ((void(__thiscall *)(void*))0x6D0E20)(veh)
 //56E0D0     ; CVehicle *__cdecl FindPlayerVehicle(int playerNum, char includeRemote)
-#define FindPlayerVehicle(playerNum, includeRemote) ((CVehicle* (__cdecl *)(int, bool))0x56E0D0)(playerNum,includeRemote)
+//#define FindPlayerVehicle(playerNum, includeRemote) ((CVehicle* (__cdecl *)(int, bool))0x56E0D0)(playerNum,includeRemote)
 void CRendererRH::RenderRoads()
 {
 	// Set road render-states.
@@ -73,9 +73,9 @@ void CRendererRH::RenderRoads()
 	// Draw roads.
 	//if (ms_nNoOfVisibleEntities == 0) {
 	for (auto entity : ms_aVisibleEntities) {
-		auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
+		//auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
 		//if (st != 3) {
-			RenderOneNonRoad(entity);
+		RenderOneNonRoad(entity);
 		//}
 	}
 	//for (auto entity : ms_aVisibleLods)
@@ -136,7 +136,7 @@ void CRendererRH::RenderTOBJs()
 
 void CRendererRH::RenderShadowCascade(int i)
 {
-	for (auto shadowEntity : ms_aVisibleShadowCasters[gShadowSettings.CullPerCascade ? i : 0])
+	for (auto shadowEntity : ms_aVisibleShadowCasters[gShadowSettings.GetToggleField("CullPerCascade") ? i : 0])
 		RenderShadowCasterEntity(shadowEntity);//shadowEntity->Render();
 	
 }
@@ -156,6 +156,15 @@ void CRendererRH::ConstructRenderList()
 	ms_lowLodDistScale = 1.0;
 	COcclusion__ProcessBeforeRendering();
 
+	CPlayerPed* player = FindPlayerPed();
+	float playerZCoord = player != nullptr ? player->GetPosition().z : 0.0f;
+	float groundHeightA = TheCamera.CalculateGroundHeight(0);
+	float groundHeightB = TheCamera.CalculateGroundHeight(2);
+	if (playerZCoord - groundHeightA > 50.0f)
+	{
+		if (FindPlayerVehicle(-1, 0) && playerZCoord - groundHeightB > 10.0f)
+			ms_bInTheSky = true;
+	}
 	ms_vecCameraPosition = TheCamera.GetPosition();
 	ms_fCameraHeading	 = TheCamera.GetHeading();
 	ms_fFarClipPlane	 = TheCamera.m_pRwCamera->farPlane;
@@ -225,7 +234,8 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkB
 	float xDist = ms_vecCameraPosition.x - pos.x;
 	float yDist = ms_vecCameraPosition.y - pos.y;
 	float zDist = ms_vecCameraPosition.z - pos.z;
-	float lodStartDist = gShadowSettings.LodShadowsMinDistance*gShadowSettings.LodShadowsMinDistance;
+	float lodStartDist = gShadowSettings.GetFloat("LodShadowsMinDistance");
+	lodStartDist *= lodStartDist;
 	float renderDistance = xDist * xDist + yDist * yDist + zDist * zDist;
 
 	CBaseModelInfo* modelInfo = CModelInfo::ms_modelInfoPtrs[modelID];
@@ -252,7 +262,7 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkB
 		
 		// Add entity to shadow caster list if it exists, inside frustum bbox and bigger than minimum shadow caster size
 		bool isInsideLightBBox=false;
-		if (!gShadowSettings.CullPerCascade) {
+		if (!gShadowSettings.GetToggleField("CullPerCascade")) {
 			// Check if entity is inside any of existing light bounding volumes
 			for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
 				isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
@@ -1246,10 +1256,11 @@ void CRendererRH::ScanWorld()
 	// TODO: Add reflections culling
 	// Resets scan codes if it exceeds 2^16
 	SetNextScanCode();
+	int sectorCount = gShadowSettings.GetUInt("MaxSectorsAroundPlayer");
 	// TODO: replace to reflection settings
-	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer + 1; x++)
+	for (int x = -sectorCount; x < sectorCount + 1; x++)
 	{
-		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer + 1; y++) {
+		for (int y = -sectorCount; y < sectorCount + 1; y++) {
 			CRendererRH::ScanSectorListForReflections(currentSectorX+x, currentSectorY+y);
 		}
 	}
@@ -1303,7 +1314,7 @@ void CRendererRH::ScanWorld()
 	sector[4].x = points[4].x * 0.005f + 15.0f;
 	sector[4].y = points[4].y * 0.005f + 15.0f;
 	
-	if (CGame::currArea != 0 || (CSAIdleHook::m_fShadowDNBalance >= 1.0) || !gShadowSettings.ScanShadowsBehindPlayer)
+	if (CGame::currArea != 0 || (CSAIdleHook::m_fShadowDNBalance >= 1.0) || !gShadowSettings.GetToggleField("ScanShadowsBehindPlayer"))
 		return;
 	
 	m_loadingPriority = 0;
@@ -1312,14 +1323,13 @@ void CRendererRH::ScanWorld()
 	{
 		tt[i] = std::thread(ScanShadowsMT, currentSectorX + i - gShadowSettings.MaxSectorsAroundPlayer, currentSectorY);
 	}*/
-	
-	for (int x = -gShadowSettings.MaxSectorsAroundPlayer; x < gShadowSettings.MaxSectorsAroundPlayer+1; x++)
+	for (int x = -sectorCount; x < sectorCount + 1; x++)
 	{
 		float sectorPosX = ((currentSectorX + x) - 60) * 50.0f + 25.0f;
 		float sectorBoundXMin = min(sectorPosX - 25.0f, sectorPosX + 25.0f);
 		float sectorBoundXMax = max(sectorPosX - 25.0f, sectorPosX + 25.0f);
 
-		for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer+1; y++) {
+		for (int y = -sectorCount; y < sectorCount + 1; y++) {
 			float sectorPosY = ((currentSectorY + y) - 60) * 50.0f + 25.0f;
 			float sectorBoundYMin = min(sectorPosY - 25.0f, sectorPosY + 25.0f);
 			float sectorBoundYMax = max(sectorPosY - 25.0f, sectorPosY + 25.0f);
@@ -1448,8 +1458,8 @@ void CRendererRH::ScanShadowsMT(const int& x, const int& cs_y)
 	float sectorPosX = ((currentSectorX+x) - 60) * 50.0f + 25.0f;
 	float sectorBoundXMin = min(sectorPosX - 25.0f, sectorPosX + 25.0f);
 	float sectorBoundXMax = max(sectorPosX - 25.0f, sectorPosX + 25.0f);
-
-	for (int y = -gShadowSettings.MaxSectorsAroundPlayer; y < gShadowSettings.MaxSectorsAroundPlayer + 1; y++) {
+	int sectorCount = gShadowSettings.GetUInt("MaxSectorsAroundPlayer");
+	for (int y = -sectorCount; y < sectorCount + 1; y++) {
 		float sectorPosY = ((currentSectorY + y) - 60) * 50.0f + 25.0f;
 		float sectorBoundYMin = min(sectorPosY - 25.0f, sectorPosY + 25.0f);
 		float sectorBoundYMax = max(sectorPosY - 25.0f, sectorPosY + 25.0f);

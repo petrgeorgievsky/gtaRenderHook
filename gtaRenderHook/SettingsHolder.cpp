@@ -137,84 +137,49 @@ void SettingsHolder::DisableGUI()
 	m_bDrawTweakBar = false;
 }
 
-tinyxml2::XMLElement * DebugSettingsBlock::Save(tinyxml2::XMLDocument *doc)
-{
-	// Debug settings node.
-	auto debugSettingsNode = doc->NewElement(m_sName.c_str());
-
-	debugSettingsNode->SetAttribute("ShowPreformanceCounters", ShowPreformanceCounters);
-	debugSettingsNode->SetAttribute("DebugMessaging", DebugMessaging);
-	debugSettingsNode->SetAttribute("DebugLevel", DebugLevel);
-	debugSettingsNode->SetAttribute("UseIdleHook", UseIdleHook);
-	debugSettingsNode->SetAttribute("Windowed", Windowed);
-	debugSettingsNode->SetAttribute("UseDefaultAdapter", UseDefaultAdapter);
-
-	return debugSettingsNode;
-}
-
-void DebugSettingsBlock::Load(const tinyxml2::XMLDocument &doc)
-{
-	auto debugSettingsNode = doc.FirstChildElement("DebugSettings");
-	// Debug
-	ShowPreformanceCounters = debugSettingsNode->BoolAttribute("ShowPreformanceCounters", false);
-	DebugMessaging = debugSettingsNode->BoolAttribute("DebugMessaging", false);
-	DebugLevel = debugSettingsNode->IntAttribute("DebugLevel", 0);
-	UseIdleHook = debugSettingsNode->BoolAttribute("UseIdleHook", true);
-	Windowed = debugSettingsNode->BoolAttribute("Windowed", true);
-	UseDefaultAdapter = debugSettingsNode->BoolAttribute("UseDefaultAdapter", true);
-	DebugRenderTarget = false;
-	DebugRenderTargetNumber = 0;
-}
-
 void DebugSettingsBlock::Reset()
 {
-	// Debug
-	ShowPreformanceCounters = false;
-	DebugMessaging = false;
-	DebugLevel = 0;
-	UseIdleHook = true;
-	DebugRenderTarget = false;
+	SettingsBlock::Reset();
 	DebugRenderTargetNumber=0;
-	Windowed = true;
-	UseDefaultAdapter = true;
 }
 
 void DebugSettingsBlock::InitGUI(TwBar * guiholder)
 {
-	TwAddVarRW(guiholder, "Enable RenderHook Idle", TwType::TW_TYPE_BOOL8, &UseIdleHook, "group=Global");
-	TwAddVarRW(guiholder, "Show performance counters", TwType::TW_TYPE_BOOL8, &ShowPreformanceCounters, "group=Debug");
-	TwAddVarRW(guiholder, "Show RenderTarget", TwType::TW_TYPE_BOOL8, &DebugRenderTarget, "group=Debug");
+	SettingsBlock::InitGUI(guiholder);
 	std::string rtIdSettings = "min=0 max=";
 	TwAddVarRW(guiholder, "RenderTarget ID", TwType::TW_TYPE_UINT32, &DebugRenderTargetNumber, 
 		(rtIdSettings +std::to_string(DebugRenderTargetList.size())+" group=Debug").c_str());
 }
 
-tinyxml2::XMLElement * ShaderDefinesSettingsBlock::Save(tinyxml2::XMLDocument * doc)
+tinyxml2::XMLElement * SettingsBlock::Save(tinyxml2::XMLDocument * doc)
 {
-	auto shaderSettingsNode = doc->NewElement(m_sName.c_str());
+	auto settingsNode = doc->NewElement(m_sName.c_str());
+	for (auto field : m_aFields)
+		if (field.second->ToXML(settingsNode)<0)
+			break;
 
-	shaderSettingsNode->SetAttribute("UsePhysicallyBasedRendering", UsePBR);
-
-	return shaderSettingsNode;
+	return settingsNode;
 }
 
-void ShaderDefinesSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
+void SettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
-	auto shaderSettingsNode = doc.FirstChildElement(m_sName.c_str());
-	UsePBR = shaderSettingsNode->BoolAttribute("UsePhysicallyBasedRendering", true);
-}
-
-void ShaderDefinesSettingsBlock::Reset()
-{
-	UsePBR = true;
-}
-
-void ShaderDefinesSettingsBlock::InitGUI(TwBar * guiholder)
-{
+	auto debugSettingsNode = doc.FirstChildElement(m_sName.c_str());
+	// Debug
+	for (auto field : m_aFields)
+		if (field.second->FromXML(debugSettingsNode)<0)
+			break;
 }
 
 void SettingsBlock::Reset()
 {
+	for (auto field : m_aFields)
+		field.second->Reset();
+}
+
+void SettingsBlock::InitGUI(TwBar * guiholder)
+{
+	for (auto field : m_aFields)
+		field.second->Draw(guiholder);
 }
 
 void SettingsBlock::ReloadShaders()

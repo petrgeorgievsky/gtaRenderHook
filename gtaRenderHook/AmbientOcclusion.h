@@ -53,18 +53,17 @@ private:
 class AmbientOcclusionSettingsBlock : public SettingsBlock {
 public:
 	AmbientOcclusionSettingsBlock() {
-		m_sName = "AmbientOcclusionSettings";
+		m_sName = "AmbientOcclusion";
+		m_aFields["Enabled"] = new ToggleSField("Enabled", false, false, false, m_sName, true);
+		m_aFields["SampleCount"] = new UIntSField("SampleCount", false, false, true, m_sName, 8, 0, 128, 1);
+		m_aFields["Radius"] = new FloatSField("Radius", false, false, false, m_sName, 0.5f, 0.005f, 5.0, 0.001f);
+		m_aFields["Intesity"] = new FloatSField("Intesity", false, false, false, m_sName, 1.0f, 0.001f, 5.0, 0.001f);
+		m_aFields["Curve"] = new FloatSField("Curve", false, false, false, m_sName, 1.5f, 0.01f, 10.0f, 0.005f);
+		m_aFields["Scale"] = new FloatSField("Scale", false, false, false, m_sName, 0.75f, 0.1f, 10.0f, 0.05f);
+
 		Reset();
 	}
-	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);
-	void Reset();
 	void InitGUI(TwBar*);
-public:
-	unsigned int AOSamples;
-	float	AORadius;
-	float	AOIntesity;
-	float	AOCurve;
-	float	AOScale;
 };
 extern AmbientOcclusionSettingsBlock gAmbientOcclusionSettings;

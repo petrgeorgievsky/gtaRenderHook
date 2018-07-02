@@ -40,6 +40,7 @@
 #include "VolumetricLighting.h"
 #include "FullscreenQuad.h"
 #include "CubemapReflectionRenderer.h"
+#include "TemporalAA.h"
 //#include <game_sa\CGlass.h>
 //#include <game_sa\CSkidmarks.h>
 
@@ -53,21 +54,16 @@
 #define CPostEffects__m_bDisableAllPostEffect (*(bool *)0xC402CF)	
 
 int drawCallCount=0;
-void RenderEntity2dfx(CEntity* e);
-void *CreateEntity2dfx(void* e);
 float CSAIdleHook::m_fShadowDNBalance = 1.0;
 void CSAIdleHook::Patch()
 {
-	//RedirectCall(0x748D9B, GameLoop);
-	//RedirectCall(0x5343B2, RenderEntity2dfx);
-	//RedirectCall(0x6FECF0, CreateEntity2dfx);//createroadsign
 	RedirectCall(0x53ECBD, Idle);
 }
 
 void CSAIdleHook::Idle(void *Data)
 {
 	SettingsHolder::Instance.InitGUI();
-	if (!gDebugSettings.UseIdleHook) {
+	if (!gDebugSettings.GetToggleField("UseIdleHook")) {
 		
 		_Idle(Data);
 		SettingsHolder::Instance.DrawGUI();
@@ -105,7 +101,7 @@ void CSAIdleHook::Idle(void *Data)
 	PrepareRwCamera();
 	if (!RsCameraBeginUpdate(Scene.m_pRwCamera))
 		return;
-	if (!FrontEndMenuManager.m_bMenuActive /*&& !CCamera__GetScreenFadeStatus(TheCamera) == 2*/) {
+	if (!FrontEndMenuManager.m_bMenuActive && TheCamera.GetScreenFadeStatus() != 2) {
 		RenderInGame();
 		SettingsHolder::Instance.DrawGUI();
 		if (SettingsHolder::Instance.IsGUIEnabled()) {
@@ -231,8 +227,9 @@ void CSAIdleHook::RenderInGame()
 		RenderRealTimeShadows(sunDirs[curr_sun_dir]);
 
 	shadowTimer.Stop();
-
+	
 	RwCameraBeginUpdate(Scene.m_pRwCamera);
+	CTemporalAA::JitterProjMatrix();
 	deferredTimer.Start();
 	g_pCustomCarFXPipe->ResetAlphaList();
 	g_pCustomBuildingPipe->ResetAlphaList();
@@ -263,7 +260,7 @@ void CSAIdleHook::RenderInGame()
 	g_pDeferredRenderer->RenderTonemappedOutput(); //TODO fix
 	renderer->EndDebugEvent();
 	DebugRendering::Render();
-	if (gDebugSettings.DebugRenderTarget &&
+	if (gDebugSettings.GetToggleField("DebugRenderTarget") &&
 		gDebugSettings.DebugRenderTargetList[gDebugSettings.DebugRenderTargetNumber]!=nullptr)
 		DebugRendering::RenderRaster(gDebugSettings.DebugRenderTargetList[gDebugSettings.DebugRenderTargetNumber]);
 	
@@ -271,7 +268,7 @@ void CSAIdleHook::RenderInGame()
 	((int (__cdecl *)())Render2dStuffAddress)();*/
 	Render2dStuff();
 	// Render preformance counters if required.
-	if (gDebugSettings.ShowPreformanceCounters) {
+	if (gDebugSettings.GetToggleField("ShowPreformanceCounters")) {
 		CFont::SetFontStyle(eFontStyle::FONT_SUBTITLES);
 		CRGBA color{ 255,255,255,255 };//pi/360
 		//CFont::SetAlignment(eFontAlignment::ALIGN_RIGHT);
@@ -348,7 +345,7 @@ void CSAIdleHook::RenderDeferred()
 {
 	CVisibilityPluginsRH::ClearWeaponPedsList();
 	
-	g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
+	//g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
 	CRendererRH::RenderRoads();
 	CRendererRH::RenderEverythingBarRoads();
 	CVisibilityPlugins::RenderFadingUnderwaterEntities();

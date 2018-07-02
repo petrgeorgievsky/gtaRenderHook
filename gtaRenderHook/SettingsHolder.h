@@ -1,6 +1,7 @@
 #pragma once
 #include <tinyxml2.h>
 #include <AntTweakBar.h>
+#include "SettingsFields.h"
 class SettingsBlock;
 class CD3D1XShader;
 #include "D3D1XShaderDefines.h"
@@ -46,47 +47,62 @@ public:
 		m_pShaderDefineList = new CD3D1XShaderDefineList();
 		Reset();
 	}
-	virtual tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc) = 0;
-	virtual void Load(const tinyxml2::XMLDocument &doc) = 0;
+	virtual tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
+	virtual void Load(const tinyxml2::XMLDocument &doc);
 	virtual void Reset();
-	virtual void InitGUI(TwBar* guiholder) = 0;
+	virtual void InitGUI(TwBar* guiholder);
 	virtual void ReloadShaders();
+
+	int GetInt(const std::string& name) {
+		IntSField* field = dynamic_cast<IntSField*>(m_aFields[name]);
+		return field != nullptr ? field->GetValue() : 0;
+	}
+
+	unsigned int GetUInt(const std::string& name) {
+		UIntSField* field = dynamic_cast<UIntSField*>(m_aFields[name]);
+		return field != nullptr ? field->GetValue() : 0;
+	}
+
+	float GetFloat(const std::string& name) {
+		FloatSField* field = dynamic_cast<FloatSField*>(m_aFields[name]);
+		return field != nullptr ? field->GetValue() : 0.0f;
+	}
+
+	bool GetToggleField(const std::string& name) {
+		ToggleSField* field = dynamic_cast<ToggleSField*>(m_aFields[name]);
+		return field != nullptr ? field->GetValue() : false;
+	}
+
+protected:
+	std::unordered_map<std::string, SettingsField*> m_aFields;
 };
 // Global shader settings block class, used to hold shader defenitions
 class ShaderDefinesSettingsBlock : public SettingsBlock {
 public:
 	ShaderDefinesSettingsBlock() {
 		m_sName = "ShaderSettings";
+		m_aFields["UsePBR"] = new ToggleSField("UsePBR", true, false, true, m_sName, true);
 		Reset();
 	}
-	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
-	void Load(const tinyxml2::XMLDocument &doc);
-	void Reset();
-	void InitGUI(TwBar* guiholder);
-public:
-	bool UsePBR;
 };
 // Debug settings block class, used to hold debugging settings
 class DebugSettingsBlock: public SettingsBlock {
 public:
 	DebugSettingsBlock() {
-		m_sName = "DebugSettings";
+		m_sName = "Debug";
+		m_aFields["Windowed"] = new ToggleSField("Windowed", true, false, false, m_sName, true);
+		m_aFields["UseDefaultAdapter"] = new ToggleSField("UseDefaultAdapter", true, false, false, m_sName, true);
+		m_aFields["UseIdleHook"] = new ToggleSField("UseIdleHook", false, true, false, m_sName, true);
+		m_aFields["ShowPreformanceCounters"] = new ToggleSField("ShowPreformanceCounters", false, false, false, m_sName);
+		m_aFields["DebugMessaging"] = new ToggleSField("DebugMessaging", false, false, false, m_sName, true);
+		m_aFields["DebugRenderTarget"] = new ToggleSField("DebugRenderTarget", false, true, false, m_sName);
+		m_aFields["DebugLevel"] = new IntSField("DebugLevel", true, false, false, m_sName, 0, 0, 2);
 		Reset();
 	}
-	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
-	void Load(const tinyxml2::XMLDocument &doc);
-	void Reset();
-	void InitGUI(TwBar* guiholder);
+	virtual void Reset() override;
+	virtual void InitGUI(TwBar* guiholder) override;
 public:
-	bool Windowed;
-	bool UseDefaultAdapter;
-	bool UseIdleHook;
-	bool ShowPreformanceCounters;
-	bool DebugMessaging;
-	int  DebugLevel;
-
-	bool DebugRenderTarget;
-	int DebugRenderTargetNumber;
+	unsigned int DebugRenderTargetNumber;
 	std::vector<RwRaster*> DebugRenderTargetList;
 };
 

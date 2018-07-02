@@ -5,7 +5,8 @@
 #include "D3D1XStateManager.h"
 #include "D3DRenderer.h"
 #include "CDebug.h"
-#include "D3D1XTexture.h"
+#include "D3D1XBaseTexture.h"
+#include "D3D1X2DTexture.h"
 #include "RwD3D1XEngine.h"
 #include "D3DSpecificHelpers.h"
 
@@ -504,8 +505,15 @@ void CD3D1XStateManager::SetRaster(RwRaster * raster, int Stage)
 	auto context = GET_D3D_CONTEXT;
 	// todo: add lazy set
 	if (raster != nullptr) {
-		auto res = GetD3D1XRaster(raster)->resourse->GetSRV();
-		context->PSSetShaderResources(Stage, 1, &res);
+		auto d3d1xRaster = GetD3D1XRaster(raster);
+		if (d3d1xRaster != nullptr) {
+			auto res = dynamic_cast<CD3D1X2DTexture*>(d3d1xRaster->resourse)->GetShaderResourceView();
+			context->PSSetShaderResources(Stage, 1, &res);
+		}
+		else {
+			ID3D11ShaderResourceView* res = nullptr;
+			context->PSSetShaderResources(Stage, 1, &res);
+		}
 	}
 	else {
 		ID3D11ShaderResourceView* res = nullptr;
@@ -518,7 +526,7 @@ void CD3D1XStateManager::SetRasterCS(RwRaster * raster, int Stage)
 	auto context = GET_D3D_CONTEXT;
 	// todo: add lazy set
 	if (raster != nullptr) {
-		auto res = GetD3D1XRaster(raster)->resourse->GetSRV();
+		auto res = dynamic_cast<CD3D1X2DTexture*>(GetD3D1XRaster(raster)->resourse)->GetShaderResourceView();
 		context->CSSetShaderResources(Stage, 1, &res);
 	}
 	else {
@@ -706,7 +714,8 @@ void CD3D1XStateManager::FlushStates()
 			RwD3D1XRaster* d3dRaster = GetD3D1XRaster(m_pCurrentRaster);
 			if (d3dRaster->resourse!=nullptr) {
 				SetTextureEnable(true);
-				auto srv = d3dRaster->resourse->GetSRV();
+				
+				auto srv = dynamic_cast<CD3D1X2DTexture*>(d3dRaster->resourse)->GetShaderResourceView();
 				// TODO: add ability to set raster-to-shader binding inside pipeline, to allow setting textures to different shaders
 				context->PSSetShaderResources(0, 1, &srv);
 				//context->DSSetShaderResources(0, 1, &srv);

@@ -95,6 +95,16 @@ cbuffer AmbientOcclusion : register(b8)
     float AOCurve;
     float padding__;
 }
+cbuffer TemporalAA : register(b9)
+{
+    row_major matrix mPrevView;
+    float3 TAAMovementVec;
+    float TAABlendFactor;
+    float MBMaxSpeed;
+    float MBMinPixelDistance;
+    float MBEdgeScale;
+    float MBCenterScale;
+}
 static const float voxelGridScale2 = 1.0f;
 static const int	voxelGridSize = 32;
 // Luminance vector

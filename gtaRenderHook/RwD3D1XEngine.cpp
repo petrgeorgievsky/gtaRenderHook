@@ -3,7 +3,10 @@
 #include "stdafx.h"
 #include "RwD3D1XEngine.h"
 #include "D3D1XStateManager.h"
-#include "D3D1XTexture.h"
+#include "D3D1X2DTexture.h"
+#include "D3D1X2DRenderTarget.h"
+#include "D3D1XBackBufferTexture.h"
+#include "D3D1XDepthStencilTexture.h"
 #include "D3D1XDefaultPipeline.h"
 #include "D3D1XSkinPipeline.h"
 #include "D3D1XEnumParser.h"
@@ -22,6 +25,7 @@
 #include "D3D1XVertexBufferManager.h"
 #include "D3D1XIndexBuffer.h"
 #include "D3D1XShaderDefines.h" 
+
 #ifdef USE_ANTTWEAKBAR
 #include <AntTweakBar.h>
 #endif
@@ -61,7 +65,7 @@ bool CRwD3D1XEngine::Start()
 	const auto featureLevel = GET_D3D_FEATURE_LVL;
 	auto featureLvl = to_string(featureLevel);
 	g_pGlobalShaderDefines->AddDefine("FEATURE_LEVEL", featureLvl);
-	g_pGlobalShaderDefines->AddDefine("USE_PBR", to_string((int)gShaderDefineSettings.UsePBR));
+	g_pGlobalShaderDefines->AddDefine("USE_PBR", to_string((int)gShaderDefineSettings.GetToggleField("UsePBR")));
 	g_pStateMgr				= new CD3D1XStateManager();
 	g_pRenderBuffersMgr		= new CD3D1XRenderBuffersManager();
 	m_pIm2DPipe				= new CD3D1XIm2DPipeline();
@@ -484,14 +488,26 @@ bool CRwD3D1XEngine::RasterCreate(RwRaster *raster, UINT flags)
 	// If somehow after format conversion, raster format is still unknown, and it isn't camera raster we shouldn't create it.
 	if (d3dRaster->format == DXGI_FORMAT_UNKNOWN && raster->cType != rwRASTERTYPECAMERA)
 		return false;
-
-	if (raster->cType == rwRASTERTYPETEXTURE || raster->cType == rwRASTERTYPENORMAL)
-		d3dRaster->resourse = new CD3D1XTexture(raster, (flags&rwRASTERFORMATMIPMAP)!=0,(flags&rwRASTERFORMATPAL8)!=0);
-	else if(raster->cType == rwRASTERTYPEZBUFFER || raster->cType == rwRASTERTYPECAMERA)
-		d3dRaster->resourse = new CD3D1XTexture(raster, false);
-	else if (raster->cType == rwRASTERTYPECAMERATEXTURE)
-		d3dRaster->resourse = new CD3D1XTexture(raster, (flags&rwRASTERFORMATMIPMAP) != 0);
-
+	std::string str = "2DTexture";
+	RwRasterType rasterType = (RwRasterType)raster->cType;
+	switch (rasterType)
+	{
+	case rwRASTERTYPENORMAL:
+	case rwRASTERTYPETEXTURE:
+		d3dRaster->resourse = new CD3D1X2DTexture(raster, (D3D11_BIND_FLAG)0, str, (flags&rwRASTERFORMATMIPMAP) != 0, true);
+		break;
+	case rwRASTERTYPEZBUFFER:
+		d3dRaster->resourse = new CD3D1XDepthStencilTexture(raster);
+		break;
+	case rwRASTERTYPECAMERA:
+		d3dRaster->resourse = new CD3D1XBackBufferTexture(raster);
+		break;
+	case rwRASTERTYPECAMERATEXTURE:
+		d3dRaster->resourse = new CD3D1X2DRenderTarget(raster);
+		break;
+	default:
+		break;
+	}
 	// If we succes in allocating texture we should add it to texture memory manager to avoid some unresonable memory leaks.
 	if(d3dRaster->resourse)
 		CD3D1XTextureMemoryManager::AddNew(d3dRaster->resourse);
@@ -606,6 +622,13 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 		RwTextureSetAddressingVMacro(texture, textureInfo.vAddressing);
 		RwTextureSetName(texture, textureInfo.name);
 		RwTextureSetMaskName(texture, textureInfo.mask);
+		if (texture->raster) {
+			auto d3draster=GetD3D1XRaster(texture->raster);
+			if (d3draster&&d3draster->resourse) {
+				char* texName = textureInfo.name;
+				d3draster->resourse->SetDebugName(texName);
+			}
+		}
 		*tex = texture;
 	}
 	else {
@@ -633,12 +656,12 @@ bool CRwD3D1XEngine::NativeTextureRead(RwStream *stream, RwTexture** tex)
 		}
 		else if (rasterInfo.rasterFormat & rwRASTERFORMATPAL8)
 		{
-			auto d3draster = GetD3D1XRaster(raster)->resourse;
+			/*auto d3draster = GetD3D1XRaster(raster)->resourse;
 			if (RwStreamRead(stream, &d3draster->GetPalettePtr()[0], 1024) != 1024)
 			{
 				RwRasterDestroy(raster);
 				return false;
-			}
+			}*/
 		}
 
 		savedFormat = raster->cFormat;
@@ -711,7 +734,7 @@ bool CRwD3D1XEngine::RasterLock(RwRaster *raster, UINT flags, void** data)
 	raster->cpPixels = (RwUInt8*)malloc(pixelCount);
 
 	*data = (void*)raster->cpPixels; 
-	if (flags&rwRASTERLOCKREAD || d3dRaster->resourse->hasPalette()) {
+	if (flags&rwRASTERLOCKREAD /*|| d3dRaster->resourse->hasPalette()*/) {
 		*data = d3dRaster->resourse->LockToRead();
 	}
 	return true;
@@ -726,7 +749,7 @@ bool CRwD3D1XEngine::RasterUnlock(RwRaster *raster)
 	{
 		auto d3dtexture = d3dRaster->resourse;
 		if (!d3dtexture->IsLockedToRead())
-			m_pRenderer->getContext()->UpdateSubresource(d3dtexture->GetTexture(), d3dRaster->lockFlags, nullptr, raster->cpPixels, raster->stride, 0);
+			m_pRenderer->getContext()->UpdateSubresource(d3dtexture->GetResource(), d3dRaster->lockFlags, nullptr, raster->cpPixels, raster->stride, 0);
 		else
 			d3dtexture->UnlockFromRead();
 	}
@@ -745,6 +768,7 @@ bool CRwD3D1XEngine::CameraClear(RwCamera *camera, RwRGBA *color, RwInt32 flags)
 	return true;
 }
 
+
 bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 {
 	RwProcessorForceSinglePrecision();
@@ -759,13 +783,16 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 	RwGraphicsMatrix *viewTransformRef = (RwGraphicsMatrix*)&viewTransform;
 	RwGraphicsMatrix *projTransformRef = (RwGraphicsMatrix*)&projTransform;
 #endif
+	RwMatrix* camMatrix = RwFrameGetLTM(static_cast<RwFrame*>(camera->object.object.parent));
 	// rw used inverse of camera frame matrix with negative column-vector
-	RwMatrixInvert((RwMatrix*)viewTransformRef, RwFrameGetLTM(static_cast<RwFrame*>(camera->object.object.parent)));
+	RwMatrixInvert((RwMatrix*)viewTransformRef, camMatrix);
 	viewTransformRef->m[0].x = -viewTransformRef->m[0].x;
 	viewTransformRef->m[1].x = -viewTransformRef->m[1].x;
 	viewTransformRef->m[2].x = -viewTransformRef->m[2].x;
 	viewTransformRef->m[3].x = -viewTransformRef->m[3].x;
-	
+	RwV3d* up = RwMatrixGetUp(camMatrix);
+	RwV3d* right = RwMatrixGetRight(camMatrix);
+
 	viewTransformRef->m[0].w = 0.0f;
 	viewTransformRef->m[1].w = 0.0f;
 	viewTransformRef->m[2].w = 0.0f;
@@ -775,11 +802,11 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 	projTransformRef->m[0].x = camera->recipViewWindow.x;
 	projTransformRef->m[1].y = camera->recipViewWindow.y;
 
-	projTransformRef->m[2].x = camera->viewOffset.x * camera->recipViewWindow.x;
-	projTransformRef->m[2].y = camera->viewOffset.y * camera->recipViewWindow.y;
+	projTransformRef->m[2].x = (camera->viewOffset.x) * camera->recipViewWindow.x;
+	projTransformRef->m[2].y = (camera->viewOffset.y) * camera->recipViewWindow.y;
 
-	projTransformRef->m[3].x = -(camera->viewOffset.x * camera->recipViewWindow.x);
-	projTransformRef->m[3].y = -(camera->viewOffset.y * camera->recipViewWindow.y);
+	projTransformRef->m[3].x = -((camera->viewOffset.x) * camera->recipViewWindow.x);
+	projTransformRef->m[3].y = -((camera->viewOffset.y) * camera->recipViewWindow.y);
 
 	if (camera->projectionType == rwPARALLEL)
 	{
@@ -823,8 +850,8 @@ bool CRwD3D1XEngine::CameraBeginUpdate(RwCamera *camera)
 			ReloadTextures();
 	}
 	if (camera->frameBuffer && camera->frameBuffer->cType == rwRASTERTYPECAMERATEXTURE) {
-		RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
-		d3dRaster->resourse->BeginRendering();
+		//RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
+		//d3dRaster->resourse->BeginRendering();
 	}
 
 	m_pRenderer->BeginUpdate(camera);
@@ -835,7 +862,7 @@ bool CRwD3D1XEngine::CameraEndUpdate(RwCamera *camera)
 {
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(camera->frameBuffer);
 	if(camera->frameBuffer && camera->frameBuffer->cType==rwRASTERTYPECAMERATEXTURE)
-		d3dRaster->resourse->EndRendering();
+		//d3dRaster->resourse->EndRendering();
 	m_pRenderer->EndUpdate(camera);
 	dgGGlobals = nullptr;
 	return true;
@@ -1408,40 +1435,53 @@ void CRwD3D1XEngine::SetRenderTargets(RwRaster ** rasters, RwRaster* zBuffer, Rw
 	std::vector<ID3D11RenderTargetView*> pRTVs;
 	for (RwUInt32 i = 0; i < rasterCount; i++)
 	{
-		RwD3D1XRaster* pd3dRaster = GetD3D1XRaster(rasters[i]);
-		if(rasters[i] !=nullptr)
-			pRTVs.push_back(pd3dRaster->resourse->GetRTRV());
+		if (rasters[i] != nullptr) {
+			RwD3D1XRaster* pd3dRaster = GetD3D1XRaster(rasters[i]);
+			auto renderTarget = dynamic_cast<ID3D1XRenderTargetViewable*>(pd3dRaster->resourse);
+			pRTVs.push_back(renderTarget ? renderTarget->GetRenderTargetView() : nullptr);
+		}
 		else
 			pRTVs.push_back(nullptr);
 	}
-	D3D11_VIEWPORT vp;
-	vp.Width = (float)rasters[0]->width;
-	vp.Height = (float)rasters[0]->height;
-	vp.MaxDepth = 1;
-	vp.MinDepth = 0;
-	vp.TopLeftX = 0;vp.TopLeftY = 0;
-	g_pStateMgr->SetViewport(vp);
+	if (rasters[0] != nullptr) {
+		D3D11_VIEWPORT vp;
+		vp.Width = (float)rasters[0]->width;
+		vp.Height = (float)rasters[0]->height;
+		vp.MaxDepth = 1;
+		vp.MinDepth = 0;
+		vp.TopLeftX = 0; vp.TopLeftY = 0;
+		g_pStateMgr->SetViewport(vp);
+	}
 	if (zBuffer) {
 		RwD3D1XRaster* pd3dDepthRaster = GetD3D1XRaster(zBuffer);
-		g_pStateMgr->SetRenderTargets(pRTVs.size(), pRTVs.data(), pd3dDepthRaster->resourse->GetDSRV());
+		auto depthTarget = dynamic_cast<CD3D1XDepthStencilTexture*>(pd3dDepthRaster->resourse);
+		g_pStateMgr->SetRenderTargets(pRTVs.size(), pRTVs.data(), depthTarget->GetDepthStencilView());
 	}else
 		g_pStateMgr->SetRenderTargets(pRTVs.size(), pRTVs.data(), nullptr);
 	if (rasterCount >= 1) {
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		for (auto rtv: pRTVs)
-			context->ClearRenderTargetView(rtv, clearColor);
+			if(rtv!=nullptr)
+				context->ClearRenderTargetView(rtv, clearColor);
 	}
 }
 
 void CRwD3D1XEngine::SetRenderTargetsAndUAVs(RwRaster ** rasters, RwRaster ** uavs, RwRaster* zBuffer, RwUInt32 rasterCount, RwUInt32 uavCount, RwUInt32 uavStart)
 {
 	RwD3D1XRaster* pd3dDepthRaster = GetD3D1XRaster(zBuffer);
+	ID3D11DepthStencilView* depthStencilRes = nullptr;
+	if (zBuffer&&pd3dDepthRaster) {
+		depthStencilRes = dynamic_cast<CD3D1XDepthStencilTexture*>(pd3dDepthRaster->resourse)->GetDepthStencilView();
+	}
 	std::vector<ID3D11RenderTargetView*> pRTVs;
 	std::vector<ID3D11UnorderedAccessView*> pUAVs;
 	for (RwUInt32 i = 0; i < rasterCount; ++i)
 	{
-		RwD3D1XRaster* pd3dRaster = GetD3D1XRaster(rasters[i]);
-		pRTVs.push_back(pd3dRaster->resourse->GetRTRV());
+		if (rasters[i]) {
+			RwD3D1XRaster* pd3dRaster = GetD3D1XRaster(rasters[i]);
+			auto renderTarget = dynamic_cast<ID3D1XRenderTargetViewable*>(pd3dRaster->resourse);
+			pRTVs.push_back(renderTarget?renderTarget->GetRenderTargetView():nullptr);
+		}
 	}
 	D3D11_VIEWPORT vp;
 	vp.Width	= static_cast<FLOAT>(rasters[0]->width);
@@ -1449,20 +1489,22 @@ void CRwD3D1XEngine::SetRenderTargetsAndUAVs(RwRaster ** rasters, RwRaster ** ua
 	vp.MaxDepth = 1;
 	vp.MinDepth = 0;
 	vp.TopLeftX = 0;vp.TopLeftY = 0;
+
 	g_pStateMgr->SetViewport(vp);
 	if (uavs[0] == nullptr) {
 		ID3D11UnorderedAccessView* puav = nullptr;
-		m_pRenderer->getContext()->OMSetRenderTargetsAndUnorderedAccessViews(pRTVs.size(), pRTVs.data(), pd3dDepthRaster->resourse->GetDSRV(),
+
+		m_pRenderer->getContext()->OMSetRenderTargetsAndUnorderedAccessViews(pRTVs.size(), pRTVs.data(), depthStencilRes,
 			uavStart, 1, &puav, nullptr);
 		return;
 	}
-	for (RwUInt32 i = 0; i < uavCount; i++)
+	/*for (RwUInt32 i = 0; i < uavCount; i++)
 	{
 		RwD3D1XRaster* pd3dRaster = GetD3D1XRaster(uavs[i]);
 		pUAVs.push_back(pd3dRaster->resourse->GetUAV());
-	}
+	}*/
 	
-	m_pRenderer->getContext()->OMSetRenderTargetsAndUnorderedAccessViews(pRTVs.size(), pRTVs.data(), pd3dDepthRaster->resourse->GetDSRV(),
+	m_pRenderer->getContext()->OMSetRenderTargetsAndUnorderedAccessViews(pRTVs.size(), pRTVs.data(), depthStencilRes,
 		uavStart, pUAVs.size(), pUAVs.data(),nullptr);
 	if (rasterCount > 1) {
 		float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -1477,8 +1519,8 @@ void CRwD3D1XEngine::ReloadTextures()
 		for (auto raster: m_pRastersToReload)
 		{
 			if (raster) {
-				//int flags = raster->cType | raster->cFlags | (raster->cFormat << 8);
-				GetD3D1XRaster(raster)->resourse->Reload();
+				auto resource = GetD3D1XRaster(raster)->resourse;
+				resource->Reallocate();
 			}
 		}
 		m_pRastersToReload.clear();
@@ -1490,7 +1532,7 @@ RwRaster * CRwD3D1XEngine::CreateD3D9Raster(RwInt32 width, RwInt32 height, D3DFO
 	RwRaster* raster = RwRasterCreate(width, height, 32, flags | rwRASTERDONTALLOCATE);
 	RwD3D1XRaster* d3dRaster = GetD3D1XRaster(raster);
 	CD3D1XEnumParser::ConvertRasterFormat(raster, flags);
-	if (raster->cType == rwRASTERTYPETEXTURE || raster->cType == rwRASTERTYPENORMAL)
-		d3dRaster->resourse = new CD3D1XTexture(raster, (flags&rwRASTERFORMATMIPMAP) != 0, (flags&rwRASTERFORMATPAL8) != 0);
+	//if (raster->cType == rwRASTERTYPETEXTURE || raster->cType == rwRASTERTYPENORMAL)
+	//	d3dRaster->resourse = new CD3D1XTexture(raster, (flags&rwRASTERFORMATMIPMAP) != 0, (flags&rwRASTERFORMATPAL8) != 0);
 	return raster;
 }

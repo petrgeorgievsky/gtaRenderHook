@@ -54,7 +54,7 @@ float4 AtmosphericScatteringPS(PS_QUAD_IN i) : SV_Target
     float3 LightDir = normalize(vSunLightDir.xyz);
 
     // Some coefficients used in fog computation
-    float Height = ViewPos.z;
+    float Height = WorldPos.z;
     
     float3 FullScattering;
     float3 ObjectColor = CalculateFogColor(ScreenColor.rgb, ViewDir, LightDir, ViewZ, Height, FullScattering);

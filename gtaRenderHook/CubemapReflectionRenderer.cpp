@@ -7,6 +7,7 @@
 #include "RwMethods.h"
 #include "D3D1XRenderBuffersManager.h"
 #include "D3D1XStateManager.h"
+#include "D3D1XDepthStencilTexture.h"
 #include <game_sa\CScene.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -40,28 +41,8 @@ CCubemapReflectionRenderer::CCubemapReflectionRenderer(int size): m_nCubemapSize
 	dstex.ArraySize = 6;
 	dstex.SampleDesc.Count = 1;
 	dstex.SampleDesc.Quality = 0;
-	dstex.Format = DXGI_FORMAT_D32_FLOAT;
 	dstex.Usage = D3D11_USAGE_DEFAULT;
-	dstex.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	dstex.CPUAccessFlags = 0;
-	dstex.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
-	if (FAILED(device->CreateTexture2D(&dstex, NULL, &g_pEnvMapDepth)))
-		g_pDebug->printMsg("Failed to create depth env map.", 0);
-
-	// Create the depth stencil view for the entire cube
-	D3D11_DEPTH_STENCIL_VIEW_DESC DescDS{};
-	DescDS.Format = DXGI_FORMAT_D32_FLOAT;
-	DescDS.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-	DescDS.Texture2DArray.FirstArraySlice = 0;
-	DescDS.Texture2DArray.ArraySize = 6;
-	DescDS.Texture2DArray.MipSlice = 0;
-	if(FAILED(device->CreateDepthStencilView(g_pEnvMapDepth, &DescDS, &g_pEnvMapDSV)))
-		g_pDebug->printMsg("Failed to create depth env map.",0);
-
-	// Create the depth stencil view for single face rendering
-	DescDS.Texture2DArray.ArraySize = 1;
-	if(FAILED(device->CreateDepthStencilView(g_pEnvMapDepth, &DescDS, &g_pEnvMapOneDSV)))
-		g_pDebug->printMsg("Failed to create depth env map.", 0);
 
 	// Create the cube map for env map render target
 	dstex.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -114,9 +95,6 @@ CCubemapReflectionRenderer::~CCubemapReflectionRenderer()
 		if (g_apEnvMapOneRTV[i]) g_apEnvMapOneRTV[i]->Release();
 	}
 	if (g_pEnvMapSRV) g_pEnvMapSRV->Release();
-	if (g_pEnvMapDepth) g_pEnvMapDepth->Release();
-	if (g_pEnvMapDSV) g_pEnvMapDSV->Release();
-	if (g_pEnvMapOneDSV) g_pEnvMapOneDSV->Release();
 }
 
 #define FindPlayerCoors(outPoint, playerIndex) ((RwV3d * (__cdecl *)(RwV3d *,int))0x56E010)(outPoint, playerIndex)
@@ -160,9 +138,9 @@ void CCubemapReflectionRenderer::RenderOneFace(void(*renderCB)(), int id, float 
 
 	float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.4f };
 	context->ClearRenderTargetView(g_apEnvMapOneRTV[id], ClearColor);
-	context->ClearDepthStencilView(g_pEnvMapOneDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
+	auto depthBuffer = dynamic_cast<CD3D1XDepthStencilTexture*>(GetD3D1XRaster(m_pReflCamera->zBuffer)->resourse);
 	ID3D11RenderTargetView* aRTViews[1] = { g_apEnvMapOneRTV[id] };
-	context->OMSetRenderTargets(1, aRTViews, g_pEnvMapOneDSV);
+	context->OMSetRenderTargets(1, aRTViews, depthBuffer->GetDepthStencilView());
 	D3D11_VIEWPORT vp{};
 	vp.Width = (FLOAT)m_nCubemapSize;
 	vp.Height = (FLOAT)m_nCubemapSize;

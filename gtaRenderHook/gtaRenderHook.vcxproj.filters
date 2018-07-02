@@ -96,6 +96,12 @@
     <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures">
       <UniqueIdentifier>{02e98621-a168-46e5-bfd3-3e2a00f45e58}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Utilities">
+      <UniqueIdentifier>{60b30041-c694-4ca1-95ce-2f761a65bfe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Utilities\SettingsSystem">
+      <UniqueIdentifier>{e7a03f28-c8b2-4811-9840-9e245d2bc962}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -203,9 +209,6 @@
     <ClInclude Include="DebugLine.h">
       <Filter>Source\Algorithms\DebugUtility</Filter>
     </ClInclude>
-    <ClInclude Include="SettingsHolder.h">
-      <Filter>Source\Headers</Filter>
-    </ClInclude>
     <ClInclude Include="CWaterLevel.h">
       <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
     </ClInclude>
@@ -311,6 +314,18 @@
     <ClInclude Include="D3D1X2DRenderTarget.h">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
     </ClInclude>
+    <ClInclude Include="D3D1XCubeTexture.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="TemporalAA.h">
+      <Filter>Source\Algorithms\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsHolder.h">
+      <Filter>Source\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsFields.h">
+      <Filter>Source\Utilities\SettingsSystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -408,9 +423,6 @@
     </ClCompile>
     <ClCompile Include="DebugLine.cpp">
       <Filter>Source\Algorithms\DebugUtility</Filter>
-    </ClCompile>
-    <ClCompile Include="SettingsHolder.cpp">
-      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="CWaterLevel.cpp">
       <Filter>Source\Games\GTA_SA\GTAClasses</Filter>
@@ -514,6 +526,18 @@
     <ClCompile Include="D3D1X2DRenderTarget.cpp">
       <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
     </ClCompile>
+    <ClCompile Include="D3D1XCubeTexture.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="TemporalAA.cpp">
+      <Filter>Source\Algorithms\PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsHolder.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsFields.cpp">
+      <Filter>Source\Utilities\SettingsSystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt">
@@ -606,6 +630,9 @@
       <Filter>Source\Shaders</Filter>
     </None>
     <None Include="shaders\AmbientOcclusion.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="shaders\TemporalAA.hlsl">
       <Filter>Source\Shaders</Filter>
     </None>
   </ItemGroup>

@@ -104,14 +104,14 @@ protected:
 };
 extern CIRwRenderEngine* g_pRwCustomEngine;
 #define GET_D3D_RENDERER \
-	static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer()
+	(static_cast<CRwD3D1XEngine*>(g_pRwCustomEngine)->getRenderer())
 #define GET_D3D_DEVICE \
-	GET_D3D_RENDERER->getDevice()
+	(GET_D3D_RENDERER->getDevice())
 #define GET_D3D_CONTEXT \
-	GET_D3D_RENDERER->getContext()
+	(GET_D3D_RENDERER->getContext())
 #define GET_D3D_FEATURE_LVL \
-	GET_D3D_RENDERER->getFeatureLevel()
+	(GET_D3D_RENDERER->getFeatureLevel())
 #define GET_D3D_SWAP_CHAIN \
-	GET_D3D_RENDERER->getSwapChain()
+	(GET_D3D_RENDERER->getSwapChain())
 #endif 
 

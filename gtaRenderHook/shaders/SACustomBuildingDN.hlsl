@@ -125,7 +125,8 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     if (bHasTexture != 0)
         baseColor *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     
-    float4 params = bHasSpecTex > 0 ? float4(txSpec.Sample(samLinear, i.vTexCoord.xy).xyz,3) : float4(fSpecularIntensity, fGlossiness, 0, 3);
+    float4 params = bHasSpecTex > 0 ? float4(txSpec.Sample(samLinear, i.vTexCoord.xy).xyz, 3) : float4(fSpecularIntensity, fGlossiness, 0, 3);
+    params.w = baseColor.a > 0.95f ? 3 : 5;
     baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
     
 	if (baseColor.a < 0.2f)

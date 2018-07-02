@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XBaseTexture.h"
 #include "CDebug.h"
@@ -19,4 +21,17 @@ void CD3D1XBaseTexture::SetDebugName(const std::string & name)
 {
 	if(m_pTextureResource)
 		g_pDebug->SetD3DName(m_pTextureResource, name + "(" + m_resourceTypeName + ", TextureBuffer)");
+}
+
+void CD3D1XBaseTexture::Reallocate()
+{
+}
+
+void * CD3D1XBaseTexture::LockToRead()
+{
+	return nullptr;
+}
+
+void CD3D1XBaseTexture::UnlockFromRead()
+{
 }

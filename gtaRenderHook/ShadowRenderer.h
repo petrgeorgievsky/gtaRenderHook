@@ -46,13 +46,18 @@ public:
 private:
 	RwMatrix* m_pLightViewProj;
 	CD3D1XConstantBuffer<CBShadows>* m_pLightCB;
-	std::list<void*> m_aShadowObjectCacheList;
 };
 
 class ShadowSettingsBlock : public SettingsBlock {
 public:
 	ShadowSettingsBlock() {
-		m_sName = "ShadowSettings";
+		m_sName = "Shadows";
+		m_aFields["Enable"] = new ToggleSField("Enable", false, false, false, m_sName, true);
+		m_aFields["CullPerCascade"] = new ToggleSField("CullPerCascade", false, false, false, m_sName);
+		m_aFields["ScanShadowsBehindPlayer"] = new ToggleSField("ScanShadowsBehindPlayer", false, false, false, m_sName, true);
+		m_aFields["MaxDrawDistance"] = new FloatSField("MaxDrawDistance", false, false, false, m_sName, 500.0f, 5.0f, 30000.0f, 5.0f);
+		m_aFields["LodShadowsMinDistance"] = new FloatSField("LodShadowsMinDistance", false, false, false, m_sName, 150.0f, 2.0f, 3000.0f, 1.0f);
+		m_aFields["MaxSectorsAroundPlayer"] = new UIntSField("MaxSectorsAroundPlayer", false, false, false, m_sName, 3, 1, 10, 1);
 		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
@@ -60,16 +65,9 @@ public:
 	void Reset();
 	void InitGUI(TwBar*);
 public:
-	bool Enable;
 	UINT Size;
 	float DistanceCoefficients[3];
 	float BiasCoefficients[4];
-	float MaxDrawDistance;
-	float MinOffscreenShadowCasterSize;
-	float LodShadowsMinDistance;
-	int MaxSectorsAroundPlayer;
 	int ShadowCascadeCount;
-	bool CullPerCascade;
-	bool ScanShadowsBehindPlayer;
 };
 extern ShadowSettingsBlock gShadowSettings;

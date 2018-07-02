@@ -102,6 +102,21 @@ void swap(inout float a, inout float b)
     a = b;
     b = t;
 }
+float rand_1_05(in float2 uv)
+{
+    float2 noise = (frac(sin(dot(uv, float2(12.9898, 78.233) * 2.0)) * 43758.5453));
+    return abs(noise.x + noise.y) * 0.5;
+}
+float rand_1_06(in float2 uv)
+{
+    float2 noise = (frac(sin(dot(uv, float2(22.9898, 32.233) * 2.0)) * 64564.5453));
+    return abs(noise.x + noise.y) * 0.5;
+}
+float rand_1_07(in float2 uv)
+{
+    float2 noise = (frac(sin(dot(uv, float2(56.9898, 85.233) * 2.0)) * 12346.5453));
+    return abs(noise.x + noise.y) * 0.5;
+}
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
@@ -131,9 +146,9 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     // Maybe even some different noise than IGN
     const float jitterScale = 5000;
     float3 ScaledWorldPos = worldSpacePos * jitterScale;
-    float3 jitter = float3(InterleavedGradientNoise(ScaledWorldPos.xy) - 0.5f,
-                           InterleavedGradientNoise(ScaledWorldPos.xz) - 0.5f, 
-                           InterleavedGradientNoise(ScaledWorldPos.yz) - 0.5f) * Roughness * 0.5f;
+    float3 jitter = float3(rand_1_05(input.texCoordOut.xy) - 0.5f,
+                           rand_1_06(input.texCoordOut.xy) - 0.5f, 
+                           rand_1_07(input.texCoordOut.xy) - 0.5f) * Roughness * 0.5f;
     ReflDir += jitter;
     float3 SSRColor = SSR(txPrevFrame, txGB1, samLinear, worldSpacePos, ReflDir, Roughness, Fallback);
     

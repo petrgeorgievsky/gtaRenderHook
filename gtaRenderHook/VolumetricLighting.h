@@ -48,18 +48,16 @@ private:
 class VolumetricLightingSettingsBlock : public SettingsBlock {
 public:
 	VolumetricLightingSettingsBlock() {
-		m_sName = "VolumetricLightingSettings";
+		m_sName = "VolumetricLighting";
+		m_aFields["Enable"]						= new ToggleSField("Enable", false, false, false, m_sName, true);
+		m_aFields["RaymarchingDistance"]		= new FloatSField("RaymarchingDistance", false, false, false, m_sName, 40.0f, 1.0f, 1000.0f, 0.5f);
+		m_aFields["SunlightBlendOffset"]		= new FloatSField("SunlightBlendOffset", false, false, false, m_sName, 0.25f, -1.0f, 1.0f, 0.01f);
+		m_aFields["SunlightIntensity"]			= new FloatSField("SunlightIntensity", false, false, false, m_sName, 0.25f, 0.001f, 5.0f, 0.001f);
+		m_aFields["VolumetricRenderingScale"] = new FloatSField("VolumetricRenderingScale", false, false, false, m_sName, 0.95f, 0.25f, 1.0f, 0.01f);
+		m_aFields["SunlightRaymarchingSteps"]	= new UIntSField("SunlightRaymarchingSteps", false, false, false, m_sName, 16, 2, 256);
 		Reset();
 	}
-	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);
-	void Reset();
 	void InitGUI(TwBar*);
-public:
-	unsigned int SunlightRaymarchingSteps;
-	float	RaymarchingDistance;
-	float	SunlightBlendOffset;
-	float	SunlightIntensity;
-	float	VolumetricRenderingScale;
 };
 extern VolumetricLightingSettingsBlock gVolumetricLightingSettings;

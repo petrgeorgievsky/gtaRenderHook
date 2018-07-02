@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D1XBaseTexture.h"
 class CD3D1XBackBufferTexture final :
-	public CD3D1XBaseTexture
+	public CD3D1XBaseTexture, public ID3D1XRenderTargetViewable
 {
 public:
 	CD3D1XBackBufferTexture(RwRaster* parent);

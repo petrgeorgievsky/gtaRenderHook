@@ -114,7 +114,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GTARENDERHOOK_EXPORTS;GTA_SA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GTARENDERHOOK_EXPORTS;GTA_SA;GTASA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>StdAfx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -200,8 +200,10 @@
     <ClInclude Include="D3D1X2DTexture.h" />
     <ClInclude Include="D3D1XBackBufferTexture.h" />
     <ClInclude Include="D3D1XBaseTexture.h" />
+    <ClInclude Include="D3D1XCubeTexture.h" />
     <ClInclude Include="D3D1XDepthStencilTexture.h" />
     <ClInclude Include="GTASAHooks.h" />
+    <ClInclude Include="SettingsFields.h" />
     <ClInclude Include="StreamingRH.h" />
     <ClInclude Include="CVisibilityPluginsRH.h" />
     <ClInclude Include="D3D1XShaderDefines.h" />
@@ -260,6 +262,7 @@
     <ClInclude Include="ShadowRenderer.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TemporalAA.h" />
     <ClInclude Include="VolumetricLighting.h" />
     <ClInclude Include="VoxelOctreeRenderer.h" />
     <ClInclude Include="VoxelPipeline.h" />
@@ -273,8 +276,10 @@
     <ClCompile Include="D3D1X2DTexture.cpp" />
     <ClCompile Include="D3D1XBackBufferTexture.cpp" />
     <ClCompile Include="D3D1XBaseTexture.cpp" />
+    <ClCompile Include="D3D1XCubeTexture.cpp" />
     <ClCompile Include="D3D1XDepthStencilTexture.cpp" />
     <ClCompile Include="GTASAHooks.cpp" />
+    <ClCompile Include="SettingsFields.cpp" />
     <ClCompile Include="StreamingRH.cpp" />
     <ClCompile Include="CVisibilityPluginsRH.cpp" />
     <ClCompile Include="D3D1XShaderDefines.cpp" />
@@ -343,6 +348,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TemporalAA.cpp" />
     <ClCompile Include="VolumetricLighting.cpp" />
     <ClCompile Include="VoxelOctreeRenderer.cpp" />
     <ClCompile Include="VoxelPipeline.cpp" />
@@ -462,6 +468,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\AmbientOcclusion.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\TemporalAA.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>

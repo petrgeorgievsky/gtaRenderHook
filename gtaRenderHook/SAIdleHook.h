@@ -157,6 +157,7 @@ public:
 	static void RenderInGame();
 
 	static float m_fShadowDNBalance;
+	static int m_nLastCascadeRenderCount;
 private:
 	static std::thread renderThread;
 	static std::thread updateThread;

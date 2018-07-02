@@ -54,25 +54,25 @@ extern UINT m_uiDeferredStage;
 class DeferredSettingsBlock : public SettingsBlock {
 public:
 	DeferredSettingsBlock() {
-		m_sName = "DeferredSettings";
+		m_sName = "Deferred";
+		// TODO: Separate by groups
+		//m_aFields["Enabled"] = new ToggleSField("Enabled", false, false, false, m_sName, true);
+		m_aFields["BlurShadows"] = new ToggleSField("BlurShadows", false, false, true, m_sName, true);
+		m_aFields["UsePCSS"] = new ToggleSField("UsePCSS", false, false, true, m_sName, true);
+		m_aFields["SampleShadows"] = new ToggleSField("SampleShadows", false, false, true, m_sName, true);
+		m_aFields["UseSSR"] = new ToggleSField("UseSSR", false, false, true, m_sName, true);
+		m_aFields["SampleCubemap"] = new ToggleSField("SampleCubemap", false, false, true, m_sName, true);
+		m_aFields["SSRStep"] = new FloatSField("SSRStep", false, false, false, m_sName, 0.0025f, 0.0005f, 10.0f, 0.005f);
+		m_aFields["SSRScale"] = new FloatSField("SSRScale", false, false, false, m_sName, 0.75f, 0.1f, 1.0f, 0.05f);
+		m_aFields["MaxShadowBlur"] = new FloatSField("MaxShadowBlur", false, false, false, m_sName, 4.0f, 0.0f, 10.0f, 0.005f);
+		m_aFields["MinShadowBlur"] = new FloatSField("MinShadowBlur", false, false, false, m_sName, 0.3f, 0.0f, 10.0f, 0.005f);
+
+		m_aFields["SSRMaxIterations"] = new UIntSField("SSRMaxIterations", false, false, true, m_sName, 24, 2, 128, 1);
+		m_aFields["CubemapSize"] = new UIntSField("CubemapSize", true, false, true, m_sName, 128, 8, 4096, 1);
+		m_aFields["ShadowsBlurKernelSize"] = new UIntSField("ShadowsBlurKernelSize", false, false, true, m_sName, 2, 1, 10, 1);
 		Reset();
 	}
-	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);
-	void Reset();
 	void InitGUI(TwBar*);
-public:
-	unsigned int SSRMaxIterations;
-	unsigned int CubemapSize;
-	unsigned int ShadowsBlurKernelSize;
-	float SSRStep;
-	float SSRScale;
-	float MaxShadowBlur;
-	float MinShadowBlur;
-	bool BlurShadows;
-	bool UsePCSS;
-	bool SampleShadows;
-	bool UseSSR;
-	bool SampleCubemap;
 };
 extern DeferredSettingsBlock gDeferredSettings;

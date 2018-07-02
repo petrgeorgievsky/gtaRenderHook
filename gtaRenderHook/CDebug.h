@@ -71,6 +71,10 @@ public:
 	}
 };
 
+/*
+	Debugging class, thread unsafe right now.
+	TODO: Make it thread-safe, create cpp move all defenitions to cpp
+*/
 class CDebug
 {
 public:
@@ -81,7 +85,9 @@ public:
 	}
 	// Prints debug message to log file. logLevel: 0 - errors only, 1 - method logs, 2 - in/out log
 	void printMsg(const string &msg, int logLevel) {
-		if (gDebugSettings.DebugMessaging && logLevel<= gDebugSettings.DebugLevel) {
+
+		if (gDebugSettings.GetToggleField("DebugMessaging") && 
+			logLevel<= gDebugSettings.GetInt("DebugLevel")) {
 			if (pLogStream) {
 				if (!pLogStream->is_open())
 					pLogStream->open(m_fileName, fstream::out | fstream::app);
@@ -90,10 +96,11 @@ public:
 				pLogStream->close();
 			}
 		}
+
 	}
 
 	void printError(const string &msg) {
-		if (gDebugSettings.DebugMessaging) {
+		if (gDebugSettings.GetToggleField("DebugMessaging")) {
 			if (pLogStream) {
 				if (!pLogStream->is_open())
 					pLogStream->open(m_fileName, fstream::out | fstream::app);

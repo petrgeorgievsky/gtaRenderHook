@@ -27,6 +27,7 @@
 #include "AmbientOcclusion.h"
 #include "DebugBBox.h"
 #include "PBSMaterial.h"
+#include "TemporalAA.h"
 
 HHOOK CGTASAHooks::m_hAntTweakBarHook;
 
@@ -92,9 +93,11 @@ void CGTASAHooks::InitWithRW() {
 	//CVoxelOctreeRenderer::Init();
 	DebugBBox::Initialize();
 	CPBSMaterialMgr::LoadMaterials();
+	CTemporalAA::Init();
 }
 
 void CGTASAHooks::ShutdownWithRW() {
+	CTemporalAA::Shutdown();
 	DebugBBox::Shutdown();
 	DebugRendering::Shutdown();
 	CAmbientOcclusion::Shutdown();

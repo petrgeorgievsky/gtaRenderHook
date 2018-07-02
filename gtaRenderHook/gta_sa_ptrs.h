@@ -43,7 +43,7 @@ MACRO_STOP
 #define RwV3dScale(o, a, s)             RwV3dScaleMacro(o, a, s)
 
 class CCamera;
-class CD3D1XTexture;
+class CD3D1XBaseTexture;
 class CD3D1XVertexDeclaration;
 
 /*
@@ -218,7 +218,7 @@ struct RpSkinPipeCB
 
 struct RwD3D1XRaster
 {
-	CD3D1XTexture*		resourse;
+	CD3D1XBaseTexture*		resourse;
 	unsigned char*		palette;
 	unsigned char       alpha;
 	unsigned char       cubeTextureFlags; /* 0x01 IS_CUBEMAP_TEX */

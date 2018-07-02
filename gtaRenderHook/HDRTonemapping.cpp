@@ -63,7 +63,7 @@ CHDRTonemapping::~CHDRTonemapping()
 
 
 
-void CHDRTonemapping::Render(RwRaster * input)
+void CHDRTonemapping::Render(RwRaster * input, RwRaster* output)
 {
 	m_pPostFXBuffer->data.LumWhite = gTonemapSettings.GetCurrentLumWhite();
 	m_pPostFXBuffer->data.MiddleGray = gTonemapSettings.GetCurrentMiddleGray();
@@ -98,7 +98,7 @@ void CHDRTonemapping::Render(RwRaster * input)
 
 	m_nCurrentAdaptationRaster = 1 - m_nCurrentAdaptationRaster;
 
-	g_pRwCustomEngine->SetRenderTargets(&Scene.m_pRwCamera->frameBuffer, Scene.m_pRwCamera->zBuffer, 1);
+	g_pRwCustomEngine->SetRenderTargets(&output, nullptr, 1);
 	g_pRwCustomEngine->RenderStateSet(RwRenderState::rwRENDERSTATETEXTURERASTER, reinterpret_cast<UINT>(input));
 	g_pStateMgr->FlushRenderTargets();
 
@@ -111,63 +111,36 @@ void CHDRTonemapping::Render(RwRaster * input)
 
 tinyxml2::XMLElement * TonemapSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 {
-	auto node = doc->NewElement(m_sName.c_str());
-	node->SetAttribute("Enable", EnableTonemapping);
-	node->SetAttribute("UseGTAColorCorrection", EnableGTAColorCorrection);
-	node->SetAttribute("LumWhiteDay", LumWhiteDay);
-	node->SetAttribute("LumWhiteNight", LumWhiteNight);
-	node->SetAttribute("MiddleGrayDay", MiddleGrayDay);
-	node->SetAttribute("MiddleGrayNight", MiddleGrayNight);
-	return node;
+	return SettingsBlock::Save(doc);
 }
 
 void TonemapSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
-	auto node = doc.FirstChildElement(m_sName.c_str());
-	EnableTonemapping = node->BoolAttribute("Enable", true);
-	EnableGTAColorCorrection = node->BoolAttribute("UseGTAColorCorrection", true);
-	LumWhiteDay = node->FloatAttribute("LumWhiteDay", 1.25f);
-	LumWhiteNight = node->FloatAttribute("LumWhiteNight", 1.0f);
-	MiddleGrayDay = node->FloatAttribute("MiddleGrayDay", 0.55f);
-	MiddleGrayNight = node->FloatAttribute("MiddleGrayNight", 0.25f);
+	SettingsBlock::Load(doc);
 	gTonemapSettings.m_pShaderDefineList = new CD3D1XShaderDefineList();
-	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)EnableGTAColorCorrection));
+	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)GetToggleField("UseGTAColorCorrection")));
 }
 
-void TonemapSettingsBlock::Reset()
-{
-	EnableGTAColorCorrection = true;
-	EnableTonemapping = true;
-	MiddleGrayDay = 0.55f;
-	LumWhiteDay = 1.25f;
-	MiddleGrayNight = 0.25f;
-	LumWhiteNight = 1.0f;
-}
 void TW_CALL ReloadTonemapShadersCallBack(void *value)
 {
 	gTonemapSettings.m_bShaderReloadRequired = true;
 	gTonemapSettings.m_pShaderDefineList->Reset();
-	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)gTonemapSettings.EnableGTAColorCorrection));
+	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)gTonemapSettings.GetToggleField("UseGTAColorCorrection")));
 }
 void TonemapSettingsBlock::InitGUI(TwBar * bar)
 {
-	TwAddVarRW(bar, "Use GTA Color-Correction", TwType::TW_TYPE_BOOL8, &EnableGTAColorCorrection, "group=Tonemap");
-	TwAddVarRW(bar, "LumWhite Day", TwType::TW_TYPE_FLOAT, &LumWhiteDay, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
-	TwAddVarRW(bar, "LumWhite Night", TwType::TW_TYPE_FLOAT, &LumWhiteNight, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
-	TwAddVarRW(bar, "MiddleGray Day", TwType::TW_TYPE_FLOAT, &MiddleGrayDay, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
-	TwAddVarRW(bar, "MiddleGray Night", TwType::TW_TYPE_FLOAT, &MiddleGrayNight, " min=0 max=10 step=0.005 help='meh' group=Tonemap");
-	
+	SettingsBlock::InitGUI(bar);
 	TwAddButton(bar, "Reload tonemap shaders", ReloadTonemapShadersCallBack, nullptr, "group=Tonemap");
 }
 
 float TonemapSettingsBlock::GetCurrentLumWhite()
 {
 	float dnBalance = *(float*)(0x8D12C0);
-	return (1 - dnBalance) * LumWhiteDay + dnBalance * LumWhiteNight;
+	return (1 - dnBalance) * GetFloat("LumWhiteDay") + dnBalance * GetFloat("LumWhiteNight");
 }
 
 float TonemapSettingsBlock::GetCurrentMiddleGray()
 {
 	float dnBalance = *(float*)(0x8D12C0);
-	return (1 - dnBalance) * MiddleGrayDay + dnBalance * MiddleGrayNight;
+	return (1 - dnBalance) * GetFloat("MiddleGrayDay") + dnBalance * GetFloat("MiddleGrayNight");
 }

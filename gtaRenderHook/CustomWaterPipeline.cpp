@@ -123,31 +123,9 @@ void TW_CALL ReloadWaterShadersCallBack(void *value)
 {
 	gWaterSettings.m_bShaderReloadRequired = true;
 }
-tinyxml2::XMLElement * WaterSettingsBlock::Save(tinyxml2::XMLDocument * doc)
-{
-	auto node = doc->NewElement(m_sName.c_str());
-	node->SetAttribute("Enable", EnableWater);
-	return node;
-}
-
-void WaterSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
-{
-	auto node = doc.FirstChildElement(m_sName.c_str());
-	if (!node) {
-		Reset();
-		return;
-	}
-	
-	EnableWater = node->BoolAttribute("Enable", true);
-}
-
-void WaterSettingsBlock::Reset()
-{
-	EnableWater = true;
-}
 
 void WaterSettingsBlock::InitGUI(TwBar * bar)
 {
-	TwAddVarRW(bar, "Use Custom Water", TwType::TW_TYPE_BOOL8, &EnableWater, "group=Water");
+	SettingsBlock::InitGUI(bar);
 	TwAddButton(bar, "Reload water shaders", ReloadWaterShadersCallBack, nullptr, "group=Water");
 }

@@ -18,7 +18,7 @@ class CHDRTonemapping :
 public:
 	CHDRTonemapping();
 	~CHDRTonemapping();
-	virtual void Render(RwRaster* input);
+	virtual void Render(RwRaster* input, RwRaster* output);
 private:
 	CD3D1XShader* m_pLogAvg;
 	CD3D1XShader* m_pTonemap;
@@ -36,20 +36,19 @@ private:
 class TonemapSettingsBlock : public SettingsBlock {
 public:
 	TonemapSettingsBlock() {
-		m_sName = "TonemapSettings";
+		m_sName = "Tonemap";
+		m_aFields["Enabled"] = new ToggleSField("Enabled", false, false, false, m_sName, true);
+		m_aFields["UseGTAColorCorrection"] = new ToggleSField("UseGTAColorCorrection", false, false, true, m_sName, true);
+		m_aFields["LumWhiteDay"] = new FloatSField("LumWhiteDay", false, false, false, m_sName, 1.25f, 0.0f, 10.0f, 0.005f);
+		m_aFields["LumWhiteNight"] = new FloatSField("LumWhiteNight", false, false, false, m_sName, 1.0f, 0.0f, 10.0f, 0.005f);
+		m_aFields["MiddleGrayDay"] = new FloatSField("MiddleGrayDay", false, false, false, m_sName, 0.55f, 0.0f, 10.0f, 0.005f);
+		m_aFields["MiddleGrayNight"] = new FloatSField("MiddleGrayNight", false, false, false, m_sName, 0.25f, 0.0f, 10.0f, 0.005f);
 		Reset();
 	}
 	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
 	void Load(const tinyxml2::XMLDocument &doc);
-	void Reset();
 	void InitGUI(TwBar*);
 public:
-	float LumWhiteDay;
-	float LumWhiteNight;
-	float MiddleGrayDay;
-	float MiddleGrayNight;
-	bool EnableGTAColorCorrection;
-	bool EnableTonemapping;
 	float GetCurrentLumWhite();
 	float GetCurrentMiddleGray();
 };

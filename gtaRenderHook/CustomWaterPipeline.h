@@ -22,13 +22,9 @@ class WaterSettingsBlock : public SettingsBlock {
 public:
 	WaterSettingsBlock() {
 		m_sName = "WaterSettings";
+		m_aFields["Enable"] = new ToggleSField("Enable", false, false, false, m_sName, true);
 		Reset();
 	}
-	tinyxml2::XMLElement* Save(tinyxml2::XMLDocument* doc);
-	void Load(const tinyxml2::XMLDocument &doc);
-	void Reset();
 	void InitGUI(TwBar*);
-public:
-	bool EnableWater;
 };
 extern WaterSettingsBlock gWaterSettings;

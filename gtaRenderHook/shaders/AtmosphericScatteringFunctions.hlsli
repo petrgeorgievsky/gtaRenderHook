@@ -55,11 +55,13 @@ float3 CalculateFogColor(float3 ScreenColor, float3 ViewDir, float3 LightDir, fl
     float MieCosPhi = max(-LightDir.z, 0.0);
     float MieCosSqPlOne = (1 + MieCosPhi * MieCosPhi);
     
-    float3 MieScattering = CalculateMieScattering(MieCosPhi, MieCosSqPlOne, Height) * vHorizonCol.rgb;
-    float3 RayleighScattering = CalculateRayleighScattering(CosSqPlOne, Height) * vSkyLightCol.rgb;
+    float3 SkyColor = lerp(vHorizonCol.rgb, vSkyLightCol.rgb, min(max(Height + 300.0f, 0.0f) / 600.0f, 1.0f));
+
+    float3 MieScattering = CalculateMieScattering(MieCosPhi, MieCosSqPlOne, Height) * vSunColor.rgb * vSunLightDir.w;
+    float3 RayleighScattering = CalculateRayleighScattering(CosSqPlOne, Height) * SkyColor;
     
     float3 SunContribution = min(pow(CosPhi, 8.0f), 1.0f) * vSunColor.rgb * vSunLightDir.w;
-    FullScattering = ((RayleighScattering*0.5f + MieScattering * 0.75f) + SunContribution*0.5f);
+    FullScattering = ((RayleighScattering * 0.75f + MieScattering * 0.5f) + SunContribution * 0.5f);
         
     float FogFadeCoeff = saturate(max(ViewDepth - fFogStart, 0) / abs(fFogRange));
     

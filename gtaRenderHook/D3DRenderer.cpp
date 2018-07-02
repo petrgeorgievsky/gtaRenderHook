@@ -2,7 +2,9 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3DRenderer.h"
-#include "D3D1XTexture.h"
+#include "D3D1XDepthStencilTexture.h"
+#include "D3D1XBaseTexture.h"
+#include "D3D1X2DRenderTarget.h"
 #include <directxcolors.h>
 #include "D3D1XStateManager.h"
 #include "D3DSpecificHelpers.h"
@@ -17,7 +19,7 @@ CD3DRenderer::CD3DRenderer(HWND& window)
 
 	IDXGIAdapter * pAdapter;
 	// Init adapter list.
-	if (!gDebugSettings.UseDefaultAdapter) {
+	if (!gDebugSettings.GetToggleField("UseDefaultAdapter")) {
 		for (UINT i = 0; m_pdxgiFactory->EnumAdapters(i, &pAdapter) != DXGI_ERROR_NOT_FOUND; ++i)
 			m_vAdapters.push_back(pAdapter);
 	}
@@ -76,7 +78,7 @@ bool CD3DRenderer::InitDevice()
 
 	auto currentAdapterMode = m_vAdapterModes[m_uiCurrentAdapterMode];
 	auto currentAdapter = m_vAdapters[m_uiCurrentAdapter];
-
+	bool isWindowed = gDebugSettings.GetToggleField("Windowed");
 	g_pDebug->printMsg("Device initialization: start", 1);
 	// resize and reposition rendering window if required
 	// TODO: add ability to choose wether to center it if we are in windowed mode
@@ -176,13 +178,13 @@ bool CD3DRenderer::InitDevice()
 		sd.SampleDesc.Quality = 0;
 		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		sd.BufferCount = 1;
-		sd.Flags = gDebugSettings.Windowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH : 0;
-
+		sd.Flags = isWindowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH : 0;
+		sd.SwapEffect = DXGI_SWAP_EFFECT_SEQUENTIAL;
 		DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsd;
 		ZeroMemory(&fsd, sizeof(fsd));
 		fsd.Scaling = currentAdapterMode.Scaling;
 		fsd.ScanlineOrdering = currentAdapterMode.ScanlineOrdering;
-		fsd.Windowed = gDebugSettings.Windowed;
+		fsd.Windowed = isWindowed;
 		fsd.RefreshRate = currentAdapterMode.RefreshRate;
 
 		if(CALL_D3D_API(dxgiFactory2->CreateSwapChainForHwnd(m_pd3dDevice, m_hWnd, &sd, &fsd, nullptr, &m_pSwapChain1),
@@ -206,8 +208,8 @@ bool CD3DRenderer::InitDevice()
 		sd.OutputWindow = m_hWnd;
 		sd.SampleDesc.Count = 1;
 		sd.SampleDesc.Quality = 0;
-		sd.Windowed = gDebugSettings.Windowed;
-		sd.Flags = gDebugSettings.Windowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH : 0;
+		sd.Windowed = isWindowed;
+		sd.Flags = isWindowed ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH : 0;
 		CALL_D3D_API(m_pdxgiFactory->CreateSwapChain(m_pd3dDevice, &sd, &m_pSwapChain), "Failed to create swap chain using DX11 API");
 	}
 	m_pdxgiFactory->Release();
@@ -258,16 +260,18 @@ void CD3DRenderer::BeginUpdate(RwCamera *camera)
 	// set render targets and depth buffers for camera
 	// texture flags check is used if you want to use UAV for rendering
 	// TODO: remove UAV set for camera, and make some separate functions for that
-	if (camera->frameBuffer && pd3dRTRaster->textureFlags!=64) {
+	if (camera->frameBuffer) {
 		// Set render targets
-		auto rtrv = pd3dRTRaster->resourse->GetRTRV();
-
-		if (camera->zBuffer != nullptr) 
-			g_pStateMgr->SetRenderTargets(1, &rtrv, pd3dDepthRaster->resourse->GetDSRV());		
+		auto rtTex = dynamic_cast<ID3D1XRenderTargetViewable*>(pd3dRTRaster->resourse);
+		auto rtrv = rtTex ? rtTex->GetRenderTargetView() : nullptr;
+		if (camera->zBuffer != nullptr) {
+			auto depthTex = dynamic_cast<CD3D1XDepthStencilTexture*>(pd3dDepthRaster->resourse);
+			g_pStateMgr->SetRenderTargets(1, &rtrv, depthTex->GetDepthStencilView());
+		}
 		else
 			g_pStateMgr->SetRenderTargets(1, &rtrv, nullptr);
 	}
-	else if(camera->frameBuffer&&pd3dRTRaster->textureFlags == 64) {
+	/*else if(camera->frameBuffer&&pd3dRTRaster->textureFlags == 64) {
 		// TODO: remove com pointers, or left as is, don't know if that will affect anything
 		CComPtr<ID3D11RenderTargetView> renderTargets;
 		CComPtr<ID3D11DepthStencilView> depthStencil;
@@ -275,10 +279,11 @@ void CD3DRenderer::BeginUpdate(RwCamera *camera)
 		
 		auto uav = pd3dRTRaster->resourse->GetUAV();
 		m_pImmediateContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &renderTargets.p, nullptr, 2, 1, &uav, nullptr);
-	}
+	}*/
 	else {
 		if (camera->zBuffer != nullptr) {
-			g_pStateMgr->SetRenderTargets(0, nullptr, pd3dDepthRaster->resourse->GetDSRV());
+			auto depthTex = dynamic_cast<CD3D1XDepthStencilTexture*>(pd3dDepthRaster->resourse);
+			g_pStateMgr->SetRenderTargets(0, nullptr, depthTex->GetDepthStencilView());
 		}
 	}
 	// Setup the viewport
@@ -311,17 +316,19 @@ void CD3DRenderer::Clear(RwCamera *camera,RwRGBA& color, RwInt32 flags)
 	RwD3D1XRaster* pd3dDepthRaster = GetD3D1XRaster(camera->zBuffer);
 	RwD3D1XRaster* pd3dRTRaster = GetD3D1XRaster(camera->frameBuffer);
 
-	if (flags&rwCAMERACLEARIMAGE) {
+	if (flags&rwCAMERACLEARIMAGE && camera->frameBuffer) {
+		auto rtTex = dynamic_cast<ID3D1XRenderTargetViewable*>(pd3dRTRaster->resourse);
 		float clearColor[] = { color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f, color.alpha / 255.0f };
-		m_pImmediateContext->ClearRenderTargetView(pd3dRTRaster->resourse->GetRTRV(), clearColor);
+		m_pImmediateContext->ClearRenderTargetView(rtTex->GetRenderTargetView(), clearColor);
 	}
-	if ((flags&rwCAMERACLEARZ || flags&rwCAMERACLEARSTENCIL)&& camera->zBuffer) {
+	if ((flags&rwCAMERACLEARZ || flags&rwCAMERACLEARSTENCIL) && camera->zBuffer) {
+		auto depthTex = dynamic_cast<CD3D1XDepthStencilTexture*>(pd3dDepthRaster->resourse);
 		if(!(flags&rwCAMERACLEARZ))
-			m_pImmediateContext->ClearDepthStencilView(pd3dDepthRaster->resourse->GetDSRV(), D3D11_CLEAR_STENCIL, 1.0f, 0);
+			m_pImmediateContext->ClearDepthStencilView(depthTex->GetDepthStencilView(), D3D11_CLEAR_STENCIL, 1.0f, 0);
 		else if (!(flags&rwCAMERACLEARSTENCIL))
-			m_pImmediateContext->ClearDepthStencilView(pd3dDepthRaster->resourse->GetDSRV(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+			m_pImmediateContext->ClearDepthStencilView(depthTex->GetDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 		else
-			m_pImmediateContext->ClearDepthStencilView(pd3dDepthRaster->resourse->GetDSRV(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+			m_pImmediateContext->ClearDepthStencilView(depthTex->GetDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 }
 

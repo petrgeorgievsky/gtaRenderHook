@@ -131,7 +131,7 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
     float4 CubeMap = txCubeMap.SampleLevel(samLinear, ReflDir, (1 - fGlossiness)*9.0f);
     ReflectionFallBack = lerp(CubeMap.rgb, SkyColor, 1 - CubeMap.a);
     // todo: add lighting methods for forward renderer
-    outColor.rgb = albedoSample.rgb * (DiffuseTerm * ShadowTerm * vSunColor.rgb + vSkyLightCol.rgb * 0.4f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb * ShadowTerm + ReflectionFallBack * fSpecularIntensity;
+    outColor.rgb = albedoSample.rgb * (DiffuseTerm * ShadowTerm * vSunColor.rgb + lerp(vSkyLightCol.rgb, vHorizonCol.rgb, i.vNormalDepth.z) * 0.5f) + SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb * ShadowTerm + ReflectionFallBack * fSpecularIntensity;
     outColor.a = lerp(albedoSample.a, 1, min(SpecularTerm * fSpecularIntensity * vSunLightDir.w * ShadowTerm, 1.0f));
     outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
 	return outColor;
@@ -145,12 +145,14 @@ void ShadowPS(PS_DEFERRED_IN i)
 PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
-    float4 baseColor = cDiffuseColor;
+    float4 baseColor = saturate(cDiffuseColor);
     if (bHasTexture != 0)
         baseColor *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     if (baseColor.a < 0.3)
         discard;
-    FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness, fMetallness, 1));
+    //FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness, fMetallness, 1));
+    FillGBufferVertexRadiance(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness, fMetallness, 1), 
+                                dot(cDiffuseColor, cDiffuseColor) > 4.0 ? cDiffuseColor.rgba : float4(lerp(vSkyLightCol.rgb, vHorizonCol.rgb, i.vNormalDepth.z)*0.5f, 1));
 	return Out;
 }
 void VoxelPS(PS_VOXEL_INPUT i)

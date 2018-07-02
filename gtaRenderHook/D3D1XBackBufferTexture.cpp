@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "stdafx.h"
 #include "D3D1XBackBufferTexture.h"
 #include "RwD3D1XEngine.h"
@@ -14,6 +16,7 @@ CD3D1XBackBufferTexture::CD3D1XBackBufferTexture(RwRaster* parent):
 		return;
 
 	m_pTextureResource->Release();
+	m_pTextureResource = nullptr;
 }
 
 

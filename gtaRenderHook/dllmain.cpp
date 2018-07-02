@@ -36,6 +36,7 @@
 #include "CRwGameHooks.h"
 #include "GTASAHooks.h"
 #include "StreamingRH.h"
+#include "TemporalAA.h"
 CDebug*				g_pDebug;
 CIRwRenderEngine*	g_pRwCustomEngine;
 
@@ -141,6 +142,7 @@ void LoadSettings() {
 	SettingsHolder::Instance.AddSettingBlock(&gWaterSettings);
 	SettingsHolder::Instance.AddSettingBlock(&gVolumetricLightingSettings);
 	SettingsHolder::Instance.AddSettingBlock(&gAmbientOcclusionSettings);
+	SettingsHolder::Instance.AddSettingBlock(&gTAASettingsBlock);
 	SettingsHolder::Instance.ReloadFile();
 }
 
