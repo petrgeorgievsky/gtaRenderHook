@@ -17,6 +17,7 @@ int CTemporalAA::m_nCurrentAccRaster=0;
 int CTemporalAA::m_nCurrentJitterSample=0;
 CD3D1XConstantBuffer<CBTemporalAA>* CTemporalAA::m_pTAABuffer = nullptr;
 TAASettingsBlock gTAASettingsBlock;
+bool CTemporalAA::m_bFirstTimeRender = true;
 void CTemporalAA::Init()
 {
 	m_pAccumRasters[0] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
@@ -24,6 +25,10 @@ void CTemporalAA::Init()
 	m_pTemporalAA = new CD3D1XPixelShader("shaders/TemporalAA.hlsl", "TAA_PS");
 	m_pTAABuffer = new CD3D1XConstantBuffer<CBTemporalAA>();
 	m_pTAABuffer->SetDebugName("TemporalAACB");
+	m_mPrevView.m[0].x = 1.0f;
+	m_mPrevView.m[1].y = 1.0f;
+	m_mPrevView.m[2].z = 1.0f;
+	m_mPrevView.m[3].w = 1.0f;
 }
 
 void CTemporalAA::Shutdown()
@@ -98,13 +103,13 @@ void CTemporalAA::Render(RwRaster * input, RwRaster* output, RwRaster* gBuff1, R
 	g_pRwCustomEngine->SetRenderTargets(&m_pAccumRasters[m_nCurrentAccRaster], Scene.m_pRwCamera->zBuffer, 1);
 	g_pStateMgr->FlushRenderTargets();
 	g_pStateMgr->SetConstantBufferPS(m_pTAABuffer, 9);
-	g_pStateMgr->SetRaster(input, 0);
-	g_pStateMgr->SetRaster(m_pAccumRasters[1 - m_nCurrentAccRaster], 1);
+	g_pStateMgr->SetRaster(input);
+	g_pStateMgr->SetRaster(m_bFirstTimeRender ? input : m_pAccumRasters[1 - m_nCurrentAccRaster], 1);
 	g_pStateMgr->SetRaster(gBuff1, 2);
 	g_pStateMgr->SetRaster(gBuff2, 3);
 	m_pTemporalAA->Set();
 	CFullscreenQuad::Draw();
-	g_pStateMgr->SetRaster(nullptr, 0);
+	g_pStateMgr->SetRaster(nullptr);
 	g_pStateMgr->SetRaster(nullptr, 1);
 	g_pStateMgr->SetRaster(nullptr, 2);
 	g_pStateMgr->SetRaster(nullptr, 3);
@@ -112,6 +117,7 @@ void CTemporalAA::Render(RwRaster * input, RwRaster* output, RwRaster* gBuff1, R
 	
 	
 	m_nCurrentAccRaster = 1 - m_nCurrentAccRaster;
+	m_bFirstTimeRender = false;
 	m_vPrevCamPos = *curCamPos;
 	SaveViewMatrix();
 }

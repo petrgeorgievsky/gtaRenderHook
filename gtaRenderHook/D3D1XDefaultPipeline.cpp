@@ -50,7 +50,10 @@ bool CD3D1XDefaultPipeline::Instance(void *object, RxD3D9ResEntryHeader *resEntr
 	for (RwUInt32 i = 0; i < resEntryHeader->totalNumVertex; i++)
 	{
 		vertexData[i].pos = geom->morphTarget[0].verts[i];
-		vertexData[i].normal = hasNormals ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
+		vertexData[i].normal = (hasNormals &&
+			geom->morphTarget[0].normals[i].x != NAN &&
+			geom->morphTarget[0].normals[i].y != NAN &&
+			geom->morphTarget[0].normals[i].z != NAN) ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
 		vertexData[i].uv = hasTexCoords? geom->texCoords[0][i] : RwTexCoords{ 0, 0 };
 		vertexData[i].color = hasColors? geom->preLitLum[i]: RwRGBA{ 255, 255, 255, 255 };
 	}
@@ -96,7 +99,10 @@ bool CD3D1XDefaultPipeline::Instance(void * object, RxD3D9ResEntryHeader * resEn
 	for (RwUInt32 i = 0; i < resEntryHeader->totalNumVertex; i++)
 	{
 		vertexData[i].pos = geom->morphTarget[0].verts[i];
-		vertexData[i].normal = hasNormals ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
+		vertexData[i].normal = (hasNormals && 
+			geom->morphTarget[0].normals[i].x!=NAN && 
+			geom->morphTarget[0].normals[i].y != NAN && 
+			geom->morphTarget[0].normals[i].z != NAN) ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
 		vertexData[i].uv = hasTexCoords ? geom->texCoords[0][i] : RwTexCoords{ 0, 0 };
 		vertexData[i].color = hasColors ? geom->preLitLum[i] : RwRGBA{ 255, 255, 255, 255 };
 	}
@@ -222,7 +228,8 @@ void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned i
 	for (RwUInt32 i = 0; i < vertexCount; i++)
 	{
 		RwReal length = sqrt(verticles[i].normal.x*verticles[i].normal.x + verticles[i].normal.y*verticles[i].normal.y + verticles[i].normal.z*verticles[i].normal.z);
-		verticles[i].normal = { verticles[i].normal.x / length, verticles[i].normal.y / length, verticles[i].normal.z / length };
+		if(length>0.000001f)
+			verticles[i].normal = { verticles[i].normal.x / length, verticles[i].normal.y / length, verticles[i].normal.z / length };
 	}
 }
 
@@ -276,9 +283,9 @@ void CD3D1XDefaultPipeline::GenerateNormals(SimpleVertex * verticles, unsigned i
 		};
 	}
 	// normalize normals
-	/*for (RwUInt32 i = 0; i < vertexCount; i++)
+	for (RwUInt32 i = 0; i < vertexCount; i++)
 	{
 		RwReal length = sqrt(verticles[i].normal.x*verticles[i].normal.x + verticles[i].normal.y*verticles[i].normal.y + verticles[i].normal.z*verticles[i].normal.z);
 		verticles[i].normal = { verticles[i].normal.x / length, verticles[i].normal.y / length, verticles[i].normal.z / length };
-	}*/
+	}
 }

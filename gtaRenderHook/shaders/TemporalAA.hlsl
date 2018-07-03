@@ -48,7 +48,7 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
     float4 ResultColor = ScreenColor;
     float4 ViewPos = mul(float4(WorldPos, 1), mPrevView);
     float4 PrevTC = mul(ViewPos, mProjection);
-    float2 PrevTexCoords = float2(0.5f, 0.5f) + float2(0.5f, -0.5f) * (PrevTC.xy / PrevTC.w);
+    float2 PrevTexCoords = float2(0.5f, 0.5f) + float2(0.5f, -0.5f) * (PrevTC.xy / max(PrevTC.w,0.001f));
     float2 MotionVec = PrevTexCoords - i.vTexCoord.xy;
 
     float coeff = (PrevTexCoords.x > 1.0 || PrevTexCoords.y > 1.0 
@@ -72,8 +72,7 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
             || AccamulatedColor.r > maxRGB.r || AccamulatedColor.g > maxRGB.g || AccamulatedColor.b > maxRGB.b))
             coeff = 0.0f;*/
         //NeighborSample.r = clamp(NeighborSample.r, minY, maxY);
-        NeighborSample = clamp(AccamulatedColor.rgb, minRGB, maxRGB);
-        AccamulatedColor.rgb = (NeighborSample);
+        AccamulatedColor.rgb = clamp(AccamulatedColor.rgb, minRGB, maxRGB);
        /* if (length(NeighborSample - ScreenColor.xyz) > 0.3)
             coeff = 0.5f;*/
     //}
@@ -92,7 +91,7 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
         float Jitter = InterleavedGradientNoise(i.vPosition.xy);
         float MBCoeff = 0.0f;
         float2 MBTexCoord;
-        float ExpDistr[8] = { exp(-1), exp(-2), exp(-3), exp(-4), exp(-5), exp(-6), exp(-7), exp(-8) };
+        const float ExpDistr[8] = { exp(-1), exp(-2), exp(-3), exp(-4), exp(-5), exp(-6), exp(-7), exp(-8) };
         for (int k = 1; k < 8; k++)
         {
             MBTexCoord = i.vTexCoord.xy + MotionVec * ((k + Jitter) / 8.0f);
@@ -110,6 +109,6 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
             ResultColor.rgb *= 0.5f;
         }
     }
-    
+    ResultColor.rgb = isnan(ResultColor.rgb) ? float3(0.01, 0.01, 0.01) : ResultColor.rgb;
     return ResultColor;
 }

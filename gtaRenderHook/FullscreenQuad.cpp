@@ -53,6 +53,7 @@ void CFullscreenQuad::Init()
 
 void CFullscreenQuad::Shutdown()
 {
+	delete m_BlitPS;
 	delete m_quadVB;
 	delete m_quadIB;
 	delete m_pVertexDecl;
@@ -87,7 +88,7 @@ void CFullscreenQuad::Copy(RwRaster * from, RwRaster* zBuffer)
 {
 	g_pRwCustomEngine->SetRenderTargets(&m_pBlitRaster, nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(from, 0);
+	g_pStateMgr->SetRaster(from);
 	m_BlitPS->Set();
 	Draw();
 }
@@ -96,7 +97,7 @@ void CFullscreenQuad::Copy(RwRaster * from, RwRaster * zBuffer, RwRaster * to)
 {
 	g_pRwCustomEngine->SetRenderTargets(&to, nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(from, 0);
+	g_pStateMgr->SetRaster(from);
 	m_BlitPS->Set();
 	Draw();
 }

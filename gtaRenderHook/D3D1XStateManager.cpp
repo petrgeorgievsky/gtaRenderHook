@@ -146,7 +146,7 @@ CD3D1XStateManager::CD3D1XStateManager()
 	context->CSSetConstantBuffers(0, 1, &m_pGlobalValuesBuffer);
 
 	m_pBlendState_Default = m_pBlendState;
-
+	m_pBlendState_Default->AddRef();
 	// default alpha blending state
 	m_blendDesc.RenderTarget[0].BlendEnable=true;
 	if (!CALL_D3D_API(dev->CreateBlendState(&m_blendDesc, &m_pBlendState_AlphaBlend), 
@@ -179,6 +179,12 @@ CD3D1XStateManager::~CD3D1XStateManager()
 	if (m_pRasterState)			m_pRasterState->Release();
 	if (m_pSamplerState)		m_pSamplerState->Release();
 	if (m_pCompSamplerState)	m_pCompSamplerState->Release();
+	if (m_pBlendState)			m_pBlendState->Release();
+	if (m_pBlendState_BlendAdditive)			m_pBlendState_BlendAdditive->Release();
+	if (m_pBlendState_NoBlendDestOne)			m_pBlendState_NoBlendDestOne->Release();
+	if (m_pBlendState_BlendDestOne)			m_pBlendState_BlendDestOne->Release();
+	if (m_pBlendState_AlphaBlend)			m_pBlendState_AlphaBlend->Release();
+	if (m_pBlendState_Default)			m_pBlendState_Default->Release();
 }
 
 void CD3D1XStateManager::SetCullMode(RwCullMode mode)
@@ -626,38 +632,43 @@ void CD3D1XStateManager::FlushStates()
 	}
 	// Blend state.
 	if (IsBlendDescRequiresUpdate()) {
-		
-		if(m_pBlendState != m_pBlendState_Default  && m_pBlendState != m_pBlendState_AlphaBlend && m_pBlendState != m_pBlendState_BlendDestOne&&
-			m_pBlendState != m_pBlendState_BlendAdditive && m_pBlendState != m_pBlendState_NoBlendDestOne)
-			if (m_pBlendState) { 
-				m_pBlendState->Release();
-				m_pBlendState = nullptr;
-			}
+		if (m_pBlendState) { 
+			m_pBlendState->Release();
+			m_pBlendState = nullptr;
+		}
 
 		if (m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_SRC_ALPHA &&
 			m_blendDesc.RenderTarget[0].DestBlend == D3D11_BLEND::D3D11_BLEND_INV_SRC_ALPHA) {
 			if (!m_blendDesc.RenderTarget[0].BlendEnable) {
 				m_pBlendState = m_pBlendState_Default;
+				m_pBlendState_Default->AddRef();
 			}
 			else {
 				m_pBlendState = m_pBlendState_AlphaBlend;
+				m_pBlendState_AlphaBlend->AddRef();
 			}
 			context->OMSetBlendState(m_pBlendState, 0, UINT_MAX);
 		}
 		else if (m_blendDesc.RenderTarget[0].DestBlend == D3D11_BLEND::D3D11_BLEND_ONE) 
 		{
 			if (m_blendDesc.RenderTarget[0].BlendEnable) {
-				if (m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_SRC_ALPHA)
+				if (m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_SRC_ALPHA) {
 					m_pBlendState = m_pBlendState_BlendDestOne;
-				else if (m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_ONE)
+					m_pBlendState_BlendDestOne->AddRef();
+				}
+				else if (m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_ONE) {
 					m_pBlendState = m_pBlendState_BlendAdditive;
+					m_pBlendState_BlendAdditive->AddRef();
+				}
 				else
 					g_pDebug->printMsg("Blend state: SRC:" + to_string(m_blendDesc.RenderTarget[0].SrcBlend) + " DST: " +
 						to_string(m_blendDesc.RenderTarget[0].DestBlend) + " Blend: " +
 						to_string(m_blendDesc.RenderTarget[0].BlendEnable), 2);
 			}
-			else if(m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_SRC_ALPHA)
+			else if (m_blendDesc.RenderTarget[0].SrcBlend == D3D11_BLEND::D3D11_BLEND_SRC_ALPHA) {
 				m_pBlendState = m_pBlendState_NoBlendDestOne;
+				m_pBlendState_NoBlendDestOne->AddRef();
+			}
 			else
 				g_pDebug->printMsg("Blend state: SRC:" + to_string(m_blendDesc.RenderTarget[0].SrcBlend) + " DST: " +
 					to_string(m_blendDesc.RenderTarget[0].DestBlend) + " Blend: " +

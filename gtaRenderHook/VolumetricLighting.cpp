@@ -45,7 +45,7 @@ void CVolumetricLighting::Shutdown()
 		RwRasterDestroy(m_pVolumeLightingRaster);
 }
 
-void CVolumetricLighting::RenderVolumetricEffects(RwRaster* normalsDepth,RwRaster* cascadeShadowMap, RwRaster* result)
+void CVolumetricLighting::RenderVolumetricEffects(RwRaster* normalsDepth,RwRaster* cascadeShadowMap, RwRaster* from, RwRaster* to)
 {
 	m_pVolumeLightingCB->data.RaymarchingDistance = gVolumetricLightingSettings.GetFloat("RaymarchingDistance");
 	m_pVolumeLightingCB->data.SunlightBlendOffset = gVolumetricLightingSettings.GetFloat("SunlightBlendOffset");
@@ -59,11 +59,10 @@ void CVolumetricLighting::RenderVolumetricEffects(RwRaster* normalsDepth,RwRaste
 	g_pStateMgr->SetRaster(cascadeShadowMap, 3);
 	m_pVolumetricSunlightPS->Set();
 	CFullscreenQuad::Draw();
-	CFullscreenQuad::Copy(result, Scene.m_pRwCamera->zBuffer);
 	// Than combine them with 
-	g_pRwCustomEngine->SetRenderTargets(&result, Scene.m_pRwCamera->zBuffer, 1);
+	g_pRwCustomEngine->SetRenderTargets(&to, Scene.m_pRwCamera->zBuffer, 1);
 	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(CFullscreenQuad::m_pBlitRaster, 0);
+	g_pStateMgr->SetRaster(from);
 	g_pStateMgr->SetRaster(m_pVolumeLightingRaster, 2);
 	m_pVolumetricCombinePS->Set();
 	CFullscreenQuad::Draw();

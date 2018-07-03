@@ -172,5 +172,5 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
 #else
     FinalReflect = ReflectionFallBack;
 #endif
-    return float4(FinalReflect, 1);
+    return float4(isnan(FinalReflect) ? 0.0f.xxx: FinalReflect, 1);
 }

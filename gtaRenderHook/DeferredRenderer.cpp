@@ -160,7 +160,7 @@ void CDeferredRenderer::RenderOutput()
 	// Render reflection pass
 	g_pRwCustomEngine->SetRenderTargets(&m_pReflectionRaster, nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(m_pFinalRasters[2], 3);
+	g_pStateMgr->SetRaster(m_pFinalRasters[1 - m_uiCurrentFinalRaster], 3);
 	m_pReflRenderer->SetCubemap();
 	m_pReflectionPassPS->Set();
 	CFullscreenQuad::Draw();
@@ -182,7 +182,7 @@ void CDeferredRenderer::RenderOutput()
 	// Atmospheric scattering
 	g_pRwCustomEngine->SetRenderTargets(&m_pFinalRasters[2], nullptr, 1);
 	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(m_pFinalRasters[m_uiCurrentFinalRaster], 0);
+	g_pStateMgr->SetRaster(m_pFinalRasters[m_uiCurrentFinalRaster]);
 	g_pStateMgr->SetRaster(m_aDeferredRasters[1], 1);
 	//m_pShadowRenderer->SetShadowBuffer();
 	m_pAtmospherePassPS->Set();
@@ -211,11 +211,12 @@ void CDeferredRenderer::RenderToCubemap(void(*renderCB)())
 void CDeferredRenderer::RenderTonemappedOutput()
 {
 	CVolumetricLighting::RenderVolumetricEffects(m_aDeferredRasters[1],
-		m_pShadowRenderer->m_pShadowCamera->zBuffer, m_pFinalRasters[m_uiCurrentFinalRaster]);
-	CTemporalAA::Render(m_pFinalRasters[m_uiCurrentFinalRaster], m_pFinalRasters[2], m_aDeferredRasters[1], m_aDeferredRasters[2]);
-	m_pTonemapping->Render(m_pFinalRasters[2], Scene.m_pRwCamera->frameBuffer);
+		m_pShadowRenderer->m_pShadowCamera->zBuffer, m_pFinalRasters[m_uiCurrentFinalRaster], m_pFinalRasters[3]);
+	CTemporalAA::Render(m_pFinalRasters[3], m_pFinalRasters[2], m_aDeferredRasters[1], m_aDeferredRasters[2]);
+	m_pTonemapping->Render(m_pFinalRasters[2], Scene.m_pRwCamera->frameBuffer, Scene.m_pRwCamera->zBuffer);
 	m_uiCurrentFinalRaster = 1-m_uiCurrentFinalRaster;
-	for (auto i = 0; i < 7; i++)
+	g_pStateMgr->SetRaster(nullptr);
+	for (auto i = 1; i < 7; i++)
 		g_pStateMgr->SetRaster(nullptr, i);
 }
 

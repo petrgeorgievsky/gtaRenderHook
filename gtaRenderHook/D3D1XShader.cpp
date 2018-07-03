@@ -53,7 +53,7 @@ HRESULT CD3D1XShader::CompileShaderFromFile(std::string szFileName, std::string 
 {
 	auto hr = S_OK;
 
-	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_WARNINGS_ARE_ERRORS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
+	DWORD dwShaderFlags = 0;
 #ifdef _DEBUG
 	// Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
 	// Setting this flag improves the shader debugging experience, but still allows

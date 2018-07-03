@@ -18,7 +18,7 @@ class CHDRTonemapping :
 public:
 	CHDRTonemapping();
 	~CHDRTonemapping();
-	virtual void Render(RwRaster* input, RwRaster* output);
+	virtual void Render(RwRaster* input, RwRaster* output, RwRaster* zbuffer);
 private:
 	CD3D1XShader* m_pLogAvg;
 	CD3D1XShader* m_pTonemap;

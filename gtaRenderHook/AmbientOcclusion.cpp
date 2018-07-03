@@ -42,7 +42,7 @@ void CAmbientOcclusion::RenderAO(RwRaster * normalsDepth)
 	g_pRwCustomEngine->SetRenderTargets(&m_pAORaser, nullptr, 1);
 	g_pStateMgr->SetConstantBufferPS(m_pAmbientOcclusionCB, 8);
 	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(normalsDepth, 0);
+	g_pStateMgr->SetRaster(normalsDepth);
 	m_pAmbientOcclusionPS->Set();
 	CFullscreenQuad::Draw();
 }

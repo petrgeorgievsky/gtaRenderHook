@@ -84,7 +84,7 @@ float SampleShadowMap(Texture2D txShadow, SamplerComparisonState samShadow, Samp
     ShadowTexCoord.y = 1.0f - ShadowTexCoord.y;
 	// early fail
     if (ShadowTexCoord.x < 0 || ShadowTexCoord.x > 1 || ShadowTexCoord.y < 0 || ShadowTexCoord.y > 1)
-        return 1;
+        return 1.0f;
 	// calculate shadow coordinate(because we use 4 cascades, we need to get 4 texcoord spaces each is half of original space plus offset)
     ShadowTexCoord.x *= 1.0f / CascadeCount;
     ShadowTexCoord += offset;
@@ -134,7 +134,7 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
 {
 	// early fail
     if (vSunLightDir.w <= 0)
-        return 0;
+        return 0.0f;
 	// TODO: make blend distance customizible, perhaps different for each cascade.
     const float blendDistance = 6;
 	// Shift view depth by blend distance, optimization for static blend distance

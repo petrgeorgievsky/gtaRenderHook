@@ -32,7 +32,7 @@ public:
 	/*!
 		Renders all volumetric lighting and combines it with result raster.
 	*/
-	static void RenderVolumetricEffects(RwRaster* normalsDepth, RwRaster* cascadeShadowMap, RwRaster* result);
+	static void RenderVolumetricEffects(RwRaster* normalsDepth, RwRaster* cascadeShadowMap, RwRaster* from, RwRaster* to);
 	static void	QueueTextureReload();
 	static bool	m_bRequiresReloading;
 private:

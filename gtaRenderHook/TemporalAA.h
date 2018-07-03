@@ -26,6 +26,7 @@ private:
 	static RwRaster* m_pAccumRasters[2];
 	static int m_nCurrentAccRaster;
 	static int m_nCurrentJitterSample;
+	static bool m_bFirstTimeRender;
 	static RwV3d m_vPrevCamPos;
 	static RwGraphicsMatrix m_mPrevView;
 	static CD3D1XConstantBuffer<CBTemporalAA>* m_pTAABuffer;

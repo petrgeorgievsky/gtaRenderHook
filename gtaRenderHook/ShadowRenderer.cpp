@@ -192,8 +192,6 @@ void CShadowRenderer::RenderShadowToBuffer(int cascade,void(*render)(int cascade
 void CShadowRenderer::SetShadowBuffer() const
 {
 	// If shadow rendering has not ended we don't need to set shadow buffer
-	if (!m_bShadowsRendered)
-		return;
 	m_pLightCB->data.ShadowSize = gShadowSettings.Size;
 	m_pLightCB->data.CascadeCount = gShadowSettings.ShadowCascadeCount;
 	for (auto i = 0; i < 4; i++)

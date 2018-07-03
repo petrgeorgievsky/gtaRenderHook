@@ -339,11 +339,11 @@ public:
 	}
 private:
 	ID3D11BlendState*			m_pBlendState			= nullptr;
-	CComPtr<ID3D11BlendState>	m_pBlendState_Default;
-	CComPtr<ID3D11BlendState>   m_pBlendState_AlphaBlend;
-	CComPtr<ID3D11BlendState>   m_pBlendState_BlendDestOne;
-	CComPtr<ID3D11BlendState>   m_pBlendState_NoBlendDestOne;
-	CComPtr<ID3D11BlendState>   m_pBlendState_BlendAdditive;
+	ID3D11BlendState*	m_pBlendState_Default;
+	ID3D11BlendState*   m_pBlendState_AlphaBlend;
+	ID3D11BlendState*   m_pBlendState_BlendDestOne;
+	ID3D11BlendState*   m_pBlendState_NoBlendDestOne;
+	ID3D11BlendState*   m_pBlendState_BlendAdditive;
 	ID3D11RasterizerState*		m_pRasterState			= nullptr;
 	ID3D11DepthStencilState*	m_pDepthStencilState	= nullptr;
 	ID3D11SamplerState*			m_pSamplerState			= nullptr;

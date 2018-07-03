@@ -63,7 +63,7 @@ CHDRTonemapping::~CHDRTonemapping()
 
 
 
-void CHDRTonemapping::Render(RwRaster * input, RwRaster* output)
+void CHDRTonemapping::Render(RwRaster * input, RwRaster* output, RwRaster* zbuffer)
 {
 	m_pPostFXBuffer->data.LumWhite = gTonemapSettings.GetCurrentLumWhite();
 	m_pPostFXBuffer->data.MiddleGray = gTonemapSettings.GetCurrentMiddleGray();
@@ -98,14 +98,14 @@ void CHDRTonemapping::Render(RwRaster * input, RwRaster* output)
 
 	m_nCurrentAdaptationRaster = 1 - m_nCurrentAdaptationRaster;
 
-	g_pRwCustomEngine->SetRenderTargets(&output, nullptr, 1);
+	g_pRwCustomEngine->SetRenderTargets(&output, zbuffer, 1);
 	g_pRwCustomEngine->RenderStateSet(RwRenderState::rwRENDERSTATETEXTURERASTER, reinterpret_cast<UINT>(input));
 	g_pStateMgr->FlushRenderTargets();
 
 	g_pStateMgr->SetRaster(m_pAdaptationRaster[1 - m_nCurrentAdaptationRaster], 1);
 	m_pTonemap->Set();
 	CFullscreenQuad::Draw();
-	g_pStateMgr->SetRaster(nullptr, 0);
+	g_pStateMgr->SetRaster(nullptr);
 	g_pStateMgr->SetRaster(nullptr, 1);
 }
 

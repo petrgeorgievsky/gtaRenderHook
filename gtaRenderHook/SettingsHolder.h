@@ -1,6 +1,7 @@
 #pragma once
 #include <tinyxml2.h>
 #include <AntTweakBar.h>
+#include <unordered_map>
 #include "SettingsFields.h"
 class SettingsBlock;
 class CD3D1XShader;
