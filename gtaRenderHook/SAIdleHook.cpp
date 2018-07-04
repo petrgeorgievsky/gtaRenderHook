@@ -62,14 +62,14 @@ void CSAIdleHook::Patch()
 
 void CSAIdleHook::Idle(void *Data)
 {
-	SettingsHolder::Instance.InitGUI();
+	SettingsHolder::Instance()->InitGUI();
 	if (!gDebugSettings.GetToggleField("UseIdleHook")) {
 		
 		_Idle(Data);
-		SettingsHolder::Instance.DrawGUI();
+		SettingsHolder::Instance()->DrawGUI();
 		return;
 	}
-	SettingsHolder::Instance.ReloadShadersIfRequired(); 
+	SettingsHolder::Instance()->ReloadShadersIfRequired();
 	// Update timers
 	TimeUpdate();
 	// Init 2D stuff per frame.
@@ -103,8 +103,8 @@ void CSAIdleHook::Idle(void *Data)
 		return;
 	if (!FrontEndMenuManager.m_bMenuActive && TheCamera.GetScreenFadeStatus() != 2) {
 		RenderInGame();
-		SettingsHolder::Instance.DrawGUI();
-		if (SettingsHolder::Instance.IsGUIEnabled()) {
+		SettingsHolder::Instance()->DrawGUI();
+		if (SettingsHolder::Instance()->IsGUIEnabled()) {
 			POINT mousePos;
 			GetCursorPos(&mousePos);
 			DefinedState2d();
@@ -497,9 +497,9 @@ void CSAIdleHook::PrepareRenderStuff()
 	// TODO: add custom key to show menu
 	auto guiEnabled = GetKeyState(VK_F12) & 1;
 	if (guiEnabled)
-		SettingsHolder::Instance.EnableGUI();	
+		SettingsHolder::Instance()->EnableGUI();
 	else
-		SettingsHolder::Instance.DisableGUI();
+		SettingsHolder::Instance()->DisableGUI();
 
 	GetCursorPos(&pMousePos);
 	if(!guiEnabled)

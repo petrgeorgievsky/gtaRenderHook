@@ -43,12 +43,12 @@ CDeferredRenderer::CDeferredRenderer()
 	m_pFinalRasters[2] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	m_pFinalRasters[3] = RwRasterCreate(RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555);
 	
-	m_pSunLightingPS	= new CD3D1XPixelShader("shaders/Deferred.hlsl", "SunLightingPS", gDeferredSettings.m_pShaderDefineList);
-	m_pPointLightingPS	= new CD3D1XPixelShader("shaders/Deferred.hlsl", "PointLightingPS", gDeferredSettings.m_pShaderDefineList);
-	m_pFinalPassPS		= new CD3D1XPixelShader("shaders/Deferred.hlsl", "FinalPassPS", gDeferredSettings.m_pShaderDefineList);
+	m_pSunLightingPS	= new CD3D1XPixelShader("shaders/Deferred.hlsl", "SunLightingPS", &gDeferredSettings.m_ShaderDefineList);
+	m_pPointLightingPS	= new CD3D1XPixelShader("shaders/Deferred.hlsl", "PointLightingPS", &gDeferredSettings.m_ShaderDefineList);
+	m_pFinalPassPS		= new CD3D1XPixelShader("shaders/Deferred.hlsl", "FinalPassPS", &gDeferredSettings.m_ShaderDefineList);
 	m_pBlitPassPS		= new CD3D1XPixelShader("shaders/Deferred.hlsl", "BlitPS");
-	m_pAtmospherePassPS = new CD3D1XPixelShader("shaders/AtmosphericScattering.hlsl", "AtmosphericScatteringPS", gDeferredSettings.m_pShaderDefineList);
-	m_pReflectionPassPS = new CD3D1XPixelShader("shaders/ScreenSpaceReflections.hlsl", "ReflectionPassPS", gDeferredSettings.m_pShaderDefineList);
+	m_pAtmospherePassPS = new CD3D1XPixelShader("shaders/AtmosphericScattering.hlsl", "AtmosphericScatteringPS", &gDeferredSettings.m_ShaderDefineList);
+	m_pReflectionPassPS = new CD3D1XPixelShader("shaders/ScreenSpaceReflections.hlsl", "ReflectionPassPS", &gDeferredSettings.m_ShaderDefineList);
 
 	gDeferredSettings.m_aShaderPointers.push_back(m_pSunLightingPS);
 	gDeferredSettings.m_aShaderPointers.push_back(m_pPointLightingPS);
@@ -272,27 +272,26 @@ void DeferredSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
 	SettingsBlock::Load(doc);
 
-	gDeferredSettings.m_pShaderDefineList = new CD3D1XShaderDefineList();
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SSR_SAMPLE_COUNT", to_string(GetUInt("SSRMaxIterations")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_SHADOWS", to_string((int)GetToggleField("SampleShadows")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)GetToggleField("BlurShadows")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)GetToggleField("UsePCSS")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(GetUInt("ShadowsBlurKernelSize")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)GetToggleField("UseSSR")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)GetToggleField("SampleCubemap")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SSR_SAMPLE_COUNT", to_string(GetUInt("SSRMaxIterations")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SAMPLE_SHADOWS", to_string((int)GetToggleField("SampleShadows")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("BLUR_SHADOWS", to_string((int)GetToggleField("BlurShadows")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("USE_PCS_SHADOWS", to_string((int)GetToggleField("UsePCSS")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SHADOW_BLUR_KERNEL", to_string(GetUInt("ShadowsBlurKernelSize")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("USE_SSR", to_string((int)GetToggleField("UseSSR")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SAMPLE_CUBEMAP", to_string((int)GetToggleField("SampleCubemap")));
 }
 
 void TW_CALL ReloadDeferredShadersCallBack(void *value)
 {
 	gDeferredSettings.m_bShaderReloadRequired = true;
-	gDeferredSettings.m_pShaderDefineList->Reset();
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SSR_SAMPLE_COUNT", to_string(gDeferredSettings.GetUInt("SSRMaxIterations")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("SampleShadows")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("BLUR_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("BlurShadows")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_PCS_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("UsePCSS")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SHADOW_BLUR_KERNEL", to_string(gDeferredSettings.GetUInt("ShadowsBlurKernelSize")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("USE_SSR", to_string((int)gDeferredSettings.GetToggleField("UseSSR")));
-	gDeferredSettings.m_pShaderDefineList->AddDefine("SAMPLE_CUBEMAP", to_string((int)gDeferredSettings.GetToggleField("SampleCubemap")));
+	gDeferredSettings.m_ShaderDefineList.Reset();
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SSR_SAMPLE_COUNT", to_string(gDeferredSettings.GetUInt("SSRMaxIterations")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SAMPLE_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("SampleShadows")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("BLUR_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("BlurShadows")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("USE_PCS_SHADOWS", to_string((int)gDeferredSettings.GetToggleField("UsePCSS")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SHADOW_BLUR_KERNEL", to_string(gDeferredSettings.GetUInt("ShadowsBlurKernelSize")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("USE_SSR", to_string((int)gDeferredSettings.GetToggleField("UseSSR")));
+	gDeferredSettings.m_ShaderDefineList.AddDefine("SAMPLE_CUBEMAP", to_string((int)gDeferredSettings.GetToggleField("SampleCubemap")));
 }
 void TW_CALL ReloadDeferredTexturesCallBack(void *value)
 {

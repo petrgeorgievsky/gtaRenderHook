@@ -206,6 +206,7 @@ void CD3D1XEnumParser::ConvertRasterFormat(RwRaster* raster, RwUInt32 flags)
 		if (rasterPixelFmt == rwRASTERFORMAT1555)//dxt1
 		{
 			d3dRaster->format = DXGI_FORMAT_BC1_UNORM;
+			d3dRaster->alpha = 1;
 		}
 		else if (rasterPixelFmt == rwRASTERFORMAT565)//dxt2
 		{

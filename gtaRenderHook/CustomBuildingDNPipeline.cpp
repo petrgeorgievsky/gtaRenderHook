@@ -62,6 +62,14 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 
 	g_pStateMgr->SetPrimitiveTopology(CD3D1XEnumParser::ConvertPrimTopology((RwPrimitiveType)entryData->header.primType));
 
+	bool hasAlphaTextures = false;
+	for (RwUInt32 i = 0; i < entryData->header.numMeshes; i++)
+	{
+		auto mesh = GetModelsData(entryData)[i];
+		if (mesh.material->texture && mesh.material->texture->raster)
+			hasAlphaTextures |= GetD3D1XRaster(mesh.material->texture->raster)->alpha;
+	}
+
 	if (m_uiDeferredStage == 3|| m_uiDeferredStage == 4) {
 		m_pVoxelVS->Set();
 		m_pVoxelGS->Set();
@@ -71,7 +79,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 	if (m_uiDeferredStage == 1)
 		m_pDeferredPS->Set();
 	else if (m_uiDeferredStage == 2)
-		m_pShadowPS->Set();
+		SetShadowPipeShader(hasAlphaTextures);
 	else if (m_uiDeferredStage == 3)
 		m_pVoxelPS->Set();
 	else if (m_uiDeferredStage == 4)
@@ -109,7 +117,7 @@ void CCustomBuildingDNPipeline::Render(RwResEntry * repEntry, void * object, RwU
 		}
 		bAlphaEnable |= mesh.material->color.alpha != 255 || mesh.vertexAlpha;
 
-		if (mesh.material->texture&&mesh.material->texture->raster) {
+		if (mesh.material->texture && mesh.material->texture->raster) {
 			bAlphaEnable |= GetD3D1XRaster(mesh.material->texture->raster)->alpha;
 			
 			g_pRwCustomEngine->SetTexture(mesh.material->texture, 0);

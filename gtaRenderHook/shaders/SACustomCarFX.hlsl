@@ -138,9 +138,11 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
 }
 void ShadowPS(PS_DEFERRED_IN i)
 {
+#if HAS_TEXTURE == 1
 	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
 	if (outColor.a < 0.3)
 		discard;
+#endif
 }
 PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {

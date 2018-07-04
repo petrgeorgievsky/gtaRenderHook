@@ -18,7 +18,7 @@ void CAmbientOcclusion::Init()
 	m_pAORaser = RwRasterCreate((RwInt32)(RsGlobal.maximumWidth*gAmbientOcclusionSettings.GetFloat("Scale")),
 								(RwInt32)(RsGlobal.maximumHeight*gAmbientOcclusionSettings.GetFloat("Scale")), 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
 	gDebugSettings.DebugRenderTargetList.push_back(m_pAORaser);
-	m_pAmbientOcclusionPS = new CD3D1XPixelShader("shaders/AmbientOcclusion.hlsl", "AmbientOcclusionPS",gAmbientOcclusionSettings.m_pShaderDefineList);
+	m_pAmbientOcclusionPS = new CD3D1XPixelShader("shaders/AmbientOcclusion.hlsl", "AmbientOcclusionPS", &gAmbientOcclusionSettings.m_ShaderDefineList);
 	m_pAmbientOcclusionCB = new CD3D1XConstantBuffer<CBAmbientOcclusion>();
 	gAmbientOcclusionSettings.m_aShaderPointers.push_back(m_pAmbientOcclusionPS);
 }
@@ -67,17 +67,14 @@ void AmbientOcclusionSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
 	SettingsBlock::Load(doc);
 
-	m_pShaderDefineList = new CD3D1XShaderDefineList();
-	m_pShaderDefineList->AddDefine("AO_SAMPLE_COUNT", std::to_string(gAmbientOcclusionSettings.GetUInt("SampleCount")));
+	m_ShaderDefineList.AddDefine("AO_SAMPLE_COUNT", std::to_string(gAmbientOcclusionSettings.GetUInt("SampleCount")));
 }
 
 void TW_CALL ReloadAOShadersCallBack(void *value)
 {
 	gAmbientOcclusionSettings.m_bShaderReloadRequired = true;
-	if(gAmbientOcclusionSettings.m_pShaderDefineList==nullptr)
-		gAmbientOcclusionSettings.m_pShaderDefineList = new CD3D1XShaderDefineList();
-	gAmbientOcclusionSettings.m_pShaderDefineList->Reset();
-	gAmbientOcclusionSettings.m_pShaderDefineList->AddDefine("AO_SAMPLE_COUNT", std::to_string(gAmbientOcclusionSettings.GetUInt("SampleCount")));
+	gAmbientOcclusionSettings.m_ShaderDefineList.Reset();
+	gAmbientOcclusionSettings.m_ShaderDefineList.AddDefine("AO_SAMPLE_COUNT", std::to_string(gAmbientOcclusionSettings.GetUInt("SampleCount")));
 }
 void TW_CALL ReloadAOTexturesCallBack(void *value)
 {

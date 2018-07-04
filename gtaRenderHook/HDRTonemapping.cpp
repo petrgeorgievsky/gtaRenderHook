@@ -18,12 +18,12 @@ CHDRTonemapping::CHDRTonemapping():CPostProcessEffect("HDRTonemapping")
 {
 	m_pAdaptationRaster[0] = RwRasterCreate(1, 1, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
 	m_pAdaptationRaster[1] = RwRasterCreate(1, 1, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
-	m_pLogAvg = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "LogLuminancePS", gTonemapSettings.m_pShaderDefineList);
-	m_pTonemap = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "TonemapPS", gTonemapSettings.m_pShaderDefineList);
-	m_pDownScale2x2_Lum = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale2x2_LumPS", gTonemapSettings.m_pShaderDefineList);
-	m_pDownScale3x3 = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3PS", gTonemapSettings.m_pShaderDefineList);
-	m_pDownScale3x3_BrightPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3_BrightPassPS", gTonemapSettings.m_pShaderDefineList);
-	m_pAdaptationPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "AdaptationPassPS", gTonemapSettings.m_pShaderDefineList);
+	m_pLogAvg = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "LogLuminancePS", &gTonemapSettings.m_ShaderDefineList);
+	m_pTonemap = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "TonemapPS", &gTonemapSettings.m_ShaderDefineList);
+	m_pDownScale2x2_Lum = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale2x2_LumPS", &gTonemapSettings.m_ShaderDefineList);
+	m_pDownScale3x3 = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3PS", &gTonemapSettings.m_ShaderDefineList);
+	m_pDownScale3x3_BrightPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "DownScale3x3_BrightPassPS", &gTonemapSettings.m_ShaderDefineList);
+	m_pAdaptationPass = new CD3D1XPixelShader( "shaders/HDRTonemapping.hlsl", "AdaptationPassPS", &gTonemapSettings.m_ShaderDefineList);
 	
 	gTonemapSettings.m_aShaderPointers.push_back(m_pLogAvg);
 	gTonemapSettings.m_aShaderPointers.push_back(m_pTonemap);
@@ -117,15 +117,14 @@ tinyxml2::XMLElement * TonemapSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 void TonemapSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
 	SettingsBlock::Load(doc);
-	gTonemapSettings.m_pShaderDefineList = new CD3D1XShaderDefineList();
-	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)GetToggleField("UseGTAColorCorrection")));
+	gTonemapSettings.m_ShaderDefineList.AddDefine("USE_GTA_CC", to_string((int)GetToggleField("UseGTAColorCorrection")));
 }
 
 void TW_CALL ReloadTonemapShadersCallBack(void *value)
 {
 	gTonemapSettings.m_bShaderReloadRequired = true;
-	gTonemapSettings.m_pShaderDefineList->Reset();
-	gTonemapSettings.m_pShaderDefineList->AddDefine("USE_GTA_CC", to_string((int)gTonemapSettings.GetToggleField("UseGTAColorCorrection")));
+	gTonemapSettings.m_ShaderDefineList.Reset();
+	gTonemapSettings.m_ShaderDefineList.AddDefine("USE_GTA_CC", to_string((int)gTonemapSettings.GetToggleField("UseGTAColorCorrection")));
 }
 void TonemapSettingsBlock::InitGUI(TwBar * bar)
 {

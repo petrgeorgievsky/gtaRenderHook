@@ -40,17 +40,6 @@
 CDebug*				g_pDebug;
 CIRwRenderEngine*	g_pRwCustomEngine;
 
-// TODO: move this crap out of here
-RxD3D9InstanceData* GetModelsData(RxInstanceData * data)
-{
-	return reinterpret_cast<RxD3D9InstanceData*>(data + 1);
-}
-
-RpMesh * GetMeshesData(RpD3DMeshHeader * data)
-{
-	return reinterpret_cast<RpMesh*>(data + 1);
-}
-
 // defines
 // TODO: "DELET DIS" - Monika
 #if (GTA_SA)//
@@ -133,19 +122,6 @@ RpMesh * GetMeshesData(RpD3DMeshHeader * data)
 //#define envMapSupportPtr 0x5DA044
 #endif 
 
-void LoadSettings() {
-	SettingsHolder::Instance.AddSettingBlock(&gDebugSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gShaderDefineSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gTonemapSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gShadowSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gDeferredSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gWaterSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gVolumetricLightingSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gAmbientOcclusionSettings);
-	SettingsHolder::Instance.AddSettingBlock(&gTAASettingsBlock);
-	SettingsHolder::Instance.ReloadFile();
-}
-
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved
@@ -156,8 +132,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		
-		LoadSettings();
+		// Load RenderHook settings
+		SettingsHolder::Instance()->ReloadFile();
 		// Init basic stuff
 		g_pDebug = new CDebug("debug.log");
 		g_pRwCustomEngine = new CRwD3D1XEngine(g_pDebug);
@@ -182,4 +158,15 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		break;
 	}
 	return TRUE;
+}
+
+// TODO: move this crap out of here
+RxD3D9InstanceData* GetModelsData(RxInstanceData * data)
+{
+	return reinterpret_cast<RxD3D9InstanceData*>(data + 1);
+}
+
+RpMesh * GetMeshesData(RpD3DMeshHeader * data)
+{
+	return reinterpret_cast<RpMesh*>(data + 1);
 }

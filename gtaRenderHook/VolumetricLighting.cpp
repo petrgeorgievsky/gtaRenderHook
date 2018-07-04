@@ -19,8 +19,8 @@ VolumetricLightingSettingsBlock gVolumetricLightingSettings;
 
 void CVolumetricLighting::Init()
 {
-	m_pVolumetricSunlightPS = new CD3D1XPixelShader("shaders/VolumetricLighting.hlsl", "VolumetricSunlightPS", gVolumetricLightingSettings.m_pShaderDefineList);
-	m_pVolumetricCombinePS = new CD3D1XPixelShader("shaders/VolumetricLighting.hlsl", "VolumetricCombinePS", gVolumetricLightingSettings.m_pShaderDefineList);
+	m_pVolumetricSunlightPS = new CD3D1XPixelShader("shaders/VolumetricLighting.hlsl", "VolumetricSunlightPS", &gVolumetricLightingSettings.m_ShaderDefineList);
+	m_pVolumetricCombinePS = new CD3D1XPixelShader("shaders/VolumetricLighting.hlsl", "VolumetricCombinePS", &gVolumetricLightingSettings.m_ShaderDefineList);
 	float renderingScale = gVolumetricLightingSettings.GetFloat("VolumetricRenderingScale");
 	m_pVolumeLightingRaster = RwRasterCreate((RwInt32)(RsGlobal.maximumWidth*renderingScale),
 											(RwInt32)(RsGlobal.maximumHeight*renderingScale),
@@ -83,15 +83,14 @@ void CVolumetricLighting::QueueTextureReload()
 void VolumetricLightingSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
 	SettingsBlock::Load(doc);
-	m_pShaderDefineList = new CD3D1XShaderDefineList();
-	m_pShaderDefineList->AddDefine("SUNLIGHT_RM_STEPS", std::to_string(gVolumetricLightingSettings.GetUInt("SunlightRaymarchingSteps")));
+	m_ShaderDefineList.AddDefine("SUNLIGHT_RM_STEPS", std::to_string(gVolumetricLightingSettings.GetUInt("SunlightRaymarchingSteps")));
 }
 
 void TW_CALL ReloadVolumetricShadersCallBack(void *value)
 {
 	gVolumetricLightingSettings.m_bShaderReloadRequired = true;
-	gVolumetricLightingSettings.m_pShaderDefineList->Reset();
-	gVolumetricLightingSettings.m_pShaderDefineList->AddDefine("SUNLIGHT_RM_STEPS", std::to_string(gVolumetricLightingSettings.GetUInt("SunlightRaymarchingSteps")));
+	gVolumetricLightingSettings.m_ShaderDefineList.Reset();
+	gVolumetricLightingSettings.m_ShaderDefineList.AddDefine("SUNLIGHT_RM_STEPS", std::to_string(gVolumetricLightingSettings.GetUInt("SunlightRaymarchingSteps")));
 }
 void TW_CALL ReloadVolumetricTexturesCallBack(void *value)
 {

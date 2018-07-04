@@ -253,6 +253,7 @@ tinyxml2::XMLElement * ShadowSettingsBlock::Save(tinyxml2::XMLDocument * doc)
 
 void ShadowSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
 {
+	SettingsBlock::Load(doc);
 	auto shadowSettingsNode = doc.FirstChildElement(m_sName.c_str());
 	// Shadows
 	

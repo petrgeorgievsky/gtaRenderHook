@@ -265,7 +265,7 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkB
 		if (!gShadowSettings.GetToggleField("CullPerCascade")) {
 			// Check if entity is inside any of existing light bounding volumes
 			for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
-				isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
+				isInsideLightBBox |= IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, entityBBox);
 			
 			if (isInsideLightBBox)
 				AddEntityToShadowCasterList(shadowEntity, renderDistance, 0);
@@ -274,7 +274,7 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded(CEntity * entity, bool checkB
 			for (auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++)
 			{
 				// Check if entity is inside light bounding volume 
-				isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 4, entityBBox);
+				isInsideLightBBox = IsAABBInsideBoundingVolume(ms_aShadowCasterBoundingPlanes[i], 5, entityBBox);
 				if (isInsideLightBBox)
 					AddEntityToShadowCasterList(shadowEntity, renderDistance, i);
 			}

@@ -10,31 +10,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-SettingsHolder SettingsHolder::Instance{};
-
 DebugSettingsBlock gDebugSettings; 
 ShaderDefinesSettingsBlock gShaderDefineSettings;
-
-SettingsHolder::SettingsHolder()
-{
-	// Try to find settings file, if not found create default.
-	/*if (mSettingsFile.LoadFile("settings.xml") == tinyxml2::XMLError::XML_ERROR_FILE_NOT_FOUND) 
-	{
-		ResetSettings();
-		SaveSettings();
-	}
-	else {
-		LoadSettings(mSettingsFile);
-		m_bInitialized = true;
-	}*/
-	
-}
-
-
-SettingsHolder::~SettingsHolder()
-{
-	
-}
+std::string SettingsHolder::m_sSettingsFileName = "settings.xml";
 
 void SettingsHolder::AddSettingBlock(SettingsBlock * block)
 {
@@ -58,22 +36,17 @@ void SettingsHolder::LoadSettings(const tinyxml2::XMLDocument &file)
 void SettingsHolder::SaveSettings()
 {
 	tinyxml2::XMLDocument newSettings;
-
+	// Save each settings block
 	for (auto block : m_aSettingsBlocks)
 		newSettings.InsertEndChild(block->Save(&newSettings));
 
-	newSettings.SaveFile("settings.xml");
+	newSettings.SaveFile(m_sSettingsFileName.c_str());
 }
 
 void SettingsHolder::ReloadFile()
 {
-	// If initialized, then try to reload file
-	if (m_bInitialized) {
-		LoadSettings(mSettingsFile);
-		return;
-	}
 	// Try to find settings file, if not found create default.
-	if (mSettingsFile.LoadFile("settings.xml") == tinyxml2::XMLError::XML_ERROR_FILE_NOT_FOUND)
+	if (mSettingsFile.LoadFile(m_sSettingsFileName.c_str()) == tinyxml2::XMLError::XML_ERROR_FILE_NOT_FOUND)
 	{
 		ResetSettings();
 		SaveSettings();
@@ -93,12 +66,12 @@ void SettingsHolder::ReloadShadersIfRequired()
 }
 void TW_CALL SaveDataCallBack(void *value)
 {
-	SettingsHolder::Instance.SaveSettings();
+	SettingsHolder::Instance()->SaveSettings();
 }
 
 void TW_CALL ReloadDataCallBack(void *value)
 {
-	SettingsHolder::Instance.ReloadFile();
+	SettingsHolder::Instance()->ReloadFile();
 }
 
 void SettingsHolder::InitGUI()
@@ -185,6 +158,6 @@ void SettingsBlock::InitGUI(TwBar * guiholder)
 void SettingsBlock::ReloadShaders()
 {
 	for (auto shader : m_aShaderPointers)
-		shader->Reload(m_pShaderDefineList);
+		shader->Reload(&m_ShaderDefineList);
 	m_bShaderReloadRequired = false;
 }
