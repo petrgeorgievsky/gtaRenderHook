@@ -6,7 +6,7 @@
 bool CIRwRenderEngine::EventHandlingSystem(RwRenderSystemState nOption, int * pOut, void * pInOut, int nIn)
 {
 	std::string s = "Event handled: "; s += std::to_string(static_cast<int>(nOption));
-	//m_pDebug->printMsg(s.c_str());
+	g_pDebug->printMsg(s.c_str(), 2);
 	switch (nOption)
 	{
 	case RwRenderSystemState::rwDEVICESYSTEMOPEN:

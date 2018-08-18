@@ -9,12 +9,12 @@
 #include <game_sa\CCamera.h>
 
 CLight CLightManager::m_aLights[1024];
-CD3D1XStructuredBuffer<CLight>* CLightManager::m_pLightBuffer = nullptr;
+CD3D1XConstantBuffer<LightsCB>* CLightManager::m_pLightBuffer = nullptr;
 int CLightManager::m_nLightCount = 0;
 
 void CLightManager::Init()
 {
-	m_pLightBuffer = new CD3D1XStructuredBuffer<CLight>(16);
+	m_pLightBuffer = new CD3D1XConstantBuffer<LightsCB>();
 }
 
 void CLightManager::Shutdown()
@@ -46,11 +46,14 @@ void CLightManager::SortByDistance(const RwV3d& from)
 
 void CLightManager::Update()
 {
-	m_pLightBuffer->Update(&m_aLights[0]);
+    for (auto i = 0; i < 16; i++)
+        m_pLightBuffer->data.m_aLights[i] = m_aLights[i];
+    
+	m_pLightBuffer->Update();
 	g_pStateMgr->SetLightCount(min(m_nLightCount, 16));
 }
 
-CD3D1XStructuredBuffer<CLight> * CLightManager::GetBuffer()
+CD3D1XConstantBuffer<LightsCB> * CLightManager::GetBuffer()
 {
 	return m_pLightBuffer;
 }

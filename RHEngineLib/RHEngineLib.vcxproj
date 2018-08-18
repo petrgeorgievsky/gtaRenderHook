@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{62D003A2-7DEB-47C6-BA8F-6754CBAED312}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>RHEngineLib</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <LibraryPath>$(PLUGIN_SDK_DIR)\output\lib;$(VULKAN_SDK)\Lib32\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa;$(VULKAN_SDK)\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>$(PLUGIN_SDK_DIR)\output\lib;$(VULKAN_SDK)\Lib32\;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa;$(VULKAN_SDK)\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa;$(VULKAN_SDK)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(PLUGIN_SDK_DIR)\output\lib;$(VULKAN_SDK)\Lib\;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Common\IStateCacheObject.h" />
+    <ClInclude Include="Common\SmartCOMPtr.h" />
+    <ClInclude Include="DebugUtils\DebugLogger.h" />
+    <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11Buffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11DynamicIndexBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11DynamicVertexBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11Common.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11Renderer.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11VertexDeclaration.h" />
+    <ClInclude Include="Engine\D3D11Impl\ImageBuffers\D3D11BackBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\ImageBuffers\ImageBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderTargetCache.h" />
+    <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderStateCache.h" />
+    <ClInclude Include="Engine\D3D11Impl\Shaders\D3D11PixelShader.h" />
+    <ClInclude Include="Engine\D3D11Impl\Shaders\D3D11Shader.h" />
+    <ClInclude Include="Engine\D3D11Impl\Shaders\D3D11VertexShader.h" />
+    <ClInclude Include="Engine\D3D12Impl\D3D12Renderer.h" />
+    <ClInclude Include="Engine\Definitions.h" />
+    <ClInclude Include="Engine\IRenderer.h" />
+    <ClInclude Include="Engine\RwRenderEngine.h" />
+    <ClInclude Include="Engine\VulkanImpl\ImageBuffers\VulkanBackBuffer.h" />
+    <ClInclude Include="Engine\VulkanImpl\VulkanRenderer.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="RWUtils\RwAPI.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="TestUtils\DeviceSettingsDialog.h" />
+    <ClInclude Include="TestUtils\TestSample.h" />
+    <ClInclude Include="TestUtils\WindowsSampleWrapper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Common\IStateCacheObject.cpp" />
+    <ClCompile Include="DebugUtils\DebugLogger.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11Buffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11DynamicIndexBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11DynamicVertexBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11Renderer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11VertexDeclaration.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\ImageBuffers\D3D11BackBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderStateCache.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderTargetCache.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Shaders\D3D11PixelShader.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Shaders\D3D11Shader.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Shaders\D3D11VertexShader.cpp" />
+    <ClCompile Include="Engine\D3D12Impl\D3D12Renderer.cpp" />
+    <ClCompile Include="Engine\RwRenderEngine.cpp" />
+    <ClCompile Include="Engine\VulkanImpl\ImageBuffers\VulkanBackBuffer.cpp" />
+    <ClCompile Include="Engine\VulkanImpl\VulkanRenderer.cpp" />
+    <ClCompile Include="RWUtils\RwAPI.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="TestUtils\DeviceSettingsDialog.cpp" />
+    <ClCompile Include="TestUtils\TestSample.cpp" />
+    <ClCompile Include="TestUtils\WindowsSampleWrapper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="dev_select_dialog.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

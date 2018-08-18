@@ -99,7 +99,7 @@ void CCustomCarFXPipeline::RenderAlphaList()
 		//RwMatrix *ltm = RwFrameGetLTM((RwFrame*)((RpAtomic*)mesh->entryptr->owner)->object.object.parent);
 		g_pRenderBuffersMgr->UpdateWorldMatrix(mesh->worldMatrix);
 		g_pRenderBuffersMgr->SetMatrixBuffer();
-		g_pRenderBuffersMgr->UpdateMaterialSpecularInt(fSpec);
+		g_pRenderBuffersMgr->UpdateMaterialSpecularInt(isnan(fSpec) ? 0.0f : fSpec);
 		g_pRenderBuffersMgr->UpdateMaterialGlossiness(fShininess);
 		g_pRenderBuffersMgr->UpdateMaterialMetalness(fMetal);
 

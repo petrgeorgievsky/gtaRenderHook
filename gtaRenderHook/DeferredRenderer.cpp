@@ -144,7 +144,7 @@ void CDeferredRenderer::RenderOutput()
 	if (CLightManager::m_nLightCount > 0) {
 		CLightManager::SortByDistance(TheCamera.GetPosition().ToRwV3d());
 		CLightManager::Update();
-		g_pStateMgr->SetStructuredBufferPS(CLightManager::GetBuffer(), 5);
+		g_pStateMgr->SetConstantBufferPS(CLightManager::GetBuffer(), 10);
 		g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, TRUE);
 		g_pRwCustomEngine->RenderStateSet(rwRENDERSTATESRCBLEND, rwBLENDONE);
 		g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEDESTBLEND, rwBLENDONE);

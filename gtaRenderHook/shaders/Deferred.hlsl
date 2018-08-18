@@ -31,7 +31,13 @@ struct Light
     float3  vDir;
     float   fPadding;
 };
-StructuredBuffer<Light> sbLightInfo : register(t5);
+/*!
+    Matrices updated each frame
+*/
+cbuffer LightBuffer : register(b10)
+{
+    Light aDynamicLights[16];
+};
 struct VS_QUAD_IN
 {
     float4 vPosition : POSITION;
@@ -137,22 +143,22 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
     //[unroll(128)]
     for (uint i = 0; i < uiLightCount; i++)
 	{
-		float3 LightDir = -normalize(WorldPos.xyz - sbLightInfo[i].vPosition.xyz);
-        float LightDistance = length(WorldPos.xyz - sbLightInfo[i].vPosition.xyz);
+        float3 LightDir = -normalize(WorldPos.xyz - aDynamicLights[i].vPosition.xyz);
+        float LightDistance = length(WorldPos.xyz - aDynamicLights[i].vPosition.xyz);
 
         float DiffuseTerm, SpecularTerm;
-        float3 LightColor = sbLightInfo[i].cColor;
+        float3 LightColor = aDynamicLights[i].cColor;
 		CalculateDiffuseTerm_ViewDependent(Normals.xyz, LightDir, ViewDir, DiffuseTerm, Roughness);
 		CalculateSpecularTerm(Normals.xyz, LightDir, -ViewDir, Roughness, SpecularTerm);
 	
-        float d = max(LightDistance - sbLightInfo[i].fRange, 0);
-        float denom = d / sbLightInfo[i].fRange + 1;
+        float d = max(LightDistance - aDynamicLights[i].fRange, 0);
+        float denom = d / aDynamicLights[i].fRange + 1;
 		
-        float Attenuation = 1.0f - saturate((LightDistance - 0.5f) / sbLightInfo[i].fRange);
+        float Attenuation = 1.0f - saturate((LightDistance - 0.5f) / aDynamicLights[i].fRange);
         Attenuation *= Attenuation;
-        if (asint(sbLightInfo[i].nLightType) == 1)
+        if (asint(aDynamicLights[i].nLightType) == 1)
 		{
-            float fSpot = pow(max(dot(-LightDir, sbLightInfo[i].vDir), 0.0f), 4.0f);
+            float fSpot = pow(max(dot(-LightDir, aDynamicLights[i].vDir), 0.0f), 4.0f);
             Attenuation *= fSpot;
         }
 			

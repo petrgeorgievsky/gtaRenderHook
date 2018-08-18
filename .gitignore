@@ -244,3 +244,11 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /gtaRenderHook/Debug_III
+/html
+/latex
+/rtf
+/Activity1.nvact
+/RHEngineLib/Common/SmartCOMPtr.h
+/RHEngineLib/html
+/RHEngineLib/latex
+/RHEngineLib/rtf

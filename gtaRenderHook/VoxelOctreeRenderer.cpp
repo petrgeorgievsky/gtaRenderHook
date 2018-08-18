@@ -85,7 +85,7 @@ void CVoxelOctreeRenderer::InjectRadiance(RwRaster * shadow, void(*emmissiveObjR
 
 	g_pStateMgr->SetRasterCS(voxelClipMap[voxelTextureID], 0);
 	g_pStateMgr->SetRasterCS(shadow, 1);
-	g_pStateMgr->SetStructuredBufferCS(CLightManager::GetBuffer(), 2);
+	g_pStateMgr->SetConstantBufferCS(CLightManager::GetBuffer(), 10);
 
 	//auto uav = GetD3D1XRaster(voxelRadiance[voxelTextureID])->resourse->GetUAV();
 	//context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);

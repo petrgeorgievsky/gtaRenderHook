@@ -9,14 +9,17 @@ struct CLight {
 	RwV3d m_vDir;
 	float m_fPadding;
 };
-
+struct LightsCB
+{
+    CLight m_aLights[16];
+};
 class CLightManager
 {
 public:
 	static CLight m_aLights[1024];
 	static int m_nLightCount;
 private:
-	static CD3D1XStructuredBuffer<CLight>* m_pLightBuffer;
+	static CD3D1XConstantBuffer<LightsCB>* m_pLightBuffer;
 public:
 	static void Init();
 	static void Shutdown();
@@ -24,6 +27,6 @@ public:
 	static bool AddLight(const CLight &light);
 	static void SortByDistance(const RwV3d& from);
 	static void Update();
-	static CD3D1XStructuredBuffer<CLight>* GetBuffer();
+	static CD3D1XConstantBuffer<LightsCB>* GetBuffer();
 };
 
