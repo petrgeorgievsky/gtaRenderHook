@@ -55,12 +55,12 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
                 || PrevTexCoords.x < 0.0 || PrevTexCoords.y < 0.0) ? 0.0 : TAABlendFactor;
     float4 AccamulatedColor = txAccumBuffer.Sample(samLinear, PrevTexCoords) ;
     float4 MatParams = txGB2.Sample(samLinear, i.vTexCoord.xy);
-    //if (coeff > 0.0)
-   // {
+    if (coeff > 0.0)
+    {
         float3 minRGB = ScreenColor.rgb;
         float3 maxRGB = ScreenColor.rgb;
         float3 NeighborSample; //= RGB2YCbCr(AccamulatedColor.rgb);
-        for (int k = 0; k < 8; k++)
+        for (int k = 0; k < 4; k++)
         {
             NeighborSample = txScreen.Sample(samLinear, i.vTexCoord.xy + NeighborPattern[k] * Offset).rgb;
             minRGB = min(minRGB, NeighborSample);
@@ -75,7 +75,7 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
         AccamulatedColor.rgb = clamp(AccamulatedColor.rgb, minRGB, maxRGB);
        /* if (length(NeighborSample - ScreenColor.xyz) > 0.3)
             coeff = 0.5f;*/
-    //}
+    }
     float DistToScreenCenter = max(distance(float2(0.5, 0.5), i.vTexCoord.xy) * MBEdgeScale, MBCenterScale);
     float MinMBPixelCount = MBMaxSpeed;
     MotionVec = max(MotionVec, Offset * -MinMBPixelCount);
@@ -109,6 +109,5 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
             ResultColor.rgb *= 0.5f;
         }
     }
-    ResultColor.rgb = isnan(ResultColor.rgb) ? float3(0.01, 0.01, 0.01) : ResultColor.rgb;
     return ResultColor;
 }

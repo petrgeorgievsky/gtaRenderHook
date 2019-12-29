@@ -15,73 +15,75 @@ CD3D1XConstantBuffer<CBAmbientOcclusion>* CAmbientOcclusion::m_pAmbientOcclusion
 bool	CAmbientOcclusion::m_bRequiresReloading = false;
 void CAmbientOcclusion::Init()
 {
-	m_pAORaser = RwRasterCreate((RwInt32)(RsGlobal.maximumWidth*gAmbientOcclusionSettings.GetFloat("Scale")),
-								(RwInt32)(RsGlobal.maximumHeight*gAmbientOcclusionSettings.GetFloat("Scale")), 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16);
-	gDebugSettings.DebugRenderTargetList.push_back(m_pAORaser);
-	m_pAmbientOcclusionPS = new CD3D1XPixelShader("shaders/AmbientOcclusion.hlsl", "AmbientOcclusionPS", &gAmbientOcclusionSettings.m_ShaderDefineList);
-	m_pAmbientOcclusionCB = new CD3D1XConstantBuffer<CBAmbientOcclusion>();
-	gAmbientOcclusionSettings.m_aShaderPointers.push_back(m_pAmbientOcclusionPS);
+    m_pAORaser = RwRasterCreate( (RwInt32)( RsGlobal.maximumWidth*gAmbientOcclusionSettings.GetFloat( "Scale" ) ),
+        (RwInt32)( RsGlobal.maximumHeight*gAmbientOcclusionSettings.GetFloat( "Scale" ) ), 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT16 );
+    gDebugSettings.DebugRenderTargetList.push_back( m_pAORaser );
+    m_pAmbientOcclusionPS = new CD3D1XPixelShader( "shaders/AmbientOcclusion.hlsl", "AmbientOcclusionPS", &gAmbientOcclusionSettings.m_ShaderDefineList );
+    m_pAmbientOcclusionCB = new CD3D1XConstantBuffer<CBAmbientOcclusion>();
+    gAmbientOcclusionSettings.m_aShaderPointers.push_back( m_pAmbientOcclusionPS );
 }
 
 void CAmbientOcclusion::Shutdown()
 {
-	if (m_pAORaser)
-		RwRasterDestroy(m_pAORaser);
-	delete m_pAmbientOcclusionPS;
-	delete m_pAmbientOcclusionCB;
+    if ( m_pAORaser )
+        RwRasterDestroy( m_pAORaser );
+    delete m_pAmbientOcclusionPS;
+    delete m_pAmbientOcclusionCB;
 }
 
-void CAmbientOcclusion::RenderAO(RwRaster * normalsDepth)
+void CAmbientOcclusion::RenderAO( RwRaster * normalsDepth )
 {
-	if (m_bRequiresReloading) {
-		m_pAmbientOcclusionCB->data.AORadius = gAmbientOcclusionSettings.GetFloat("Radius");
-		m_pAmbientOcclusionCB->data.AOCurve = gAmbientOcclusionSettings.GetFloat("Curve");
-		m_pAmbientOcclusionCB->data.AOIntensity = gAmbientOcclusionSettings.GetFloat("Intensity");
-		m_pAmbientOcclusionCB->Update();
-	}
-	g_pRwCustomEngine->SetRenderTargets(&m_pAORaser, nullptr, 1);
-	g_pStateMgr->SetConstantBufferPS(m_pAmbientOcclusionCB, 8);
-	g_pStateMgr->FlushRenderTargets();
-	g_pStateMgr->SetRaster(normalsDepth);
-	m_pAmbientOcclusionPS->Set();
-	CFullscreenQuad::Draw();
+    if ( m_bRequiresReloading )
+    {
+        m_pAmbientOcclusionCB->data.AORadius = gAmbientOcclusionSettings.GetFloat( "Radius" );
+        m_pAmbientOcclusionCB->data.AOCurve = gAmbientOcclusionSettings.GetFloat( "Curve" );
+        m_pAmbientOcclusionCB->data.AOIntensity = gAmbientOcclusionSettings.GetFloat( "Intensity" );
+        m_pAmbientOcclusionCB->Update();
+    }
+    g_pRwCustomEngine->SetRenderTargets( &m_pAORaser, nullptr, 1 );
+    g_pStateMgr->SetConstantBufferPS( m_pAmbientOcclusionCB, 8 );
+    g_pStateMgr->FlushRenderTargets();
+    g_pStateMgr->SetRaster( normalsDepth );
+    m_pAmbientOcclusionPS->Set();
+    CFullscreenQuad::Draw();
 }
 
 RwRaster* CAmbientOcclusion::GetAORaster()
 {
-	return m_pAORaser;
+    return m_pAORaser;
 }
 
 void CAmbientOcclusion::QueueTextureReload()
 {
-	CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
+    CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
 
-	if (m_bRequiresReloading || dxEngine->m_bScreenSizeChanged) {
-		m_pAORaser->width = (int)(RsGlobal.maximumWidth*gAmbientOcclusionSettings.GetFloat("Scale"));
-		m_pAORaser->height = (int)(RsGlobal.maximumHeight*gAmbientOcclusionSettings.GetFloat("Scale"));
-		dxEngine->m_pRastersToReload.push_back(m_pAORaser);
-	}
+    if ( m_bRequiresReloading || dxEngine->m_bScreenSizeChanged )
+    {
+        m_pAORaser->width = (int)( RsGlobal.maximumWidth*gAmbientOcclusionSettings.GetFloat( "Scale" ) );
+        m_pAORaser->height = (int)( RsGlobal.maximumHeight*gAmbientOcclusionSettings.GetFloat( "Scale" ) );
+        dxEngine->m_pRastersToReload.push_back( m_pAORaser );
+    }
 }
 
-void AmbientOcclusionSettingsBlock::Load(const tinyxml2::XMLDocument & doc)
+void AmbientOcclusionSettingsBlock::Load( const tinyxml2::XMLDocument & doc )
 {
-	SettingsBlock::Load(doc);
+    SettingsBlock::Load( doc );
 
-	m_ShaderDefineList.AddDefine("AO_SAMPLE_COUNT", std::to_string(gAmbientOcclusionSettings.GetUInt("SampleCount")));
+    m_ShaderDefineList.AddDefine( "AO_SAMPLE_COUNT", std::to_string( gAmbientOcclusionSettings.GetUInt( "SampleCount" ) ) );
 }
 
-void TW_CALL ReloadAOShadersCallBack(void *value)
+void TW_CALL ReloadAOShadersCallBack( void *value )
 {
-	gAmbientOcclusionSettings.m_bShaderReloadRequired = true;
-	gAmbientOcclusionSettings.m_ShaderDefineList.Reset();
-	gAmbientOcclusionSettings.m_ShaderDefineList.AddDefine("AO_SAMPLE_COUNT", std::to_string(gAmbientOcclusionSettings.GetUInt("SampleCount")));
+    gAmbientOcclusionSettings.m_bShaderReloadRequired = true;
+    gAmbientOcclusionSettings.m_ShaderDefineList.Reset();
+    gAmbientOcclusionSettings.m_ShaderDefineList.AddDefine( "AO_SAMPLE_COUNT", std::to_string( gAmbientOcclusionSettings.GetUInt( "SampleCount" ) ) );
 }
-void TW_CALL ReloadAOTexturesCallBack(void *value)
+void TW_CALL ReloadAOTexturesCallBack( void *value )
 {
-	CAmbientOcclusion::m_bRequiresReloading = true;
+    CAmbientOcclusion::m_bRequiresReloading = true;
 }
-void AmbientOcclusionSettingsBlock::InitGUI(TwBar * mainBar)
+void AmbientOcclusionSettingsBlock::InitGUI( TwBar * mainBar )
 {
-	TwAddButton(mainBar, "Reload AO shaders", ReloadAOShadersCallBack, nullptr, "group=AmbientOcclusion");
-	TwAddButton(mainBar, "Reload AO textures", ReloadAOTexturesCallBack, nullptr, "group=AmbientOcclusion");
+    TwAddButton( mainBar, "Reload AO shaders", ReloadAOShadersCallBack, nullptr, "group=AmbientOcclusion" );
+    TwAddButton( mainBar, "Reload AO textures", ReloadAOTexturesCallBack, nullptr, "group=AmbientOcclusion" );
 }

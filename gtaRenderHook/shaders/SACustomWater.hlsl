@@ -265,9 +265,14 @@ float4 PS(PS_INPUT i) : SV_Target
     GetNormalsAndDepth(txGB1, samLinear, ScreenCoords, ViewZ, Normals);
 
     float Shadow = SampleShadowCascades( txShadow, samShadow, samLinear, i.vWorldPos, length(i.vWorldPos.xyz - mViewInv[3].xyz) );
-    float2 waterWake = txWaterWake.Sample(samLinear, i.vTexCoord * 16).ra;
-    float3 SmallWaveNormal = normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord*16).gbr - float3(1, -8, 1));
-    SmallWaveNormal += normalize(2 * txDiffuse.Sample(samLinear, i.vTexCoord * 8 + 0.05).gbr - float3(1, -8, 1));
+    float2 ws_tc     = frac( i.vWorldPos.xy / 64 );
+    float2 waterWake = txWaterWake.Sample( samLinear, ws_tc * 16 ).ra;
+    float3 SmallWaveNormal =
+        normalize( 2 * txDiffuse.Sample( samLinear, ws_tc * 16 ).gbr -
+                   float3( 1, -8, 1 ) );
+    SmallWaveNormal +=
+        normalize( 2 * txDiffuse.Sample( samLinear, ws_tc * 8 + 0.05 ).gbr -
+                   float3( 1, -8, 1 ) );
     
     float3x3 NormalSpaceMatrix;
 	// calculating base normal rotation matrix
@@ -298,7 +303,9 @@ float4 PS(PS_INPUT i) : SV_Target
     float3 RefractionColor = txGB0.Sample(samLinear, ScreenCoords).rgb;
     RefractionColor = lerp(DiffuseTerm, RefractionColor, min(1, exp(-WaterDepth / 8.0))) * vWaterColor.rgb;
 
-    OutColor.rgb = lerp(lerp(RefractionColor, ReflectionColor, FresnelCoeff), waterWake.rrr * min(DiffuseLighting + 0.5, 1.0f), min(exp(-WaterDepth), 1) * waterWake.g);
+    OutColor.rgb = lerp( lerp( RefractionColor, ReflectionColor, FresnelCoeff ),
+                         waterWake.rrr * min( DiffuseLighting + 0.5, 1.0f ),
+                         min( exp( -WaterDepth ), 1 ) * waterWake.g );
     OutColor.rgb += min(SpecularTerm, 16.0f) * Shadow * vSunLightDir.w * FresnelCoeff;
     float3 FullScattering;
     OutColor.rgb = CalculateFogColor(OutColor.rgb, ViewDir, LightDir, min(ViewZ, i.fDepth), i.vWorldPos.z, FullScattering);

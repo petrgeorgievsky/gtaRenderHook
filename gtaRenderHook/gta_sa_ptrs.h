@@ -1,6 +1,9 @@
 #ifndef GTA_SA_PTRS_H
 #define GTA_SA_PTRS_H
+
+#pragma warning( push, 0 )
 #include <game_sa\RenderWare.h>
+#pragma warning( pop )
 
 /*
 *	RW MACROS(plugin sdk lacks them for some reason)
@@ -52,137 +55,143 @@ class CD3D1XVertexDeclaration;
 
 struct _rwNativeTexture
 {
-	unsigned int	platformId;
-	unsigned int	filterMode	: 8;
-	unsigned int	uAddressing	: 4;
-	unsigned int	vAddressing	: 4;
-	char			name[32];		/* Texture name */
-	char			mask[32];	/* Texture mask name */
+    unsigned int	platformId;
+    unsigned int	filterMode : 8;
+    unsigned int	uAddressing : 4;
+    unsigned int	vAddressing : 4;
+    char			name[32];		/* Texture name */
+    char			mask[32];	/* Texture mask name */
 };
 
 struct RasterFormat
 {
-	unsigned int rasterFormat;
-	union {
-		D3DFORMAT	d3dFormat; // SA, see D3DFORMAT on MSDN
-		unsigned int hasAlpha; // GTA3 & VC
-	};
-	unsigned short	width;
-	unsigned short	height;
-	unsigned char	depth;
-	unsigned char	numLevels;
-	unsigned char	rasterType;
-	union {
-		unsigned char compression; // GTA3 & VC
-		struct { // SA
-			unsigned char alpha : 1;
-			unsigned char cubeTexture : 1;
-			unsigned char autoMipMaps : 1;
-			unsigned char compressed : 1;
-			unsigned char pad : 4;
-		};
-	};
+    unsigned int rasterFormat;
+    union
+    {
+        D3DFORMAT	d3dFormat; // SA, see D3DFORMAT on MSDN
+        unsigned int hasAlpha; // GTA3 & VC
+    };
+    unsigned short	width;
+    unsigned short	height;
+    unsigned char	depth;
+    unsigned char	numLevels;
+    unsigned char	rasterType;
+    union
+    {
+        unsigned char compression; // GTA3 & VC
+        struct
+        { // SA
+            unsigned char alpha : 1;
+            unsigned char cubeTexture : 1;
+            unsigned char autoMipMaps : 1;
+            unsigned char compressed : 1;
+            unsigned char pad : 4;
+        };
+    };
 };
 
 /*struct RsGlobalType
 {
-	char*	AppName;
-	int		MaximumWidth;
-	int		MaximumHeight;
-	int		frameLimit;
-	int		quit;
-	int		ps;
+    char*	AppName;
+    int		MaximumWidth;
+    int		MaximumHeight;
+    int		frameLimit;
+    int		quit;
+    int		ps;
 };*/
 
 struct RpSkin
 {
-	RwUInt32			numBones;
-	RwUInt32			numBoneIds;
-	RwUInt8*			boneIds;
-	RwMatrix*			skinToBoneMatrices;
-	RwUInt32			maxNumWeightsForVertex;
-	RwUInt32*			vertexBoneIndices;
-	RwMatrixWeights*	vertexBoneWeights;
-	RwUInt32			boneCount;
-	RwUInt32			useVS;
-	RwUInt32			boneLimit;
-	RwUInt32			numMeshes;
-	RwUInt32			numRLE;
-	RwUInt8*			meshBoneRemapIndices;
-	RwUInt32			meshBoneRLECount;
-	void*				meshBoneRLE;
-	void*				field_3C;
+    RwUInt32			numBones;
+    RwUInt32			numBoneIds;
+    RwUInt8*			boneIds;
+    RwMatrix*			skinToBoneMatrices;
+    RwUInt32			maxNumWeightsForVertex;
+    RwUInt32*			vertexBoneIndices;
+    RwMatrixWeights*	vertexBoneWeights;
+    RwUInt32			boneCount;
+    RwUInt32			useVS;
+    RwUInt32			boneLimit;
+    RwUInt32			numMeshes;
+    RwUInt32			numRLE;
+    RwUInt8*			meshBoneRemapIndices;
+    RwUInt32			meshBoneRLECount;
+    void*				meshBoneRLE;
+    void*				field_3C;
 };
 
-struct RwMatrix4x3 {
-	RwV4d a[3];
+struct RwMatrix4x3
+{
+    RwV4d a[3];
 };
 
 struct RpSkinGlobals
 {
-	int globalPluginOffset;
-	int _atomicSkinOffset;
-	int _geometrySkinOffset;
-	RwMatrix *alignedMatrixCache;
-	RpSkin *skinArray;
-	char anonymous_1[4];
-	RwFreeList *alignedMatrixCacheFreeList;
-	char anonymous_2[4];
-	int instanceCount;
-	RxPipeline *m_pPipelines[4];
-	int pCurrentSkin;
-	int anonymous_6;
-	int pCurrentFrame;
-	int supportSystemMemBuffers;
-	int useVertexShader;
-	int nMaxBoneCount;
-	int maxVSConst;
+    int globalPluginOffset;
+    int _atomicSkinOffset;
+    int _geometrySkinOffset;
+    RwMatrix *alignedMatrixCache;
+    RpSkin *skinArray;
+    char anonymous_1[4];
+    RwFreeList *alignedMatrixCacheFreeList;
+    char anonymous_2[4];
+    int instanceCount;
+    RxPipeline *m_pPipelines[4];
+    int pCurrentSkin;
+    int anonymous_6;
+    int pCurrentFrame;
+    int supportSystemMemBuffers;
+    int useVertexShader;
+    int nMaxBoneCount;
+    int maxVSConst;
 };
 
-struct sScene {
-	RpWorld*	curWorld;
-	RwCamera*	curCamera;             /* Current camera */
+struct sScene
+{
+    RpWorld*	curWorld;
+    RwCamera*	curCamera;             /* Current camera */
 };
 
-/* 
+/*
 *	RenderWare D3D9 structures
 */
 
 struct RwD3D9Raster
 {
-	union
-	{
-		IDirect3DTexture9* texture;
-		IDirect3DSurface9* surface;
-	};
-	unsigned char*       palette;
-	RwUInt8			alpha;
-	RwUInt8			cube : 4; /* This texture is a cube texture */
-	RwUInt8			face : 4; /* The active face of a cube texture */
-	RwUInt8			automipmapgen : 4; /* This texture uses automipmap generation */
-	RwUInt8			compressed : 4;  /* This texture is compressed */
-	RwUInt8			lockedMipLevel;
-	IDirect3DSurface9*   lockedSurface;
-	D3DLOCKED_RECT       lockedRect;
-	D3DFORMAT            format;
-	IDirect3DSwapChain9* swapChain;
-	HWND*                hwnd;
+    union
+    {
+        IDirect3DTexture9* texture;
+        IDirect3DSurface9* surface;
+    };
+    unsigned char*       palette;
+    RwUInt8			alpha;
+    RwUInt8			cube : 4; /* This texture is a cube texture */
+    RwUInt8			face : 4; /* The active face of a cube texture */
+    RwUInt8			automipmapgen : 4; /* This texture uses automipmap generation */
+    RwUInt8			compressed : 4;  /* This texture is compressed */
+    RwUInt8			lockedMipLevel;
+    IDirect3DSurface9*   lockedSurface;
+    D3DLOCKED_RECT       lockedRect;
+    D3DFORMAT            format;
+    IDirect3DSwapChain9* swapChain;
+    HWND*                hwnd;
 };
 
-struct _rwD3DRaster {
-	RwRaster		r;
-	RwD3D9Raster	dr;
+struct _rwD3DRaster
+{
+    RwRaster		r;
+    RwD3D9Raster	dr;
 };
 
 struct RxInstanceData : RwResEntry
 {
-	RxD3D9ResEntryHeader	header;
+    RxD3D9ResEntryHeader	header;
 };
 
 /*!
 *	Returns model list for RxInstanceData.
 */
-RxD3D9InstanceData* GetModelsData(RxInstanceData * data);
+RxD3D9InstanceData* GetModelsData( RxInstanceData * data );
 
 struct RpD3DMeshHeader : RpMeshHeader
 {
@@ -191,25 +200,25 @@ struct RpD3DMeshHeader : RpMeshHeader
 /*!
 *	Returns model list for RxInstanceData.
 */
-RpMesh* GetMeshesData(RpD3DMeshHeader * data);
+RpMesh* GetMeshesData( RpD3DMeshHeader * data );
 
 struct RxD3D9Pipelines
 {
-	RxD3D9AllInOneInstanceCallBack		instance;
-	RxD3D9AllInOneReinstanceCallBack	reinstance;
-	RxD3D9AllInOneLightingCallBack		lighting;
-	RxD3D9AllInOneRenderCallBack		render;
+    RxD3D9AllInOneInstanceCallBack		instance;
+    RxD3D9AllInOneReinstanceCallBack	reinstance;
+    RxD3D9AllInOneLightingCallBack		lighting;
+    RxD3D9AllInOneRenderCallBack		render;
 };
 
 struct RpSkinPipeCB
 {
-	RxD3D9AllInOneRenderCallBack					render;
-	RxD3D9AllInOneLightingCallBack					lighting;
-	_rxD3D9VertexShaderBeginCallBack				VSBegin;
-	_rxD3D9VertexShaderLightingCallBack				VSLighting;
-	_rxD3D9VertexShaderGetMaterialShaderCallBack	VSGetMatShader;
-	_rxD3D9VertexShaderMeshRenderCallBack			VSRender;
-	_rxD3D9VertexShaderEndCallBack					VSEnd;
+    RxD3D9AllInOneRenderCallBack					render;
+    RxD3D9AllInOneLightingCallBack					lighting;
+    _rxD3D9VertexShaderBeginCallBack				VSBegin;
+    _rxD3D9VertexShaderLightingCallBack				VSLighting;
+    _rxD3D9VertexShaderGetMaterialShaderCallBack	VSGetMatShader;
+    _rxD3D9VertexShaderMeshRenderCallBack			VSRender;
+    _rxD3D9VertexShaderEndCallBack					VSEnd;
 };
 
 /*
@@ -218,74 +227,78 @@ struct RpSkinPipeCB
 
 struct RwD3D1XRaster
 {
-	CD3D1XBaseTexture*		resourse;
-	unsigned char*		palette;
-	unsigned char       alpha;
-	unsigned char       cubeTextureFlags; /* 0x01 IS_CUBEMAP_TEX */
-	unsigned char       textureFlags;     /* 0x01 HAS_MIP_MAPS
-										   0x10 IS_COMPRESSED */
-	unsigned char        lockFlags;
-	ID3D11Resource*		 lockedSurface;
-	D3DLOCKED_RECT       lockedRect;
-	DXGI_FORMAT          format;
-	IDXGISwapChain*		 swapChain;
-	HWND*                hwnd;
+    CD3D1XBaseTexture*		resourse;
+    unsigned char*		palette;
+    unsigned char       alpha;
+    unsigned char       cubeTextureFlags; /* 0x01 IS_CUBEMAP_TEX */
+    unsigned char       textureFlags;     /* 0x01 HAS_MIP_MAPS
+                                           0x10 IS_COMPRESSED */
+    unsigned char        lockFlags;
+    ID3D11Resource*		 lockedSurface;
+    D3DLOCKED_RECT       lockedRect;
+    DXGI_FORMAT          format;
+    IDXGISwapChain*		 swapChain;
+    HWND*                hwnd;
 };
 
-struct _rwD3D1XRaster {
-	RwRaster r;
-	RwD3D1XRaster dr;
+struct _rwD3D1XRaster
+{
+    RwRaster r;
+    RwD3D1XRaster dr;
 };
 
 struct SimpleVertex
 {
-	RwV3d		pos, normal;
-	RwTexCoords uv;
-	RwRGBA		color;
+    RwV3d		pos, normal;
+    RwTexCoords uv;
+    RwRGBA      color;
+    RwV3d       tangent, bitangent;
 };
 
 struct SimpleVertexSkin
 {
-	RwV3d			pos, normal;
-	RwTexCoords		uv;
-	RwRGBA			color;
-	RwMatrixWeights weights;
-	UINT			indices;
+    RwV3d			pos, normal;
+    RwTexCoords		uv;
+    RwRGBA			color;
+    RwMatrixWeights weights;
+    UINT			indices;
 };
 
-struct AlphaMesh {
-	RxInstanceData* entryptr;
-	RwMatrix*		worldMatrix;
-	int				meshID;
+struct AlphaMesh
+{
+    RxInstanceData* entryptr;
+    RwMatrix*		worldMatrix;
+    int				meshID;
 };
 
 #ifdef RENDER_VK_ENGINE
 struct RwVulkanRasterData
 {
-	VkImage		vkImg;
-	VkImageView vkImgView;
-	VkDeviceMemory memory;
-	VkSampler	vkSampler;
+    VkImage		vkImg;
+    VkImageView vkImgView;
+    VkDeviceMemory memory;
+    VkSampler	vkSampler;
 };
 
 struct RwVulkanRaster
 {
-	RwVulkanRasterData		*texture;
-	unsigned char       *palette;
-	unsigned char        alpha;
-	unsigned char        cubeTextureFlags; /* 0x01 IS_CUBEMAP_TEX */
-	unsigned char        textureFlags;     /* 0x01 HAS_MIP_MAPS
-										   0x10 IS_COMPRESSED */
-	unsigned char        lockFlags;
-	VkImageView   *lockedSurface;
-	D3DLOCKED_RECT       lockedRect;
-	VkFormat            format;
-	VkSwapchainKHR		*swapChain;
-	HWND                *hwnd;
+    RwVulkanRasterData		*texture;
+    unsigned char       *palette;
+    unsigned char        alpha;
+    unsigned char        cubeTextureFlags; /* 0x01 IS_CUBEMAP_TEX */
+    unsigned char        textureFlags;     /* 0x01 HAS_MIP_MAPS
+                                           0x10 IS_COMPRESSED */
+    unsigned char        lockFlags;
+    VkImageView   *lockedSurface;
+    D3DLOCKED_RECT       lockedRect;
+    VkFormat            format;
+    VkSwapchainKHR		*swapChain;
+    HWND                *hwnd;
 };
-struct _rwVKRaster {
-	RwRaster r;
-	RwVulkanRaster dr;
+struct _rwVKRaster
+{
+    RwRaster r;
+    RwVulkanRaster dr;
 };
 #endif
 

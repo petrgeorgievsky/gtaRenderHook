@@ -129,6 +129,17 @@ float SampleShadowMapCompute(Texture2D txShadow, float3 LightViewPos)
     return (LightViewPos.z - sSample < ShadowBias[0] * 8);
 }
 
+bool CheckIsOutOfBounds( float3 LightViewPos )
+{
+    float2 ShadowTexCoord = 0.5 * LightViewPos.xy + float2( 0.5, 0.5 );
+    ShadowTexCoord.y      = 1.0f - ShadowTexCoord.y;
+    // early fail
+    if ( ShadowTexCoord.x < 0 || ShadowTexCoord.x > 1 || ShadowTexCoord.y < 0 ||
+         ShadowTexCoord.y > 1 )
+        return true;
+    return false;
+}
+
 // Samples cascade shadow maps, blended 
 float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow, SamplerState samShadowNonComp, float3 worldPos, float viewZ)
 {
@@ -137,8 +148,9 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
         return 0.0f;
 	// TODO: make blend distance customizible, perhaps different for each cascade.
     const float blendDistance = 6;
-	// Shift view depth by blend distance, optimization for static blend distance
-    //viewZ += blendDistance;
+	// Shift view depth a bit, to avoid some blurring problems
+    viewZ = max( viewZ - 0.15f, 0.0 );
+
     const float LFadeDistances[] =
     {
         FadeDistances.x,
@@ -157,7 +169,17 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
     far = FadeDistanceMax;
     near = LFadeDistances[i];
     float2 shadowTCOffset = float2((float) i / CascadeCount, 0.0f);
-    Shadow = SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos, shadowTCOffset, i);
+    if ( !CheckIsOutOfBounds( LightViewPos ) )
+        Shadow = SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos, shadowTCOffset, i);
+    else if ( i < CascadeCount )
+    {
+        i++;
+        near                  = LFadeDistances[i];
+        shadowTCOffset = float2( (float)i / CascadeCount, 0.0f );
+        LightViewPos = mul( WorldPos, DirLightViewProj[i] ).xyz;
+        Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
+                                  LightViewPos, shadowTCOffset, i );
+    }
 	
     /*for (i = 0; i < CascadeCount; i++)
     {        

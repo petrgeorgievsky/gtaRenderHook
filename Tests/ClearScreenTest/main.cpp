@@ -1,28 +1,29 @@
 #include <TestUtils\WindowsSampleWrapper.h>
+
 #include "ClearScreenSample.h"
+#include <memory>
 
-int APIENTRY wWinMain(HINSTANCE hInstance,
-    HINSTANCE hPrevInstance,
-    LPWSTR    lpCmdLine,
-    int       nCmdShow)
+int APIENTRY wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
+    UNREFERENCED_PARAMETER( hPrevInstance );
+    UNREFERENCED_PARAMETER( lpCmdLine );
+    UNREFERENCED_PARAMETER( nCmdShow );
+
     // Window params initialization
-    RHTests::WindowsSampleParams initParams;
+    rh::tests::WindowsSampleParams initParams;
     initParams.instance = hInstance;
-    initParams.sampleTitle = L"ClearScreenSample";
-    initParams.windowClass = L"CLEARSCREENSAMPLE";
+    initParams.sampleTitle = TEXT( "ClearScreenSample" );
+    initParams.windowClass = TEXT( "CLEARSCREENSAMPLE" );
 
-    RHEngine::RHRenderingAPI renderingAPI = RHEngine::RHRenderingAPI::Vulkan;
+    rh::engine::RenderingAPI renderingAPI = rh::engine::RenderingAPI::DX11;
 
-    RHTests::WindowsSampleWrapper sample(
-        initParams,
-        std::unique_ptr<ClearScreenSample>(
-            new ClearScreenSample(renderingAPI, hInstance)));
+    auto sample_impl = std::make_unique<ClearScreenSample>( renderingAPI, hInstance );
+
+    rh::tests::WindowsSampleWrapper sample( initParams, std::move( sample_impl ) );
 
     // Initialize test sample.
-    if (!sample.Init()) return FALSE;
+    if ( !sample.Init() )
+        return FALSE;
 
     // Run test sample!
     sample.Run();

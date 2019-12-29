@@ -25,7 +25,7 @@ SamplerComparisonState samShadow          : register(s1);
 struct Light
 {
 	float3  vPosition;
-	float   nLightType;
+	int   nLightType;
 	float3  cColor;
 	float   fRange;
     float3  vDir;
@@ -111,6 +111,12 @@ float4 SunLightingPS(PS_QUAD_IN i) : SV_Target
 	return OutLighting;
 }
 
+float SpotLightIntensity(float cosA, float umbraAngle, float penumbraAngle)
+{
+    float t = saturate((cosA - cos(umbraAngle)) / (cos(penumbraAngle) - cos(umbraAngle)));
+    return smoothstep(0, 1, t);
+}
+
 // point and spot light pass
 float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
 {
@@ -150,15 +156,12 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
         float3 LightColor = aDynamicLights[i].cColor;
 		CalculateDiffuseTerm_ViewDependent(Normals.xyz, LightDir, ViewDir, DiffuseTerm, Roughness);
 		CalculateSpecularTerm(Normals.xyz, LightDir, -ViewDir, Roughness, SpecularTerm);
-	
-        float d = max(LightDistance - aDynamicLights[i].fRange, 0);
-        float denom = d / aDynamicLights[i].fRange + 1;
 		
-        float Attenuation = 1.0f - saturate((LightDistance - 0.5f) / aDynamicLights[i].fRange);
+        float Attenuation = 1.0f - pow(saturate(LightDistance / aDynamicLights[i].fRange), 2);
         Attenuation *= Attenuation;
-        if (asint(aDynamicLights[i].nLightType) == 1)
+        if (aDynamicLights[i].nLightType == 1)
 		{
-            float fSpot = pow(max(dot(-LightDir, aDynamicLights[i].vDir), 0.0f), 4.0f);
+            float fSpot = SpotLightIntensity(max(dot(-LightDir, aDynamicLights[i].vDir), 0.0f), PI / 3.0f, PI / 6.0f); //pow(, 4.0f);
             Attenuation *= fSpot;
         }
 			

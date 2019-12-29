@@ -41,5 +41,6 @@ void InjectRadiance(uint3 DTid : SV_DispatchThreadID)
 			k++;
 		}
 	}
+    //InterlockedAdd()
 	voxelVolume[DTid] = float4(color.xyz, alpha);
 }

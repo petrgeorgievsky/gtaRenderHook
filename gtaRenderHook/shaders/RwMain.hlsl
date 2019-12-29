@@ -10,7 +10,9 @@ struct VS_MAIN_IN
     float3 vPosition   	: POSITION;
     float2 vTexCoord     	: TEXCOORD;
     float3 vInNormal    	: NORMAL;
-	float4 vInColor 		: COLOR;
+    float4 vInColor : COLOR;
+    float3 vInTangents : TEXCOORD1;
+    float3 vInBiTangents : TEXCOORD2;
 };
 
 struct PS_MAIN_IN

@@ -12,6 +12,6 @@ void CBlurAlgorithms::Shutdown()
 {
 }
 
-void CBlurAlgorithms::Gaussian(int kernel, RwRaster * tex, bool halfSize)
+void CBlurAlgorithms::Gaussian( int kernel, RwRaster * tex, bool halfSize )
 {
 }

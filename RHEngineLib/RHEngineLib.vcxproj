@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -23,34 +23,38 @@
     <ProjectGuid>{62D003A2-7DEB-47C6-BA8F-6754CBAED312}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RHEngineLib</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -74,30 +78,45 @@
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(PLUGIN_SDK_DIR)\output\lib;$(VULKAN_SDK)\Lib32\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa;$(VULKAN_SDK)\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Platform)Build\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>$(PLUGIN_SDK_DIR)\output\lib;$(VULKAN_SDK)\Lib32\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa;$(VULKAN_SDK)\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Platform)Build\$(Configuration)\</OutDir>
+    <CodeAnalysisRuleSet>rhlib_rs.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa;$(VULKAN_SDK)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(PLUGIN_SDK_DIR)\output\lib;$(VULKAN_SDK)\Lib\;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Platform)Build\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_sa;$(VULKAN_SDK)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(PLUGIN_SDK_DIR)\output\lib;$(VULKAN_SDK)\Lib\;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Platform)Build\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -108,26 +127,45 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <BrowseInformation>true</BrowseInformation>
+      <EnablePREfast>true</EnablePREfast>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,14 +174,21 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -153,47 +198,101 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Common\IStateCacheObject.h" />
-    <ClInclude Include="Common\SmartCOMPtr.h" />
+    <ClInclude Include="Engine\Common\IDeviceOutputView.h" />
+    <ClInclude Include="Engine\Common\IDeviceState.h" />
+    <ClInclude Include="Engine\Common\IGPUAllocator.h" />
+    <ClInclude Include="Engine\Common\IRenderingContext.h" />
+    <ClInclude Include="Engine\Common\IStateCacheObject.h" />
     <ClInclude Include="DebugUtils\DebugLogger.h" />
     <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11Buffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11ConstantBuffer.h" />
     <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11DynamicIndexBuffer.h" />
     <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11DynamicVertexBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11IndexBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11StructuredBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\Buffers\D3D11VertexBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11Convert.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11DeviceOutputView.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11DeviceState.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11GPUAllocator.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11Im2DPipeline.h" />
+    <ClInclude Include="Engine\Common\ISimple2DRenderer.h" />
     <ClInclude Include="Engine\D3D11Impl\D3D11Common.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11PrimitiveBatch.h" />
     <ClInclude Include="Engine\D3D11Impl\D3D11Renderer.h" />
-    <ClInclude Include="Engine\D3D11Impl\D3D11VertexDeclaration.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11RenderingContext.h" />
+    <ClInclude Include="Engine\D3D11Impl\D3D11InputLayout.h" />
+    <ClInclude Include="Engine\D3D11Impl\ImageBuffers\D3D11DepthStencilBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\ImageBuffers\D3D11Texture2D.h" />
     <ClInclude Include="Engine\D3D11Impl\ImageBuffers\D3D11BackBuffer.h" />
     <ClInclude Include="Engine\D3D11Impl\ImageBuffers\ImageBuffer.h" />
+    <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11BlendStateCache.h" />
+    <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11DepthStencilStateCache.h" />
+    <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11RasterizerStateCache.h" />
     <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderTargetCache.h" />
     <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderStateCache.h" />
+    <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11SampleStateCache.h" />
+    <ClInclude Include="Engine\D3D11Impl\RenderStateCache\D3D11ShaderResourceCache.h" />
+    <ClInclude Include="Engine\D3D11Impl\Shaders\D3D11ComputeShader.h" />
     <ClInclude Include="Engine\D3D11Impl\Shaders\D3D11PixelShader.h" />
     <ClInclude Include="Engine\D3D11Impl\Shaders\D3D11Shader.h" />
     <ClInclude Include="Engine\D3D11Impl\Shaders\D3D11VertexShader.h" />
     <ClInclude Include="Engine\D3D12Impl\D3D12Renderer.h" />
     <ClInclude Include="Engine\Definitions.h" />
+    <ClInclude Include="Engine\FlagsToString.h" />
     <ClInclude Include="Engine\IRenderer.h" />
     <ClInclude Include="Engine\RwRenderEngine.h" />
     <ClInclude Include="Engine\VulkanImpl\ImageBuffers\VulkanBackBuffer.h" />
     <ClInclude Include="Engine\VulkanImpl\VulkanRenderer.h" />
+    <ClInclude Include="ImGUI\imconfig.h" />
+    <ClInclude Include="ImGUI\imgui.h" />
+    <ClInclude Include="ImGUI\imgui_impl_dx11.h" />
+    <ClInclude Include="ImGUI\imgui_impl_win32.h" />
+    <ClInclude Include="ImGUI\imgui_internal.h" />
+    <ClInclude Include="ImGUI\imstb_rectpack.h" />
+    <ClInclude Include="ImGUI\imstb_textedit.h" />
+    <ClInclude Include="ImGUI\imstb_truetype.h" />
+    <ClInclude Include="MemoryInjectionUtils\InjectorHelpers.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RWUtils\RwAPI.h" />
-    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="RWUtils\RwGameHooks.h" />
+    <ClInclude Include="RWUtils\RwPointerTables.h" />
+    <ClInclude Include="common.h" />
+    <ClInclude Include="RWUtils\RwRHConvert.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TestUtils\DeviceSettingsDialog.h" />
     <ClInclude Include="TestUtils\TestSample.h" />
     <ClInclude Include="TestUtils\WindowsSampleWrapper.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Common\IStateCacheObject.cpp" />
+    <ClCompile Include="Engine\Common\IStateCacheObject.cpp" />
     <ClCompile Include="DebugUtils\DebugLogger.cpp" />
     <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11Buffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11ConstantBuffer.cpp" />
     <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11DynamicIndexBuffer.cpp" />
     <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11DynamicVertexBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11IndexBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Buffers\D3D11VertexBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11Convert.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11DeviceOutputView.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11DeviceState.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11GPUAllocator.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11Im2DPipeline.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11PrimitiveBatch.cpp" />
     <ClCompile Include="Engine\D3D11Impl\D3D11Renderer.cpp" />
-    <ClCompile Include="Engine\D3D11Impl\D3D11VertexDeclaration.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11RenderingContext.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\D3D11InputLayout.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\ImageBuffers\D3D11DepthStencilBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\ImageBuffers\D3D11Texture2D.cpp" />
     <ClCompile Include="Engine\D3D11Impl\ImageBuffers\D3D11BackBuffer.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11BlendStateCache.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11DepthStencilStateCache.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11RasterizerStateCache.cpp" />
     <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderStateCache.cpp" />
     <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11RenderTargetCache.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11SampleStateCache.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\RenderStateCache\D3D11ShaderResourceCache.cpp" />
+    <ClCompile Include="Engine\D3D11Impl\Shaders\D3D11ComputeShader.cpp" />
     <ClCompile Include="Engine\D3D11Impl\Shaders\D3D11PixelShader.cpp" />
     <ClCompile Include="Engine\D3D11Impl\Shaders\D3D11Shader.cpp" />
     <ClCompile Include="Engine\D3D11Impl\Shaders\D3D11VertexShader.cpp" />
@@ -201,19 +300,30 @@
     <ClCompile Include="Engine\RwRenderEngine.cpp" />
     <ClCompile Include="Engine\VulkanImpl\ImageBuffers\VulkanBackBuffer.cpp" />
     <ClCompile Include="Engine\VulkanImpl\VulkanRenderer.cpp" />
+    <ClCompile Include="ImGUI\imgui.cpp" />
+    <ClCompile Include="ImGUI\imgui_demo.cpp" />
+    <ClCompile Include="ImGUI\imgui_draw.cpp" />
+    <ClCompile Include="ImGUI\imgui_impl_dx11.cpp" />
+    <ClCompile Include="ImGUI\imgui_impl_win32.cpp" />
+    <ClCompile Include="ImGUI\imgui_widgets.cpp" />
     <ClCompile Include="RWUtils\RwAPI.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="RWUtils\RwGameHooks.cpp" />
+    <ClCompile Include="RWUtils\RwRHConvert.cpp" />
     <ClCompile Include="TestUtils\DeviceSettingsDialog.cpp" />
     <ClCompile Include="TestUtils\TestSample.cpp" />
     <ClCompile Include="TestUtils\WindowsSampleWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="dev_select_dialog.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="shaders\d3d11\engine\Im2D.hlsl">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <FileType>Document</FileType>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -61,105 +61,106 @@ typedef void CShadowManager;
 #define Timecycle ((CTimeCycleCurrent *)0xB7C4A0)
 #define ShadowManager ((CShadowManager *)0xC40350)
 #define CReplay__Mode (*(unsigned char *)0xA43088)
+#define D3D9Device (*(IDirect3DDevice9 **)0xC97C28)
 /*!
-	GTA SA Idle hook, responsible for main game loop
+    GTA SA Idle hook, responsible for main game loop
 */
 class CSAIdleHook
 {
 public:
-	/*!
-		Patches game memory, used to inject RenderHook methods in game. 
-	*/
-	static void Patch();
-	/// Rendering on separate thread experiments, currently useless
-	static void GameLoop();
-	static void RenderLoop();
-	static void UpdateLoop();
-	/*!
-		Idle method, responsible for everything in game from rendering to gameplay update
-	*/
-	static void Idle(void *Data);
-	/*!
-		Experimental Voxel Global Illumination rendering(currently disabled)
-	*/
-	static void RenderVoxelGI();
-	/*!
-		Renders all shadow objects to cascade shadow buffer for specified light direction 
-	*/
-	static void RenderRealTimeShadows(const RwV3d &sundir);
-	/*!
-		Prepares shadow matrices for each cascade for specified light direction
-	*/
-	static void PrepareRealTimeShadows(const RwV3d &sundir);
-	/*!
-		Prepares mouse position and GUI overlay rendering
-	*/
-	static void PrepareRenderStuff();
-	/*!
-		Renders fronted part of game
-	*/
-	static void RenderHUD();
-	/*!
-		Renders text and credits(for some reason after in-game screen fade)
-	*/
-	static void Render2dStuffAfterFade();
-	/*!
-		Prints debuging info and sends image to GPU
-	*/
-	static void DoRWStuffEndOfFrame();
-	/*!
-		Prepares camera params
-	*/
-	static void PrepareRwCamera();
-	/*!
-		Resets light for current frame and updates colors
-	*/
-	static void LightUpdate();
-	/*!
-		Updates game and audio
-	*/
-	static void GameUpdate();
-	/*!
-		Initializes 2D params for current frame
-	*/
-	static void InitPerFrame2D();
-	/*!
-		Updates time counters and deltas
-	*/
-	static void TimeUpdate();
-	/*!
-		Renders geometry in deferred render path
-	*/
-	static void RenderDeferred();
-	/*!
-		Renders geometry in forward render path
-	*/
-	static void RenderForward();
-	/*!
-		Renders effects(e.g. particles, decals etc.)
-	*/
-	static void RenderEffects();
-	/*!
-		Render geometry in forward render path before deferred pass
-	*/
-	static void RenderForwardBeforeDeferred();
-	/*!
-		Render geometry in forward render path after deferred pass
-	*/
-	static void RenderForwardAfterDeferred();
-	/*!
-		Updates day-night balance, adjusted for shadows 
-	*/
-	static void UpdateShadowDNBalance();
-	/*!
-		Renders game
-	*/
-	static void RenderInGame();
+    /*!
+        Patches game memory, used to inject RenderHook methods in game.
+    */
+    static void Patch();
+    /// Rendering on separate thread experiments, currently useless
+    static void GameLoop();
+    static void RenderLoop();
+    static void UpdateLoop();
+    /*!
+        Idle method, responsible for everything in game from rendering to gameplay update
+    */
+    static void Idle( void *Data );
+    /*!
+        Experimental Voxel Global Illumination rendering(currently disabled)
+    */
+    static void RenderVoxelGI();
+    /*!
+        Renders all shadow objects to cascade shadow buffer for specified light direction
+    */
+    static void RenderRealTimeShadows( const RwV3d &sundir );
+    /*!
+        Prepares shadow matrices for each cascade for specified light direction
+    */
+    static void PrepareRealTimeShadows( const RwV3d &sundir );
+    /*!
+        Prepares mouse position and GUI overlay rendering
+    */
+    static void PrepareRenderStuff();
+    /*!
+        Renders fronted part of game
+    */
+    static void RenderHUD();
+    /*!
+        Renders text and credits(for some reason after in-game screen fade)
+    */
+    static void Render2dStuffAfterFade();
+    /*!
+        Prints debuging info and sends image to GPU
+    */
+    static void DoRWStuffEndOfFrame();
+    /*!
+        Prepares camera params
+    */
+    static void PrepareRwCamera();
+    /*!
+        Resets light for current frame and updates colors
+    */
+    static void LightUpdate();
+    /*!
+        Updates game and audio
+    */
+    static void GameUpdate();
+    /*!
+        Initializes 2D params for current frame
+    */
+    static void InitPerFrame2D();
+    /*!
+        Updates time counters and deltas
+    */
+    static void TimeUpdate();
+    /*!
+        Renders geometry in deferred render path
+    */
+    static void RenderDeferred();
+    /*!
+        Renders geometry in forward render path
+    */
+    static void RenderForward();
+    /*!
+        Renders effects(e.g. particles, decals etc.)
+    */
+    static void RenderEffects();
+    /*!
+        Render geometry in forward render path before deferred pass
+    */
+    static void RenderForwardBeforeDeferred();
+    /*!
+        Render geometry in forward render path after deferred pass
+    */
+    static void RenderForwardAfterDeferred();
+    /*!
+        Updates day-night balance, adjusted for shadows
+    */
+    static void UpdateShadowDNBalance();
+    /*!
+        Renders game
+    */
+    static void RenderInGame();
 
-	static float m_fShadowDNBalance;
-	static int m_nLastCascadeRenderCount;
+    static float m_fShadowDNBalance;
+    static int m_nLastCascadeRenderCount;
 private:
-	static std::thread renderThread;
-	static std::thread updateThread;
+    static std::thread renderThread;
+    static std::thread updateThread;
 };
 

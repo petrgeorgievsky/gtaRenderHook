@@ -1,15 +1,17 @@
 #pragma once
-#include <TestUtils\TestSample.h>
+#include <rwtestsample.h>
 
 /**
 * @brief Simple sample that clears framebuffer with color varying from blue to pink
 * by each frame incrementing/decrementing red color value
 *
 */
-class ClearScreenSample : public RHTests::TestSample
+class ClearScreenSample : public rh::rw::engine::RwTestSample
 {
 public:
-    ClearScreenSample(RHEngine::RHRenderingAPI api, HINSTANCE inst) : RHTests::TestSample(api, inst) { }
+    ClearScreenSample( rh::engine::RenderingAPI api, HINSTANCE inst )
+        : rh::rw::engine::RwTestSample( api, inst )
+    {}
     void CustomRender() override;
 private:
     unsigned char m_nCurrentRed = 0;

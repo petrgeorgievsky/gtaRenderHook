@@ -24,9 +24,6 @@
     <Filter Include="Source\RwRenderEngine\RwVulkanRenderEngine\GTAPipelines">
       <UniqueIdentifier>{9b9676ce-9780-4009-bf44-9d4ab68ea990}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\Managers">
-      <UniqueIdentifier>{d2107dee-4078-4b14-a7b0-c8ceedbfa923}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\Helpers">
       <UniqueIdentifier>{e2d1b967-07d7-46e9-ae95-c78d85808533}</UniqueIdentifier>
     </Filter>
@@ -101,6 +98,15 @@
     </Filter>
     <Filter Include="Source\Utilities\SettingsSystem">
       <UniqueIdentifier>{e7a03f28-c8b2-4811-9840-9e245d2bc962}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Algorithms\NextGen">
+      <UniqueIdentifier>{bf00300a-a2f4-4a98-8069-6190965767ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Algorithms\NextGen\RayTracing">
+      <UniqueIdentifier>{75f228cd-3dca-4303-abb1-91343a130fd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\RwRenderEngine\RwD3DRenderEngine\Managers">
+      <UniqueIdentifier>{d2107dee-4078-4b14-a7b0-c8ceedbfa923}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -326,6 +332,9 @@
     <ClInclude Include="SettingsFields.h">
       <Filter>Source\Utilities\SettingsSystem</Filter>
     </ClInclude>
+    <ClInclude Include="RHRayTracer.h">
+      <Filter>Source\Algorithms\NextGen\RayTracing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -538,6 +547,9 @@
     <ClCompile Include="SettingsFields.cpp">
       <Filter>Source\Utilities\SettingsSystem</Filter>
     </ClCompile>
+    <ClCompile Include="RHRayTracer.cpp">
+      <Filter>Source\Algorithms\NextGen\RayTracing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt">
@@ -635,5 +647,10 @@
     <None Include="shaders\TemporalAA.hlsl">
       <Filter>Source\Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders\RayTracing.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

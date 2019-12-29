@@ -8,6 +8,8 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #define NOASM
 #define USE_ANTTWEAKBAR
+
+#pragma warning( push, 0 )
 // Windows Header Files:
 #include <windows.h>
 #include <stdio.h>
@@ -41,7 +43,9 @@ static const char *vk_layers[] = { "VK_LAYER_LUNARG_standard_validation" };
 static const char *vk_extensions[] = { "VK_KHR_surface", "VK_KHR_win32_surface", "VK_EXT_debug_report" };
 #endif
 
+#pragma warning( pop )
+
 #include "gta_sa_ptrs.h"
 #include "MemoryFuncs.h"
 
-#endif // stdafx_h__
+#endif // stdafx_h

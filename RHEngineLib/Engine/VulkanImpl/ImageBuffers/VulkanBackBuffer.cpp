@@ -1,39 +1,30 @@
-#include "stdafx.h"
 #include "VulkanBackBuffer.h"
 #include "../../../DebugUtils/DebugLogger.h"
 
-RHEngine::VulkanBackBuffer::VulkanBackBuffer(const VkDevice &device, const VkSwapchainKHR &swapChain)
+rh::engine::VulkanBackBuffer::VulkanBackBuffer( const vk::Device &device, const vk::SwapchainKHR &swapChain )
 {
-	uint32_t imageCount;
-	if (!CALL_VK_API(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr),
-		TEXT("Failed to create logical device!")))
-		return;
-	m_vkBackBufferImages.resize(imageCount);
-	if (!CALL_VK_API(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, m_vkBackBufferImages.data()),
-        TEXT("Failed to create logical device!")))
-		return;
+    m_vkBackBufferImages = device.getSwapchainImagesKHR( swapChain );
 }
 
-RHEngine::VulkanBackBuffer::~VulkanBackBuffer()
+rh::engine::VulkanBackBuffer::~VulkanBackBuffer()
+= default;
+
+vk::ImageView rh::engine::VulkanBackBuffer::GetImageView() const
 {
+    return vk::ImageView();
 }
 
-VkImageView RHEngine::VulkanBackBuffer::GetImageView() const
+vk::Image rh::engine::VulkanBackBuffer::GetImage() const
 {
-	return VkImageView();
+    return m_vkBackBufferImages[m_uiBackBufferID];
 }
 
-VkImage RHEngine::VulkanBackBuffer::GetImage() const
+uint32_t rh::engine::VulkanBackBuffer::GetBackBufferID()
 {
-	return m_vkBackBufferImages[m_uiBackBufferID];
+    return m_uiBackBufferID;
 }
 
-uint32_t RHEngine::VulkanBackBuffer::GetBackBufferID()
+void rh::engine::VulkanBackBuffer::SetBackBufferID( uint32_t id )
 {
-	return m_uiBackBufferID;
-}
-
-void RHEngine::VulkanBackBuffer::SetBackBufferID(uint32_t id)
-{
-	m_uiBackBufferID = id;
+    m_uiBackBufferID = id;
 }

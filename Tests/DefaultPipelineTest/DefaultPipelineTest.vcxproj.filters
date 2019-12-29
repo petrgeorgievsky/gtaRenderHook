@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{bb1e30d1-d94c-4c18-9c50-4c934dfa322d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\d3d11">
+      <UniqueIdentifier>{01f3af60-6555-43c0-9f46-d227f49293b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\d3d11\engine">
+      <UniqueIdentifier>{fe7f1a90-f7f3-4c13-aa58-69b39c41f347}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\rw_funcs">
+      <UniqueIdentifier>{c3525bd5-fe24-4ae4-9eba-9f3b5dba16ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\rw_funcs">
+      <UniqueIdentifier>{c97f4b43-ca96-4162-81a1-b7732d7e62b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\rw_io_funcs">
+      <UniqueIdentifier>{ebe3584e-7e81-4c3a-a99e-b1b542c6770b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\rw_io_funcs">
+      <UniqueIdentifier>{db7e9abc-0714-40e0-978a-981f095ad893}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleSample.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_atomic_funcs.cpp">
+      <Filter>Исходные файлы\rw_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_clump_funcs.cpp">
+      <Filter>Исходные файлы\rw_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_geometry_funcs.cpp">
+      <Filter>Исходные файлы\rw_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_material_funcs.cpp">
+      <Filter>Исходные файлы\rw_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_matlist_funcs.cpp">
+      <Filter>Исходные файлы\rw_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_frame_funcs.cpp">
+      <Filter>Исходные файлы\rw_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_geometry_binmesh_read_funcs.cpp">
+      <Filter>Исходные файлы\rw_io_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_geometry_read_funcs.cpp">
+      <Filter>Исходные файлы\rw_io_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_material_read_funcs.cpp">
+      <Filter>Исходные файлы\rw_io_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rp_matlist_read_funcs.cpp">
+      <Filter>Исходные файлы\rw_io_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_framelist_read_funcs.cpp">
+      <Filter>Исходные файлы\rw_io_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_geometrylist_read_funcs.cpp">
+      <Filter>Исходные файлы\rw_io_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="clump_read_funcs.cpp">
+      <Filter>Исходные файлы\rw_io_funcs</Filter>
+    </ClCompile>
+    <ClCompile Include="forward_pbr_pipeline.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SimpleSample.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_atomic_funcs.h">
+      <Filter>Файлы заголовков\rw_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_clump_funcs.h">
+      <Filter>Файлы заголовков\rw_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_geometry_funcs.h">
+      <Filter>Файлы заголовков\rw_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_material_funcs.h">
+      <Filter>Файлы заголовков\rw_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_matlist_funcs.h">
+      <Filter>Файлы заголовков\rw_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_frame_funcs.h">
+      <Filter>Файлы заголовков\rw_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="clump_read_funcs.h">
+      <Filter>Файлы заголовков\rw_io_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_geometry_binmesh_read_funcs.h">
+      <Filter>Файлы заголовков\rw_io_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_geometry_read_funcs.h">
+      <Filter>Файлы заголовков\rw_io_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_material_read_funcs.h">
+      <Filter>Файлы заголовков\rw_io_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rp_matlist_read_funcs.h">
+      <Filter>Файлы заголовков\rw_io_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_framelist_read_funcs.h">
+      <Filter>Файлы заголовков\rw_io_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_geometrylist_read_funcs.h">
+      <Filter>Файлы заголовков\rw_io_funcs</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_pipeline_wrapper.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="rh_pipeline_core.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="gta_map_loader.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="forward_pbr_pipeline.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DependencyPaths.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="Shaders\d3d11\engine\Im2D.hlsl">
+      <Filter>Shaders\d3d11\engine</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\d3d11\simple_pipeline.hlsl">
+      <Filter>Shaders\d3d11</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\d3d11\forward_pbr_pipeline.hlsl" />
+  </ItemGroup>
+</Project>

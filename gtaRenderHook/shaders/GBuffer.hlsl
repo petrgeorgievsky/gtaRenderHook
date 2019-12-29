@@ -100,7 +100,9 @@ struct PS_DEFERRED_IN
 	float4 vPosition		: SV_POSITION;
 	float4 vColor			: COLOR;
 	float4 vNormalDepth		: NORMAL;
-	float4 vTexCoord		: TEXCOORD0;
+    float4 vTexCoord : TEXCOORD0;
+    float4 vTangent : TEXCOORD1;
+    float4 vBiTangent : TEXCOORD2;
 };
 /*!
     Deferred output structure.
@@ -115,7 +117,7 @@ void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float
 	output.vParameters = Params;
     output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
     float3 AmbLighting = lerp(vSkyLightCol.rgb, vHorizonCol.rgb, Normals.z);
-    output.vLighting = float4(isnan(AmbLighting) ? 0.1f.xxx : AmbLighting * 0.5f, 1);
+    output.vLighting = float4(0.0f.xxx, 1);
 }
 
 /*!

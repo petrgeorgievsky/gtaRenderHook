@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.12)
+project (Tests)
+add_subdirectory(DisplayModeSelectionTest)
+add_subdirectory(ClearScreenTest)
+#add_subdirectory(DefaultPipelineTest)
+add_subdirectory(TextureLoadingTest)
+add_subdirectory(GTAModelLoadingTest)
+add_subdirectory(GTAModelRayTracingTest)

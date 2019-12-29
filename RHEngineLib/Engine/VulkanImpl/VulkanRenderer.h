@@ -1,110 +1,141 @@
 #pragma once
+#include "../Common/IStateCacheObject.h"
 #include "../IRenderer.h"
-#include "../../stdafx.h"
-namespace RHEngine
+#include <common.h>
+
+namespace rh::engine {
+class VulkanRenderer : public IRenderer
 {
-	class VulkanRenderer : public IRenderer
-	{
-	public:
+public:
+    VulkanRenderer( HWND window, HINSTANCE inst );
+    ~VulkanRenderer() override;
 
-		VulkanRenderer(HWND window, HINSTANCE inst);
-		~VulkanRenderer();
+    bool InitDevice() override;
 
-		virtual bool InitDevice() override;
+    bool ShutdownDevice() override;
 
-		virtual bool ShutdownDevice() override;
+    bool GetAdaptersCount( unsigned int & ) override;
 
-		virtual bool GetAdaptersCount(int &) override;
+    bool GetAdapterInfo( unsigned int n, rh::engine::String & ) override;
 
-		virtual bool GetAdapterInfo(unsigned int n, std::wstring &) override;
+    bool SetCurrentAdapter( unsigned int n ) override;
 
-		virtual bool SetCurrentAdapter(unsigned int n) override;
+    bool GetOutputCount( unsigned int adapterId, int & ) override;
 
-		virtual bool GetOutputCount(unsigned int adapterId, int &) override;
+    bool GetOutputInfo( unsigned int n, std::wstring & ) override;
 
-		virtual bool GetOutputInfo(unsigned int n, std::wstring &) override;
+    bool SetCurrentOutput( unsigned int id ) override;
 
-		virtual bool SetCurrentOutput(unsigned int id) override;
+    bool GetDisplayModeCount( unsigned int outputId, int & ) override;
 
-		virtual bool GetDisplayModeCount(unsigned int outputId, int &) override;
+    bool GetDisplayModeInfo( unsigned int id, DisplayModeInfo & ) override;
 
-		virtual bool GetDisplayModeInfo(unsigned int id, DisplayModeInfo &) override;
+    bool SetCurrentDisplayMode( unsigned int id ) override;
 
-		virtual bool SetCurrentDisplayMode(unsigned int id) override;
+    bool GetCurrentAdapter( int & ) override;
 
-		virtual bool GetCurrentAdapter(int &) override;
+    bool GetCurrentOutput( int & ) override;
 
-		virtual bool GetCurrentOutput(int &) override;
+    bool GetCurrentDisplayMode( int & ) override;
 
-		virtual bool GetCurrentDisplayMode(int &) override;
-		virtual bool Present(void* image) override;
-	private:
-		UINT m_uiCurrentAdapter = 0,
-			m_uiCurrentOutput = 0,
-			m_uiCurrentAdapterMode = 0;
-		// Vulkan renderer instance - used to work with platform-specific stuff
-		VkInstance m_vkInstance;
-		// Avaliable physical devices
-		std::vector<VkPhysicalDevice> m_aAdapters;
+    bool Present( void *image ) override;
 
-		// Main window surface 
-		VkSurfaceKHR m_vkWindowSurface = VK_NULL_HANDLE;
-		// Main window surface capabilities
-        VkSurfaceCapabilitiesKHR m_vkWindowSurfaceCap = {};
-		// Avaliable surface formats for main window
-		std::vector<VkSurfaceFormatKHR> m_aWindowSurfaceFormats;
-		// Avaliable present modes for main window
-		std::vector<VkPresentModeKHR> m_aWindowSurfacePresentModes;
+    void *GetCurrentDevice() override;
+    void *GetCurrentContext() override;
 
-		// Main logical device 
-		VkDevice m_vkDevice = VK_NULL_HANDLE;
-		// Vulkan debug callback
-		VkDebugReportCallbackEXT m_debugCallback;
-		// Graphics families list
-		std::vector<int> m_aGraphicsQueueFamilies;
-		// Compute families list
-		std::vector<int> m_aComputeQueueFamilies;
-		// Transfer families list
-		std::vector<int> m_aTransferQueueFamilies;
-		// Graphics queue - used as immediate context
-		VkQueue m_vkGraphicsQueue = VK_NULL_HANDLE;
-		// Present queue
-		VkQueue m_vkPresentQueue = VK_NULL_HANDLE;
-		// Swap-chain image retrieval semaphore
-		VkSemaphore m_vkSwapChainImageSemaphore = VK_NULL_HANDLE;
-		VkSemaphore m_vkMainCmdBufferSemaphore = VK_NULL_HANDLE;
-        VkFence m_vkMainCmdBufferFence = VK_NULL_HANDLE;
-        std::vector<VkFence> m_vkMainCmdBufferFences;
-		// Main command pool for graphics queue
-		VkCommandPool m_vkGraphicsQueueCommandPool = VK_NULL_HANDLE;
-		// Main command buffer
-		std::vector<VkCommandBuffer> m_vkMainCommandBufferList;
-		uint32_t m_nCurrentMainCmdBuffer;
-		// Unused
-		std::vector<VkDisplayPropertiesKHR> m_aOutputProperties;
-		// Instance extension list
-		std::vector<const char*> m_aExtensions;
-		// Instance layer list
-		std::vector<const char*> m_aLayers;
-		// Main swap-chain
-		VkSwapchainKHR m_vkSwapChain = VK_NULL_HANDLE;
+    void BindViewPorts( const std::vector<ViewPort> &viewports ) override;
 
-		// Унаследовано через IRenderer
-		virtual void * AllocateImageBuffer(unsigned int width, unsigned int height, RHImageBufferType type) override;
-		virtual bool FreeImageBuffer(void * buffer, RHImageBufferType type) override;
+private:
+    UINT m_uiCurrentAdapter = 0, m_uiCurrentOutput = 0, m_uiCurrentAdapterMode = 0;
 
-		// Унаследовано через IRenderer
-		virtual bool BindImageBuffers(RHImageBindType bindType, const std::unordered_map<int, void*>& buffers) override;
+    // Vulkan renderer instance - used to work with platform-specific stuff
+    vk::Instance m_vkInstance;
 
-		// Унаследовано через IRenderer
-		virtual bool ClearImageBuffer(RHImageClearType clearType, void* buffer, const float clearColor[4]) override;
+    // Avaliable physical devices
+    std::vector<vk::PhysicalDevice> m_aAdapters;
 
-		// Унаследовано через IRenderer
-		virtual bool BeginCommandList(void * cmdList) override;
-		virtual bool EndCommandList(void * cmdList) override;
+    // Main window surface
+    vk::SurfaceKHR m_vkWindowSurface = nullptr;
 
-		// Унаследовано через IRenderer
-		virtual bool RequestSwapChainImage(void * frameBuffer) override;
-		virtual bool PresentSwapChainImage(void * frameBuffer) override;
-	};
+    // Main window surface capabilities
+    vk::SurfaceCapabilitiesKHR m_vkWindowSurfaceCap = {};
+
+    // Avaliable surface formats for main window
+    std::vector<vk::SurfaceFormatKHR> m_aWindowSurfaceFormats;
+
+    // Avaliable present modes for main window
+    std::vector<vk::PresentModeKHR> m_aWindowSurfacePresentModes;
+
+    // Main logical device
+    vk::Device m_vkDevice = nullptr;
+
+    // Vulkan debug callback
+    VkDebugReportCallbackEXT m_debugCallback{};
+
+    // Graphics families list
+    std::vector<uint32_t> m_aGraphicsQueueFamilies;
+
+    // Compute families list
+    std::vector<uint32_t> m_aComputeQueueFamilies;
+
+    // Transfer families list
+    std::vector<uint32_t> m_aTransferQueueFamilies;
+
+    // Graphics queue - used as immediate context
+    vk::Queue m_vkGraphicsQueue = nullptr;
+
+    // Present queue
+    vk::Queue m_vkPresentQueue = nullptr;
+
+    // Swap-chain image retrieval semaphore
+    vk::Semaphore m_vkSwapChainImageSemaphore = nullptr;
+
+    vk::Semaphore m_vkMainCmdBufferSemaphore = nullptr;
+    vk::Fence m_vkMainCmdBufferFence = nullptr;
+    std::vector<vk::Fence> m_vkMainCmdBufferFences;
+
+    // Main command pool for graphics queue
+    vk::CommandPool m_vkGraphicsQueueCommandPool = nullptr;
+
+    // Main command buffer
+    std::vector<vk::CommandBuffer> m_vkMainCommandBufferList;
+    uint32_t m_nCurrentMainCmdBuffer = 0;
+
+    // Unused
+    std::vector<vk::DisplayPropertiesKHR> m_aOutputProperties;
+
+    // Instance extension list
+    std::vector<const char *> m_aExtensions;
+
+    // Instance layer list
+    std::vector<const char *> m_aLayers;
+
+    // Main swap-chain
+    vk::SwapchainKHR m_vkSwapChain = nullptr;
+
+    void *AllocateImageBuffer( const ImageBufferInfo &info ) override;
+    bool FreeImageBuffer( void *buffer, ImageBufferType type ) override;
+
+    bool BindImageBuffers( ImageBindType bindType,
+                           const std::vector<IndexPtrPair> &buffers ) override;
+
+    bool ClearImageBuffer( ImageClearType clearType,
+                           void *buffer,
+                           const std::array<float, 4> &clearColor ) override;
+
+    bool BeginCommandList( void *cmdList ) override;
+    bool EndCommandList( void *cmdList ) override;
+
+    bool RequestSwapChainImage( void *frameBuffer ) override;
+    bool PresentSwapChainImage( void *frameBuffer ) override;
+    void FlushCache() override;
+
+    IGPUAllocator *GetGPUAllocator() override;
+
+    void InitImGUI() override;
+    void ImGUIStartFrame() override;
+
+    void ImGUIRender() override;
+    void ShutdownImGUI() override;
 };
+}; // namespace rh::engine

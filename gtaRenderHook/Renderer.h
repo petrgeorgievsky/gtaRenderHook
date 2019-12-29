@@ -29,194 +29,196 @@
 #define CRenderer__SetupBigBuildingVisibility(entity,renderDistance) ((char (__cdecl *)(CEntity *, float*))0x554650)(entity,renderDistance)
 //B992B8     _ZN6CWorld17ms_aRepeatSectorsE CRepeatSector
 
-enum RendererVisibility {
-	INVISIBLE,
-	VISIBLE,
-	OFFSCREEN,
-	NOT_LOADED,
+enum class RendererVisibility
+{
+    INVISIBLE,
+    VISIBLE,
+    OFFSCREEN,
+    NOT_LOADED,
 };
 
-struct sLodListEntry {
-	CEntity* entity;
-	float distance;
+struct sLodListEntry
+{
+    CEntity* entity;
+    float distance;
 };
 
 class CRendererRH
 {
 public:
-	/*!
-		Renders all road entities.
-		This was used by R* because of corona reflections rendered after that.
-	*/
-	static void RenderRoads();
-	/*!
-		Renders all cubemap entities.
-	*/
-	static void RenderCubemapEntities();
-	/*!
-		Renders all non-road entities.
-	*/
-	static void RenderEverythingBarRoads();
-	/*!
-		Renders all time dependant objects
-	*/
-	static void RenderTOBJs();
-	/*!
-		Renders all shadow casters for i-th cascade
-	*/
-	static void RenderShadowCascade(int i);
-	/*!
-		Deprecated, to be removed
-	*/
-	static void ConstructShadowList();
-	/*!
-		Constructs entities lists to be rendered in current frame 
-	*/
-	static void ConstructRenderList();
-	/*!
-		Renders fading in all entities(LOD transitions)
-	*/
-	static void RenderFadingInEntities();
-	/*!
-		Adds entity to main render list
-	*/
-	static void AddEntityToRenderList(CEntity* entity, float renderDistance);
-	/*!
-		Adds entity to reflection list
-	*/
-	static void AddEntityToReflectionList(CEntity* entity, float renderDistance);
-	/*!
-		Adds entity to shadow caster render list
-	*/
-	static char AddEntityToShadowCasterList(CEntity* entity, float renderDistance, int shadowCascade);
-	/*!
-		Adds entity to LOD render list
-	*/
-	static char AddToLodRenderList(CEntity* entity, float renderDistance);
-	/*!
-		Adds entity to shadow caster render list if it's inside light frustum
-	*/
-	static void AddEntityToShadowCastersIfNeeded(CEntity* entity,bool checkBBox);
-	/*!
-		Checks if AABB is inside plane bounded volume
-	*/
-	static bool IsAABBInsideBoundingVolume(RwPlane * boundingPlanes, int planeCount, const RW::BBox& b);
-	/*!
-		Calculates entity visibility based on flags and distance
-	*/
-	static RendererVisibility SetupEntityVisibility(CEntity* entity, float* renderDistance);
-	/*!
-		Calculates BIG building entity visibility based on flags and distance
-	*/
-	static RendererVisibility SetupBigBuildingVisibility(CEntity* entity, float* renderDistance);
-	
-	/*!
-		Calculates map entity visibility
-	*/
-	static RendererVisibility SetupMapEntityVisibility(CEntity *entity, CBaseModelInfo *mapInfo, float renderDistance, char a4);
-	/*!
-		Renders one road entity
-	*/
-	static void RenderOneRoad(CEntity*);
-	/*!
-		Renders one non-road entity
-	*/
-	static void RenderOneNonRoad(CEntity*);
-	/*!
-		Checks if entity is culled by tunnel
-	*/
-	static bool IsCulledByTunnel(CEntity*);
-	/*!
-		Scans sector for entities
-	*/
-	static void ScanSectorList(int x, int y);
-	/*!
-		Scans entity pointer list
-	*/
-	static void ScanPtrList(CPtrList* ptrList, bool loadIfRequired);
-	/*!
-		Scans entity pointer list for shadows
-	*/
-	static void ScanPtrListForShadows(CPtrList* ptrList, bool loadIfRequired);
-	/*!
-		Scans entity pointer list for reflections
-	*/
-	static void ScanPtrListForReflections(CPtrList* ptrList, bool loadIfRequired);
-	/*!
-		Scans sector for BIG buildings
-	*/
-	static void ScanBigBuildingList(int x, int y);
-	/*!
-		Scans sector for reflection entities
-	*/
-	static void ScanSectorListForReflections(int x, int y);
-	/*!
-		Scans sector for shadow casting entities
-	*/
-	static void ScanSectorListForShadowCasters(int x, int y);
-	/*!
-		Prepares render entiy lists before rendering
-	*/
-	static void PreRender();
-	/*!
-		Cleans up LOD render lists 
-	*/
-	static void ProcessLodRenderLists();
-	/*!
-		Deprecated, to be removed
-	*/
-	static void ScanWorld(RwCamera* camera, RwV3d* gameCamPos, float shadowStart, float shadowEnd);
-	/*!
-		Scans world for entities
-	*/
-	static void ScanWorld();
-	/*!
-		Resets LOD render lists
-	*/
-	static void ResetLodRenderLists();
-	/*!
-		Renders shadow caster entity, skips effect rendering. 
-	*/
-	static void RenderShadowCasterEntity(CEntity*);
-	/*!
-		Renders reflection entity, skips effect rendering. 
-	*/
-	static void RenderReflectionEntity(CEntity*);
-	/*!
-		Returns base of LOD render list
-	*/
-	static sLodListEntry *GetLodRenderListBase();
-	static sLodListEntry *GetLodDontRenderListBase();
-	static void CalculateShadowBoundingPlanes(int shadowCascade);
-	/*!
-		Scans for shadows in sector, multithreading experiment. 
-	*/
-	static void ScanShadowsMT(const int& x, const int& cs_y);
+    /*!
+        Renders all road entities.
+        This was used by R* because of corona reflections rendered after that.
+    */
+    static void RenderRoads();
+    /*!
+        Renders all cubemap entities.
+    */
+    static void RenderCubemapEntities();
+    /*!
+        Renders all non-road entities.
+    */
+    static void RenderEverythingBarRoads();
+    /*!
+        Renders all time dependant objects
+    */
+    static void RenderTOBJs();
+    /*!
+        Renders all shadow casters for i-th cascade
+    */
+    static void RenderShadowCascade( int i );
+    /*!
+        Deprecated, to be removed
+    */
+    static void ConstructShadowList();
+    /*!
+        Constructs entities lists to be rendered in current frame
+    */
+    static void ConstructRenderList();
+    /*!
+        Renders fading in all entities(LOD transitions)
+    */
+    static void RenderFadingInEntities();
+    /*!
+        Adds entity to main render list
+    */
+    static void AddEntityToRenderList( CEntity* entity, float renderDistance );
+    /*!
+        Adds entity to reflection list
+    */
+    static void AddEntityToReflectionList( CEntity* entity, float renderDistance );
+    /*!
+        Adds entity to shadow caster render list
+    */
+    static char AddEntityToShadowCasterList( CEntity* entity, float renderDistance, int shadowCascade );
+    /*!
+        Adds entity to LOD render list
+    */
+    static char AddToLodRenderList( CEntity* entity, float renderDistance );
+    /*!
+        Adds entity to shadow caster render list if it's inside light frustum
+    */
+    static void AddEntityToShadowCastersIfNeeded( CEntity* entity, bool checkBBox );
+    /*!
+        Checks if AABB is inside plane bounded volume
+    */
+    static bool IsAABBInsideBoundingVolume( RwPlane * boundingPlanes, int planeCount, const RW::BBox& b );
+    /*!
+        Calculates entity visibility based on flags and distance
+    */
+    static RendererVisibility SetupEntityVisibility( CEntity* entity, float* renderDistance );
+    /*!
+        Calculates BIG building entity visibility based on flags and distance
+    */
+    static RendererVisibility SetupBigBuildingVisibility( CEntity* entity, float* renderDistance );
+
+    /*!
+        Calculates map entity visibility
+    */
+    static RendererVisibility SetupMapEntityVisibility( CEntity *entity, CBaseModelInfo *mapInfo, float renderDistance, char a4 );
+    /*!
+        Renders one road entity
+    */
+    static void RenderOneRoad( CEntity* );
+    /*!
+        Renders one non-road entity
+    */
+    static void RenderOneNonRoad( CEntity* );
+    /*!
+        Checks if entity is culled by tunnel
+    */
+    static bool IsCulledByTunnel( CEntity* );
+    /*!
+        Scans sector for entities
+    */
+    static void ScanSectorList( int x, int y );
+    /*!
+        Scans entity pointer list
+    */
+    static void ScanPtrList( CPtrList* ptrList, bool loadIfRequired );
+    /*!
+        Scans entity pointer list for shadows
+    */
+    static void ScanPtrListForShadows( CPtrList* ptrList, bool loadIfRequired );
+    /*!
+        Scans entity pointer list for reflections
+    */
+    static void ScanPtrListForReflections( CPtrList* ptrList, bool loadIfRequired );
+    /*!
+        Scans sector for BIG buildings
+    */
+    static void ScanBigBuildingList( int x, int y );
+    /*!
+        Scans sector for reflection entities
+    */
+    static void ScanSectorListForReflections( int x, int y );
+    /*!
+        Scans sector for shadow casting entities
+    */
+    static void ScanSectorListForShadowCasters( int x, int y );
+    /*!
+        Prepares render entiy lists before rendering
+    */
+    static void PreRender();
+    /*!
+        Cleans up LOD render lists
+    */
+    static void ProcessLodRenderLists();
+    /*!
+        Deprecated, to be removed
+    */
+    static void ScanWorld( RwCamera* camera, RwV3d* gameCamPos, float shadowStart, float shadowEnd );
+    /*!
+        Scans world for entities
+    */
+    static void ScanWorld();
+    /*!
+        Resets LOD render lists
+    */
+    static void ResetLodRenderLists();
+    /*!
+        Renders shadow caster entity, skips effect rendering.
+    */
+    static void RenderShadowCasterEntity( CEntity* );
+    /*!
+        Renders reflection entity, skips effect rendering.
+    */
+    static void RenderReflectionEntity( CEntity* );
+    /*!
+        Returns base of LOD render list
+    */
+    static sLodListEntry *GetLodRenderListBase();
+    static sLodListEntry *GetLodDontRenderListBase();
+    static void CalculateShadowBoundingPlanes( int shadowCascade );
+    /*!
+        Scans for shadows in sector, multithreading experiment.
+    */
+    static void ScanShadowsMT( const int& x, const int& cs_y );
 public:
-	// fields
-	static bool		&ms_bRenderTunnels;
-	static bool		&ms_bRenderOutsideTunnels;
-	static bool		&ms_bInTheSky;
-	static UINT&		ms_nNoOfVisibleEntities;
-	static UINT&		ms_nNoOfInVisibleEntities;
-	static UINT&		ms_nNoOfVisibleLods;
-	static UINT&		m_loadingPriority;
-	static CEntity*		m_pFirstPersonVehicle;
-	static CVector		&ms_vecCameraPosition;
-	static float&		ms_fCameraHeading;
-	static float&		ms_lowLodDistScale;
-	static float&		ms_fFarClipPlane;
-	static CEntity** ms_aVisibleEntityPtrs;
-	static CEntity** ms_aInVisibleEntityPtrs;
-	static CEntity** ms_aVisibleLodPtrs;
-	static sLodListEntry* &ms_pLodRenderList;
-	static sLodListEntry* &ms_pLodDontRenderList;
-	static RwPlane ms_aShadowCasterBoundingPlanes[4][5];
-	//static CBaseModelInfo **ms_modelInfoPtrs;
-	static bool TOBJpass;
-	static std::list<CEntity*> ms_aVisibleEntities;
-	static std::list<CEntity*> ms_aVisibleLods;
-	static std::vector<CEntity*> ms_aVisibleShadowCasters[4];
-	static std::vector<CEntity*> ms_aVisibleReflectionObjects;
+    // fields
+    static bool		&ms_bRenderTunnels;
+    static bool		&ms_bRenderOutsideTunnels;
+    static bool		&ms_bInTheSky;
+    static UINT&		ms_nNoOfVisibleEntities;
+    static UINT&		ms_nNoOfInVisibleEntities;
+    static UINT&		ms_nNoOfVisibleLods;
+    static UINT&		m_loadingPriority;
+    static CEntity*		m_pFirstPersonVehicle;
+    static CVector		&ms_vecCameraPosition;
+    static float&		ms_fCameraHeading;
+    static float&		ms_lowLodDistScale;
+    static float&		ms_fFarClipPlane;
+    static CEntity** ms_aVisibleEntityPtrs;
+    static CEntity** ms_aInVisibleEntityPtrs;
+    static CEntity** ms_aVisibleLodPtrs;
+    static sLodListEntry* &ms_pLodRenderList;
+    static sLodListEntry* &ms_pLodDontRenderList;
+    static RwPlane ms_aShadowCasterBoundingPlanes[4][5];
+    //static CBaseModelInfo **ms_modelInfoPtrs;
+    static bool TOBJpass;
+    static std::list<CEntity*> ms_aVisibleEntities;
+    static std::list<CEntity*> ms_aVisibleLods;
+    static std::vector<CEntity*> ms_aVisibleShadowCasters[4];
+    static std::vector<CEntity*> ms_aVisibleReflectionObjects;
 };
 

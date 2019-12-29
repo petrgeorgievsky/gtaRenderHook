@@ -6,20 +6,20 @@ CD3D1XShaderDefineList* g_pGlobalShaderDefines;
 
 CD3D1XShaderDefineList::CD3D1XShaderDefineList()
 {
-	Reset();
+    Reset();
 }
 
-void CD3D1XShaderDefineList::AddDefine(const std::string & defineName, const std::string & defineValue)
+void CD3D1XShaderDefineList::AddDefine( const std::string & defineName, const std::string & defineValue )
 {
-	m_aDefines.emplace_back( defineName , defineValue);
+    m_aDefines.emplace_back( defineName, defineValue );
 }
 
 
 void CD3D1XShaderDefineList::Reset()
 {
-	m_aDefines.clear();
+    m_aDefines.clear();
 }
 
-CD3D1XShaderDefine::CD3D1XShaderDefine(const std::string & name, const std::string & def):m_sName{name},m_sDefinition{def}
+CD3D1XShaderDefine::CD3D1XShaderDefine( const std::string & name, const std::string & def ) :m_sName{ name }, m_sDefinition{ def }
 {
 }

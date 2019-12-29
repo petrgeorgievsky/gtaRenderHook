@@ -5,14 +5,14 @@
 #include "D3DRenderer.h"
 #include "D3D1XShader.h"
 
-CDeferredPipeline::CDeferredPipeline(const std::string &pipeName, bool useVoxelPipe) : CShadowPipeline{pipeName}, CVoxelPipeline{ pipeName,useVoxelPipe }
+CDeferredPipeline::CDeferredPipeline( const std::string &pipeName, bool useVoxelPipe ) : CShadowPipeline{ pipeName }, CVoxelPipeline{ pipeName,useVoxelPipe }
 {
-	std::string shaderPath = "shaders/" + m_sPipeName + ".hlsl";
-	m_pDeferredPS = new CD3D1XPixelShader(shaderPath, "DeferredPS");
+    std::string shaderPath = "shaders/" + m_sPipeName + ".hlsl";
+    m_pDeferredPS = new CD3D1XPixelShader( shaderPath, "DeferredPS" );
 }
 
 
 CDeferredPipeline::~CDeferredPipeline()
 {
-	delete m_pDeferredPS;
+    delete m_pDeferredPS;
 }

@@ -6,8 +6,9 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-Texture2D txDiffuse : register( t0 );
-Texture2D txSpec 	: register( t1 );
+Texture2D    txDiffuse : register( t0 );
+Texture2D    txSpec : register( t1 );
+Texture2D    txNormals : register( t2 );
 SamplerState samLinear : register(s0);
 Texture2D txShadow 	: register(t4);
 
@@ -15,8 +16,10 @@ struct VS_INPUT
 {
     float3 vPosition   	: POSITION;
     float2 vTexCoord    : TEXCOORD;
-    float3 vInNormal    : NORMAL;
-	float4 vInColor 	: COLOR;
+    float3 vInNormal : NORMAL;
+    float4 vInColor : COLOR;
+    float3 vInTangents : TEXCOORD1;
+    float3 vInBiTangents : TEXCOORD2;
 };
 struct GS_VOXEL_IN
 {
@@ -38,8 +41,10 @@ struct PS_DEFERRED_DN_IN
     float4 vPosition    : SV_POSITION;
     float4 vColor       : COLOR;
     float4 vNormalDepth : NORMAL;
-    float4 vTexCoord    : TEXCOORD0;
-    float4 vWorldPos    : TEXCOORD1;
+    float4 vTexCoord : TEXCOORD0;
+    float4 vWorldPos : TEXCOORD1;
+    float4 vTangent : TEXCOORD2;
+    float4 vBiTangent : TEXCOORD3;
 };
 //--------------------------------------------------------------------------------------
 // Vertex Shader
@@ -51,8 +56,12 @@ PS_DEFERRED_DN_IN VS(VS_INPUT i)
 			outPos 		= mul( outPos, mWorld );
     o.vWorldPos = outPos;
 			outPos		= mul( outPos, mView );
-    o.vPosition 	    = mul( outPos, mProjection );
-    o.vNormalDepth  = float4(mul((float3x3) mWorldInv, i.vInNormal), outPos.z);
+    o.vPosition         = mul( outPos, mProjection );
+
+    o.vNormalDepth =
+        float4( mul( (float3x3)mWorldInv, i.vInNormal ), outPos.z );
+    o.vTangent   = float4( mul( (float3x3)mWorldInv, i.vInTangents ), 1.0 );
+    o.vBiTangent = float4( mul( (float3x3)mWorldInv, i.vInBiTangents ), 1.0 );
 	o.vTexCoord     = float4(i.vTexCoord, 0, 0);
 	o.vColor		= i.vInColor;
 	
@@ -130,10 +139,24 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     float4 params = bHasSpecTex > 0 ? float4(txSpec.Sample(samLinear, i.vTexCoord.xy).xyz, 3) : float4(fSpecularIntensity, fGlossiness, 0, 3);
     params.w = baseColor.a > 0.95f ? 3 : 5;
     baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
-    
+    float3 normal = -i.vNormalDepth.xyz;
+    if ( bHasNormalTex > 0 )
+    {
+        float3x3 tbn =
+            float3x3( normalize( i.vTangent.xyz ),
+                      normalize( cross( normalize( normal ),
+                                        normalize( i.vTangent.xyz ) ) ),
+                      normalize( normal ) );
+
+        normal = txNormals.Sample( samLinear, i.vTexCoord.xy ).xyz;
+        normal = normalize( normal * 2.0 - 1.0 );
+        normal = normalize( mul( normal, tbn ) );
+    }
+
 	if (baseColor.a < 0.2f)
 		discard;
-    FillGBufferVertexRadiance(Out, baseColor, -i.vNormalDepth.xyz, i.vNormalDepth.w, params, i.vColor);
+    FillGBufferVertexRadiance( Out, baseColor, normal, i.vNormalDepth.w, params,
+                               i.vColor );
 	return Out;
 }
 

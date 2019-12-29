@@ -149,7 +149,7 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float3 jitter = float3(rand_1_05(input.texCoordOut.xy) - 0.5f,
                            rand_1_06(input.texCoordOut.xy) - 0.5f, 
                            rand_1_07(input.texCoordOut.xy) - 0.5f) * Roughness * 0.5f;
-    ReflDir += jitter;
+    //ReflDir += jitter;
     float3 SSRColor = SSR(txPrevFrame, txGB1, samLinear, worldSpacePos, ReflDir, Roughness, Fallback);
     
     float3 LightDir = normalize(vSunLightDir.xyz);

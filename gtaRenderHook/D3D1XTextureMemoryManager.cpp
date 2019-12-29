@@ -7,20 +7,20 @@
 
 std::list<CD3D1XBaseTexture*> CD3D1XTextureMemoryManager::textureList = {};
 
-void CD3D1XTextureMemoryManager::AddNew(CD3D1XBaseTexture* &tex)
+void CD3D1XTextureMemoryManager::AddNew( CD3D1XBaseTexture* &tex )
 {
-	textureList.push_back(tex);
+    textureList.push_back( tex );
 }
 
-void CD3D1XTextureMemoryManager::Remove(CD3D1XBaseTexture * &tex)
+void CD3D1XTextureMemoryManager::Remove( CD3D1XBaseTexture * &tex )
 {
-	textureList.remove(tex);
-	delete tex;
+    textureList.remove( tex );
+    delete tex;
 }
 
 void CD3D1XTextureMemoryManager::Shutdown()
 {
-	for (auto &tex : textureList)
-		delete tex;
-	
+    for ( auto &tex : textureList )
+        delete tex;
+
 }

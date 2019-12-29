@@ -6,7 +6,8 @@
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 Texture2D txDiffuse : register( t0 );
-Texture2D txSpec 	: register( t1 );
+Texture2D    txSpec : register( t1 );
+Texture2D    txNormals : register( t2 );
 Texture2D txShadow  : register(t4);
 SamplerState samLinear : register(s0);
 
@@ -16,7 +17,9 @@ struct VS_BUILDING_IN
     float3 vPosition   	: POSITION;
     float2 vTexCoord    : TEXCOORD;
     float3 vNormal    	: NORMAL;
-	float4 cColor 		: COLOR;
+    float4 cColor : COLOR;
+    float3 vInTangents : TEXCOORD1;
+    float3 vInBiTangents : TEXCOORD2;
 };
 struct GS_VOXEL_IN
 {
@@ -42,6 +45,8 @@ PS_DEFERRED_IN VS(VS_BUILDING_IN i)
 			OutPos	= mul( OutPos, mView );
     o.vPosition 	= mul( OutPos, mProjection );
 	o.vNormalDepth  = float4(mul( i.vNormal,(float3x3)mWorld), OutPos.z);
+    o.vTangent   = float4( mul( (float3x3)mWorldInv, i.vInTangents ), 1.0 );
+    o.vBiTangent = float4( mul( (float3x3)mWorldInv, i.vInBiTangents ), 1.0 );
 	o.vTexCoord	    = float4(i.vTexCoord,0,0);
 	o.vColor		= i.cColor;
 	
@@ -115,7 +120,22 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     PS_DEFERRED_OUT Out;
 	float4 baseColor=txDiffuse.Sample( samLinear, i.vTexCoord.xy );
     float4 params = bHasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness, 0, 0);
-    FillGBuffer(Out, baseColor * cDiffuseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, params);
+    float3 normal = i.vNormalDepth.xyz;
+    if ( bHasNormalTex > 0 )
+    {
+        float3x3 tbn =
+            float3x3( normalize( i.vTangent.xyz ),
+                      normalize( cross( normalize( normal ),
+                                        normalize( i.vTangent.xyz ) ) ),
+                      normalize( normal ) );
+
+        normal = txNormals.Sample( samLinear, i.vTexCoord.xy ).xyz;
+        normal = normalize( normal * 2.0 - 1.0 );
+        normal = normalize( mul( normal, tbn ) );
+    }
+    
+    FillGBuffer( Out, baseColor * cDiffuseColor, normal, i.vNormalDepth.w,
+                 params );
 	if (baseColor.a < 0.3)
 		discard;
 	

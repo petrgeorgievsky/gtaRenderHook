@@ -122,51 +122,51 @@ CIRwRenderEngine*	g_pRwCustomEngine;
 //#define envMapSupportPtr 0x5DA044
 #endif 
 
-BOOL APIENTRY DllMain(HMODULE hModule,
-	DWORD  ul_reason_for_call,
-	LPVOID lpReserved
+BOOL APIENTRY DllMain( HMODULE hModule,
+                       DWORD  ul_reason_for_call,
+                       LPVOID lpReserved
 )
 {
-	UNREFERENCED_PARAMETER(lpReserved);
-	UNREFERENCED_PARAMETER(hModule);
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-		// Load RenderHook settings
-		SettingsHolder::Instance()->ReloadFile();
-		// Init basic stuff
-		g_pDebug = new CDebug("debug.log");
-		g_pRwCustomEngine = new CRwD3D1XEngine(g_pDebug);
+    UNREFERENCED_PARAMETER( lpReserved );
+    UNREFERENCED_PARAMETER( hModule );
+    switch ( ul_reason_for_call )
+    {
+    case DLL_PROCESS_ATTACH:
+        // Load RenderHook settings
+        SettingsHolder::Instance()->ReloadFile();
+        // Init basic stuff
+        g_pDebug = new CDebug( "debug.log" );
+        g_pRwCustomEngine = new CRwD3D1XEngine( g_pDebug );
 
 #if GTA_SA
-		// Path rw/game stuff
-		CRwGameHooks::Patch(CRwGameHooks::ms_rwPointerTableSA);
-		CGTASAHooks::Patch();
-		// Replace all pipelines(move to CRwGameHooks or CGTASAHooks)
-		CCustomBuildingPipeline::Patch();
-		CCustomBuildingDNPipeline::Patch();
-		CCustomCarFXPipeline::Patch();
+        // Path rw/game stuff
+        CRwGameHooks::Patch( CRwGameHooks::ms_rwPointerTableSA );
+        CGTASAHooks::Patch();
+        // Replace all pipelines(move to CRwGameHooks or CGTASAHooks)
+        CCustomBuildingPipeline::Patch();
+        CCustomBuildingDNPipeline::Patch();
+        CCustomCarFXPipeline::Patch();
 #endif // GTA_SA
 
-		break;
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-		break;
-	case DLL_PROCESS_DETACH:
-		delete g_pDebug;
-		delete g_pRwCustomEngine;
-		break;
-	}
-	return TRUE;
+        break;
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+        break;
+    case DLL_PROCESS_DETACH:
+        delete g_pDebug;
+        delete g_pRwCustomEngine;
+        break;
+    }
+    return TRUE;
 }
 
 // TODO: move this crap out of here
-RxD3D9InstanceData* GetModelsData(RxInstanceData * data)
+RxD3D9InstanceData* GetModelsData( RxInstanceData * data )
 {
-	return reinterpret_cast<RxD3D9InstanceData*>(data + 1);
+    return reinterpret_cast<RxD3D9InstanceData*>( data + 1 );
 }
 
-RpMesh * GetMeshesData(RpD3DMeshHeader * data)
+RpMesh * GetMeshesData( RpD3DMeshHeader * data )
 {
-	return reinterpret_cast<RpMesh*>(data + 1);
+    return reinterpret_cast<RpMesh*>( data + 1 );
 }

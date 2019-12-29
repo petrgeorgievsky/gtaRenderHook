@@ -10,154 +10,156 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-DebugSettingsBlock gDebugSettings; 
+DebugSettingsBlock gDebugSettings;
 ShaderDefinesSettingsBlock gShaderDefineSettings;
 std::string SettingsHolder::m_sSettingsFileName = "settings.xml";
 
-void SettingsHolder::AddSettingBlock(SettingsBlock * block)
+void SettingsHolder::AddSettingBlock( SettingsBlock * block )
 {
-	m_aSettingsBlocks.push_back(block);
+    m_aSettingsBlocks.push_back( block );
 }
 
 // Resets settings
 void SettingsHolder::ResetSettings()
 {
-	for (auto block : m_aSettingsBlocks)
-		block->Reset();
+    for ( auto block : m_aSettingsBlocks )
+        block->Reset();
 }
 
-void SettingsHolder::LoadSettings(const tinyxml2::XMLDocument &file)
+void SettingsHolder::LoadSettings( const tinyxml2::XMLDocument &file )
 {
-	// Load settings
-	for (auto block : m_aSettingsBlocks)
-		block->Load(file);
+    // Load settings
+    for ( auto block : m_aSettingsBlocks )
+        block->Load( file );
 }
 
 void SettingsHolder::SaveSettings()
 {
-	tinyxml2::XMLDocument newSettings;
-	// Save each settings block
-	for (auto block : m_aSettingsBlocks)
-		newSettings.InsertEndChild(block->Save(&newSettings));
+    tinyxml2::XMLDocument newSettings;
+    // Save each settings block
+    for ( auto block : m_aSettingsBlocks )
+        newSettings.InsertEndChild( block->Save( &newSettings ) );
 
-	newSettings.SaveFile(m_sSettingsFileName.c_str());
+    newSettings.SaveFile( m_sSettingsFileName.c_str() );
 }
 
 void SettingsHolder::ReloadFile()
 {
-	// Try to find settings file, if not found create default.
-	if (mSettingsFile.LoadFile(m_sSettingsFileName.c_str()) == tinyxml2::XMLError::XML_ERROR_FILE_NOT_FOUND)
-	{
-		ResetSettings();
-		SaveSettings();
-	}
-	else {
-		LoadSettings(mSettingsFile);
-		m_bInitialized = true;
-	}
+    // Try to find settings file, if not found create default.
+    if ( mSettingsFile.LoadFile( m_sSettingsFileName.c_str() ) == tinyxml2::XMLError::XML_ERROR_FILE_NOT_FOUND )
+    {
+        ResetSettings();
+        SaveSettings();
+    }
+    else
+    {
+        LoadSettings( mSettingsFile );
+        m_bInitialized = true;
+    }
 }
 
 void SettingsHolder::ReloadShadersIfRequired()
 {
-	for (auto block : m_aSettingsBlocks) {
-		if (block->m_bShaderReloadRequired)
-			block->ReloadShaders();
-	}
+    for ( auto block : m_aSettingsBlocks )
+    {
+        if ( block->m_bShaderReloadRequired )
+            block->ReloadShaders();
+    }
 }
-void TW_CALL SaveDataCallBack(void *value)
+void TW_CALL SaveDataCallBack( void *value )
 {
-	SettingsHolder::Instance()->SaveSettings();
+    SettingsHolder::Instance()->SaveSettings();
 }
 
-void TW_CALL ReloadDataCallBack(void *value)
+void TW_CALL ReloadDataCallBack( void *value )
 {
-	SettingsHolder::Instance()->ReloadFile();
+    SettingsHolder::Instance()->ReloadFile();
 }
 
 void SettingsHolder::InitGUI()
 {
-	if (m_pGuiholder != nullptr)
-		return;
-	// Init new settings bar
-	m_pGuiholder = TwNewBar("Settings");
-	// Init each settings block
-	for (auto block : m_aSettingsBlocks)
-		block->InitGUI(m_pGuiholder);
-	// Init save and reload buttons
-	TwAddButton(m_pGuiholder, "Save", SaveDataCallBack, nullptr, "");
-	TwAddButton(m_pGuiholder, "Reload", ReloadDataCallBack, nullptr, "");
+    if ( m_pGuiholder != nullptr )
+        return;
+    // Init new settings bar
+    m_pGuiholder = TwNewBar( "Settings" );
+    // Init each settings block
+    for ( auto block : m_aSettingsBlocks )
+        block->InitGUI( m_pGuiholder );
+    // Init save and reload buttons
+    TwAddButton( m_pGuiholder, "Save", SaveDataCallBack, nullptr, "" );
+    TwAddButton( m_pGuiholder, "Reload", ReloadDataCallBack, nullptr, "" );
 }
 
 void SettingsHolder::DrawGUI()
 {
-	if (!m_bDrawTweakBar) return;
+    if ( !m_bDrawTweakBar ) return;
 
-	TwDraw();
+    TwDraw();
 }
 
 bool SettingsHolder::IsGUIEnabled()
 {
-	return m_bDrawTweakBar;
+    return m_bDrawTweakBar;
 }
 
 void SettingsHolder::EnableGUI()
 {
-	m_bDrawTweakBar = true;
+    m_bDrawTweakBar = true;
 }
 
 void SettingsHolder::DisableGUI()
 {
-	m_bDrawTweakBar = false;
+    m_bDrawTweakBar = false;
 }
 
 void DebugSettingsBlock::Reset()
 {
-	SettingsBlock::Reset();
-	DebugRenderTargetNumber=0;
+    SettingsBlock::Reset();
+    DebugRenderTargetNumber = 0;
 }
 
-void DebugSettingsBlock::InitGUI(TwBar * guiholder)
+void DebugSettingsBlock::InitGUI( TwBar * guiholder )
 {
-	SettingsBlock::InitGUI(guiholder);
-	std::string rtIdSettings = "min=0 max=";
-	TwAddVarRW(guiholder, "RenderTarget ID", TwType::TW_TYPE_UINT32, &DebugRenderTargetNumber, 
-		(rtIdSettings +std::to_string(DebugRenderTargetList.size())+" group=Debug").c_str());
+    SettingsBlock::InitGUI( guiholder );
+    std::string rtIdSettings = "min=0 max=";
+    TwAddVarRW( guiholder, "RenderTarget ID", TwType::TW_TYPE_UINT32, &DebugRenderTargetNumber,
+        ( rtIdSettings + std::to_string( DebugRenderTargetList.size() - 1 ) + " group=Debug" ).c_str() );
 }
 
-tinyxml2::XMLElement * SettingsBlock::Save(tinyxml2::XMLDocument * doc)
+tinyxml2::XMLElement * SettingsBlock::Save( tinyxml2::XMLDocument * doc )
 {
-	auto settingsNode = doc->NewElement(m_sName.c_str());
-	for (auto field : m_aFields)
-		if (field.second->ToXML(settingsNode)<0)
-			break;
+    auto settingsNode = doc->NewElement( m_sName.c_str() );
+    for ( auto field : m_aFields )
+        if ( field.second->ToXML( settingsNode ) < 0 )
+            break;
 
-	return settingsNode;
+    return settingsNode;
 }
 
-void SettingsBlock::Load(const tinyxml2::XMLDocument & doc)
+void SettingsBlock::Load( const tinyxml2::XMLDocument & doc )
 {
-	auto debugSettingsNode = doc.FirstChildElement(m_sName.c_str());
-	// Debug
-	for (auto field : m_aFields)
-		if (field.second->FromXML(debugSettingsNode)<0)
-			break;
+    auto debugSettingsNode = doc.FirstChildElement( m_sName.c_str() );
+    // Debug
+    for ( auto field : m_aFields )
+        if ( field.second->FromXML( debugSettingsNode ) < 0 )
+            break;
 }
 
 void SettingsBlock::Reset()
 {
-	for (auto field : m_aFields)
-		field.second->Reset();
+    for ( auto field : m_aFields )
+        field.second->Reset();
 }
 
-void SettingsBlock::InitGUI(TwBar * guiholder)
+void SettingsBlock::InitGUI( TwBar * guiholder )
 {
-	for (auto field : m_aFields)
-		field.second->Draw(guiholder);
+    for ( auto field : m_aFields )
+        field.second->Draw( guiholder );
 }
 
 void SettingsBlock::ReloadShaders()
 {
-	for (auto shader : m_aShaderPointers)
-		shader->Reload(&m_ShaderDefineList);
-	m_bShaderReloadRequired = false;
+    for ( auto shader : m_aShaderPointers )
+        shader->Reload( &m_ShaderDefineList );
+    m_bShaderReloadRequired = false;
 }

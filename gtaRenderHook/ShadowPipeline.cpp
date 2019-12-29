@@ -6,33 +6,33 @@
 #include "D3D1XShaderDefines.h"
 
 #ifndef DebuggingShaders
-CShadowPipeline::CShadowPipeline(const std::string &pipeName) : CD3D1XPipeline{ pipeName }
+CShadowPipeline::CShadowPipeline( const std::string &pipeName ) : CD3D1XPipeline{ pipeName }
 #else
-CShadowPipeline::CShadowPipeline(const std::wstring &pipeName) :  m_sPipeName{ pipeName }
+CShadowPipeline::CShadowPipeline( const std::wstring &pipeName ) : m_sPipeName{ pipeName }
 #endif // !DebuggingShaders
 {
 #ifndef DebuggingShaders
-	std::string shaderPath = "shaders/" + m_sPipeName + ".hlsl";
+    std::string shaderPath = "shaders/" + m_sPipeName + ".hlsl";
 #else
-	std::wstring shaderPath = L"shaders/" + m_sPipeName + L".hlsl";
+    std::wstring shaderPath = L"shaders/" + m_sPipeName + L".hlsl";
 #endif // !DebuggingShaders
-	CD3D1XShaderDefineList defineList;
-	defineList.AddDefine("HAS_TEXTURE", "1");
-	m_pShadowPS = new CD3D1XPixelShader(shaderPath, "ShadowPS", &defineList);
-	m_pShadowPS_NoTex = new CD3D1XPixelShader(shaderPath, "ShadowPS");
+    CD3D1XShaderDefineList defineList;
+    defineList.AddDefine( "HAS_TEXTURE", "1" );
+    m_pShadowPS = new CD3D1XPixelShader( shaderPath, "ShadowPS", &defineList );
+    m_pShadowPS_NoTex = new CD3D1XPixelShader( shaderPath, "ShadowPS" );
 }
 
 
 CShadowPipeline::~CShadowPipeline()
 {
-	delete m_pShadowPS;
-	delete m_pShadowPS_NoTex;
+    delete m_pShadowPS;
+    delete m_pShadowPS_NoTex;
 }
 
-void CShadowPipeline::SetShadowPipeShader(bool textured)
+void CShadowPipeline::SetShadowPipeShader( bool textured )
 {
-	if (textured)
-		m_pShadowPS->Set();
-	else
-		m_pShadowPS_NoTex->Set();
+    if ( textured )
+        m_pShadowPS->Set();
+    else
+        m_pShadowPS_NoTex->Set();
 }

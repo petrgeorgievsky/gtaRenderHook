@@ -1,11 +1,11 @@
 #pragma once
 #include "DebugRenderObject.h"
 class DebugLine :
-	public DebugRenderObject
+    public DebugRenderObject
 {
 public:
-	DebugLine();
-	~DebugLine();
-	void Render();
+    DebugLine();
+    ~DebugLine();
+    void Render();
 };
 

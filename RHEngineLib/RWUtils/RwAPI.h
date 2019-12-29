@@ -1,14 +1,15 @@
 #pragma once
-#include "../stdafx.h"
-namespace RH_RWAPI
-{
-	RwCamera * RwCameraCreate();
+#include "../Engine/Definitions.h"
+#include <Engine/Common/IRenderingContext.h>
+#include <common.h>
 
-    void RwCameraDestroy(RwCamera * camera);
+namespace RH_RWAPI {
 
-	RwRaster * RwRasterCreate(RwInt32 width, RwInt32 height, RwInt32 depth, RwInt32 flags);
+// ************************************* STREAM API
 
-    void RwRasterDestroy(RwRaster * raster);
+// ************************************* STREAM API
 
-	extern RwGlobals* g_pRHRwEngineInstance;
-};
+// ************************************* TEXTURE DICT API
+
+// ************************************* TEXTURE DICT API
+}; // namespace RH_RWAPI

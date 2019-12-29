@@ -1,14 +1,14 @@
 #pragma once
 /*!
-	\class DebugRenderObject
+    \class DebugRenderObject
 
-	Base class for rendering debug objects.
+    Base class for rendering debug objects.
 */
 class DebugRenderObject
 {
 public:
-	DebugRenderObject();
-	~DebugRenderObject();
-	virtual void Render()=0;
+    DebugRenderObject();
+    ~DebugRenderObject();
+    virtual void Render() = 0;
 };
 
