@@ -25,7 +25,7 @@ jobs:
       - name: Checkout vcpkg
         uses: actions/checkout@v2
         with:
-          repository: https://github.com/microsoft/vcpkg.git
+          repository: microsoft/vcpkg.git
           path: ${{runner.workspace}}/vcpkg
 
       - name: Configure CMake
