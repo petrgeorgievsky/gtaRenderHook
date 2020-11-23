@@ -3,28 +3,42 @@
 #include "../rw_stream/rw_stream.h"
 #include "../rw_texture/rw_texture.h"
 #include <common_headers.h>
-namespace rh::rw::engine {
+#include <rw_engine/rh_backend/material_backend.h>
+namespace rh::rw::engine
+{
+struct RpMaterialChunkInfo;
+
+struct RpMaterialChunkInfo
+{
+    int32_t flags;                    /* Material flags - unused currently -
+                                       * for future expansion */
+    RwRGBA              color;        /* Color of material. */
+    int32_t             unused;       /* Not used */
+    int32_t             textured;     /* Are we textured? */
+    RwSurfaceProperties surfaceProps; /* Surface properties */
+};
 
 RpMaterial *RpMaterialStreamRead( void *stream )
 {
-    RwUInt32 size;
-    RwUInt32 version;
+    uint32_t size;
+    uint32_t version;
 
-    if ( !RwStreamFindChunk( stream, rwID_STRUCT, &size, &version ) ) {
+    if ( !RwStreamFindChunk( stream, rwID_STRUCT, &size, &version ) )
+    {
         return nullptr;
     }
 
-    RpMaterial *material = nullptr;
-    _rpMaterial mat;
-
-    memset( &mat, 0, sizeof( mat ) );
-    if ( RwStreamRead( stream, &mat, size ) != size ) {
+    RpMaterial *        material = nullptr;
+    RpMaterialChunkInfo mat{};
+    if ( RwStreamRead( stream, &mat, size ) != size )
+    {
         return nullptr;
     }
 
     /* Create the material */
     material = RpMaterialCreate();
-    if ( !material ) {
+    if ( !material )
+    {
         return nullptr;
     }
 
@@ -37,15 +51,17 @@ RpMaterial *RpMaterialStreamRead( void *stream )
     /* Check if it has a texture */
     material->texture = nullptr;
 
-    if ( mat.textured ) {
+    if ( mat.textured )
+    {
         /* Read in the texture */
-        if ( !RwStreamFindChunk( stream, rwID_TEXTURE, nullptr, &version ) ) {
+        if ( !RwStreamFindChunk( stream, rwID_TEXTURE, nullptr, &version ) )
+        {
             rh::rw::engine::RpMaterialDestroy( material );
             return nullptr;
         }
         /* If we don't get the material, the polygons will just be the
-     * color of the underlying material - usually white
-     */
+         * color of the underlying material - usually white
+         */
         material->texture = RwTextureStreamRead( stream );
     }
     if ( !RwStreamFindChunk( stream, rwID_EXTENSION, nullptr, nullptr ) )
@@ -56,28 +72,32 @@ RpMaterial *RpMaterialStreamRead( void *stream )
 RpMaterial *RpMaterialCreate()
 {
     RpMaterial *material;
-    RwRGBA color;
+    RwRGBA      color;
 
-    material = static_cast<RpMaterial *>( malloc( sizeof( RpMaterial ) ) );
+    material = static_cast<RpMaterial *>(
+        malloc( sizeof( RpMaterial ) + sizeof( BackendMaterialExt ) ) );
     if ( !material )
         return nullptr;
 
     material->refCount = 1;
 
     /*
-   *  White is an appropriate material color (especially for textured materials)
-   */
-    color.red = 0xff;
+     *  White is an appropriate material color (especially for textured
+     * materials)
+     */
+    color.red   = 0xff;
     color.green = 0xff;
-    color.blue = 0xff;
+    color.blue  = 0xff;
     color.alpha = 0xff;
 
     rpMaterial::SetColor( material, color );
     material->texture = nullptr; /* Non textured */
 
     /* use the default material pipeline */
-    material->pipeline = nullptr;
-    material->surfaceProps = {1.0F, 1.0F, 1.0F};
+    material->pipeline                             = nullptr;
+    material->surfaceProps                         = { 1.0F, 1.0F, 1.0F };
+    GetBackendMaterialExt( material )->mMaterialId = 0xBADF00D;
+    GetBackendMaterialExt( material )->mSpecTex    = nullptr;
     // RpMaterialSetSurfaceProperties( material, &defaultSurfaceProperties );
 
     /* Initialize memory allocated to toolkits */
@@ -90,16 +110,20 @@ RpMaterial *RpMaterialCreate()
 
 int32_t RpMaterialDestroy( RpMaterial *material )
 {
-    if ( 1 == material->refCount ) {
+    if ( 1 == material->refCount )
+    {
         /* De-initialize memory allocated to toolkits */
         // rwPluginRegistryDeInitObject( &materialTKList, material );
 
         /* Decreases the reference count on the texture too */
         // RpMaterialSetTexture( material, (RwTexture *)NULL );
 
-        free( material ); // RwFreeListFree( RWMATERIALGLOBAL( matFreeList ), material
+        free( material ); // RwFreeListFree( RWMATERIALGLOBAL( matFreeList ),
+                          // material
                           // );
-    } else {
+    }
+    else
+    {
         /* RWCRTCHECKMEMORY(); */
         --material->refCount;
         /* RWCRTCHECKMEMORY(); */
@@ -108,4 +132,4 @@ int32_t RpMaterialDestroy( RpMaterial *material )
     return ( TRUE );
 }
 
-} // namespace rw_rh_engine
+} // namespace rh::rw::engine

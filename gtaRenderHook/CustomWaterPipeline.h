@@ -24,7 +24,7 @@ public:
     WaterSettingsBlock()
     {
         m_sName = "WaterSettings";
-        m_aFields["Enable"] = new ToggleSField( "Enable", false, false, false, m_sName, true );
+        m_aFields["EnableWater"] = new ToggleSField( "EnableWater", false, false, false, m_sName, true );
         Reset();
     }
     void InitGUI( TwBar* );

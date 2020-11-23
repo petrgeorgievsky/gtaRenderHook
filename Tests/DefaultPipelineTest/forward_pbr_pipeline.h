@@ -6,7 +6,7 @@ namespace RHEngine
 class IRenderingContext;
 class D3D11ConstantBuffer;
 class D3D11PrimitiveBatch;
-};
+}
 
 struct RHVertexDescPosOnly
 {

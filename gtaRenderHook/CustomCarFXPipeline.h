@@ -1,5 +1,6 @@
 #pragma once
 #include "DeferredPipeline.h"
+#include "RenderMeshPool.h"
 
 class CCustomCarFXPipeline :public CDeferredPipeline
 {
@@ -11,7 +12,7 @@ public:
     void RenderAlphaList();
     void Render( RwResEntry *repEntry, void *object, RwUInt8 type, RwUInt32 flags );
 private:
-    static std::list<AlphaMesh*> m_aAlphaMeshList;
+    static CRenderMeshPool<AlphaMesh> m_aAlphaMeshList;
 };
 
 

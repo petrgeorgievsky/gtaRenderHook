@@ -56,7 +56,7 @@ public:
     AmbientOcclusionSettingsBlock()
     {
         m_sName = "AmbientOcclusion";
-        m_aFields["Enabled"] = new ToggleSField( "Enabled", false, false, false, m_sName, true );
+        m_aFields["EnableAO"] = new ToggleSField( "EnableAO", false, false, false, m_sName, true );
         m_aFields["SampleCount"] = new UIntSField( "SampleCount", false, false, true, m_sName, 8, 0, 128, 1 );
         m_aFields["Radius"] = new FloatSField( "Radius", false, false, false, m_sName, 0.5f, 0.005f, 5.0, 0.001f );
         m_aFields["Intesity"] = new FloatSField( "Intesity", false, false, false, m_sName, 1.0f, 0.001f, 5.0, 0.001f );

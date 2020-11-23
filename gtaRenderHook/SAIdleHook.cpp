@@ -12,6 +12,7 @@
 #include "HDRTonemapping.h"
 #include "CustomCarFXPipeline.h"
 #include "CustomBuildingPipeline.h"
+#include "CustomBuildingDNPipeline.h"
 #include "CWaterLevel.h"
 #include "RwMethods.h"
 #include <AntTweakBar.h>
@@ -20,6 +21,7 @@
 #include "DebugBBox.h"
 #include "CVisibilityPluginsRH.h"
 #include "AmbientOcclusion.h"
+#include "CloudRendering.h"
 #include <game_sa\CPointLights.h> 
 #include <game_sa\CFont.h>
 #include <game_sa\CWorld.h>
@@ -83,20 +85,24 @@ void CSAIdleHook::Idle( void *Data )
     // reload textures if required
     g_pDeferredRenderer->QueueTextureReload();
     CVolumetricLighting::QueueTextureReload();
+    CCloudRendering::QueueTextureReload();
     CAmbientOcclusion::QueueTextureReload();
     CFullscreenQuad::QueueTextureReload();
     CTemporalAA::QueueTextureReload();
     // TODO: move to RwD3D1XEngine
     CRwD3D1XEngine* dxEngine = (CRwD3D1XEngine*)g_pRwCustomEngine;
     if ( dxEngine->m_bScreenSizeChanged || g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading ||
-         g_pDeferredRenderer->m_bRequiresReloading || CVolumetricLighting::m_bRequiresReloading )
+         g_pDeferredRenderer->m_bRequiresReloading ||
+         CVolumetricLighting::m_bRequiresReloading ||
+         CCloudRendering::m_bRequiresReloading )
     {
         dxEngine->ReloadTextures();
         dxEngine->m_bScreenSizeChanged = false;
         g_pDeferredRenderer->m_pShadowRenderer->m_bRequiresReloading = false;
         g_pDeferredRenderer->m_bRequiresReloading = false;
-        CVolumetricLighting::m_bRequiresReloading = false;
-        CAmbientOcclusion::m_bRequiresReloading = false;
+        CVolumetricLighting::m_bRequiresReloading                    = false;
+        CAmbientOcclusion::m_bRequiresReloading                      = false;
+        CCloudRendering::m_bRequiresReloading                        = false;
     }
 
     if ( !Data )
@@ -108,11 +114,11 @@ void CSAIdleHook::Idle( void *Data )
     {
         RenderInGame();
         SettingsHolder::Instance()->DrawGUI();
+        DefinedState2d();
         if ( SettingsHolder::Instance()->IsGUIEnabled() )
         {
             POINT mousePos;
             GetCursorPos( &mousePos );
-            DefinedState2d();
             //g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, TRUE);
             FrontEndMenuManager.m_apTextures[23].SetRenderState();
             FrontEndMenuManager.m_apTextures[23].DrawTxRect(
@@ -222,6 +228,7 @@ void CSAIdleHook::RenderInGame()
     scanTimer.Stop();
 
     CRenderer::PreRender();
+    CRendererRH::PreRender();
     CWorld::ProcessPedsAfterPreRender();
 
     RwCameraEndUpdate( Scene.m_pRwCamera );
@@ -239,6 +246,7 @@ void CSAIdleHook::RenderInGame()
     deferredTimer.Start();
     g_pCustomCarFXPipe->ResetAlphaList();
     g_pCustomBuildingPipe->ResetAlphaList();
+    g_pCustomBuildingDNPipe->ResetAlphaList();
     // Render scene to geometry buffers.
     g_pDeferredRenderer->RenderToGBuffer( RenderDeferred );
 
@@ -265,11 +273,14 @@ void CSAIdleHook::RenderInGame()
     renderer->BeginDebugEvent( L"Tonemapping pass" );
     g_pDeferredRenderer->RenderTonemappedOutput(); //TODO fix
     renderer->EndDebugEvent();
+    //g_pRwCustomEngine->SetRenderTargets( &Scene.m_pRwCamera->frameBuffer,
+    //                                     Scene.m_pRwCamera->zBuffer, 1 );
     DebugRendering::Render();
     if ( gDebugSettings.GetToggleField( "DebugRenderTarget" ) &&
          gDebugSettings.DebugRenderTargetList[gDebugSettings.DebugRenderTargetNumber] != nullptr )
         DebugRendering::RenderRaster( gDebugSettings.DebugRenderTargetList[gDebugSettings.DebugRenderTargetNumber] );
 
+    DefinedState();
     int Render2dStuffAddress = *(DWORD *)0x53EB13 + 0x53EB12 + 5;
     ( ( int( __cdecl * )( ) )Render2dStuffAddress )( );
     //Render2dStuff();
@@ -306,6 +317,7 @@ void CSAIdleHook::RenderInGame()
 
 void CSAIdleHook::RenderHUD()
 {
+    DefinedState();
     if ( FrontEndMenuManager.m_bMenuActive )
         DrawMenuManagerFrontEnd( &FrontEndMenuManager ); // CMenuManager::DrawFrontEnd
     g_pRwCustomEngine->RenderStateSet( rwRENDERSTATETEXTURERASTER, NULL );
@@ -337,6 +349,7 @@ void CSAIdleHook::RenderForwardAfterDeferred()
     g_pDeferredRenderer->m_pReflRenderer->SetCubemap();
     g_pCustomCarFXPipe->RenderAlphaList();
     g_pCustomBuildingPipe->RenderAlphaList();
+    g_pCustomBuildingDNPipe->RenderAlphaList();
     renderer->EndDebugEvent();
 
     //CPostEffects__m_bDisableAllPostEffect = true;

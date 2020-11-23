@@ -81,6 +81,7 @@
     <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(TINY_XML)\..\;$(IncludePath)</IncludePath>
     <LibraryPath>$(TINY_XML)\Debug-Lib;$(ANT_TWEAKBAR)\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(GTA_SA_DIR)</OutDir>
+    <CodeAnalysisRuleSet>gtaRenderHook.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -89,6 +90,7 @@
     <IncludePath>C:\Users\peter\Documents\GitHub\sa-render\Render\game;$(IncludePath)</IncludePath>
     <LibraryPath>D:\tinyxml2-master\tinyxml2\Release-Lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(GTA_VC_DIR)</OutDir>
+    <CodeAnalysisRuleSet>gtaRenderHook.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -97,7 +99,7 @@
     <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(TINY_XML)\..\;$(IncludePath)</IncludePath>
     <LibraryPath>$(TINY_XML)\Release-Lib;$(ANT_TWEAKBAR)\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(GTA_SA_DIR)</OutDir>
-    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>gtaRenderHook.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <EnableCppCoreCheck>false</EnableCppCoreCheck>
   </PropertyGroup>
@@ -108,6 +110,7 @@
     <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\plugin_iii\;$(TINY_XML)\..\;$(PLUGIN_SDK_DIR)\plugin_sa\;$(IncludePath)</IncludePath>
     <LibraryPath>$(TINY_XML)\Debug-Lib;$(ANT_TWEAKBAR)\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
     <LinkIncremental>true</LinkIncremental>
+    <CodeAnalysisRuleSet>gtaRenderHook.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -199,16 +202,22 @@
   <ItemGroup>
     <ClInclude Include="AmbientOcclusion.h" />
     <ClInclude Include="BlurAlgorithms.h" />
+    <ClInclude Include="CloudRendering.h" />
     <ClInclude Include="D3D1X2DRenderTarget.h" />
     <ClInclude Include="CloudsRH.h" />
     <ClInclude Include="CRwGameHooks.h" />
     <ClInclude Include="D3D1X2DTexture.h" />
+    <ClInclude Include="D3D1X3DTexture.h" />
     <ClInclude Include="D3D1XBackBufferTexture.h" />
     <ClInclude Include="D3D1XBaseTexture.h" />
     <ClInclude Include="D3D1XCubeTexture.h" />
     <ClInclude Include="D3D1XDepthStencilTexture.h" />
+    <ClInclude Include="FastNoiseSIMD.h" />
+    <ClInclude Include="FastNoiseSIMD_internal.h" />
     <ClInclude Include="GTASAHooks.h" />
+    <ClInclude Include="RenderMeshPool.h" />
     <ClInclude Include="RHRayTracer.h" />
+    <ClInclude Include="SampHaxx.h" />
     <ClInclude Include="SettingsFields.h" />
     <ClInclude Include="StreamingRH.h" />
     <ClInclude Include="CVisibilityPluginsRH.h" />
@@ -276,16 +285,27 @@
   <ItemGroup>
     <ClCompile Include="AmbientOcclusion.cpp" />
     <ClCompile Include="BlurAlgorithms.cpp" />
+    <ClCompile Include="CloudRendering.cpp" />
     <ClCompile Include="D3D1X2DRenderTarget.cpp" />
     <ClCompile Include="CloudsRH.cpp" />
     <ClCompile Include="CRwGameHooks.cpp" />
     <ClCompile Include="D3D1X2DTexture.cpp" />
+    <ClCompile Include="D3D1X3DTexture.cpp" />
     <ClCompile Include="D3D1XBackBufferTexture.cpp" />
     <ClCompile Include="D3D1XBaseTexture.cpp" />
     <ClCompile Include="D3D1XCubeTexture.cpp" />
     <ClCompile Include="D3D1XDepthStencilTexture.cpp" />
+    <ClCompile Include="FastNoiseSIMD.cpp" />
+    <ClCompile Include="FastNoiseSIMD_avx2.cpp" />
+    <ClCompile Include="FastNoiseSIMD_avx512.cpp" />
+    <ClCompile Include="FastNoiseSIMD_internal.cpp" />
+    <ClCompile Include="FastNoiseSIMD_neon.cpp" />
+    <ClCompile Include="FastNoiseSIMD_sse2.cpp" />
+    <ClCompile Include="FastNoiseSIMD_sse41.cpp" />
     <ClCompile Include="GTASAHooks.cpp" />
+    <ClCompile Include="RenderMeshPool.cpp" />
     <ClCompile Include="RHRayTracer.cpp" />
+    <ClCompile Include="SampHaxx.cpp" />
     <ClCompile Include="SettingsFields.cpp" />
     <ClCompile Include="StreamingRH.cpp" />
     <ClCompile Include="CVisibilityPluginsRH.cpp" />
@@ -361,6 +381,7 @@
     <ClCompile Include="VoxelPipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="gtaRenderHook.ruleset" />
     <None Include="shaders\AtmosphericScatteringFunctions.hlsli" />
     <None Include="shaders\AtmosphericScattering.hlsl">
       <FileType>Document</FileType>
@@ -492,6 +513,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\CloudRendering.hlsl">
+      <FileType>Document</FileType>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug_III|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug_vc|Win32'">true</DeploymentContent>
+    </None>
     <FxCompile Include="shaders\RayTracing.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>

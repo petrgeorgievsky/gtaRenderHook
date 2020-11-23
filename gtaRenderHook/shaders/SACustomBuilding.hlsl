@@ -2,15 +2,18 @@
 #include "LightingFunctions.hlsl"
 #include "GBuffer.hlsl"
 #include "VoxelizingHelper.hlsl"
+#include "AtmosphericScatteringFunctions.hlsli"
+#include "Shadows.hlsl"
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 Texture2D txDiffuse : register( t0 );
 Texture2D    txSpec : register( t1 );
 Texture2D    txNormals : register( t2 );
-Texture2D txShadow  : register(t4);
-SamplerState samLinear : register(s0);
-
+Texture2D              txShadow : register( t4 );
+TextureCube            txCubeMap : register( t5 );
+SamplerState           samLinear : register( s0 );
+SamplerComparisonState samShadow : register( s1 );
 
 struct VS_BUILDING_IN
 {
@@ -21,12 +24,14 @@ struct VS_BUILDING_IN
     float3 vInTangents : TEXCOORD1;
     float3 vInBiTangents : TEXCOORD2;
 };
+
 struct GS_VOXEL_IN
 {
 	float4 vPosition		: SV_POSITION;    // World position
 	float4 vNormal			: NORMAL;
 	float2 vTexCoord		: TEXCOORD0;         // Texture coord
 };
+
 struct PS_VOXEL_INPUT
 {
 	float4 vPosition	: SV_POSITION;
@@ -34,14 +39,25 @@ struct PS_VOXEL_INPUT
 	float4 vNormal		: NORMAL;
 	float2 vTexCoord	: TEXCOORD0;
 };
+struct PS_DEFERRED_CF_IN
+{
+    float4 vPosition : SV_POSITION;
+    float4 vColor : COLOR;
+    float4 vNormalDepth : NORMAL;
+    float4 vTexCoord : TEXCOORD0;
+    float4 vTangent : TEXCOORD1;
+    float4 vBiTangent : TEXCOORD2;
+    float4 vWorldPos : TEXCOORD3;
+};
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PS_DEFERRED_IN VS(VS_BUILDING_IN i)
+PS_DEFERRED_CF_IN VS( VS_BUILDING_IN i )
 {
-    PS_DEFERRED_IN o;
+    PS_DEFERRED_CF_IN o;
 	float4 	OutPos 	= float4( i.vPosition,1.0);// transform to screen space
-			OutPos 	= mul( OutPos, mWorld );
+    OutPos          = mul( OutPos, mWorld );
+    o.vWorldPos          = OutPos;
 			OutPos	= mul( OutPos, mView );
     o.vPosition 	= mul( OutPos, mProjection );
 	o.vNormalDepth  = float4(mul( i.vNormal,(float3x3)mWorld), OutPos.z);
@@ -52,6 +68,7 @@ PS_DEFERRED_IN VS(VS_BUILDING_IN i)
 	
     return o;
 }
+
 GS_VOXEL_IN VoxelVS(VS_BUILDING_IN i)
 {
 	GS_VOXEL_IN Out = (GS_VOXEL_IN)0.0f;
@@ -61,6 +78,7 @@ GS_VOXEL_IN VoxelVS(VS_BUILDING_IN i)
 	Out.vNormal = float4(mul(i.vNormal, (float3x3)mWorld),1.0);
 	return Out;
 }
+
 [maxvertexcount(18)]
 void VoxelGS(triangle GS_VOXEL_IN input[3], inout TriangleStream<PS_VOXEL_INPUT> VoxelStream)
 {
@@ -83,18 +101,68 @@ void VoxelGS(triangle GS_VOXEL_IN input[3], inout TriangleStream<PS_VOXEL_INPUT>
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS(PS_DEFERRED_IN i) : SV_Target
+float4 PS( PS_DEFERRED_CF_IN i )
+    : SV_Target
 {
-	float DiffuseTerm;
-	float4 outColor;
-    float diff;
-    CalculateDiffuseTerm(normalize(i.vNormalDepth.xyz), normalize(vSunLightDir.xyz), diff, 1.0f-fGlossiness);
-    diff *= vSunLightDir.w;
+    const float3 ViewPos  = mViewInv[3].xyz;
+    float3       WorldPos = i.vWorldPos.xyz;
+    float3       Normals  = i.vNormalDepth.xyz;
+    Normals               = normalize( Normals );
+    float3 ViewDir        = normalize( WorldPos.xyz - ViewPos );
+    float3 LightDir       = normalize( vSunLightDir.xyz );
 
-	outColor 		 = txDiffuse.Sample( samLinear, i.vTexCoord.xy ) * cDiffuseColor;
-    outColor.xyz *= (diff + 0.1f);
+    float DiffuseTerm, SpecularTerm;
+    CalculateDiffuseTerm_ViewDependent( Normals.xyz, LightDir, ViewDir,
+                                        DiffuseTerm, 1 - fGlossiness );
+    CalculateSpecularTerm( Normals.xyz, LightDir, -ViewDir, 1 - fGlossiness,
+                           SpecularTerm );
+    // clamp to avoid unrealisticly high values
+    // SpecularTerm = min(SpecularTerm, 16.0f);
+    DiffuseTerm *= vSunLightDir.w;
 
-	return outColor;
+    float4 albedoSample = cDiffuseColor;
+    if ( bHasTexture != 0 )
+        albedoSample *= txDiffuse.Sample( samLinear, i.vTexCoord.xy );
+    if ( albedoSample.a < 0.3 )
+        discard;
+    float4 outColor;
+#if SAMPLE_SHADOWS != 1
+    float ShadowTerm =
+        SampleShadowCascades( txShadow, samShadow, samLinear, WorldPos,
+                              length( WorldPos.xyz - ViewPos ) ) *
+        vSunLightDir.w;
+#else
+    float ShadowTerm = 1.0;
+#endif
+    float3 ReflDir =
+        normalize( reflect( ViewDir, normalize( i.vNormalDepth.xyz ) ) );
+    float3 FullScattering;
+
+    float3 ObjectColor = CalculateFogColor( float3( 0, 0, 0 ), ReflDir,
+                                            LightDir, 1000, 0, FullScattering );
+
+    float3 SkyColor = GetSkyColor( ReflDir, LightDir, FullScattering );
+
+    float3 ReflectionFallBack;
+    ReflDir.x *= -1;
+    float4 CubeMap =
+        txCubeMap.SampleLevel( samLinear, ReflDir, ( 1 - fGlossiness ) * 9.0f );
+    ReflectionFallBack = lerp( CubeMap.rgb, SkyColor, 1 - CubeMap.a );
+    // todo: add lighting methods for forward renderer
+    outColor.rgb =
+        albedoSample.rgb *
+            ( DiffuseTerm * ShadowTerm* vSunColor.rgb +
+              lerp( vSkyLightCol.rgb, vHorizonCol.rgb, i.vNormalDepth.z ) *
+                  0.25f ) +
+        SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb *
+            ShadowTerm +
+        ReflectionFallBack * fSpecularIntensity;
+    outColor.a = albedoSample.a * i.vColor.a;
+    outColor.rgb =
+        CalculateFogColor( outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w,
+                           WorldPos.z, FullScattering );
+
+    return outColor;
 }
 void VoxelPS(PS_VOXEL_INPUT i)
 {
@@ -121,7 +189,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 	float4 baseColor=txDiffuse.Sample( samLinear, i.vTexCoord.xy );
     float4 params = bHasSpecTex > 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness, 0, 0);
     float3 normal = i.vNormalDepth.xyz;
-    if ( bHasNormalTex > 0 )
+    if ( bHasNormalTex > 0 && length( i.vTangent.xyz ) > 0 )
     {
         float3x3 tbn =
             float3x3( normalize( i.vTangent.xyz ),

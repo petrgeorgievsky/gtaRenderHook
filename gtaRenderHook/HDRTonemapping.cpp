@@ -10,7 +10,9 @@
 #include "FullscreenQuad.h"
 #include "D3D1XStateManager.h"
 #include "D3D1XBuffer.h"
+#pragma warning( push, 0 )
 #include <game_sa\CScene.h>
+#pragma warning( pop )
 #include "D3D1XShaderDefines.h"
 TonemapSettingsBlock gTonemapSettings{};
 

@@ -34,7 +34,7 @@ public:
     void QueueTextureReload();
     void DrawDebug();
     RwCamera* m_pShadowCamera = nullptr;
-    float	m_fShadowDistances[5];
+    float     m_fShadowDistances[5]{};
     bool	m_bShadowsRendered = false;
     bool	m_bRequiresReloading = false;
     /*!

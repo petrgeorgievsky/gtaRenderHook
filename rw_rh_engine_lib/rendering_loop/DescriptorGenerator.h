@@ -1,0 +1,36 @@
+//
+// Created by peter on 27.06.2020.
+//
+
+#pragma once
+#include <Engine/Common/IDescriptorSetLayout.h>
+#include <map>
+namespace rh::engine
+{
+class IDescriptorSetAllocator;
+}
+namespace rh::rw::engine
+{
+
+class DescriptorGenerator
+{
+    struct DescritptorSet_Desc
+    {
+        std::vector<rh::engine::DescriptorBinding> bindings;
+        uint32_t                                   max_count = 0;
+    };
+    std::map<uint32_t, DescritptorSet_Desc> mDescriptorSets;
+
+  public:
+    DescriptorGenerator &AddDescriptor( uint32_t set, uint32_t binding,
+                                        uint32_t                   register_id,
+                                        rh::engine::DescriptorType type,
+                                        uint32_t                   count,
+                                        uint32_t shader_stages );
+
+    rh::engine::IDescriptorSetLayout *
+    FinalizeDescriptorSet( uint32_t set, uint32_t max_count );
+
+    rh::engine::IDescriptorSetAllocator *FinalizeAllocator();
+};
+} // namespace rh::rw::engine

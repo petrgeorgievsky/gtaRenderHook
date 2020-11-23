@@ -14,15 +14,16 @@
    rendering functions.
 */
 #pragma once
-#include "Engine\Common\ISimple2DRenderer.h"
-#include "Engine\IRenderer.h"
-#include <Engine\Definitions.h>
-#include <game_sa\RenderWare.h>
+#include <cstdint>
+
+/* Standard functions */
+using RwStandardFunc = bool (*)( void *pOut, void *pInOut, std::int32_t nI );
 
 namespace rh::rw::engine {
+
 struct RwStandard
 {
-    RwInt32 nStandard;
+    std::int32_t nStandard;
     RwStandardFunc fpStandard;
 };
 
@@ -76,7 +77,7 @@ public:
    * Assigns window handle and enumerates hardware info(videocards, monitors and
    * display modes).
    */
-    bool Open( HWND );
+    bool Open( void* );
 
     /**
    * @brief Closes rendering engine, releasing all used resources
@@ -226,4 +227,4 @@ private:
 };
 extern std::unique_ptr<RwRenderEngine> g_pRwRenderEngine;
 extern bool g_bRwSwapchainChanged;
-}; // namespace rh::rw::engine
+} // namespace rh::rw::engine

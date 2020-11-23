@@ -1,8 +1,15 @@
 #pragma once
+#include <common_headers.h>
 #include <cstdint>
-namespace rh::engine {
+#include <functional>
+#include <span>
+#include <vector>
+
+namespace rh::engine
+{
 class IRenderingContext;
 class IRenderingPipeline;
+class IBuffer;
 } // namespace rh::engine
 struct RpAtomic;
 struct RpMeshHeader;
@@ -11,84 +18,99 @@ struct RpMorphTarget;
 struct RwTexCoords;
 struct RwRGBA;
 struct RpTriangle;
-namespace rh::rw::engine {
 
-enum RenderStatus { Failure, NotInstanced, Instanced };
-
-struct VertexDescPosOnly
+struct MeshSplitData
 {
-    float x, y, z, w;
+    uint32_t numIndex{};
+
+    uint32_t baseIndex{};
+
+    uint32_t numVertices{};
+
+    uint32_t startIndex{};
+
+    // !TODO: REMOVE THIS
+    void *material = nullptr;
 };
 
-struct VertexDescPosColor : VertexDescPosOnly
+struct RenderMeshData
 {
-    uint8_t color[4];
+    rh::engine::IBuffer *      mIndexBuffer;
+    rh::engine::IBuffer *      mVertexBuffer;
+    std::vector<MeshSplitData> mMaterialInfo;
 };
 
-struct VertexDescPosColorUV : VertexDescPosColor
+namespace rh::rw::engine
 {
-    float u, v;
+
+struct ResEnty : RwResEntry
+{
+    uint64_t meshData;
+    uint16_t batchId;
+    uint16_t frameId;
 };
 
-struct VertexDescPosColorUVNormals : VertexDescPosColorUV
+enum RenderStatus
 {
-    float nx, ny, nz;
+    Failure,
+    NotInstanced,
+    Instanced
 };
 
 class RpGeometryInterface
 {
-public:
+  public:
     virtual ~RpGeometryInterface() = default;
-    void Init( void *geometry );
-    virtual void *GetResEntry() = 0;
-    virtual RwResEntry *&GetResEntryRef() = 0;
-    virtual int32_t GetVertexCount() = 0;
-    virtual int32_t GetTriangleCount() = 0;
-    virtual RpTriangle *GetTrianglePtr() = 0;
-    virtual uint32_t GetFlags() = 0;
-    virtual int32_t GetMorphTargetCount() = 0;
-    virtual RpMeshHeader *GetMeshHeader() = 0;
-    virtual RpMorphTarget *GetMorphTarget( uint32_t id ) = 0;
-    virtual RwTexCoords *GetTexCoordSetPtr( uint32_t id ) = 0;
-    virtual RwRGBA *GetVertexColorPtr() = 0;
-    virtual void Unlock() = 0;
+    void                      Init( void *geometry );
+    virtual void *            GetResEntry()                    = 0;
+    virtual RwResEntry *&     GetResEntryRef()                 = 0;
+    virtual int32_t           GetVertexCount()                 = 0;
+    virtual int32_t           GetTriangleCount()               = 0;
+    virtual RpTriangle *      GetTrianglePtr()                 = 0;
+    virtual uint32_t          GetFlags()                       = 0;
+    virtual int32_t           GetMorphTargetCount()            = 0;
+    virtual RpMeshHeader *    GetMeshHeader() const            = 0;
+    virtual RpMorphTarget *   GetMorphTarget( uint32_t id )    = 0;
+    virtual RwTexCoords *     GetTexCoordSetPtr( uint32_t id ) = 0;
+    virtual RwRGBA *          GetVertexColorPtr()              = 0;
+    virtual void              Unlock()                         = 0;
+    virtual std::span<RpMesh> GetMeshList() const              = 0;
+    virtual void *            GetThis() { return m_pGeometryImpl; }
 
-protected:
+  protected:
     void *m_pGeometryImpl = nullptr;
 };
 
 class RpGeometryRw36 : public RpGeometryInterface
 {
-public:
-    virtual ~RpGeometryRw36() override {}
-    void *GetResEntry() override;
-    RwResEntry *&GetResEntryRef() override;
-    int32_t GetVertexCount() override;
-    uint32_t GetFlags() override;
-    RpMeshHeader *GetMeshHeader() override;
+  public:
+    ~RpGeometryRw36() override {}
+    void *        GetResEntry() override;
+    RwResEntry *& GetResEntryRef() override;
+    int32_t       GetVertexCount() override;
+    uint32_t      GetFlags() override;
+    RpMeshHeader *GetMeshHeader() const override;
 
-    int32_t GetMorphTargetCount() override;
+    int32_t        GetMorphTargetCount() override;
     RpMorphTarget *GetMorphTarget( uint32_t id ) override;
-    RwTexCoords *GetTexCoordSetPtr( uint32_t id ) override;
-    RwRGBA *GetVertexColorPtr() override;
-    void Unlock() override;
+    RwTexCoords *  GetTexCoordSetPtr( uint32_t id ) override;
+    RwRGBA *       GetVertexColorPtr() override;
+    void           Unlock() override;
 
     // RpGeometryInterface interface
-public:
-    int32_t GetTriangleCount() override;
-    RpTriangle *GetTrianglePtr() override;
+  public:
+    int32_t           GetTriangleCount() override;
+    RpTriangle *      GetTrianglePtr() override;
+    std::span<RpMesh> GetMeshList() const override;
 };
 
-RenderStatus RwRHInstanceAtomic( RpAtomic *atomic, RpGeometryInterface *geom_io );
+RenderStatus RwRHInstanceAtomic( RpAtomic *           atomic,
+                                 RpGeometryInterface *geom_io );
 
-void MeshGetNumVerticesMinIndex( const uint16_t *indices,
-                                 uint32_t size,
-                                 uint32_t &numVertices,
-                                 uint32_t &min );
+void MeshGetNumVerticesMinIndex( const uint16_t *indices, uint32_t size,
+                                 uint32_t &numVertices, uint32_t &min );
 
-void DrawAtomic( RpAtomic *atomic,
-                 RpGeometryInterface *geom_io,
-                 rh::engine::IRenderingContext *context,
-                 rh::engine::IRenderingPipeline *pipeline );
+void DrawAtomic( RpAtomic *atomic, RpGeometryInterface *geom_io,
+                 const std::function<void( ResEnty *entry )> &render_callback );
 
-} // namespace rw_rh_engine
+} // namespace rh::rw::engine

@@ -18,7 +18,9 @@ struct VS_CAR_INPUT
 	float3 vPosition   	: POSITION;
 	float2 vTexCoord    : TEXCOORD;
 	float3 vNormal    	: NORMAL;
-	float4 vColor 		: COLOR;
+    float4 vColor : COLOR;
+    float3 vInTangents : TEXCOORD1;
+    float3 vInBiTangents : TEXCOORD2;
 };
 struct GS_VOXEL_IN
 {
@@ -33,13 +35,16 @@ struct PS_VOXEL_INPUT
 	float4 vNormal		: NORMAL;
 	float2 vTexCoord	: TEXCOORD0;
 };
+
 struct PS_DEFERRED_CF_IN
 {
     float4 vPosition : SV_POSITION;
     float4 vColor : COLOR;
     float4 vNormalDepth : NORMAL;
     float4 vTexCoord : TEXCOORD0;
-    float4 vWorldPos : TEXCOORD1;
+    float4 vInTangents : TEXCOORD1;
+    float4 vInBiTangents : TEXCOORD2;
+    float4 vWorldPos : TEXCOORD3;
 };
 
 //--------------------------------------------------------------------------------------
@@ -56,7 +61,11 @@ PS_DEFERRED_CF_IN VS(VS_CAR_INPUT i)
 
 	Out.vPosition = mul(outPos, mProjection);
 
-    Out.vNormalDepth = float4(mul((float3x3) mWorldInv, i.vNormal), outPos.z);
+    Out.vNormalDepth =
+        float4( mul( (float3x3)mWorldInv, i.vNormal ), outPos.z );
+    Out.vInTangents   = float4( mul( (float3x3)mWorldInv, i.vInTangents ), 1 );
+    Out.vInBiTangents =
+        float4( mul( (float3x3)mWorldInv, i.vInBiTangents ), 1 );
 	Out.vTexCoord = float4(i.vTexCoord, 0, 0);
 	Out.vColor = i.vColor;
 
@@ -116,7 +125,10 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
         albedoSample *= txDiffuse.Sample(samLinear, i.vTexCoord.xy);
     float4 outColor;
 #if SAMPLE_SHADOWS!=1
-    float ShadowTerm = SampleShadowCascades(txShadow, samShadow, samLinear, WorldPos, length(WorldPos.xyz - ViewPos));
+    float ShadowTerm =
+        SampleShadowCascades( txShadow, samShadow, samLinear, WorldPos,
+                              length( WorldPos.xyz - ViewPos ) ) *
+        vSunLightDir.w;
 #else
     float ShadowTerm = 1.0;
 #endif
@@ -136,6 +148,7 @@ float4 PS(PS_DEFERRED_CF_IN i) : SV_Target
     outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
 	return outColor;
 }
+
 void ShadowPS(PS_DEFERRED_IN i)
 {
 #if HAS_TEXTURE == 1
@@ -144,6 +157,7 @@ void ShadowPS(PS_DEFERRED_IN i)
 		discard;
 #endif
 }
+
 PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;

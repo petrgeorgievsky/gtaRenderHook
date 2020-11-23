@@ -106,6 +106,17 @@ cbuffer TemporalAA : register(b9)
     float MBEdgeScale;
     float MBCenterScale;
 }
+cbuffer Clouds : register( b10 )
+{
+    float3 WindDir;
+    float Time;
+    float4 CloudsColor;
+
+    float CloudStartHeight;
+    float CloudEndHeight;
+    float CloudCoverage;
+    float CloudSpeed;
+}
 static const float voxelGridScale2 = 1.0f;
 static const int	voxelGridSize = 32;
 // Luminance vector

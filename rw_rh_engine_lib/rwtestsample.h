@@ -1,19 +1,21 @@
 #pragma once
-#include "RwRenderEngine.h"
 #include <TestUtils/TestSample.h>
-namespace rh::rw::engine {
+struct RwCamera;
+struct RwFrame;
+namespace rh::rw::engine
+{
 class RwTestSample : public rh::tests::TestSample
 {
-public:
-    RwTestSample( rh::engine::RenderingAPI api, HINSTANCE inst );
+  public:
+    RwTestSample( rh::engine::RenderingAPI api, void *inst );
     ~RwTestSample() override;
-    bool Initialize( HWND wnd ) override;
+    bool Initialize( void *wnd ) override;
     bool CustomInitialize() override;
     void CustomShutdown() override;
     void Render() override;
 
-protected:
+  protected:
     RwCamera *m_pMainCamera{};
-    RwFrame *m_pMainCameraFrame{};
+    RwFrame * m_pMainCameraFrame{};
 };
-} // namespace rw_rh_engine
+} // namespace rh::rw::engine

@@ -68,7 +68,7 @@ RwBool CRwGameHooks::RenderSystem( RwInt32 request, void * out, void * inOut, Rw
 
 RwBool CRwGameHooks::SetRenderState( RwRenderState state, UINT param )
 {
-    return g_pRwCustomEngine->RenderStateSet( state, param );
+    return g_pRwCustomEngine->RenderStateSet( state, param ); 
 }
 
 RwBool CRwGameHooks::GetRenderState( RwRenderState nState, UINT* pParam )

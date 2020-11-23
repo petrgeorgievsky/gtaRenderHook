@@ -36,10 +36,10 @@ public:
     static void	QueueTextureReload();
     static bool	m_bRequiresReloading;
 private:
-    static CD3D1XShader* m_pVolumetricSunlightPS;
-    static CD3D1XShader* m_pVolumetricCombinePS;
-    static RwRaster*	 m_pVolumeLightingRaster;
-    static CD3D1XConstantBuffer<CBVolumetricLighting>* m_pVolumeLightingCB;
+    static CD3D1XShader *m_pVolumetricSunlightPS;
+    static CD3D1XShader *m_pVolumetricCombinePS;
+    static RwRaster *m_pVolumeLightingRaster;
+    static CD3D1XConstantBuffer<CBVolumetricLighting> *m_pVolumeLightingCB;
 };
 
 /*!
@@ -51,7 +51,7 @@ public:
     VolumetricLightingSettingsBlock()
     {
         m_sName = "VolumetricLighting";
-        m_aFields["Enable"] = new ToggleSField( "Enable", false, false, false, m_sName, true );
+        m_aFields["EnableVolumetricLighting"] = new ToggleSField( "EnableVolumetricLighting", false, false, false, m_sName, true );
         m_aFields["RaymarchingDistance"] = new FloatSField( "RaymarchingDistance", false, false, false, m_sName, 40.0f, 1.0f, 1000.0f, 0.5f );
         m_aFields["SunlightBlendOffset"] = new FloatSField( "SunlightBlendOffset", false, false, false, m_sName, 0.25f, -1.0f, 1.0f, 0.01f );
         m_aFields["SunlightIntensity"] = new FloatSField( "SunlightIntensity", false, false, false, m_sName, 0.25f, 0.001f, 5.0f, 0.001f );

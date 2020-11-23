@@ -3,14 +3,17 @@
 #include "GBuffer.hlsl"
 #include "VoxelizingHelper.hlsl"
 #include "AtmosphericScatteringFunctions.hlsli"
+#include "Shadows.hlsl"
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
 Texture2D    txDiffuse : register( t0 );
 Texture2D    txSpec : register( t1 );
 Texture2D    txNormals : register( t2 );
-SamplerState samLinear : register(s0);
 Texture2D txShadow 	: register(t4);
+TextureCube            txCubeMap : register( t5 );
+SamplerState           samLinear : register( s0 );
+SamplerComparisonState samShadow : register( s1 );
 
 struct VS_INPUT
 {
@@ -103,20 +106,66 @@ void VoxelGS(triangle GS_VOXEL_IN input[3], inout TriangleStream<PS_VOXEL_INPUT>
 //--------------------------------------------------------------------------------------
 float4 PS(PS_DEFERRED_DN_IN i) : SV_Target
 {
-    const float3 ViewPos = mViewInv[3].xyz;
-    float3 WorldPos = i.vWorldPos.xyz;
-    float3 Normals = (i.vNormalDepth.xyz * 0.5f + 0.5f) * 2.0f - 1.0f;
-    Normals.z = sqrt(1.01 - dot(Normals.xy, Normals.xy));
-    Normals = normalize(Normals);
-    float3 LightDir = normalize(vSunLightDir.xyz);
-    float3 ViewDir = normalize(WorldPos.xyz - ViewPos);
-	float4 outColor =txDiffuse.Sample( samLinear, i.vTexCoord.xy ) * cDiffuseColor;
-    outColor.xyz *= i.vColor.xyz;
-	outColor.a		*=i.vColor.w;
+    const float3 ViewPos  = mViewInv[3].xyz;
+    float3       WorldPos = i.vWorldPos.xyz;
+    float3       Normals  = ( i.vNormalDepth.xyz * 0.5f + 0.5f ) * 2.0f - 1.0f;
+    Normals.z             = sqrt( 1.01 - dot( Normals.xy, Normals.xy ) );
+    Normals               = normalize( Normals );
+    float3 ViewDir        = normalize( WorldPos.xyz - ViewPos );
+    float3 LightDir       = normalize( vSunLightDir.xyz );
+
+    float DiffuseTerm, SpecularTerm;
+    CalculateDiffuseTerm_ViewDependent( Normals.xyz, LightDir, ViewDir,
+                                        DiffuseTerm, 1 - fGlossiness );
+    CalculateSpecularTerm( Normals.xyz, LightDir, -ViewDir, 1 - fGlossiness,
+                           SpecularTerm );
+    // clamp to avoid unrealisticly high values
+    // SpecularTerm = min(SpecularTerm, 16.0f);
+    // DiffuseTerm *= vSunLightDir.w;
+
+    float4 albedoSample = cDiffuseColor;
+    if ( bHasTexture != 0 )
+        albedoSample *= txDiffuse.Sample( samLinear, i.vTexCoord.xy );
+    if ( albedoSample.a < 0.3 )
+        discard;
+    float4 outColor;
+#if SAMPLE_SHADOWS != 1
+    float ShadowTerm =
+        SampleShadowCascades( txShadow, samShadow, samLinear, WorldPos,
+                              length( WorldPos.xyz - ViewPos ) ) *
+        vSunLightDir.w;
+#else
+    float ShadowTerm = 1.0;
+#endif
+    float3 ReflDir = normalize( reflect( ViewDir, normalize( Normals.xyz ) ) );
     float3 FullScattering;
-    outColor.rgb = CalculateFogColor(outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w, WorldPos.z, FullScattering);
-    DO_ALPHA_TEST(outColor.w)
-	return outColor;
+
+    float3 ObjectColor = CalculateFogColor( float3( 0, 0, 0 ), ReflDir,
+                                            LightDir, 1000, 0, FullScattering );
+
+    float3 SkyColor = GetSkyColor( ReflDir, LightDir, FullScattering );
+
+    float3 ReflectionFallBack;
+    ReflDir.x *= -1;
+    float4 CubeMap =
+        txCubeMap.SampleLevel( samLinear, ReflDir, ( 1 - fGlossiness ) * 9.0f );
+    ReflectionFallBack = lerp( CubeMap.rgb, SkyColor, 1 - CubeMap.a );
+    float3 sun_lighting = DiffuseTerm * ShadowTerm * vSunColor.rgb;
+    float3 radiance = i.vColor.rgb * saturate( 1.0f - vSunLightDir.w + 0.2f );
+    // todo: add lighting methods for forward renderer
+    outColor.rgb =
+        albedoSample.rgb *
+            ( sun_lighting + radiance +
+              vSkyLightCol.rgb * 0.3f ) +
+        SpecularTerm * fSpecularIntensity * vSunLightDir.w * vSunColor.rgb *
+            ShadowTerm +
+        ReflectionFallBack * fSpecularIntensity;
+    outColor.rgb =
+        CalculateFogColor( outColor.rgb, ViewDir, LightDir, i.vNormalDepth.w,
+                           WorldPos.z, FullScattering );
+    outColor.a = albedoSample.a * i.vColor.a;
+
+    return outColor;
 }
 
 void ShadowPS(PS_DEFERRED_IN i)
@@ -139,8 +188,8 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     float4 params = bHasSpecTex > 0 ? float4(txSpec.Sample(samLinear, i.vTexCoord.xy).xyz, 3) : float4(fSpecularIntensity, fGlossiness, 0, 3);
     params.w = baseColor.a > 0.95f ? 3 : 5;
     baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
-    float3 normal = -i.vNormalDepth.xyz;
-    if ( bHasNormalTex > 0 )
+    float3 normal = i.vNormalDepth.xyz;
+    if ( bHasNormalTex > 0 && length( i.vTangent.xyz ) > 0 )
     {
         float3x3 tbn =
             float3x3( normalize( i.vTangent.xyz ),
@@ -156,7 +205,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 	if (baseColor.a < 0.2f)
 		discard;
     FillGBufferVertexRadiance( Out, baseColor, normal, i.vNormalDepth.w, params,
-                               i.vColor );
+                               i.vColor * lerp( 0.25f, 1.0f, 1 - vSunLightDir.a ) );
 	return Out;
 }
 

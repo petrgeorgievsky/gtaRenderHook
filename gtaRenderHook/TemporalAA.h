@@ -44,7 +44,7 @@ public:
     TAASettingsBlock()
     {
         m_sName = "TAA";
-        m_aFields["Enable"] = new ToggleSField( "Enable", false, false, false, m_sName, true );
+        m_aFields["EnableTAA"] = new ToggleSField( "EnableTAA", false, false, false, m_sName, true );
         m_aFields["MotionBlurFallback"] = new ToggleSField( "MotionBlurFallback", false, false, true, m_sName, true );
         // count of frames participating in temporal anti-aliasing
         m_aFields["FrameCount"] = new IntSField( "FrameCount", false, false, false, m_sName, 4, 2, 480, 1 );

@@ -4,25 +4,25 @@
 #include <rw_engine/rw_rh_convert_funcs.h>
 
 using namespace rh::rw::engine;
-RwImageFindRasterFormatCmd::RwImageFindRasterFormatCmd( RwRaster *raster,
-                                                        RwImage *image,
-                                                        uint32_t flags )
-    : m_pRaster( raster )
-    , m_pImage( image )
-    , m_nFlags( flags )
-{}
-
-bool RwImageFindRasterFormatCmd::Execute()
+rh::rw::engine::RwImageFindRasterFormatCmd::RwImageFindRasterFormatCmd(
+    RwRaster *raster, RwImage *image, uint32_t flags )
+    : m_pRaster( raster ), m_pImage( image ), m_nFlags( flags )
 {
-    m_pRaster->width = m_pImage->width;
+}
+
+bool rh::rw::engine::RwImageFindRasterFormatCmd::Execute()
+{
+    m_pRaster->width  = m_pImage->width;
     m_pRaster->height = m_pImage->height;
-    m_pRaster->depth = 0;
-    m_pRaster->cType = m_nFlags & rwRASTERTYPEMASK;
+    m_pRaster->depth  = 0;
+    m_pRaster->cType  = m_nFlags & rwRASTERTYPEMASK;
 
     /* Find the rasters format */
-    switch ( m_nFlags & rwRASTERTYPEMASK ) {
-    case rwRASTERTYPENORMAL: {
-        RwUInt32 format;
+    switch ( m_nFlags & rwRASTERTYPEMASK )
+    {
+    case rwRASTERTYPENORMAL:
+    {
+        uint32_t format;
 
         /* Check size */
         //_rwD3D9CheckRasterSize( &( ras->width ), &( ras->height ), flags );
@@ -31,21 +31,24 @@ bool RwImageFindRasterFormatCmd::Execute()
         format = InternalImageFindFormat( m_pImage );
 
         /* rwRASTERTYPENORMAL - 'Linear' textures can not have mip maps */
-        // RWASSERT( !( ( rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP ) & flags
-        // ) );
+        // RWASSERT( !( ( rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP ) &
+        // flags ) );
 
         /* Only Mipmap if actually requested */
-        format |= m_nFlags
-                  & static_cast<RwUInt32>( ~( rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP ) );
+        format |= m_nFlags &
+                  static_cast<uint32_t>(
+                      ~( rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP ) );
 
-        m_pRaster->cFormat = static_cast<RwUInt8>( format >> 8 );
+        m_pRaster->cFormat = static_cast<uint8_t>( format >> 8u );
         /* Check format */
         // RWRETURN( _rwD3D9CheckRasterFormat( raster, format | ( flags &
         // rwRASTERTYPEMASK ) ) );
-    } break;
+    }
+    break;
     case rwRASTERTYPETEXTURE:
-    case rwRASTERTYPECAMERATEXTURE: {
-        RwUInt32 format;
+    case rwRASTERTYPECAMERATEXTURE:
+    {
+        uint32_t format;
 
         /* Check size */
         //_rwD3D9CheckRasterSize( &( ras->width ), &( ras->height ), flags );
@@ -54,19 +57,24 @@ bool RwImageFindRasterFormatCmd::Execute()
         format = InternalImageFindFormat( m_pImage );
 
         /* Only Mipmap if actually requested */
-        format |= m_nFlags & ( rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP );
+        format |=
+            m_nFlags & ( rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP );
 
-        m_pRaster->cFormat = static_cast<RwUInt8>( format >> 8 );
+        m_pRaster->cFormat = static_cast<uint8_t>( format >> 8u );
         /* Check format */
         // RWRETURN( _rwD3D9CheckRasterFormat( raster, format | ( flags &
         // rwRASTERTYPEMASK ) ) );
-    } break;
+    }
+    break;
     case rwRASTERTYPECAMERA:
-    case rwRASTERTYPEZBUFFER: {
+    case rwRASTERTYPEZBUFFER:
+    {
         /* Just take the default case */
         // RWRETURN( _rwD3D9CheckRasterFormat( raster, flags ) );
-    } break;
-    default: {
+    }
+    break;
+    default:
+    {
         /* Don't know what one of those is... */
         // RWERROR( ( E_RW_INVRASTERFORMAT ) );
     }

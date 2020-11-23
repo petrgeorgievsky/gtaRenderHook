@@ -1,29 +1,38 @@
 #include "rw_raster.h"
 #include "../global_definitions.h"
+#include "../system_funcs/rw_device_system_globals.h"
+#include "../rh_backend/raster_backend.h"
+
 #include <common_headers.h>
-namespace rh::rw::engine {
-
-RwRaster *RwRasterCreate(int32_t width, int32_t height, int32_t depth, int32_t flags)
+namespace rh::rw::engine
 {
-    auto *raster = static_cast<RwRaster *>(malloc(sizeof(RwRaster) + sizeof(void *)));
 
-    if (raster == nullptr)
+RwRaster *RwRasterCreate( int32_t width, int32_t height, int32_t depth,
+                          int32_t flags )
+{
+    auto *raster = static_cast<RwRaster *>(
+        malloc( sizeof( RwRaster ) + sizeof( BackendRasterExt ) ) );
+    new (raster) RwRaster{};
+
+    if ( raster == nullptr )
         return nullptr;
 
     raster->privateFlags = 0;
-    raster->cFlags = 0;
-    raster->width = width;
-    raster->height = height;
-    raster->nOffsetX = 0;
-    raster->nOffsetY = 0;
-    raster->depth = depth;
-    raster->parent = raster; /* It contains its own pixels */
-    raster->cpPixels = nullptr;
-    raster->palette = nullptr;
-    const RwStandardFunc RasterCreateFunc = g_pRwEngineInstance->stdFunc[rwSTANDARDRASTERCREATE];
+    raster->cFlags       = 0;
+    raster->width        = width;
+    raster->height       = height;
+    raster->nOffsetX     = 0;
+    raster->nOffsetY     = 0;
+    raster->depth        = depth;
+    raster->parent       = raster; /* It contains its own pixels */
+    raster->cpPixels     = nullptr;
+    raster->palette      = nullptr;
+    const RwStandardFunc RasterCreateFunc =
+        DeviceGlobals::Standards[rwSTANDARDRASTERCREATE];
 
-    if (!RasterCreateFunc(nullptr, raster, flags)) {
-        free(raster);
+    if ( !RasterCreateFunc( nullptr, raster, flags ) )
+    {
+        free( raster );
 
         return nullptr;
     }
@@ -31,16 +40,17 @@ RwRaster *RwRasterCreate(int32_t width, int32_t height, int32_t depth, int32_t f
     return raster;
 }
 
-int32_t RwRasterDestroy(RwRaster *raster)
+int32_t RwRasterDestroy( RwRaster *raster )
 {
-    if (raster == nullptr)
+    if ( raster == nullptr )
         return false;
 
-    const RwStandardFunc RasterDestroyFunc = g_pRwEngineInstance->stdFunc[rwSTANDARDRASTERDESTROY];
-    RasterDestroyFunc(nullptr, raster, 0);
+    const RwStandardFunc RasterDestroyFunc =
+        DeviceGlobals::Standards[rwSTANDARDRASTERDESTROY];
+    RasterDestroyFunc( nullptr, raster, 0 );
 
-    free(raster);
+    free( raster );
     return true;
 }
 
-} // namespace rw_rh_engine
+} // namespace rh::rw::engine

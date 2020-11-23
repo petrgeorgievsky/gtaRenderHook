@@ -1,18 +1,22 @@
 #include "rastershowrastercmd.h"
 #include "../global_definitions.h"
-#include <Engine/IRenderer.h>
+#include "../rh_backend/camera_backend.h"
+#include "../rh_backend/raster_backend.h"
+#include <Engine/Common/ISwapchain.h>
+#include <Engine/Common/IWindow.h>
+#include <render_loop.h>
 using namespace rh::rw::engine;
 
-RwRasterShowRasterCmd::RwRasterShowRasterCmd( RwRaster* raster, int32_t flags ):
-    m_pRaster( raster ), m_nFlags( flags )
+RwRasterShowRasterCmd::RwRasterShowRasterCmd( RwRaster *raster, int32_t flags )
+    : m_pRaster( raster ), m_nFlags( flags )
 {
-
 }
 
 bool RwRasterShowRasterCmd::Execute()
 {
     /* Retrieve a pointer to internal raster */
-    void* internalRaster = GetInternalRaster( m_pRaster );
-
-    return rh::engine::g_pRHRenderer->Present( internalRaster );
+    ExecuteRender();
+    GetCurrentSceneGraph()->mFrameInfo.camera_updated = false;
+    GetCurrentSceneGraph()->mFrameInfo.mLightCount    = 0;
+    return true;
 }

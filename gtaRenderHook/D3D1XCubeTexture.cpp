@@ -31,6 +31,8 @@ CD3D1XCubeTexture::CD3D1XCubeTexture( RwRaster* parent, bool createMipMaps ) :
                                               reinterpret_cast<ID3D11Texture2D**>( &m_pTextureResource ) ),
                         "Failed to create cubemap texture" ) )
         return;
+    if ( m_pTextureResource == nullptr )
+        return;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
     SRVDesc.Format = CD3D1XEnumParser::ConvertToSRVSupportedFormat( d3dRaster->format );

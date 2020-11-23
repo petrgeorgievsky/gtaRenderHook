@@ -1,0 +1,69 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_GOOGLE_include_directive : enable
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0, set = 0, rgba16f) uniform image2D tx_albedo;
+layout(binding = 1, set = 0, rgba16f) uniform image2D tx_normal_depth;
+layout(binding = 2, set = 0, r16f) uniform image2D tx_ao;
+layout(binding = 3, set = 0, rgba16f) uniform image2D tx_lighting;
+layout(binding = 4, set = 0, rgba16f) uniform image2D tx_refl;
+layout(binding = 5, set = 0, rgba16f) uniform image2D output_image;
+layout(binding = 6, set = 0) uniform SkyCfg
+{
+    vec4 sunDir;
+    vec4 sunColor;
+    vec4 horizonColor;
+    vec4 skyColor;
+}sky_cfg;
+
+void main()
+{
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+    vec4 OutLighting;
+    // const float3 ViewPos = mViewInv[3].xyz;
+
+    vec4 AlbedoColor = imageLoad(tx_albedo, pos);
+    //float4 Parameters = txGB2.Sample(samLinear, i.vTexCoord.xy);
+
+    vec3 Normals;
+    float ViewZ;
+    //GetNormalsAndDepth(txGB1, samLinear, i.vTexCoord.xy, ViewZ, Normals);
+    vec4 normals_depth = imageLoad(tx_normal_depth, pos);
+    Normals = normalize(normals_depth.xyz);
+
+    //float3 WorldPos = DepthToWorldPos(ViewZ, i.vTexCoord.xy).xyz;
+
+    //float3 ViewDir = normalize(WorldPos.xyz - ViewPos);
+    //uint MaterialType = ConvertToMatType(Parameters.w);
+
+    // float Metallness = Parameters.x;
+
+    vec4 Lighting = imageLoad(tx_lighting, pos);//txLighting.Sample(samLinear, i.vTexCoord.xy);
+
+    if (normals_depth.w >= 5000)
+    {
+        OutLighting.xyz = AlbedoColor.xyz;
+        OutLighting.a = 1;
+    }
+    else
+    {
+        vec3 vSkyLightCol = sky_cfg.skyColor.xyz;//vec3(90.0/255.0, 205.0/255.0, 255.0/255.0);
+        float AmbientOcclusion = imageLoad(tx_ao, pos).r;
+        // Diffuse term consists of diffuse lighting, and sky ambient
+        vec3 DiffuseTerm = ((Lighting.rba) + AmbientOcclusion * vSkyLightCol.rgb);
+        // Specular term consists of specular highlights
+        // vec3 SpecularTerm = (Lighting.w * Lighting.xyz) * AmbientOcclusion;
+        // Reflection term is computed before deferred
+        vec4 ref_params = imageLoad(tx_refl, pos);
+        vec3 ReflectionTerm = mix(vec3(1), AlbedoColor.rgb, ref_params.w) * ref_params.rgb;//txReflections.Sample(samLinear, i.vTexCoord.xy).rgb;
+
+
+        // Add atmospheric scattering to result
+        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb * (1 - ref_params.w) + ReflectionTerm;//+ SpecularTerm * Parameters.x + ReflectionTerm * FresnelCoeff * Parameters.x;
+        OutLighting.a = 1;
+    }
+    imageStore(output_image, pos, OutLighting);
+}

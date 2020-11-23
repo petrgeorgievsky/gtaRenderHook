@@ -18,13 +18,18 @@ bool rh::rw::engine::LoadClump( RpClump *&                   clump,
 
     return clump != nullptr;
 }
-
+struct RpClumpChunkInfo
+{
+    int32_t numAtomics;
+    int32_t numLights;
+    int32_t numCameras;
+};
 RpClump *rh::rw::engine::RpClumpStreamRead( void *stream )
 {
     using logger = rh::debug::DebugLogger;
-    RwBool   status;
-    RwUInt32 size;
-    RwUInt32 version;
+    int32_t  status;
+    uint32_t size;
+    uint32_t version;
 
     status = RwStreamFindChunk( stream, rwID_STRUCT, &size, &version );
 
@@ -33,11 +38,11 @@ RpClump *rh::rw::engine::RpClumpStreamRead( void *stream )
         return nullptr;
     }
 
-    RwUInt32       chunkversion;
-    _rpClump       cl{};
-    rwFrameList    fl{};
-    rpGeometryList gl{};
-    RpAtomic *     atom;
+    uint32_t         chunkversion;
+    RpClumpChunkInfo cl{};
+    rwFrameList      fl{};
+    rpGeometryList   gl{};
+    RpAtomic *       atom;
 
     logger::Log( "RpClumpStreamRead: reading _rpClump info:\n" );
 
@@ -124,7 +129,7 @@ RpClump *rh::rw::engine::RpClumpCreate() noexcept
     {
         return ( clump );
     }
-
+    constexpr auto rpCLUMP = 2;
     rwObject::Initialize( clump, rpCLUMP, 0 );
     //_RpClumpSetFrame( clump, NULL );
 
@@ -185,18 +190,18 @@ RpClump *rh::rw::engine::RpClumpAddAtomic( RpClump * clump,
 
 struct rpAtomicBinary
 {
-    RwInt32 frameIndex;
-    RwInt32 geomIndex;
-    RwInt32 flags;
-    RwInt32 unused;
+    int32_t frameIndex;
+    int32_t geomIndex;
+    int32_t flags;
+    int32_t unused;
 };
 
 RpAtomic *rh::rw::engine::ClumpAtomicStreamRead( void *stream, rwFrameList *fl,
                                                  rpGeometryList *gl )
 {
-    RwBool   status;
-    RwUInt32 size;
-    RwUInt32 version;
+    int32_t  status;
+    uint32_t size;
+    uint32_t version;
 
     status = RwStreamFindChunk( stream, rwID_STRUCT, &size, &version );
 

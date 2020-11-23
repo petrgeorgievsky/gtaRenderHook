@@ -1,22 +1,23 @@
 #pragma once
 #include <common_headers.h>
 struct RwCamera;
-namespace rh::rw::engine {
+namespace rh::rw::engine
+{
 
 class RwCameraBeginUpdateCmd
 {
-public:
+  public:
     RwCameraBeginUpdateCmd( RwCamera *camera );
     ~RwCameraBeginUpdateCmd();
     bool Execute();
 
-private:
-    void SetupCameraContext();
-    DirectX::XMMATRIX GetCameraTransform();
-    DirectX::XMMATRIX GetProjectionTransform();
+  private:
+    void                SetupCameraContext();
+    DirectX::XMFLOAT4X4 GetCameraTransform();
+    DirectX::XMFLOAT4X4 GetProjectionTransform();
 
-private:
+  private:
     RwCamera *m_pCamera = nullptr;
 };
 
-} // namespace rw_rh_engine
+} // namespace rh::rw::engine

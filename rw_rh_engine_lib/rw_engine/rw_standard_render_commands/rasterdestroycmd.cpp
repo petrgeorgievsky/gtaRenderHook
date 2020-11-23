@@ -2,27 +2,24 @@
 #include "../global_definitions.h"
 #include <Engine/Common/types/image_buffer_type.h>
 #include <Engine/IRenderer.h>
+#include <ipc/shared_memory_queue_client.h>
+#include <rw_engine/rh_backend/raster_backend.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 using namespace rh::rw::engine;
-RwRasterDestroyCmd::RwRasterDestroyCmd( RwRaster *raster )
-    : m_pRaster( raster )
-{}
+RwRasterDestroyCmd::RwRasterDestroyCmd( RwRaster *raster ) : m_pRaster( raster )
+{
+}
 
 bool RwRasterDestroyCmd::Execute()
 {
     if ( m_pRaster == nullptr )
         return true;
     /* Retrieve a pointer to internal raster */
-    void *internalRaster = GetInternalRaster( m_pRaster );
+    auto *rasExt = GetBackendRasterExt( m_pRaster );
+    if ( rasExt->mImageId == 0xBADF00D )
+        return true;
 
-    rh::engine::ImageBufferType imageBufferType = rh::engine::ImageBufferType::Unknown;
-
-    if ( m_pRaster->cType & rwRASTERTYPECAMERA )
-        imageBufferType = rh::engine::ImageBufferType::BackBuffer;
-    if ( m_pRaster->cType & rwRASTERTYPEZBUFFER )
-        imageBufferType = rh::engine::ImageBufferType::DepthBuffer;
-    if ( m_pRaster->cType & rwRASTERTYPETEXTURE )
-        imageBufferType = rh::engine::ImageBufferType::TextureBuffer;
-
-    return rh::engine::g_pRHRenderer->FreeImageBuffer( internalRaster, imageBufferType );
+    return true; // rh::engine::g_pRHRenderer->FreeImageBuffer( internalRaster,
+                 // imageBufferType );
 }

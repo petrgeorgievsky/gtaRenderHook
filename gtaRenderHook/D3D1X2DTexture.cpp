@@ -34,7 +34,7 @@ CD3D1X2DTexture::CD3D1X2DTexture( RwRaster * parent, D3D11_BIND_FLAG bindFlags,
                         "Failed to create 2D texture" ) )
         return;
     // If texture has no shader access(e.g. depth stencil surface for camera), than we don't need shader resource view
-    if ( !m_bShaderAccess )
+    if ( !m_bShaderAccess || m_pTextureResource == nullptr )
         return;
 
     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};

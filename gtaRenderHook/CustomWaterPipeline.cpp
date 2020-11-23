@@ -109,6 +109,7 @@ void CCustomWaterPipeline::RenderWater( RwIm3DVertex * verticles, UINT vertexCou
     g_pStateMgr->SetRaster( m_pWaterRaster );
     g_pStateMgr->SetTextureAdressUV(
         RwTextureAddressMode::rwTEXTUREADDRESSWRAP );
+    g_pStateMgr->SetAlphaBlendEnable( true );
     g_pStateMgr->SetRaster( m_pWaterWakeRaster, 5 );
     //g_pStateMgr->SetFillMode(D3D11_FILL_WIREFRAME);
     m_pVS->Set();

@@ -1,0 +1,273 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+#extension GL_GOOGLE_include_directive : enable
+#include "raycommon.glsl"
+
+struct Tile
+{
+    uint light_count;
+    uint light_offset;
+};
+layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 1, set = 0, rgba16f) uniform image2D result;
+layout(binding = 2, set = 0, rgba16f) uniform image2D normals;
+layout(binding = 3, set = 0) uniform sampler baseSampler;
+layout(binding = 4, set = 0) uniform texture2D randomNoise;
+layout(binding = 5, set = 0) uniform SkyCfg
+{
+    vec4 sunDir;
+    vec4 sunColor;
+    vec4 horizonColor;
+    vec4 skyColor;
+}sky_cfg;
+layout(binding = 6, set = 0) uniform ShadowParams
+{
+    float sun_light_radius;
+    float min_distance;
+    float max_distance;
+    uint time_stamp;
+} shadow_params;
+
+struct PointLight
+{
+    vec4 posAndRadius;
+    vec4 color;
+};
+
+layout(binding = 7, set = 0) buffer PointLights
+{
+    PointLight i[];
+}
+point_lights;
+
+layout(binding = 8, set = 0) buffer TileInfo
+{
+    Tile tiles[];
+}
+tile_info_list;
+layout(binding = 9, set = 0) buffer LightIds
+{
+    uint light_ids[];
+}
+light_id_list;
+
+layout(binding = 0, set = 1) uniform CameraProperties
+{
+    mat4 view;
+    mat4 proj;
+    mat4 viewInverse;
+    mat4 projInverse;
+    mat4 viewProj;
+    mat4 viewProjPrev;
+} cam;
+
+layout(location = 0) rayPayloadNV ShadowHitPayload payload;
+
+
+uint SmallestPowerOf2GreaterThan(in uint x)
+{
+    // Set all the bits behind the most significant non-zero bit in x to 1.
+    // Essentially giving us the largest value that is smaller than the
+    // next power of 2 we're looking for.
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+
+    // Return the next power of two value.
+    return x + 1;
+}
+
+float FloatPrecision(in float x, in uint NumMantissaBits)
+{
+    // Find the exponent range the value is in.
+    uint nextPowerOfTwo = SmallestPowerOf2GreaterThan(uint(x));
+    float exponentRange = nextPowerOfTwo - (nextPowerOfTwo >> 1);
+
+    float MaxMantissaValue = 1 << NumMantissaBits;
+
+    return exponentRange / MaxMantissaValue;
+}
+
+// Rotation with angle (in radians) and axis
+mat3 angleAxis3x3(float angle, vec3 axis) {
+    float c=cos(angle), s=sin(angle);
+
+    float t = 1 - c;
+    float x = axis.x;
+    float y = axis.y;
+    float z = axis.z;
+
+    return mat3(
+    t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+    t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+    t * x * z - s * y, t * y * z + s * x, t * z * z + c
+    );
+}
+
+vec3 getConeSample(vec2 rng, vec3 direction, float coneAngle) {
+    float cosAngle = cos(coneAngle);
+
+    // Generate points on the spherical cap around the north pole [1].
+    // [1] See https://math.stackexchange.com/a/205589/81266
+    float z = rng.x * (1.0f - cosAngle) + cosAngle;
+    float phi = rng.y * 2.0f * 3.14f;
+
+    float x = sqrt(1.0f - z * z) * cos(phi);
+    float y = sqrt(1.0f - z * z) * sin(phi);
+    vec3 north = vec3(0.f, 0.f, 1.f);
+
+    // Find the rotation axis `u` and rotation angle `rot` [1]
+    vec3 axis = normalize(cross(north, normalize(direction)));
+    float angle = acos(dot(normalize(direction), north));
+
+    // Convert rotation axis and angle to 3x3 rotation matrix [2]
+    mat3 R = angleAxis3x3(angle, axis);
+
+    return vec3(x, y, z) * R;
+}
+
+void main()
+{
+    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
+    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+    vec2 d = inUV * 2.0 - 1.0;
+    vec4 origin    = cam.viewInverse * vec4(0, 0, 0, 1);
+    vec4 target    = cam.projInverse * vec4(d.x, d.y, 1, 1);
+    vec4 direction = cam.viewInverse * vec4(normalize(target.xyz), 0);
+
+    uint  rayFlags = gl_RayFlagsNoneNV;
+    float tMin     = 0.001;
+    float tMax     = 5000.0;
+
+    vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDNV.xy));
+    normals_d.xyz = normalize(normals_d.xyz);
+    float ao_accum = 0.0f;
+    const int sample_count = 1;
+    const int rng_offsets = 8;
+
+    // Calculate coordinate system for the hemisphere.
+    vec3 u, v, w;
+    w = normals_d.xyz;
+
+    // Get a vector that's not parallel to w.
+    vec3 right = 0.3f * w + vec3(-0.72f, 0.56f, -0.34f);
+    v = normalize(cross(w, right));
+    u = cross(v, w);
+    vec3 light_dir = sky_cfg.sunDir.xyz;
+    float light_int = 1.0f;
+    if (light_dir.z < 0) {
+        light_dir.z = -light_dir.z;
+        light_int = 0.15f;
+    }
+
+    vec4 world_pos = vec4(origin.xyz + direction.xyz * normals_d.w, 1);
+
+    // Calculate a vector perpendicular to L
+    vec3 perpL = cross(normalize(light_dir), vec3(0.f, 1.0f, 0.f));
+    bvec3 up_perp = equal(perpL, vec3(0.0f));
+    float light_radius = shadow_params.sun_light_radius;
+    // Handle case where L = up -> perpL should then be (1,0,0)
+    if (all(up_perp)) {
+        perpL.x = 1.0;
+    }
+    // Use perpL to get a vector from worldPosition to the edge of the light sphere
+    vec3 toLightEdge = normalize(light_dir*1000.0f + perpL * light_radius);
+    // Angle between L and toLightEdge. Used as the cone angle when sampling shadow rays
+    float coneAngle = 0.53 * 0.0174533;//acos(dot(normalize(light_dir), toLightEdge)) * 2.0f;
+
+    const float c_goldenRatioConjugate = 0.61803398875;
+    vec3 random_s_dir = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64)/64.0f).xyz;
+
+    const float depth_eps = FloatPrecision(normals_d.w, 10);
+
+    float velocity = 0;
+    for (int i =0; i< sample_count; i++)
+    {
+        payload.hitDistance = 0.0f;
+        payload.velocity = 0.0f;
+        payload.x = 0.0f;
+        payload.y = 0.0f;
+
+        vec3 jitter = fract(random_s_dir + vec3((i + shadow_params.time_stamp) % 512) * c_goldenRatioConjugate) * 2.0f - 1.0f.xxx;//texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy + ivec2((i+old_idx)/rng_offsets, (i+old_idx)%rng_offsets))%64)/64.0f).xyz * 2.0f - 1.0f.xxx;
+        traceNV(topLevelAS, rayFlags,
+        0xFF, // cullMask
+        0, // sbtRecordOffset
+        0, // sbtRecordStride
+        0, // missIndex
+        world_pos.xyz + depth_eps * w, // ray origin
+        tMin, // ray min range
+        getConeSample(jitter.xy, normalize(light_dir), coneAngle), // ray direction
+        tMax, // ray max range
+        0// payload (location = 0)
+        );
+        ao_accum += (payload.hitDistance > 0 ? 1.0f: 0.0f) * max(0, dot(normals_d.xyz, normalize(light_dir))) * light_int;
+        velocity+=payload.velocity;
+    }
+
+
+    uint tile_id = (gl_LaunchIDNV.y / 8)*gl_LaunchSizeNV.x/ 8 + gl_LaunchIDNV.x/8;
+
+    uint light_count = tile_info_list.tiles[tile_id].light_count;
+    uint light_offset = tile_info_list.tiles[tile_id].light_offset;
+    vec3 res_color = vec3(0);
+    for (int i =0; i< min(light_count, 32); i++)
+    {
+        payload.hitDistance = 1.0f;
+        payload.velocity = 0.0f;
+        payload.x = 0.0f;
+        payload.y = 0.0f;
+
+        PointLight pl = point_lights.i[light_id_list.light_ids[light_offset + i]];
+        float light_rad = pl.posAndRadius.w;
+        float distance_to_light = distance(pl.posAndRadius.xyz, world_pos.xyz);
+        if (light_rad <= 0.0f)
+        continue;
+        vec3 pl_dir = normalize(pl.posAndRadius.xyz - world_pos.xyz);
+        float ndotl = max(0, dot(normals_d.xyz, pl_dir));
+        if (ndotl <= 0.0f)
+        continue;
+        float lr_sq = 1/(light_rad*light_rad);
+        float attenuation = 1.0f - pow(min(max(distance_to_light / light_rad, 0.0f), 1.0f), 2);//= 2*(1-(distance_to_light/sqrt(distance_to_light*distance_to_light + lr_sq)))/(lr_sq);
+        attenuation*=attenuation;
+        if (i > 8)
+        {
+            res_color += ndotl * attenuation * pl.color.rgb;
+            continue;
+        }
+        vec3 perpL_pl = cross(pl_dir, vec3(0.f, 1.0f, 0.f));
+        bvec3 up_perp_pl = equal(perpL_pl, vec3(0.0f));
+        float plight_radius = 0.01f;
+        // Handle case where L = up -> perpL should then be (1,0,0)
+        if (all(up_perp_pl)) {
+            perpL_pl.x = 1.0;
+        }
+
+        // Use perpL to get a vector from worldPosition to the edge of the light sphere
+        vec3 toLightEdge_pl = normalize(pl.posAndRadius.xyz + perpL_pl * plight_radius);
+        // Angle between L and toLightEdge. Used as the cone angle when sampling shadow rays
+        float coneAngle_pl = 0.35 * 0.0174533;
+
+        vec3 jitter = fract(random_s_dir + vec3((i + shadow_params.time_stamp) % 512) * c_goldenRatioConjugate) * 2.0f - 1.0f.xxx;//texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy + ivec2((i+old_idx)/rng_offsets, (i+old_idx)%rng_offsets))%64)/64.0f).xyz * 2.0f - 1.0f.xxx;
+
+        traceNV(topLevelAS, rayFlags,
+        0xFF, // cullMask
+        0, // sbtRecordOffset
+        0, // sbtRecordStride
+        0, // missIndex
+        world_pos.xyz + depth_eps * w, // ray origin
+        0.01f, // ray min range
+        getConeSample(jitter.xy, pl_dir, coneAngle_pl), // ray direction
+        distance_to_light - 0.25f, // ray max range
+        0// payload (location = 0)
+        );
+        res_color += (payload.hitDistance > 0 ? 1.0f: 0.0f) * ndotl * attenuation * pl.color.rgb;
+        velocity += payload.velocity;
+    }
+    //ao_accum /= float(sample_count + 3);
+    //velocity /= float(sample_count + 3);
+    res_color += normals_d.w < 5000 ? vec3(ao_accum) : vec3(0.0f);
+
+    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(res_color.x, velocity, res_color.yz));
+}

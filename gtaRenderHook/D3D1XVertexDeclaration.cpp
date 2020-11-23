@@ -32,7 +32,7 @@ CD3D1XVertexDeclaration::CD3D1XVertexDeclaration( CD3D1XShader* pVS, UINT flags 
         m_elements.push_back( { "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,	0, m_stride,	D3D11_INPUT_PER_VERTEX_DATA, 0 } );
         m_stride += 4;
     }
-    const UINT tangents_and_bitangents = 0x00000100;
+    constexpr UINT tangents_and_bitangents = 0x00000100;
     if ( flags & tangents_and_bitangents )
     {
         m_elements.push_back( {"TEXCOORD", 1, DXGI_FORMAT_R32G32B32_FLOAT, 0,

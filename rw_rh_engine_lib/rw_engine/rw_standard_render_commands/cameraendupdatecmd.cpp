@@ -1,7 +1,10 @@
 #include "cameraendupdatecmd.h"
 #include "../global_definitions.h"
+#include "../rh_backend/camera_backend.h"
+#include "../system_funcs/rw_device_system_globals.h"
 #include <DebugUtils/DebugLogger.h>
-#include <Engine/IRenderer.h>
+#include <Engine/Common/ICommandBuffer.h>
+#include <Engine/Common/IDeviceState.h>
 
 using namespace rh::rw::engine;
 
@@ -22,15 +25,22 @@ bool RwCameraEndUpdateCmd::Execute()
 {
     if ( m_pCamera == nullptr )
         return false;
-    void *frameBufferInternal = GetInternalRaster( m_pCamera->frameBuffer );
 
-    if ( m_pCamera->frameBuffer == nullptr || frameBufferInternal == nullptr )
-        return false;
+    /*    auto *cameraBackendExt = GetBackendCameraExt( m_pCamera );
+        auto &frame_res =
+            cameraBackendExt
+                ->mFrameResourceCache[cameraBackendExt->mCurrentFrameId];
 
-    if ( !rh::engine::g_pRHRenderer->PresentSwapChainImage( frameBufferInternal ) )
-        return false;
-    if ( !rh::engine::g_pRHRenderer->EndCommandList( nullptr ) )
-        return false;
+        frame_res.mCmdBuffer->EndRenderPass();
+        frame_res.mCmdBuffer->EndRecord();
 
+        DeviceGlobals::RenderHookDevice->ExecuteCommandBuffer(
+            frame_res.mCmdBuffer, frame_res.mImageAquire,
+            frame_res.mRenderExecute );
+        frame_res.mBufferIsRecorded = true;
+        cameraBackendExt->mCurrentFrameId =
+            ( cameraBackendExt->mCurrentFrameId + 1 ) %
+       gFrameResourceCacheSize;*/
+    DeviceGlobals::DeviceGlobalsPtr->curCamera = nullptr;
     return true;
 }

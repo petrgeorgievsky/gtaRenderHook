@@ -8,9 +8,9 @@ class CPBSMaterial
 {
 public:
     CPBSMaterial( const std::string&fname );
-  std::string m_sName;
-    RwTexture * m_tSpecRoughness;
-    RwTexture * m_tNormals;
+  std::string m_sName{};
+    RwTexture * m_tSpecRoughness{};
+  RwTexture * m_tNormals{};
 };
 
 class CPBSMaterialMgr

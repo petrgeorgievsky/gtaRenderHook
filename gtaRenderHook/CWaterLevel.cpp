@@ -918,7 +918,7 @@ void CWaterLevel::RenderHighDetailWaterRectangle_OneLayer( int x0, int x1, int y
                 do
                 {
                     int xcinv = halfXSize - xc;
-                    if ( yc * yScale + xc * xScale < 1.0 )
+                    if ( 1.0 * yc * yScale + 1.0 * xc * xScale < 1.0 )
                     {
                         x = xd + x0;
                         y = yd + y0;

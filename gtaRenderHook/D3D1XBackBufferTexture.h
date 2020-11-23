@@ -9,6 +9,6 @@ public:
     void SetDebugName( const std::string& name );
     ID3D11RenderTargetView* GetRenderTargetView() const { return m_pRenderTargetView; }
 private:
-    ID3D11RenderTargetView * m_pRenderTargetView;
+    ID3D11RenderTargetView *m_pRenderTargetView{};
 };
 

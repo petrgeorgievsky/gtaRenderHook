@@ -1,0 +1,18 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_GOOGLE_include_directive : enable
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0, set = 0, r16f) uniform image2D tx_result;
+layout(binding = 1, set = 0, rgba16f) uniform image2D tx_material_buffer;
+
+void main()
+{
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+    float spec = imageLoad(tx_material_buffer, pos).g;
+    vec4 res = vec4(1-spec*spec);
+    imageStore(tx_result, pos, res);
+}

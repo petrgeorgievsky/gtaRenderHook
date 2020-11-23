@@ -1,12 +1,22 @@
+#include "Im2DRenderer.h"
 #include <Engine/Common/ISwapchain.h>
 #include <Engine/D3D11Impl/D3D11DeviceState.h>
 #include <Engine/IRenderer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <Engine/VulkanImpl/VulkanShader.h>
-#include <TestUtils\WindowsSampleWrapper.h>
+#include <TestUtils/WindowsSampleWrapper.h>
+#include <filesystem>
 #include <memory>
 
 std::unique_ptr<rh::engine::IRenderer> rh::engine::g_pRHRenderer;
+
+struct PerFrameResources
+{
+    rh::engine::ISyncPrimitive *mImageAquire;
+    rh::engine::ISyncPrimitive *mRenderExecute;
+    rh::engine::ICommandBuffer *mCmdBuffer;
+    bool                        mBufferIsRecorded = false;
+};
 
 class DisplayModeTest : public rh::tests::TestSample
 {
@@ -15,7 +25,7 @@ class DisplayModeTest : public rh::tests::TestSample
         : rh::tests::TestSample( api, inst )
     {
     }
-    bool Initialize( HWND wnd ) override;
+    bool Initialize( void *wnd ) override;
 
     rh::engine::IFrameBuffer *
     GetFramebufferForFrame( const rh::engine::SwapchainFrame &frame );
@@ -24,22 +34,26 @@ class DisplayModeTest : public rh::tests::TestSample
     rh::engine::IDeviceState *mDeviceState  = nullptr;
     rh::engine::IWindow *     mDeviceWindow = nullptr;
 
-    //
-    rh::engine::ICommandBuffer *mCmdBuffer     = nullptr;
-    rh::engine::ISyncPrimitive *mRenderExecute = nullptr;
-
     // Per-Frame resources
-    rh::engine::ISyncPrimitive *              mImageAquire = nullptr;
-    std::array<rh::engine::IFrameBuffer *, 2> mFrameBuffer{nullptr, nullptr};
+    std::array<rh::engine::IFrameBuffer *, 8> mFrameBuffer{
+        nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr };
+
+    std::array<PerFrameResources, 16> mPerFrameResources{};
 
     //
     rh::engine::IRenderPass *mRenderPass = nullptr;
 
-    //
-    rh::engine::IPipeline *m2DPipeline = nullptr;
+    // 2d renderer
+    std::unique_ptr<Im2DRenderer> m2DRenderer;
 
     //
-    rh::engine::IBuffer *mVertexBuffer = nullptr;
+    rh::engine::IBuffer *   mGlobalsBuffer = nullptr;
+    rh::engine::IImageView *mImageView     = nullptr;
+
+    rh::engine::IDescriptorSetLayout *   mGlobalDescSetLayout = nullptr;
+    rh::engine::IDescriptorSet *         mGlobalDescSet       = nullptr;
+    rh::engine::IDescriptorSetAllocator *mGlobalDescSetAlloc  = nullptr;
 
     // TestSample interface
   public:
@@ -55,7 +69,7 @@ rh::engine::IFrameBuffer *DisplayModeTest::GetFramebufferForFrame(
 {
     if ( mFrameBuffer[frame.mImageId] == nullptr )
     {
-        std::vector<rh::engine::IImageView *> img_views{frame.mImageView};
+        std::vector<rh::engine::IImageView *> img_views{ frame.mImageView };
         rh::engine::FrameBufferCreateParams   create_params{};
         create_params.width      = frame.mWidth;
         create_params.height     = frame.mHeight;
@@ -68,35 +82,55 @@ rh::engine::IFrameBuffer *DisplayModeTest::GetFramebufferForFrame(
     return mFrameBuffer[frame.mImageId];
 }
 
-bool DisplayModeTest::Initialize( HWND window )
+struct RenderStateBuffer
 {
+    float fScreenWidth;
+    float fScreenHeight;
+    float fRedness;
+    float fPadding;
+};
+
+RenderStateBuffer gGlobalStateBuffer;
+
+bool DisplayModeTest::Initialize( void *window )
+{
+    bool d3d11_test = true;
+    /*if ( d3d11_test )
+        mDeviceState = new rh::engine::D3D11DeviceState();
+    else*/
     mDeviceState = new rh::engine::VulkanDeviceState();
 
-    unsigned int adapter_count;
-    assert( mDeviceState->GetAdaptersCount( adapter_count ) );
-
-    unsigned int output_count;
-    assert( mDeviceState->GetOutputCount( 0, output_count ) );
-
-    unsigned int display_mode_count;
-    assert( mDeviceState->GetDisplayModeCount( 0, display_mode_count ) );
-
     mDeviceState->Init();
-
-    rh::engine::DisplayModeInfo dm_info{};
-    auto r = mDeviceState->GetDisplayModeInfo( 0, dm_info );
-    assert( r );
 
     rh::engine::OutputInfo info{};
     info.displayModeId = 0;
     info.windowed      = true;
-    mDeviceWindow      = mDeviceState->CreateDeviceWindow( window, info );
+    mDeviceWindow =
+        mDeviceState->CreateDeviceWindow( static_cast<HWND>( window ), info );
 
-    mCmdBuffer = mDeviceState->GetMainCommandBuffer();
-    mImageAquire =
-        mDeviceState->CreateSyncPrimitive( rh::engine::SyncPrimitiveType::GPU );
-    mRenderExecute =
-        mDeviceState->CreateSyncPrimitive( rh::engine::SyncPrimitiveType::GPU );
+    rh::engine::DescriptorSetAllocatorCreateParams dsc_all_cp{};
+    std::array<rh::engine::DescriptorPoolSize, 3>  dsc_pool_sizes = {
+        rh::engine::DescriptorPoolSize{
+            .mType = rh::engine::DescriptorType::ROBuffer, .mCount = 32 },
+        rh::engine::DescriptorPoolSize{ rh::engine::DescriptorType::ROTexture,
+                                        32 },
+        rh::engine::DescriptorPoolSize{ rh::engine::DescriptorType::Sampler,
+                                        32 } };
+
+    dsc_all_cp.mMaxSets         = 40;
+    dsc_all_cp.mDescriptorPools = dsc_pool_sizes;
+    mGlobalDescSetAlloc =
+        mDeviceState->CreateDescriptorSetAllocator( dsc_all_cp );
+
+    for ( size_t i = 0; i < mPerFrameResources.size(); i++ )
+    {
+        mPerFrameResources[i].mCmdBuffer = mDeviceState->CreateCommandBuffer();
+        mPerFrameResources[i].mImageAquire = mDeviceState->CreateSyncPrimitive(
+            rh::engine::SyncPrimitiveType::GPU );
+        mPerFrameResources[i].mRenderExecute =
+            mDeviceState->CreateSyncPrimitive(
+                rh::engine::SyncPrimitiveType::GPU );
+    }
 
     // Basic render pass
     rh::engine::RenderPassCreateParams render_pass_desc{};
@@ -120,157 +154,243 @@ bool DisplayModeTest::Initialize( HWND window )
 
     mRenderPass = mDeviceState->CreateRenderPass( render_pass_desc );
 
-    rh::engine::ShaderDesc vs_desc{};
-    vs_desc.mShaderPath  = "Im2D.hlsl";
-    vs_desc.mEntryPoint  = "BaseVS";
-    vs_desc.mShaderStage = rh::engine::ShaderStage::Vertex;
-    auto vs_shader       = mDeviceState->CreateShader( vs_desc );
+    // DescriptorSetLayouts
 
-    rh::engine::ShaderDesc ps_desc{};
-    ps_desc.mShaderPath  = "Im2D.hlsl";
-    ps_desc.mEntryPoint  = "NoTexPS";
-    ps_desc.mShaderStage = rh::engine::ShaderStage::Pixel;
-    auto ps_shader       = mDeviceState->CreateShader( ps_desc );
+    std::array<rh::engine::DescriptorBinding, 1> desc_set_bindings = { {
+        0,                                    //  mBindingId;
+        rh::engine::DescriptorType::ROBuffer, //  mDescriptorType;
+        1,                                    //  mCount;
+        rh::engine::ShaderStage::Pixel |
+            rh::engine::ShaderStage::Vertex //  mShaderStages;
+    } };
+    mGlobalDescSetLayout =
+        mDeviceState->CreateDescriptorSetLayout( { desc_set_bindings } );
 
-    rh::engine::ShaderStageDesc vs_stage_desc{};
-    vs_stage_desc.mShader     = vs_shader;
-    vs_stage_desc.mStage      = vs_desc.mShaderStage;
-    vs_stage_desc.mEntryPoint = vs_desc.mEntryPoint;
+    Im2DRendererInitParams im2d_init_params{};
+    im2d_init_params.mDeviceState                = mDeviceState;
+    im2d_init_params.mGlobalsDescriptorSetLayout = mGlobalDescSetLayout;
+    im2d_init_params.mRenderPass                 = mRenderPass;
+    im2d_init_params.mCmdBufferCount             = 16;
 
-    rh::engine::ShaderStageDesc ps_stage_desc{};
-    ps_stage_desc.mShader     = ps_shader;
-    ps_stage_desc.mStage      = ps_desc.mShaderStage;
-    ps_stage_desc.mEntryPoint = ps_desc.mEntryPoint;
+    m2DRenderer = std::make_unique<Im2DRenderer>( im2d_init_params );
 
-    rh::engine::PipelineCreateParams pipe_create_params{};
-    pipe_create_params.mRenderPass = mRenderPass;
-    pipe_create_params.mShaderStages.push_back( vs_stage_desc );
-    pipe_create_params.mShaderStages.push_back( ps_stage_desc );
+    std::array<rh::engine::IDescriptorSetLayout *, 1> layout_array = {
+        mGlobalDescSetLayout };
+    rh::engine::DescriptorSetsAllocateParams all_params{};
+    all_params.mLayouts = layout_array;
+    mGlobalDescSet =
+        mGlobalDescSetAlloc->AllocateDescriptorSets( all_params )[0];
 
-    m2DPipeline = mDeviceState->CreatePipeline( pipe_create_params );
-    struct VertexDesc
+    RenderStateBuffer buff{};
+    buff.fScreenHeight = 1000;
+    buff.fScreenWidth  = 2000;
+    rh::engine::BufferCreateInfo rs_buff_create_info{};
+    rs_buff_create_info.mSize        = sizeof( RenderStateBuffer );
+    rs_buff_create_info.mUsage       = rh::engine::BufferUsage::ConstantBuffer;
+    rs_buff_create_info.mFlags       = rh::engine::BufferFlags::Immutable;
+    rs_buff_create_info.mInitDataPtr = &buff;
+    mGlobalsBuffer = mDeviceState->CreateBuffer( rs_buff_create_info );
+
+    rh::engine::DescriptorSetUpdateInfo desc_set_upd_info{};
+    desc_set_upd_info.mSet              = mGlobalDescSet;
+    desc_set_upd_info.mDescriptorType   = rh::engine::DescriptorType::ROBuffer;
+    std::array update_info              = { rh::engine::BufferUpdateInfo{
+        0, sizeof( RenderStateBuffer ), mGlobalsBuffer } };
+    desc_set_upd_info.mBufferUpdateInfo = update_info;
+    mDeviceState->UpdateDescriptorSets( desc_set_upd_info );
+
+    std::vector<uint32_t> buffer_data( 128 * 128, 0xFFFF00FF );
+    for ( size_t x = 0; x < 128; x++ )
     {
-        float    x, y, z, w;
-        uint32_t color;
-        float    u, v;
-    };
-    std::vector<VertexDesc> triangle_verticles = {
-        {0, 0, 0, 1, // pos
-         0xFFFFFFFF, // color
-         0, 0},
-        // v0
-        {0, 720, 0, 1, // pos
-         0xFFFF0000,   // color
-         0, 0},
-        // v1
-        {1280, 0, 0, 1, // pos
-         0xFF0000FF,    // color
-         0, 0},
-        // v2
-        {1280, 0, 0, 1, // pos
-         0xFF00FF00,    // color
-         0, 0},
-        // v3
-        {1280, 720, 0, 1, // pos
-         0xFFFF0000,      // color
-         0, 0},
-        // v4
-        {0, 720, 0, 1, // pos
-         0xFFFF00FF,   // color
-         0, 0}
-        // v5
-    };
-    rh::engine::BufferCreateInfo v_buff_create_info{};
-    v_buff_create_info.mSize = sizeof( VertexDesc ) * triangle_verticles.size();
-    v_buff_create_info.mUsage = rh::engine::BufferUsage::VertexBuffer;
-    mVertexBuffer = mDeviceState->CreateBuffer( v_buff_create_info );
-    mVertexBuffer->Update( triangle_verticles.data(),
-                           v_buff_create_info.mSize );
-    delete vs_shader;
-    delete ps_shader;
+        for ( size_t y = 0; y < 128; y++ )
+        {
+            buffer_data[x + y * 128] =
+                ( x + y ) % 2 == 0 ? 0xFFFF00FF : 0xFF0000FF;
+        }
+    }
+
+    std::array image_init_buffer = { rh::engine::ImageBufferInitData{
+        buffer_data.data(),
+        static_cast<uint32_t>( buffer_data.size() * sizeof( uint32_t ) ), 8 } };
+
+    rh::engine::ImageBufferCreateParams image_buffer_ci{};
+    image_buffer_ci.mDimension   = rh::engine::ImageDimensions::d2D;
+    image_buffer_ci.mWidth       = 128;
+    image_buffer_ci.mHeight      = 128;
+    image_buffer_ci.mFormat      = rh::engine::ImageBufferFormat::RGBA8;
+    image_buffer_ci.mPreinitData = image_init_buffer;
+    auto img_buffer = mDeviceState->CreateImageBuffer( image_buffer_ci );
+
+    // CopyDataToImage( img_buffer, 128, 128 );
+
+    rh::engine::ImageViewCreateInfo shader_view_ci{};
+    shader_view_ci.mBuffer = img_buffer;
+    shader_view_ci.mFormat = rh::engine::ImageBufferFormat::RGBA8;
+    shader_view_ci.mUsage  = rh::engine::ImageViewUsage::ShaderResource;
+    mImageView             = mDeviceState->CreateImageView( shader_view_ci );
+    // delete img_buffer;
     return true;
 }
 
 void DisplayModeTest::CustomRender()
 {
-    auto [swapchain, invalidate_framebuffers] = mDeviceWindow->GetSwapchain();
+    static std::vector triangle_verticles = {
+        Im2DVertex{ 0, 0, 0, 1, // pos
+                    0, 0,       // uv
+                    0xFFFFFFFF, // color
+                    0 },
+        // v0
+        Im2DVertex{ 0, 720, 0, 1, // pos
+                    0, 1,         // uv
+                    0xFFFF0000,   // color
+                    0 },
+        // v1
+        Im2DVertex{ 1280, 0, 0, 1, // pos
+                    1, 0,
+                    0xFF0000FF, // color
+                    0 },
+        // v2
+        Im2DVertex{ 1280, 0, 0, 1, // pos
+                    1, 0,
+                    0xFF00FF00, // color
+                    0 },
+        // v3
+        Im2DVertex{ 0, 720, 0, 1, // pos
+                    0, 1,
+                    0xFFFF00FF, // color
+                    0 },
+        // v4
+        Im2DVertex{ 1280, 720, 0, 1, // pos
+                    1, 1,
+                    0xFFFF0000, // color
+                    0 }
+        // v5
+    };
+    static int current_frame = 0;
+    const auto &[swapchain, invalidate_framebuffers] =
+        mDeviceWindow->GetSwapchain();
     if ( invalidate_framebuffers )
     {
-        for ( auto fb : mFrameBuffer )
+        for ( auto &fb : mFrameBuffer )
+        {
             delete fb;
-        mFrameBuffer[0] = mFrameBuffer[1] = nullptr;
+            fb = nullptr;
+        }
     }
-    auto frame = swapchain->GetAvaliableFrame( mImageAquire );
+    auto cmdbuffer   = mPerFrameResources[current_frame].mCmdBuffer;
+    auto render_exec = mPerFrameResources[current_frame].mRenderExecute;
+    auto img_aq      = mPerFrameResources[current_frame].mImageAquire;
+    if ( mPerFrameResources[current_frame].mBufferIsRecorded )
+    {
+        std::array exec_prim_list = { cmdbuffer->ExecutionFinishedPrimitive() };
 
-    // Record frame
-    mCmdBuffer->BeginRecord();
+        mDeviceState->Wait( exec_prim_list );
+        mPerFrameResources[current_frame].mBufferIsRecorded = false;
+    }
+    auto frame = swapchain->GetAvaliableFrame( img_aq );
 
-    rh::engine::RenderPassBeginInfo info{};
-    info.m_pRenderPass  = mRenderPass;
-    info.m_pFrameBuffer = GetFramebufferForFrame( frame );
-    info.m_aClearValues = {
-        {rh::engine::ClearValueType::Color, {0, 0, 128, 0xFF}, {}}};
+    gGlobalStateBuffer.fRedness = frame.mImageId % 2 ? 1.0f : 0.0f;
+    mGlobalsBuffer->Update( &gGlobalStateBuffer, sizeof( RenderStateBuffer ) );
 
-    mCmdBuffer->BeginRenderPass( info );
-    auto fb_info = info.m_pFrameBuffer->GetInfo();
+    auto record_cmd_buffer = [&]( auto record_call ) {
+        cmdbuffer->BeginRecord();
+        record_call();
+        cmdbuffer->EndRecord();
+    };
 
-    mCmdBuffer->SetViewports(
-        0, {rh::engine::ViewPort{
-               0,                                    // float topLeftX;
-               0,                                    // float topLeftY;
-               static_cast<float>( fb_info.width ),  // float width;
-               static_cast<float>( fb_info.height ), // float height;
-               0,                                    // float minDepth;
-               1.0                                   // float maxDepth;
-           }} );
+    auto record_render_pass = [&]( auto record_call ) {
+        std::array                      clear_values = { rh::engine::ClearValue{
+            rh::engine::ClearValueType::Color,
+            rh::engine::ClearValue::ClearColor{ 0, 0, 128, 0xFF },
+            {} } };
+        rh::engine::RenderPassBeginInfo info{};
+        info.m_pRenderPass  = mRenderPass;
+        info.m_pFrameBuffer = GetFramebufferForFrame( frame );
+        info.m_aClearValues = clear_values;
+        cmdbuffer->BeginRenderPass( info );
+        record_call();
+        cmdbuffer->EndRenderPass();
+    };
 
-    mCmdBuffer->SetScissors( 0, {rh::engine::Scissor{
-                                    0,             // float topLeftX;
-                                    0,             // float topLeftY;
-                                    fb_info.width, // float width;
-                                    fb_info.height // float height;
-                                }} );
-    mCmdBuffer->BindPipeline( m2DPipeline );
-    mCmdBuffer->BindVertexBuffers( 0, {{mVertexBuffer, 0}} );
-    mCmdBuffer->Draw( 6, 1, 0, 0 );
+    record_cmd_buffer( [&]() {
+        record_render_pass( [&]() {
+            auto       fb_info   = GetFramebufferForFrame( frame )->GetInfo();
+            std::array viewports = { rh::engine::ViewPort{
+                0,                                    // float topLeftX;
+                0,                                    // float topLeftY;
+                static_cast<float>( fb_info.width ),  // float width;
+                static_cast<float>( fb_info.height ), // float height;
+                0,                                    // float minDepth;
+                1.0                                   // float maxDepth;
+            } };
+            std::array scissors  = { rh::engine::Scissor{
+                0,             // float topLeftX;
+                0,             // float topLeftY;
+                fb_info.width, // float width;
+                fb_info.height // float height;
+            } };
+            cmdbuffer->SetViewports( 0, viewports );
+            cmdbuffer->SetScissors( 0, scissors );
+            m2DRenderer->SetImageView( mImageView );
+            m2DRenderer->RecordDrawCall( triangle_verticles );
 
-    mCmdBuffer->EndRenderPass();
+            std::array desc_sets = { mGlobalDescSet };
 
-    mCmdBuffer->EndRecord();
+            rh::engine::DescriptorSetBindInfo desc_set_bind{};
+            desc_set_bind.mPipelineLayout = m2DRenderer->GetLayout();
+            desc_set_bind.mDescriptorSets = desc_sets;
+
+            cmdbuffer->BindDescriptorSets( desc_set_bind );
+
+            m2DRenderer->DrawBatch( cmdbuffer );
+            m2DRenderer->FrameEnd();
+        } );
+    } );
 
     // Submit command buffer
-    mDeviceState->ExecuteCommandBuffer( mCmdBuffer, mImageAquire,
-                                        mRenderExecute );
-
-    swapchain->Present( frame, mRenderExecute );
-
-    std::vector<rh::engine::ISyncPrimitive *> exec_prim_list = {
-        mCmdBuffer->ExecutionFinishedPrimitive()};
-
-    mDeviceState->Wait( exec_prim_list );
+    mDeviceState->ExecuteCommandBuffer( cmdbuffer, img_aq, render_exec );
+    mPerFrameResources[current_frame].mBufferIsRecorded = true;
+    swapchain->Present( frame, render_exec );
 
     static bool res_switch = true;
     if ( res_switch )
     {
+        mDeviceState->WaitForGPU();
         rh::engine::DisplayModeInfo dm_info{};
         mDeviceState->GetDisplayModeInfo( 25, dm_info );
         rh::engine::WindowParams params{};
         params.mWidth  = dm_info.width;
         params.mHeight = dm_info.height;
         mDeviceWindow->SetWindowParams( params );
+
+        gGlobalStateBuffer.fScreenWidth  = dm_info.width;
+        gGlobalStateBuffer.fScreenHeight = dm_info.height;
+        mGlobalsBuffer->Update( &gGlobalStateBuffer,
+                                sizeof( RenderStateBuffer ) );
+
         res_switch = false;
     }
+
+    current_frame = ( current_frame + 1 ) % mPerFrameResources.size();
 }
 
 void DisplayModeTest::CustomShutdown()
 {
-    delete mVertexBuffer;
-    delete m2DPipeline;
+    mDeviceState->WaitForGPU();
+    m2DRenderer.reset();
+    delete mGlobalsBuffer;
+    delete mGlobalDescSet;
+    delete mGlobalDescSetAlloc;
+    delete mGlobalDescSetLayout;
     delete mRenderPass;
     for ( auto fb : mFrameBuffer )
         delete fb;
-    delete mImageAquire;
-    delete mRenderExecute;
+    for ( auto res : mPerFrameResources )
+    {
+        delete res.mCmdBuffer;
+        delete res.mImageAquire;
+        delete res.mRenderExecute;
+    }
     delete mDeviceWindow;
     mDeviceState->Shutdown();
     delete mDeviceState;

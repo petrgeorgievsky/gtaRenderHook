@@ -113,7 +113,7 @@ private:
         ID3D11DepthStencilView* 			m_depthStencilRV;
         ID3D11UnorderedAccessView*			m_unorderedAV;
     };
-    RwRGBA  m_palette[256];
+    RwRGBA m_palette[256]{};
     BYTE* m_dataPtr;
     bool m_isRendering = false,
         m_isLockedToRead = false,

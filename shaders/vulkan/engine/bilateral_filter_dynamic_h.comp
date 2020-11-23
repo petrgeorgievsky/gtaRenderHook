@@ -1,0 +1,76 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_GOOGLE_include_directive : enable
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0, set = 0, rgba16f) uniform image2D input_image;
+layout(binding = 1, set = 0, rgba16f) uniform image2D normal_depth;
+layout(binding = 2, set = 0, rgba16f) uniform image2D output_image;
+layout(binding = 3, set = 0, r16f) uniform image2D blur_strength;
+float sqr(float x)
+{
+    return x*x;
+}
+
+float get_spatial_weight(int x, int y, float sigma)
+{
+    const int atrous_rate = 1;
+    return (sqr(x* atrous_rate) + sqr(y* atrous_rate))/(2*sigma*sigma);
+}
+
+float get_depth_weight(float depth_diff, float sigma)
+{
+    return (sqr(depth_diff))/(2*sigma*sigma);
+}
+
+float get_normal_weight(float angle_diff, float sigma)
+{
+    return (angle_diff)/(2*sigma*sigma);
+}
+
+float get_weight(int x, int y, vec4 center_nd, vec4 local_nd, float sigma_spatial, float sigma_closseness, float sigma_normals)
+{
+    float depth_diff = local_nd.w - center_nd.w;
+    float angle_diff = max(1-abs(dot(normalize(local_nd.xyz), normalize(center_nd.xyz))), 0.01f);
+
+    float spatial_weight = get_spatial_weight(x, y, sigma_spatial);
+    float depth_weight = get_depth_weight(depth_diff, sigma_closseness);
+    float normal_weight = get_normal_weight(angle_diff, sigma_normals);
+    return exp(-spatial_weight - depth_weight - normal_weight);
+}
+
+void main()
+{
+    vec4 img_c_sample = vec4(0);
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 tex_res = ivec2(1920, 1080);
+    vec4 center_sample =  imageLoad(normal_depth, pos);
+    float blur_str =  imageLoad(blur_strength, pos).x;
+    float weight_summ = 0;
+    float center_dist = max(dot(pos, tex_res*0.5f), 0.0f);
+    float sigma_spatial = 40.0 * blur_str + 0.1;
+    float sigma_closseness = 0.05;
+    float sigma_normals = 0.05;
+    const int window_size = 3;
+    int atrous_rate = 2;
+
+    //for (int x = -window_size/2; x <= window_size/2; x++)
+    int x =0;
+    int y =0;
+    for (x = -window_size/2; x <= window_size/2; x++)
+    {
+        ivec2 sample_pos = pos + ivec2(x, y) * atrous_rate;
+        if (sample_pos.x <0 ||sample_pos.x >tex_res.x || sample_pos.y <0||sample_pos.y >tex_res.y)
+        continue;
+        vec4 offset_sample = imageLoad(input_image, sample_pos);
+        vec4 offset_sample_d = imageLoad(normal_depth, sample_pos);
+
+        float w = get_weight(x, y, center_sample, offset_sample_d, sigma_spatial, sigma_closseness, sigma_normals);
+        img_c_sample += offset_sample*w;
+        weight_summ += w;
+    }
+
+    imageStore(output_image, ivec2(gl_GlobalInvocationID.xy), vec4(img_c_sample/(weight_summ + 0.001f)));
+}

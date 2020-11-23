@@ -4,6 +4,7 @@
 #include "RwD3D1XEngine.h"
 #include "D3D1XStateManager.h"
 #include "D3D1X2DTexture.h"
+#include "D3D1X3DTexture.h"
 #include "D3D1X2DRenderTarget.h"
 #include "D3D1XBackBufferTexture.h"
 #include "D3D1XDepthStencilTexture.h"
@@ -490,8 +491,8 @@ bool CRwD3D1XEngine::RasterCreate( RwRaster *raster, UINT flags )
     if ( d3dRaster->format == DXGI_FORMAT_UNKNOWN && raster->cType != rwRASTERTYPECAMERA )
         return false;
     std::string str = "2DTexture";
-    RwRasterType rasterType = (RwRasterType)raster->cType;
-    switch ( rasterType )
+    constexpr auto tex3d_type = ( rwRASTERTYPECAMERATEXTURE + 1 );
+    switch ( raster->cType )
     {
     case rwRASTERTYPENORMAL:
     case rwRASTERTYPETEXTURE:
@@ -505,6 +506,9 @@ bool CRwD3D1XEngine::RasterCreate( RwRaster *raster, UINT flags )
         break;
     case rwRASTERTYPECAMERATEXTURE:
         d3dRaster->resourse = new CD3D1X2DRenderTarget( raster );
+        break;
+    case tex3d_type:
+        d3dRaster->resourse = nullptr; // new CD3D1X3DTexture( raster );
         break;
     default:
         break;
@@ -984,7 +988,7 @@ bool CRwD3D1XEngine::AtomicAllInOneNode( RxPipelineNode *self, const RxPipelineN
             {
                 rwLinkListRemoveLLLink( &entryData->link );
                 const RwModuleInfo ResModule = RpResModule;
-                const UINT engineOffset = reinterpret_cast<UINT>( *static_cast<RwGlobals**>( RwEngineInstance ) );
+                UINT engineOffset = reinterpret_cast<UINT>( *static_cast<RwGlobals**>( RwEngineInstance ) );
                 auto globalPtr = reinterpret_cast<rwResourcesGlobals*>( engineOffset + ResModule.globalsOffset );
                 rwLinkListAddLLLink( globalPtr->res.usedEntries, &entryData->link );
             }

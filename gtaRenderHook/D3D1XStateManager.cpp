@@ -363,7 +363,8 @@ void CD3D1XStateManager::SetTextureAdressUV( RwTextureAddressMode mode )
 {
     D3D11_TEXTURE_ADDRESS_MODE d3dMode = CD3D1XEnumParser::ConvertTextureAddressMode( mode );
 
-    if ( m_sampDesc.AddressU != d3dMode || m_sampDesc.AddressV != d3dMode )
+    if ( m_sampDesc.AddressU != d3dMode || m_sampDesc.AddressV != d3dMode ||
+         m_sampDesc.AddressW != d3dMode )
     {
         m_sampDesc.AddressU = d3dMode;
         m_sampDesc.AddressV = d3dMode;
@@ -545,7 +546,9 @@ void CD3D1XStateManager::SetRaster( RwRaster * raster, int Stage )
         auto d3d1xRaster = GetD3D1XRaster( raster );
         if ( d3d1xRaster != nullptr )
         {
-            auto res = dynamic_cast<CD3D1X2DTexture*>( d3d1xRaster->resourse )->GetShaderResourceView();
+            auto res =
+                dynamic_cast<ID3D1XShaderViewable *>( d3d1xRaster->resourse )
+                    ->GetShaderResourceView();
             context->PSSetShaderResources( Stage, 1, &res );
         }
         else
