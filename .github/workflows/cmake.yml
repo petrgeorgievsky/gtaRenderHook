@@ -22,11 +22,20 @@ jobs:
         # We'll use this as our working directory for all subsequent commands
         run: cmake -E make_directory ${{runner.workspace}}/build
 
-      - name: Checkout vcpkg
-        uses: actions/checkout@v2
+      # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
+      - name: Restore from cache and install vcpkg
+        # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
+        uses: lukka/run-vcpkg@v5
         with:
-          repository: microsoft/vcpkg.git
-          path: ${{runner.workspace}}/vcpkg
+          setupOnly: true
+      # Now that vcpkg is installed, it is being used to run desired arguments.
+      - run: |
+          $VCPKG_ROOT/vcpkg @$vcpkgResponseFile
+          $VCPKG_ROOT/vcpkg install imgui:x64-windows-static
+          $VCPKG_ROOT/vcpkg install imgui[vulkan-binding]:x64-windows-static
+          $VCPKG_ROOT/vcpkg install nlohmann-json:x64-windows-static
+          $VCPKG_ROOT/vcpkg install vulkan-memory-allocator:x64-windows-static
+        shell: bash
 
       - name: Configure CMake
         # Use a bash shell so we can use the same syntax for environment variable
