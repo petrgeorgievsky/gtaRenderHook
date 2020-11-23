@@ -21,12 +21,19 @@ jobs:
         # Some projects don't allow in-source building, so create a separate build directory
         # We'll use this as our working directory for all subsequent commands
         run: cmake -E make_directory ${{runner.workspace}}/build
-
+        
+      - name: Cache Vulkan SDK
+        id: cache-vulkan-sdk
+        uses: actions/cache@v1
+        with:
+           path: "C:\\VulkanSDK\\1.2.135.0"
+           key: vulkan-sdk-1.2.135.0
       - name: Setup Vulkan
+        if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
         run: |
-            Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe" -OutFile VulkanSDK.exe
-            $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
-            $installer.WaitForExit();
+         Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.135.0/windows/VulkanSDK-1.2.135.0-Installer.exe" -OutFile VulkanSDK.exe
+         $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
+         $installer.WaitForExit();
 
       # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
       - name: Restore from cache and install vcpkg
