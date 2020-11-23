@@ -1,0 +1,12 @@
+imgui:x64-windows-static
+imgui[vulkan-binding]:x64-windows-static
+imgui[dx11-binding]:x64-windows-static
+imgui[win32-binding]:x64-windows-static
+nlohmann-json:x64-windows-static
+vulkan-memory-allocator:x64-windows-static
+imgui:x86-windows-static
+imgui[vulkan-binding]:x86-windows-static
+imgui[dx11-binding]:x86-windows-static
+imgui[win32-binding]:x86-windows-static
+nlohmann-json:x86-windows-static
+vulkan-memory-allocator:x86-windows-static

@@ -31,7 +31,7 @@ jobs:
           vcpkgGitCommitId: 097a31d4c3127f38a6fbf4002122550dd9d39b84
       # Now that vcpkg is installed, it is being used to run desired arguments.
       - run: |
-          $VCPKG_ROOT/vcpkg @$vcpkgResponseFile
+          $VCPKG_ROOT/vcpkg @response_file.txt
           $VCPKG_ROOT/vcpkg install imgui:x64-windows-static
           $VCPKG_ROOT/vcpkg install imgui[vulkan-binding]:x64-windows-static
           $VCPKG_ROOT/vcpkg install nlohmann-json:x64-windows-static
