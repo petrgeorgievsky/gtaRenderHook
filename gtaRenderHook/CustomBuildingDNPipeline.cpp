@@ -17,7 +17,8 @@
 #include "RwRenderEngine.h"
 #include "stdafx.h"
 #include <game_sa\CWeather.h>
-extern int drawCallCount;
+extern int      drawCallCount;
+CRenderMeshPool<AlphaMesh> CCustomBuildingDNPipeline::m_aAlphaMeshList( 1000 );
 CCustomBuildingDNPipeline::CCustomBuildingDNPipeline()
     :
 #ifndef DebuggingShaders
@@ -150,20 +151,30 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
                 {
                     g_pStateMgr->SetRaster( mat->m_tSpecRoughness->raster, 1 );
                     g_pRenderBuffersMgr->UpdateHasSpecTex( 1 );
-                    if (mat->m_tNormals) {
-                        g_pStateMgr->SetRaster( mat->m_tNormals->raster,
-                                                2 );
+                    if ( mat->m_tNormals )
+                    {
+                        g_pStateMgr->SetRaster( mat->m_tNormals->raster, 2 );
                         g_pRenderBuffersMgr->UpdateHasNormalTex( 1 );
                     }
                 }
-            } 
+            }
         }
         else
             g_pRwCustomEngine->SetTexture( nullptr, 0 );
         if ( m_uiDeferredStage != 1 )
             g_pStateMgr->SetAlphaBlendEnable( bAlphaEnable > 0 );
         else
+        {
+            if ( bAlphaEnable > 0 && !gDeferredSettings.GetToggleField("UseDitheringForAlphaObjects") )
+            { 
+                m_aAlphaMeshList.Push( {entryData,
+                                        RwFrameGetLTM( static_cast<RwFrame *>(
+                                            atomic->object.object.parent ) ),
+                                        (int)i} );
+                continue;
+            }
             g_pStateMgr->SetAlphaBlendEnable( FALSE );
+        }
         drawCallCount++;
         g_pRenderBuffersMgr->FlushMaterialBuffer();
         g_pStateMgr->FlushStates();
@@ -173,11 +184,60 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
         g_pRenderBuffersMgr->UpdateHasNormalTex( 0 );
         g_pRwCustomEngine->SetTexture( nullptr, 1 );
         g_pRwCustomEngine->SetTexture( nullptr, 2 );
-
     }
 
     if ( m_uiDeferredStage == 3 || m_uiDeferredStage == 4 )
         m_pVoxelGS->ReSet();
 
     g_pStateMgr->SetAlphaBlendEnable( oldBlendState );
+}
+
+void CCustomBuildingDNPipeline::ResetAlphaList() { m_aAlphaMeshList.Clean(); }
+
+void CCustomBuildingDNPipeline::RenderAlphaList()
+{
+    g_pStateMgr->SetAlphaBlendEnable( true );
+    m_aAlphaMeshList.ExecuteForEach( [this]( const AlphaMesh &mesh ) {
+        UINT stride  = sizeof( SimpleVertex );
+        UINT offset  = 0;
+        auto curmesh = GetModelsData( mesh.entryptr )[mesh.meshID];
+        g_pStateMgr->SetInputLayout(
+            (ID3D11InputLayout *)mesh.entryptr->header.vertexDeclaration );
+        g_pStateMgr->SetVertexBuffer(
+            ( (CD3D1XBuffer *)mesh.entryptr->header.vertexStream[0]
+                  .vertexBuffer )
+                ->getBuffer(),
+            stride, offset );
+        g_pStateMgr->SetIndexBuffer(
+            ( (CD3D1XIndexBuffer *)mesh.entryptr->header.indexBuffer )
+                ->getBuffer() );
+        g_pStateMgr->SetPrimitiveTopology(
+            CD3D1XEnumParser::ConvertPrimTopology(
+                (RwPrimitiveType)mesh.entryptr->header.primType ) );
+        m_pVS->Set();
+        m_pPS->Set();
+        if ( curmesh.material->surfaceProps.ambient > 1.0 ||
+             CRendererRH::TOBJpass == true )
+            g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(
+                curmesh.material->color );
+        else
+            g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(
+                curmesh.material->color );
+        float fSpec       = max( CWeather::WetRoads,
+                           CCustomCarEnvMapPipeline__GetFxSpecSpecularity(
+                               curmesh.material ) );
+        float fGlossiness = RpMaterialGetFxEnvShininess( curmesh.material );
+
+        g_pRenderBuffersMgr->UpdateWorldMatrix( mesh.worldMatrix );
+        g_pRenderBuffersMgr->SetMatrixBuffer();
+        g_pRenderBuffersMgr->UpdateMaterialSpecularInt( fSpec );
+        g_pRenderBuffersMgr->UpdateMaterialGlossiness( fGlossiness );
+
+        g_pRwCustomEngine->SetTexture( curmesh.material->texture, 0 );
+
+        g_pRenderBuffersMgr->FlushMaterialBuffer();
+        g_pStateMgr->FlushStates();
+        GET_D3D_RENDERER->DrawIndexed( curmesh.numIndex, curmesh.startIndex,
+                                       curmesh.minVert );
+    } );
 }

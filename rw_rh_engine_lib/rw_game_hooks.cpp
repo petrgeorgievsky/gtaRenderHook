@@ -1,120 +1,245 @@
 #include "rw_game_hooks.h"
-#include "RwRenderEngine.h"
+#include "render_loop.h"
+#include "rw_engine/rh_backend/im2d_backend.h"
 #include <DebugUtils/DebugLogger.h>
 #include <MemoryInjectionUtils/InjectorHelpers.h>
+#include <rw_engine/rw_api_injectors.h>
+#include <rw_engine/rw_rh_convert_funcs.h>
 
-void rh::rw::engine::RwGameHooks::Patch( const RwPointerTable &pointerTable )
+namespace rh::rw::engine
 {
-    if ( pointerTable.m_fpRenderSystem )
-        SetPointer( pointerTable.m_fpRenderSystem, reinterpret_cast<void *>( RenderSystem ) );
+void *_rwIm3DOpen( void *instance, [[maybe_unused]] int32_t offset,
+                   [[maybe_unused]] int32_t size )
+{
+    return instance;
+}
 
-    if ( pointerTable.m_fpIm3DOpen )
-        RedirectJump( pointerTable.m_fpIm3DOpen, reinterpret_cast<void *>( Im3DOpen ) );
+void *_rwIm3DClose( void *instance, [[maybe_unused]] int32_t offset,
+                    [[maybe_unused]] int32_t size )
+{
+    return instance;
+}
+
+void RwGameHooks::Patch( const RwPointerTable &pointerTable )
+{
+    if ( pointerTable.mRwDevicePtr )
+    {
+        DeviceGlobals::DevicePtr =
+            reinterpret_cast<RwDevice *>( pointerTable.mRwDevicePtr );
+        DeviceGlobals::fpOldSystem         = DeviceGlobals::DevicePtr->fpSystem;
+        DeviceGlobals::DevicePtr->fpSystem = SystemHandler;
+        DeviceGlobals::DevicePtr->fpIm2DRenderPrimitive =
+            Im2DRenderPrimitiveFunction;
+        DeviceGlobals::DevicePtr->fpIm2DRenderIndexedPrimitive =
+            Im2DRenderIndexedPrimitiveFunction;
+        DeviceGlobals::DevicePtr->fpRenderStateSet = SetRenderState;
+        DeviceGlobals::DevicePtr->fpRenderStateGet = GetRenderState;
+
+        /* Render functions */
+        DeviceGlobals::DevicePtr->fpIm2DRenderLine =
+            []( RwIm2DVertex *vertices, int32_t numVertices, int32_t vert1,
+                int32_t vert2 ) { return 1; };
+        DeviceGlobals::DevicePtr->fpIm2DRenderTriangle =
+            []( RwIm2DVertex *vertices, int32_t numVertices, int32_t vert1,
+                int32_t vert2, int32_t vert3 ) { return 1; };
+
+        DeviceGlobals::DevicePtr->fpIm3DRenderLine             = nullptr;
+        DeviceGlobals::DevicePtr->fpIm3DRenderTriangle         = nullptr;
+        DeviceGlobals::DevicePtr->fpIm3DRenderPrimitive        = nullptr;
+        DeviceGlobals::DevicePtr->fpIm3DRenderIndexedPrimitive = nullptr;
+    }
+    if ( pointerTable.mAllocateResourceEntry )
+        DeviceGlobals::ResourceFuncs.AllocateResourceEntry =
+            reinterpret_cast<RwResourcesAllocateResEntry>(
+                pointerTable.mAllocateResourceEntry );
+    if ( pointerTable.mFreeResourceEntry )
+        DeviceGlobals::ResourceFuncs.FreeResourceEntry =
+            reinterpret_cast<RwResourcesFreeResEntry>(
+                pointerTable.mFreeResourceEntry );
+
+    if ( pointerTable.mRasterRegisterPluginPtr )
+        DeviceGlobals::PluginFuncs.RasterRegisterPlugin =
+            reinterpret_cast<RegisterPluginCall>(
+                pointerTable.mRasterRegisterPluginPtr );
+
+    if ( pointerTable.mMaterialRegisterPluginPtr )
+        DeviceGlobals::PluginFuncs.MaterialRegisterPlugin =
+            reinterpret_cast<RegisterPluginCall>(
+                pointerTable.mMaterialRegisterPluginPtr );
+
+    if ( pointerTable.mCameraRegisterPluginPtr )
+        DeviceGlobals::PluginFuncs.CameraRegisterPlugin =
+            reinterpret_cast<RegisterPluginCall>(
+                pointerTable.mCameraRegisterPluginPtr );
+
+    if ( pointerTable.mAtomicGetHAnimHierarchy )
+        DeviceGlobals::SkinFuncs.AtomicGetHAnimHierarchy =
+            reinterpret_cast<RpSkinAtomicGetHAnimHierarchyFP>(
+                pointerTable.mAtomicGetHAnimHierarchy );
+    if ( pointerTable.mGeometryGetSkin )
+        DeviceGlobals::SkinFuncs.GeometryGetSkin =
+            reinterpret_cast<RpSkinGeometryGetSkinFP>(
+                pointerTable.mGeometryGetSkin );
+    if ( pointerTable.mGetSkinToBoneMatrices )
+        DeviceGlobals::SkinFuncs.GetSkinToBoneMatrices =
+            reinterpret_cast<RpSkinGetSkinToBoneMatricesFP>(
+                pointerTable.mGetSkinToBoneMatrices );
+    if ( pointerTable.mGetVertexBoneIndices )
+        DeviceGlobals::SkinFuncs.GetVertexBoneIndices =
+            reinterpret_cast<RpSkinGetVertexBoneIndicesFP>(
+                pointerTable.mGetVertexBoneIndices );
+    if ( pointerTable.mGetVertexBoneWeights )
+        DeviceGlobals::SkinFuncs.GetVertexBoneWeights =
+            reinterpret_cast<RpSkinGetVertexBoneWeightsFP>(
+                pointerTable.mGetVertexBoneWeights );
+
+    if ( pointerTable.mRwRwDeviceGlobalsPtr )
+    {
+        DeviceGlobals::DeviceGlobalsPtr = reinterpret_cast<RwRwDeviceGlobals *>(
+            pointerTable.mRwRwDeviceGlobalsPtr );
+    }
+
+    if ( pointerTable.mIm3DOpen )
+        SetPointer( pointerTable.mIm3DOpen,
+                    reinterpret_cast<void *>( _rwIm3DOpen ) );
+    if ( pointerTable.mIm3DClose )
+        SetPointer( pointerTable.mIm3DClose,
+                    reinterpret_cast<void *>( _rwIm3DClose ) );
 
     if ( pointerTable.m_fpCheckEnviromentMapSupport )
         RedirectJump( pointerTable.m_fpCheckEnviromentMapSupport,
                       reinterpret_cast<void *>( CheckEnviromentMapSupport ) );
 
     if ( pointerTable.m_fpCheckNativeTextureSupport )
-        RedirectJump( pointerTable.m_fpCheckNativeTextureSupport,
+        RedirectCall( pointerTable.m_fpCheckNativeTextureSupport,
                       reinterpret_cast<void *>( CheckNativeTextureSupport ) );
 
     if ( pointerTable.m_fpSetRefreshRate )
-        RedirectJump( pointerTable.m_fpSetRefreshRate, reinterpret_cast<void *>( SetRefreshRate ) );
+        RedirectJump( pointerTable.m_fpSetRefreshRate,
+                      reinterpret_cast<void *>( SetRefreshRate ) );
 
     if ( pointerTable.m_fpSetVideoMode )
-        RedirectJump( pointerTable.m_fpSetVideoMode, reinterpret_cast<void *>( SetVideoMode ) );
+        RedirectJump( pointerTable.m_fpSetVideoMode,
+                      reinterpret_cast<void *>( SetVideoMode ) );
 
-    if ( pointerTable.m_fpIm2DRenderPrim )
-        SetPointer( pointerTable.m_fpIm2DRenderPrim, reinterpret_cast<void *>( Im2DRenderPrim ) );
+    /*    if ( pointerTable.m_fpIm2DRenderPrim )
+        SetPointer( pointerTable.m_fpIm2DRenderPrim,
+                    reinterpret_cast<void *>( Im2DRenderPrim ) );
 
     if ( pointerTable.m_fpIm2DRenderIndexedPrim )
         SetPointer( pointerTable.m_fpIm2DRenderIndexedPrim,
                     reinterpret_cast<void *>( Im2DRenderIndexedPrim ) );
 
     if ( pointerTable.m_fpIm2DRenderLine )
-        SetPointer( pointerTable.m_fpIm2DRenderLine, reinterpret_cast<void *>( Im2DRenderLine ) );
+        SetPointer( pointerTable.m_fpIm2DRenderLine,
+                    reinterpret_cast<void *>( Im2DRenderLine ) );
 
     if ( pointerTable.m_fpSetRenderState )
-        SetPointer( pointerTable.m_fpSetRenderState, reinterpret_cast<void *>( SetRenderState ) );
+        SetPointer( pointerTable.m_fpSetRenderState,
+                    reinterpret_cast<void *>( SetRenderState ) );
 
     if ( pointerTable.m_fpGetRenderState )
-        SetPointer( pointerTable.m_fpGetRenderState, reinterpret_cast<void *>( GetRenderState ) );
+        SetPointer( pointerTable.m_fpGetRenderState,
+                    reinterpret_cast<void *>( GetRenderState ) );*/
 }
 
-RwBool rh::rw::engine::RwGameHooks::RenderSystem( RwInt32 request, void *out, void *inOut, RwInt32 in )
+int32_t RwGameHooks::SetRenderState( RwRenderState nState, void *pParam )
 {
-    return g_pRwRenderEngine->EventHandlingSystem( static_cast<RwRenderSystemRequest>( request ),
-                                                   static_cast<int *>( out ),
-                                                   inOut,
-                                                   in );
+    /* debug::DebugLogger::Log(
+         "RWGAMEHOOKS_LOG: SetRenderState:" + std::to_string( nState ) +
+         " value:" + std::to_string( (uint32_t)pParam ) );*/
+    if ( nState == RwRenderState::rwRENDERSTATETEXTURERASTER )
+    {
+        Im2DSetRaster( static_cast<RwRaster *>( pParam ) );
+    }
+    else if ( nState == RwRenderState::rwRENDERSTATESRCBLEND )
+    {
+        auto rh_blend_op = static_cast<uint8_t>(
+            RwBlendFunctionToRHBlendOp( static_cast<RwBlendFunction>(
+                reinterpret_cast<uint32_t>( pParam ) ) ) );
+        EngineClient::gIm2DGlobals.SetBlendSrc( rh_blend_op );
+        EngineClient::gIm3DGlobals.SetBlendSrc( rh_blend_op );
+    }
+    else if ( nState == RwRenderState::rwRENDERSTATEDESTBLEND )
+    {
+        auto rh_blend_op = static_cast<uint8_t>(
+            RwBlendFunctionToRHBlendOp( static_cast<RwBlendFunction>(
+                reinterpret_cast<uint32_t>( pParam ) ) ) );
+        EngineClient::gIm2DGlobals.SetBlendDest( rh_blend_op );
+        EngineClient::gIm3DGlobals.SetBlendDest( rh_blend_op );
+    }
+    else if ( nState == RwRenderState::rwRENDERSTATEVERTEXALPHAENABLE )
+    {
+        EngineClient::gIm2DGlobals.SetBlendEnable(
+            reinterpret_cast<uint32_t>( pParam ) != 0 );
+        EngineClient::gIm3DGlobals.SetBlendEnable(
+            reinterpret_cast<uint32_t>( pParam ) != 0 );
+    }
+    else if ( nState == RwRenderState::rwRENDERSTATEZTESTENABLE )
+    {
+        EngineClient::gIm2DGlobals.SetDepthEnable(
+            reinterpret_cast<uint32_t>( pParam ) != 0 );
+        EngineClient::gIm3DGlobals.SetDepthEnable(
+            reinterpret_cast<uint32_t>( pParam ) != 0 );
+    }
+    else if ( nState == RwRenderState::rwRENDERSTATEZWRITEENABLE )
+    {
+        EngineClient::gIm2DGlobals.SetDepthWriteEnable(
+            reinterpret_cast<uint32_t>( pParam ) != 0 );
+        EngineClient::gIm3DGlobals.SetDepthWriteEnable(
+            reinterpret_cast<uint32_t>( pParam ) != 0 );
+    }
+    return 1;
 }
 
-RwBool rh::rw::engine::RwGameHooks::SetRenderState( RwRenderState state, UINT param )
+int32_t RwGameHooks::GetRenderState( [[maybe_unused]] RwRenderState nState,
+                                     void *                         pParam )
 {
-    /*RHDebug::DebugLogger::Log( TEXT( "SetRenderState:" ) +
-             std::to_string( static_cast<UINT>( state ) ) +
-             TEXT( " value:" ) +
-             std::to_string( static_cast<UINT>( param ) )
-);
-*/
-    return g_pRwRenderEngine->RenderStateSet( state, param );
-}
-
-RwBool rh::rw::engine::RwGameHooks::GetRenderState( RwRenderState /*state*/, UINT *param )
-{
-    *param = 0;
+    /* debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: GetRenderState:" +
+                              std::to_string( nState ) );*/
+    *static_cast<uint32_t *>( pParam ) = 0;
     return true;
 }
 
-void rh::rw::engine::RwGameHooks::SetRefreshRate( RwUInt32 /*refreshRate*/ )
+void RwGameHooks::SetRefreshRate( uint32_t /*refreshRate*/ )
 {
-    debug::DebugLogger::Log( "test" );
+    debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: SetRefreshRate" );
 }
 
-void rh::rw::engine::RwGameHooks::SetVideoMode( RwUInt32 videomode )
+void RwGameHooks::SetVideoMode( uint32_t )
 {
-    g_pRwRenderEngine->UseMode( videomode );
+    debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: SetVideoMode" );
+    // g_pRwRenderEngine->UseMode( videomode );
 }
 
-void rh::rw::engine::RwGameHooks::Im3DOpen() {}
+[[maybe_unused]] void RwGameHooks::Im3DOpen() {}
 
-RwBool rh::rw::engine::RwGameHooks::CheckNativeTextureSupport()
+void RwGameHooks::CheckNativeTextureSupport() {}
+
+int32_t RwGameHooks::CheckEnviromentMapSupport() { return true; }
+
+[[maybe_unused]] int32_t
+RwGameHooks::Im2DRenderPrim( [[maybe_unused]] RwPrimitiveType primType,
+                             [[maybe_unused]] RwIm2DVertex *  vertices,
+                             [[maybe_unused]] int32_t         numVertices )
 {
-    return true;
+    debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: Im2DRenderPrim" );
+    return 1;
 }
 
-RwBool rh::rw::engine::RwGameHooks::CheckEnviromentMapSupport()
+int32_t
+RwGameHooks::Im2DRenderIndexedPrim( [[maybe_unused]] RwPrimitiveType primType,
+                                    [[maybe_unused]] RwIm2DVertex *  vertices,
+                                    [[maybe_unused]] int32_t  numVertices,
+                                    [[maybe_unused]] int16_t *indices,
+                                    [[maybe_unused]] int32_t  numIndices )
 {
-    return true;
+    debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: Im2DRenderIndexedPrim" );
+    return 1;
 }
 
-RwBool rh::rw::engine::RwGameHooks::Im2DRenderPrim( RwPrimitiveType primType,
-                                                  RwIm2DVertex *vertices,
-                                                  RwInt32 numVertices )
-{
-    return g_pRwRenderEngine->Im2DRenderPrimitive( primType,
-                                                   vertices,
-                                                   static_cast<RwUInt32>( numVertices ) );
-}
-
-RwBool rh::rw::engine::RwGameHooks::Im2DRenderIndexedPrim( RwPrimitiveType primType,
-                                                         RwIm2DVertex *vertices,
-                                                         RwInt32 numVertices,
-                                                         RwImVertexIndex *indices,
-                                                         RwInt32 numIndices )
-{
-    return g_pRwRenderEngine->Im2DRenderIndexedPrimitive( primType,
-                                                          vertices,
-                                                          static_cast<RwUInt32>( numVertices ),
-                                                          indices,
-                                                          numIndices );
-}
-
-RwBool rh::rw::engine::RwGameHooks::Im2DRenderLine( RwIm2DVertex * /*vertices*/,
-                                                  RwInt32 /*numVertices*/,
-                                                  RwInt32 /*vert1*/,
-                                                  RwInt32 /*vert2*/ )
+int32_t RwGameHooks::Im2DRenderLine( void *, int32_t, int32_t, int32_t )
 {
     return true;
 }
+} // namespace rh::rw::engine

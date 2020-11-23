@@ -32,8 +32,9 @@ int SettingsField::FromXML( const tinyxml2::XMLElement * node )
 }
 
 ToggleSField::ToggleSField( const std::string & name, bool unchangeable,
-                            bool inGameOnly, bool shaderDependant, const std::string & groupName, bool defaultValue ) :
-    SettingsField( name, unchangeable, inGameOnly, shaderDependant, groupName ), m_bDefaultValue( defaultValue )
+                            bool inGameOnly, bool shaderDependant, const std::string & groupName, bool defaultValue ) : SettingsField( name, unchangeable, inGameOnly, shaderDependant,
+                     groupName ),
+      m_bDefaultValue( defaultValue ), m_bValue( m_bDefaultValue )
 {
 }
 
@@ -80,7 +81,8 @@ void ToggleSField::Reset()
 IntSField::IntSField( const std::string & name, bool unchangeable, bool inGameOnly,
                       bool shaderDependant, const std::string & groupName, int defaultValue, int minValue, int maxValue, int step ) :
     SettingsField( name, unchangeable, inGameOnly, shaderDependant, groupName ),
-    m_nDefaultValue( defaultValue ), m_nMinValue( minValue ), m_nMaxValue( maxValue ), m_nStep( step )
+      m_nDefaultValue( defaultValue ), m_nMinValue( minValue ),
+      m_nMaxValue( maxValue ), m_nStep( step ), m_nValue( m_nDefaultValue )
 {
 }
 
@@ -134,7 +136,8 @@ int IntSField::GetValue()
 FloatSField::FloatSField( const std::string & name, bool unchangeable, bool inGameOnly,
                           bool shaderDependant, const std::string & groupName, float defaultValue, float minValue, float maxValue, float step ) :
     SettingsField( name, unchangeable, inGameOnly, shaderDependant, groupName ),
-    m_fDefaultValue( defaultValue ), m_fMinValue( minValue ), m_fMaxValue( maxValue ), m_fStep( step )
+      m_fDefaultValue( defaultValue ), m_fMinValue( minValue ),
+      m_fMaxValue( maxValue ), m_fStep( step ), m_fValue( m_fDefaultValue )
 {
 }
 
@@ -187,7 +190,8 @@ float FloatSField::GetValue()
 UIntSField::UIntSField( const std::string & name, bool unchangeable, bool inGameOnly, bool shaderDependant,
                         const std::string & groupName, unsigned int defaultValue, unsigned int minValue, unsigned int maxValue, unsigned int step )
     : SettingsField( name, unchangeable, inGameOnly, shaderDependant, groupName ),
-    m_nDefaultValue( defaultValue ), m_nMinValue( minValue ), m_nMaxValue( maxValue ), m_nStep( step )
+      m_nDefaultValue( defaultValue ), m_nMinValue( minValue ),
+      m_nMaxValue( maxValue ), m_nStep( step ), m_nValue( m_nDefaultValue )
 {
 }
 

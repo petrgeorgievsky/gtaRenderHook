@@ -11,7 +11,7 @@ public:
     {
         CD3D1XBuffer::Update( &data );
     }
-    T data;
+    T    data{};
 };
 
 template<class T>

@@ -2,9 +2,12 @@
 #include "PostProcessEffect.h"
 #include "SettingsHolder.h"
 #include "D3D1XConstantBuffer.h"
+#pragma warning( push, 0 )
 #include <AntTweakBar.h>
+#pragma warning( pop )
 class CD3D1XShader;
-#define NUM_TONEMAP_TEXTURES  3       // Number of stages in the 3x3 down-scaling for post-processing in PS
+constexpr auto NUM_TONEMAP_TEXTURES =
+    3; // Number of stages in the 3x3 down-scaling for post-processing in PS
 static const int ToneMappingTexSize = (int)pow( 3.0f, NUM_TONEMAP_TEXTURES - 1 );
 struct CBPostProcess
 {
@@ -27,7 +30,7 @@ private:
     CD3D1XShader* m_pAdaptationPass;
     CD3D1XShader* m_pDownScale3x3_BrightPass;
     RwRaster*	m_pAdaptationRaster[2];
-    RwRaster*	m_pToneMapRaster[NUM_TONEMAP_TEXTURES];
+    RwRaster *    m_pToneMapRaster[NUM_TONEMAP_TEXTURES]{};
     UINT m_nCurrentAdaptationRaster = 0;
     CD3D1XConstantBuffer<CBPostProcess>* m_pPostFXBuffer;
 };
@@ -39,7 +42,7 @@ public:
     TonemapSettingsBlock()
     {
         m_sName = "Tonemap";
-        m_aFields["Enabled"] = new ToggleSField( "Enabled", false, false, false, m_sName, true );
+        m_aFields["EnableTonemap"] = new ToggleSField( "EnableTonemap", false, false, false, m_sName, true );
         m_aFields["UseGTAColorCorrection"] = new ToggleSField( "UseGTAColorCorrection", false, false, true, m_sName, true );
         m_aFields["LumWhiteDay"] = new FloatSField( "LumWhiteDay", false, false, false, m_sName, 1.25f, 0.0f, 10.0f, 0.005f );
         m_aFields["LumWhiteNight"] = new FloatSField( "LumWhiteNight", false, false, false, m_sName, 1.0f, 0.0f, 10.0f, 0.005f );

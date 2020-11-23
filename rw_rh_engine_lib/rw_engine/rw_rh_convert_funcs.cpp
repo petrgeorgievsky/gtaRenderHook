@@ -19,7 +19,7 @@ rh::engine::ImageBufferFormat rh::rw::engine::RwFormatToRHImageBufferFormat( RwR
     case rwRASTERFORMAT8888:
         return rh::engine::ImageBufferFormat::BGRA8;
     case rwRASTERFORMAT888:
-        return rh::engine::ImageBufferFormat::BGR8;
+        return rh::engine::ImageBufferFormat::BGRA8;
     case rwRASTERFORMAT16:
         return rh::engine::ImageBufferFormat::Unknown;
     case rwRASTERFORMAT24:
@@ -71,7 +71,7 @@ rh::engine::ImageBufferFormat rh::rw::engine::RwNativeFormatToRHImageBufferForma
                 case rwRASTERFORMAT8888:
                     return rh::engine::ImageBufferFormat::BGRA8;
                 case rwRASTERFORMAT888:
-                    return rh::engine::ImageBufferFormat::BGR8;
+                    return rh::engine::ImageBufferFormat::BGRA8;
                 case rwRASTERFORMAT555:
                     return rh::engine::ImageBufferFormat::BGR5A1;
                 default:
@@ -94,7 +94,7 @@ rh::engine::ImageBufferFormat rh::rw::engine::RwNativeFormatToRHImageBufferForma
         case D3DFMT_A8R8G8B8:
             return rh::engine::ImageBufferFormat::BGRA8;
         case D3DFMT_X8R8G8B8:
-            return rh::engine::ImageBufferFormat::BGR8;
+            return rh::engine::ImageBufferFormat::BGRA8;
         case D3DFMT_DXT1:
             return rh::engine::ImageBufferFormat::BC1;
         case D3DFMT_DXT2:

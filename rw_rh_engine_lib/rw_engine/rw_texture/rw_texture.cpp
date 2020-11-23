@@ -1,14 +1,11 @@
 #include "rw_texture.h"
 #include "../rw_macro_constexpr.h"
-#include <Engine/Common/IRenderingContext.h>
 #include <Engine/Common/types/comparison_func.h>
 #include <Engine/Common/types/image_bind_type.h>
 #include <Engine/Common/types/sampler.h>
 #include <Engine/Common/types/sampler_addressing.h>
 #include <Engine/Common/types/sampler_filter.h>
 #include <Engine/Common/types/shader_stage.h>
-#include <Engine/D3D11Impl/ImageBuffers/D3D11Texture2D.h>
-#include <Engine/IRenderer.h>
 #include <array>
 #include <common_headers.h>
 #include <rw_engine/global_definitions.h>
@@ -43,16 +40,18 @@ RwTexture *rh::rw::engine::RwTextureCreate( RwRaster *raster )
     return texture;
 }
 
-RwBool TextureAnnihilate( RwTexture *texture )
+int32_t TextureAnnihilate( RwTexture *texture )
 {
     /* Temporarily bump up reference count to avoid assertion failures */
     texture->refCount++;
 
-    if ( texture->dict ) {
-        rwLinkListRemoveLLLink( &texture->lInDictionary );
+    if ( texture->dict )
+    {
+        rh::rw::engine::rwLinkList::RemoveLLLink( &texture->lInDictionary );
     }
 
-    if ( texture->raster ) {
+    if ( texture->raster )
+    {
         /* We still have the raster to destroy */
         rh::rw::engine::RwRasterDestroy( texture->raster );
         texture->raster = nullptr;
@@ -66,7 +65,7 @@ RwBool TextureAnnihilate( RwTexture *texture )
 
 int32_t rh::rw::engine::RwTextureDestroy( RwTexture *texture )
 {
-    RwBool result = TRUE;
+    int32_t result = TRUE;
 
     --texture->refCount;
 
@@ -76,24 +75,29 @@ int32_t rh::rw::engine::RwTextureDestroy( RwTexture *texture )
     /* All done */
     return result;
 }
-
+enum RwTextureStreamFlags
+{
+    rwNATEXTURESTREAMFLAG           = 0x00,
+    rwTEXTURESTREAMFLAGSUSERMIPMAPS = 0x01
+};
 RwTexture *rh::rw::engine::RwTextureStreamRead( void *stream )
 {
-    RwUInt32 size, version;
+    uint32_t size, version;
 
-    if ( !RwStreamFindChunk( stream, rwID_STRUCT, &size, &version ) ) {
+    if ( !RwStreamFindChunk( stream, rwID_STRUCT, &size, &version ) )
+    {
         return nullptr;
     }
 
-    RwTexture *texture;
-    std::array<RwChar, rwTEXTUREBASENAMELENGTH * 4> textureName;
-    std::array<RwChar, rwTEXTUREBASENAMELENGTH * 4> textureMask;
-    RwTextureFilterMode filtering;
-    RwTextureAddressMode addressingU;
-    RwTextureAddressMode addressingV;
+    RwTexture *                                   texture;
+    std::array<char, rwTEXTUREBASENAMELENGTH * 4> textureName;
+    std::array<char, rwTEXTUREBASENAMELENGTH * 4> textureMask;
+    RwTextureFilterMode                           filtering;
+    RwTextureAddressMode                          addressingU;
+    RwTextureAddressMode                          addressingV;
     struct _rwStreamTexture
     {
-        RwUInt32 filterAndAddress;
+        uint32_t filterAndAddress;
     } texFiltAddr{};
     // RwBool mipmapState;
     // RwBool autoMipmapState;
@@ -101,35 +105,43 @@ RwTexture *rh::rw::engine::RwTextureStreamRead( void *stream )
 
     /* Read the filtering mode */
     memset( &texFiltAddr, 0, sizeof( texFiltAddr ) );
-    if ( RwStreamRead( stream, &texFiltAddr, size ) != size ) {
+    if ( RwStreamRead( stream, &texFiltAddr, size ) != size )
+    {
         return nullptr;
     }
 
     /* Extract filtering */
-    filtering = static_cast<RwTextureFilterMode>( texFiltAddr.filterAndAddress
-                                                  & rwTEXTUREFILTERMODEMASK );
+    filtering = static_cast<RwTextureFilterMode>(
+        texFiltAddr.filterAndAddress & rwTexture::rwTEXTUREFILTERMODEMASK );
 
     /* Extract addressing */
-    addressingU = static_cast<RwTextureAddressMode>( ( texFiltAddr.filterAndAddress >> 8 ) & 0x0F );
+    addressingU = static_cast<RwTextureAddressMode>(
+        ( texFiltAddr.filterAndAddress >> 8 ) & 0x0F );
 
-    addressingV = static_cast<RwTextureAddressMode>( ( texFiltAddr.filterAndAddress >> 12 ) & 0x0F );
+    addressingV = static_cast<RwTextureAddressMode>(
+        ( texFiltAddr.filterAndAddress >> 12 ) & 0x0F );
 
     /* Make sure addressingV is valid so files old than 3.04 still work */
-    if ( addressingV == rwTEXTUREADDRESSNATEXTUREADDRESS ) {
+    if ( addressingV == rwTEXTUREADDRESSNATEXTUREADDRESS )
+    {
         addressingV = addressingU;
-        texFiltAddr.filterAndAddress |= ( ( static_cast<uint32_t>( addressingV ) & 0xF ) << 12 );
+        texFiltAddr.filterAndAddress |=
+            ( ( static_cast<uint32_t>( addressingV ) & 0xF ) << 12 );
     }
 
     /* Extract user mipmap flags */
-    flags = static_cast<RwTextureStreamFlags>( ( texFiltAddr.filterAndAddress >> 16 ) & 0xFF );
+    flags = static_cast<RwTextureStreamFlags>(
+        ( texFiltAddr.filterAndAddress >> 16 ) & 0xFF );
 
     // mipmapState = RwTextureGetMipmapping();
     // autoMipmapState = RwTextureGetAutoMipmapping();
 
     /* Use it */
-    if ( ( filtering == rwFILTERMIPNEAREST ) || ( filtering == rwFILTERMIPLINEAR )
-         || ( filtering == rwFILTERLINEARMIPNEAREST )
-         || ( filtering == rwFILTERLINEARMIPLINEAR ) ) {
+    if ( ( filtering == rwFILTERMIPNEAREST ) ||
+         ( filtering == rwFILTERMIPLINEAR ) ||
+         ( filtering == rwFILTERLINEARMIPNEAREST ) ||
+         ( filtering == rwFILTERLINEARMIPLINEAR ) )
+    {
         /* Lets mip map it */
         /*RwTextureSetMipmapping( TRUE );
 if( flags & rwTEXTURESTREAMFLAGSUSERMIPMAPS )
@@ -140,14 +152,17 @@ else
 {
 RwTextureSetAutoMipmapping( TRUE );
 }*/
-    } else {
+    }
+    else
+    {
         /* Lets not */
         // RwTextureSetMipmapping( FALSE );
         // RwTextureSetAutoMipmapping( FALSE );
     }
 
     /* Search for a string or a unicode string */
-    if ( !_rwStringStreamFindAndRead( textureName.data(), stream ) ) {
+    if ( !_rwStringStreamFindAndRead( textureName.data(), stream ) )
+    {
         // RwTextureSetMipmapping( mipmapState );
         // RwTextureSetAutoMipmapping( autoMipmapState );
 
@@ -155,14 +170,16 @@ RwTextureSetAutoMipmapping( TRUE );
     }
 
     /* Search for a string or a unicode string */
-    if ( !_rwStringStreamFindAndRead( textureMask.data(), stream ) ) {
+    if ( !_rwStringStreamFindAndRead( textureMask.data(), stream ) )
+    {
         // RwTextureSetMipmapping( mipmapState );
         // RwTextureSetAutoMipmapping( autoMipmapState );
         return nullptr;
     }
 
     /* Get the textures */
-    if ( !( texture = nullptr /*RwTextureRead( textureName, textureMask )*/ ) ) {
+    if ( !( texture = nullptr /*RwTextureRead( textureName, textureMask )*/ ) )
+    {
         RwStreamFindChunk( stream, rwID_EXTENSION, nullptr, nullptr );
         return nullptr;
     }
@@ -182,20 +199,25 @@ RwTextureSetAutoMipmapping( TRUE );
 
     // RWASSERT( 0 < texture->refCount );
 
-    if ( texture->refCount == 1 ) {
+    if ( texture->refCount == 1 )
+    {
         /* By testing the reference count here,
-     * we can tell if we just loaded it!!! */
+         * we can tell if we just loaded it!!! */
 
         /* Set the filtering and addressing */
-        texture->filterAddressing = texFiltAddr.filterAndAddress
-                                    & ( rwTEXTUREFILTERMODEMASK | rwTEXTUREADDRESSINGMASK );
+        texture->filterAddressing = texFiltAddr.filterAndAddress &
+                                    ( rwTexture::rwTEXTUREFILTERMODEMASK |
+                                      rwTexture::rwTEXTUREADDRESSINGMASK );
 
         /* Read the extension chunks */
-        /*if( !_rwPluginRegistryReadDataChunks( &textureTKList, stream, texture ) )
+        /*if( !_rwPluginRegistryReadDataChunks( &textureTKList, stream, texture
+) )
 {
 RWRETURN( (RwTexture*)NULL );
 }*/
-    } else {
+    }
+    else
+    {
         /*if( !_rwPluginRegistrySkipDataChunks( &textureTKList, stream ) )
 {
 //RWRETURN( (RwTexture*)NULL );
@@ -205,7 +227,7 @@ RWRETURN( (RwTexture*)NULL );
         return nullptr;
     return ( texture );
 }
-
+/*
 int32_t rh::rw::engine::RwD3D11SetTexture( void *context,
                                          RwTexture *texture,
                                          uint32_t reg_id,
@@ -270,5 +292,7 @@ int32_t rh::rw::engine::RwD3D11SetTexture( void *context,
     sampler.comparison = ComparisonFunc::Never;
     sampler.borderColor = {255, 255, 255, 255};
     context_impl->BindSamplers( {{reg_id, &sampler}}, shaderStage );
-    return context_impl->BindImageBuffers( bindType, {{reg_id, internalTexture}} );
+    return context_impl->BindImageBuffers( bindType, {{reg_id, internalTexture}}
+);
 }
+*/

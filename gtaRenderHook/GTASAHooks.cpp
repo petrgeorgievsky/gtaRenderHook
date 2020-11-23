@@ -28,6 +28,7 @@
 #include "DebugBBox.h"
 #include "PBSMaterial.h"
 #include "TemporalAA.h"
+#include "CloudRendering.h"
 
 HHOOK CGTASAHooks::m_hAntTweakBarHook;
 
@@ -92,6 +93,7 @@ void CGTASAHooks::InitWithRW()
         g_pCustomWaterPipe = new CCustomWaterPipeline();
     CLightManager::Init();
     CVolumetricLighting::Init();
+    CCloudRendering::Init();
     CAmbientOcclusion::Init();
     //CVoxelOctreeRenderer::Init();
     DebugBBox::Initialize();
@@ -106,6 +108,7 @@ void CGTASAHooks::ShutdownWithRW()
     DebugRendering::Shutdown();
     CAmbientOcclusion::Shutdown();
     //CVoxelOctreeRenderer::Shutdown();
+    CCloudRendering::Shutdown();
     CVolumetricLighting::Shutdown();
     CLightManager::Shutdown();
     delete g_pCustomWaterPipe;

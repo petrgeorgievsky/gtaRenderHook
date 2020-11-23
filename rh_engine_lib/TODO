@@ -1,0 +1,6 @@
+1) Reduce WinAPI dependency
+2) Add linux test app wrapper
+3) Comment out uncommented code
+4) Add test list that could verify that everything works correctly
+5) Add memory allocation utilities like pools and aligned memory allocation
+6) Write some code and documentation standard

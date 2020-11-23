@@ -1,0 +1,84 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+#extension GL_GOOGLE_include_directive : enable
+#include "raycommon.glsl"
+
+layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 1, set = 0, rgba16f) uniform image2D normals;
+layout(binding = 2, set = 0, rgba16f) uniform image2D result;
+layout(binding = 3, set = 0) uniform sampler baseSampler;
+layout(binding = 5, set = 0, rgba16f) uniform image2D material_params;
+layout(binding = 6, set = 0) uniform texture2D randomNoise;
+
+layout(binding = 0, set = 1) uniform CameraProperties
+{
+    mat4 view;
+    mat4 proj;
+    mat4 viewInverse;
+    mat4 projInverse;
+    mat4 viewProjInverse;
+    mat4 viewProjInversePrev;
+} cam;
+
+layout(location = 0) rayPayloadNV ReflectionRaysPayload pay_load;
+layout(location = 1) rayPayloadNV ShadowHitPayload shad_pld;
+
+float pow5(float v) {
+    return v*v*v*v*v;
+}
+
+float MicrofacetFresnel(in vec3 LightDir, in vec3 Normal, in float fRoughness) {
+    float IOR = 1.5f;
+    float f0 = (1 - IOR) / (1 + IOR);
+    f0 *= f0;
+    // Cosine between light and normal
+    float CosPhi = max(dot(LightDir, Normal), 0);
+
+    return f0 + (1 - f0) * (1 - CosPhi);
+}
+
+void main()
+{
+    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
+    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+    vec2 d = inUV * 2.0 - 1.0;
+    vec4 origin    = cam.viewInverse * vec4(0, 0, 0, 1);
+    vec4 target    = cam.projInverse * vec4(d.x, d.y, 1, 1);
+    vec4 direction = cam.viewInverse * vec4(normalize(target.xyz), 0);
+
+    uint  rayFlags = gl_RayFlagsNoneNV;
+    float tMin     = 0.1;
+    float tMax     = 10000.0;
+
+    pay_load.reflection_color    = vec4(0);
+
+    vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDNV.xy));
+    vec4 mat_params =  imageLoad(material_params, ivec2(gl_LaunchIDNV.xy));
+    normals_d.xyz = normalize(normals_d.xyz);
+    float refl_int = MicrofacetFresnel(-direction.xyz, normals_d.xyz, 0);
+
+    vec4 world_pos = vec4(origin.xyz + direction.xyz * normals_d.w, 1);
+    if (normals_d.w > 1000.0f || mat_params.r * refl_int< 0.01f){
+        imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(0.0, 0.0, 0.0, mat_params.b));
+        return;
+    }
+
+    vec3 jitter = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64)/64.0f).xyz * 2.0f - 1.0f.xxx;
+
+    vec3 hitValue = vec3(0);
+    float roughness = (1 - mat_params.g);
+    roughness*=roughness;
+    vec3 ref_dir = normalize(reflect(direction.xyz, normals_d.xyz) + jitter * roughness * 0.5f);
+    traceNV(topLevelAS, rayFlags,
+    0xFF, // cullMask
+    0, // sbtRecordOffset
+    0, // sbtRecordStride
+    0, // missIndex
+    world_pos.xyz, // ray origin
+    tMin, // ray min range
+    ref_dir, // ray direction
+    tMax, // ray max range
+    0// payload (location = 0)
+    );
+    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(pay_load.reflection_color.rgb * mat_params.r * refl_int, mat_params.b));
+}

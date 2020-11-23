@@ -1,6 +1,9 @@
 #pragma once
+
+#pragma warning( push, 0 )
 #include <tinyxml2.h>
 #include <AntTweakBar.h>
+#pragma warning( pop )
 #include <unordered_map>
 #include "SettingsFields.h"
 class SettingsBlock;

@@ -252,3 +252,6 @@ ModelManifest.xml
 /RHEngineLib/html
 /RHEngineLib/latex
 /RHEngineLib/rtf
+/Tests/TextureLoadingTest/textures
+/Tests/TextureLoadingTest/dump.bin
+/Tests/TextureLoadingTest/dump_orig.bin

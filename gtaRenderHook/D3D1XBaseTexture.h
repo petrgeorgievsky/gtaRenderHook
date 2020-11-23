@@ -19,6 +19,12 @@ public:
     virtual ID3D11DepthStencilView* GetDepthStencilView() const = 0;
 };
 
+class ID3D1XShaderViewable
+{
+  public:
+    virtual ID3D11ShaderResourceView *GetShaderResourceView() const = 0;
+};
+
 class CD3D1XBaseTexture
 {
 public:

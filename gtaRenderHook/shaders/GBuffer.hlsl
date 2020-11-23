@@ -46,7 +46,7 @@ inline float3 DecodeNormals(float2 v)
 {
 	float3 n;
 	n.xy = v * 2 - 1;
-	n.z = -sqrt(1.01 - dot(n.xy, n.xy));// added 0.01 to avoid z-fighting(or sqrt(0) to be more precise)
+	n.z = -sqrt(max(1.01 - dot(n.xy, n.xy), 0.0f));// added 0.01 to avoid z-fighting(or sqrt(0) to be more precise)
 	return n;
 }
 /*!
@@ -110,14 +110,14 @@ struct PS_DEFERRED_IN
 void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float ViewZ, float4 Params)
 {
     // transform normals to view-space
-    Normals = isnan(Normals)? 0.0f.xxx: mul(normalize(Normals), (float3x3) mView);
+    Normals = length(Normals) <= 0.0f ? 0.0f.xxx : mul(normalize(Normals), (float3x3) mView);
 	output.vColor = Color;
     float2 EncNormals = EncodeNormals(Normals.xy);
     output.vNormalDepth = float4(isnan(EncNormals) ? 0.0f.xx : EncNormals, EncodeFloatRG(ViewZ / fFarClip));
 	output.vParameters = Params;
     output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
-    float3 AmbLighting = lerp(vSkyLightCol.rgb, vHorizonCol.rgb, Normals.z);
-    output.vLighting = float4(0.0f.xxx, 1);
+    float3 AmbLighting = lerp(vSkyLightCol.rgb, vHorizonCol.rgb, saturate(Normals.z));
+    output.vLighting     = float4( AmbLighting * 0.25f, 1 );
 }
 
 /*!

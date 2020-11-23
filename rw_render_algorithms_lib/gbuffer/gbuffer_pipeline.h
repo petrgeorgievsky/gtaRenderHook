@@ -5,7 +5,7 @@
 namespace rh::engine {
 class IRenderingContext;
 class IGPUResource;
-}; // namespace rh::engine
+} // namespace rh::engine
 
 class GBufferPipeline : public rh::engine::IRenderingPipeline
 {

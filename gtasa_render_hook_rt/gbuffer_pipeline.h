@@ -3,7 +3,7 @@
 
 namespace RHEngine {
 class IRenderingContext;
-}; // namespace RHEngine
+} // namespace RHEngine
 
 class GBufferPipeline : public RHEngine::IRenderingPipeline
 {

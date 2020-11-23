@@ -59,7 +59,10 @@ public:
         m_sName = "Deferred";
         // TODO: Separate by groups
         //m_aFields["Enabled"] = new ToggleSField("Enabled", false, false, false, m_sName, true);
-        m_aFields["BlurShadows"] = new ToggleSField( "BlurShadows", false, false, true, m_sName, true );
+        m_aFields["BlurShadows"] = new ToggleSField(
+            "BlurShadows", false, false, true, m_sName, true );
+        m_aFields["UseDitheringForAlphaObjects"] = new ToggleSField(
+            "UseDitheringForAlphaObjects", false, false, false, m_sName, false );
         m_aFields["UsePCSS"] = new ToggleSField( "UsePCSS", false, false, true, m_sName, true );
         m_aFields["SampleShadows"] = new ToggleSField( "SampleShadows", false, false, true, m_sName, true );
         m_aFields["UseSSR"] = new ToggleSField( "UseSSR", false, false, true, m_sName, true );

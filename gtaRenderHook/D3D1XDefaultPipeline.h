@@ -53,7 +53,10 @@ public:
     /*!
         Generates normals for verticies using indicies
     */
-    static void GenerateNormals( SimpleVertex* verticles, unsigned int vertexCount, const std::vector<RxVertexIndex> &indexBuffer );
+    static void
+    GenerateNormals( RxD3D9ResEntryHeader *resEntryHeader,
+                     SimpleVertex *verticles, unsigned int vertexCount,
+                     const std::vector<RxVertexIndex> &indexBuffer );
 };
 #endif // D3D1XDefaultPipeline_h__
 

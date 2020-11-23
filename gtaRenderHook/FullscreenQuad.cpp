@@ -95,7 +95,7 @@ void CFullscreenQuad::Copy( RwRaster * from, RwRaster* zBuffer )
 
 void CFullscreenQuad::Copy( RwRaster * from, RwRaster * zBuffer, RwRaster * to )
 {
-    g_pRwCustomEngine->SetRenderTargets( &to, nullptr, 1 );
+    g_pRwCustomEngine->SetRenderTargets( &to, zBuffer, 1 );
     g_pStateMgr->FlushRenderTargets();
     g_pStateMgr->SetRaster( from );
     m_BlitPS->Set();

@@ -1,8 +1,9 @@
 #include "rw_tex_dict.h"
-#include "../global_definitions.h"
+//#include "../global_definitions.h"
 #include "../rw_macro_constexpr.h"
 #include "../rw_stream/rw_stream.h"
 #include "../rw_texture/rw_texture.h"
+#include "rw_engine/system_funcs/rw_device_system_globals.h"
 #include <fstream>
 
 struct _rwStreamTexDictionary
@@ -15,10 +16,12 @@ RwTexDictionary *rh::rw::engine::RwTexDictionaryCreate()
 {
     RwTexDictionary *dict;
 
-    dict = static_cast<RwTexDictionary *>( malloc( sizeof( RwTexDictionary ) ) );
+    dict =
+        static_cast<RwTexDictionary *>( malloc( sizeof( RwTexDictionary ) ) );
     if ( !dict )
         return nullptr;
 
+    constexpr auto rwTEXDICTIONARY = 6;
     rwObject::Initialize( dict, rwTEXDICTIONARY, 0 );
     rwLinkList::Initialize( &dict->texturesInDict );
 
@@ -28,10 +31,9 @@ RwTexDictionary *rh::rw::engine::RwTexDictionaryCreate()
 int32_t rh::rw::engine::RwTexDictionaryDestroy( RwTexDictionary *dict )
 {
     /* Destroy all the textures */
-    rh::rw::engine::RwTexDictionaryForAllTextures( dict,
-                                                 reinterpret_cast<RwTextureCallBack>(
-                                                     RwTextureDestroy ),
-                                                 nullptr );
+    rh::rw::engine::RwTexDictionaryForAllTextures(
+        dict, reinterpret_cast<RwTextureCallBack>( RwTextureDestroy ),
+        nullptr );
 
     /* De-initialize the plugin memory */
 
@@ -44,24 +46,26 @@ int32_t rh::rw::engine::RwTexDictionaryDestroy( RwTexDictionary *dict )
     return TRUE;
 }
 
-const RwTexDictionary *rh::rw::engine::RwTexDictionaryForAllTextures( const RwTexDictionary *dict,
-                                                                    RwTextureCallBack fpCallBack,
-                                                                    void *pData )
+const RwTexDictionary *rh::rw::engine::RwTexDictionaryForAllTextures(
+    const RwTexDictionary *dict, RwTextureCallBack fpCallBack, void *pData )
 {
-    RwLLLink *cur, *next;
+    RwLLLink *      cur, *next;
     const RwLLLink *end;
 
     end = rwLinkList::GetTerminator( &dict->texturesInDict );
     cur = rwLinkList::GetFirstLLLink( &dict->texturesInDict );
 
-    while ( cur != end ) {
+    while ( cur != end )
+    {
         RwTexture *texture;
 
         next = rwLLLink::GetNext( cur );
 
-        texture = rwLLLink::GetData<RwTexture>( cur, offsetof( RwTexture, lInDictionary ) );
+        texture = rwLLLink::GetData<RwTexture>(
+            cur, offsetof( RwTexture, lInDictionary ) );
 
-        if ( !fpCallBack( texture, pData ) ) {
+        if ( !fpCallBack( texture, pData ) )
+        {
             /* Early out */
             break;
         }
@@ -73,9 +77,11 @@ const RwTexDictionary *rh::rw::engine::RwTexDictionaryForAllTextures( const RwTe
     return dict;
 }
 
-RwTexture *rh::rw::engine::RwTexDictionaryAddTexture( RwTexDictionary *dict, RwTexture *texture )
+RwTexture *rh::rw::engine::RwTexDictionaryAddTexture( RwTexDictionary *dict,
+                                                      RwTexture *      texture )
 {
-    if ( texture->dict ) {
+    if ( texture->dict )
+    {
         rwLinkList::RemoveLLLink( &texture->lInDictionary );
     }
 
@@ -87,27 +93,27 @@ RwTexture *rh::rw::engine::RwTexDictionaryAddTexture( RwTexDictionary *dict, RwT
 
 RwTexDictionary *rh::rw::engine::RwTexDictionaryStreamRead( void *stream )
 {
-    uint32_t lengthOut, versionOut;
+    uint32_t               lengthOut, versionOut;
     _rwStreamTexDictionary binDict{};
-    RwTexDictionary *result = RwTexDictionaryCreate();
-    RwTexture *texture;
+    RwTexDictionary *      result = RwTexDictionaryCreate();
+    RwTexture *            texture;
 
     if ( !RwStreamFindChunk( stream, rwID_STRUCT, &lengthOut, &versionOut ) )
         return nullptr;
 
     RwStreamRead( stream, &binDict, sizeof( binDict ) );
 
-    while ( binDict.numTextures-- ) {
+    while ( binDict.numTextures-- )
+    {
         uint32_t size, version;
         texture = nullptr;
 
         if ( !RwStreamFindChunk( stream, rwID_TEXTURENATIVE, &size, &version ) )
             return nullptr;
 
-        if ( !g_pRwEngineInstance
-                  ->stdFunc[rwSTANDARDNATIVETEXTUREREAD]( static_cast<void *>( stream ),
-                                                          &texture,
-                                                          static_cast<int32_t>( size ) ) )
+        if ( !DeviceGlobals::Standards[rwSTANDARDNATIVETEXTUREREAD](
+                 static_cast<void *>( stream ), &texture,
+                 static_cast<int32_t>( size ) ) )
 
             return nullptr;
         rh::rw::engine::RwTexDictionaryAddTexture( result, texture );
@@ -116,7 +122,8 @@ RwTexDictionary *rh::rw::engine::RwTexDictionaryStreamRead( void *stream )
     return result;
 }
 
-RwTexDictionary *rh::rw::engine::GTAReadTexDict( const rh::engine::String &fileName )
+RwTexDictionary *
+rh::rw::engine::GTAReadTexDict( const rh::engine::String &fileName )
 {
     std::ifstream stream( fileName, std::ios_base::in | std::ios_base::binary );
 

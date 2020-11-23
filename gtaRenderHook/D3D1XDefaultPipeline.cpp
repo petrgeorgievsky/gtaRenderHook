@@ -37,16 +37,16 @@ bool CD3D1XDefaultPipeline::Instance( void *object, RxD3D9ResEntryHeader *resEnt
     auto vdeclPtr = CD3D1XVertexDeclarationManager::AddNew( m_pVS, geom->flags | rpGEOMETRYNORMALS | rpGEOMETRYPRELIT |
                    rpGEOMETRYTEXTURED | rpGEOMETRYPOSITIONS | 0x00000100 );
     resEntryHeader->vertexDeclaration = vdeclPtr->getInputLayout();
-
+     
     // copy vertex data to data structure that represents vertex in shader
     // TODO: add ability to create custom verticle types on fly,
     // currently even if mesh doesn't have colors/textures they are still filled, that could be potentional performance hit.
     SimpleVertex* vertexData = new SimpleVertex[resEntryHeader->totalNumVertex];
 
-    bool	hasNormals = geom->morphTarget[0].normals != nullptr,
+    bool	hasNormals = geom->morphTarget[0].normals != nullptr, 
         hasTexCoords = geom->texCoords[0] != nullptr,
         hasColors = geom->preLitLum && geom->flags&rpGEOMETRYPRELIT;
-
+    
     for ( RwUInt32 i = 0; i < resEntryHeader->totalNumVertex; i++ )
     {
         vertexData[i].pos = geom->morphTarget[0].verts[i];
@@ -55,14 +55,18 @@ bool CD3D1XDefaultPipeline::Instance( void *object, RxD3D9ResEntryHeader *resEnt
                                  geom->morphTarget[0].normals[i].y != NAN &&
                                  geom->morphTarget[0].normals[i].z != NAN ) ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
         vertexData[i].uv = hasTexCoords ? geom->texCoords[0][i] : RwTexCoords{ 0, 0 };
-        vertexData[i].color = hasColors ? geom->preLitLum[i] : RwRGBA{ 255, 255, 255, 255 };
+        vertexData[i].color =
+            hasColors ? geom->preLitLum[i] : RwRGBA{255, 255, 255, 255};
+        vertexData[i].tangent   = {0.0f, 0.0f, 0.0f};
+        vertexData[i].bitangent = {0.0f, 0.0f, 0.0f};
     }
     // if mesh doesn't have normals generate them on the fly
     if ( !hasNormals )
-        GenerateNormals( vertexData, resEntryHeader->totalNumVertex, geom->triangles, geom->numTriangles, reinstance == 2 );
+        GenerateNormals( vertexData, resEntryHeader->totalNumVertex,
+                         geom->triangles, geom->numTriangles, false );
     else
         GenerateTangentsOnly( vertexData, resEntryHeader->totalNumVertex,
-                         geom->triangles, geom->numTriangles, reinstance == 2 );
+                              geom->triangles, geom->numTriangles, false );
 
     D3D11_SUBRESOURCE_DATA InitData;
 
@@ -86,10 +90,10 @@ bool CD3D1XDefaultPipeline::Instance( void * object, RxD3D9ResEntryHeader * resE
     resEntryHeader->totalNumVertex = geom->numVertices;
     // create vertex declaration
     // TODO: add more robust vertex declaration generation
-    auto vdeclPtr = CD3D1XVertexDeclarationManager::AddNew( m_pVS, geom->flags | rpGEOMETRYNORMALS |
-                                                            rpGEOMETRYPRELIT | rpGEOMETRYTEXTURED | rpGEOMETRYPOSITIONS );
+    auto vdeclPtr = CD3D1XVertexDeclarationManager::AddNew( m_pVS, geom->flags | rpGEOMETRYNORMALS | rpGEOMETRYPRELIT |
+                   rpGEOMETRYTEXTURED | rpGEOMETRYPOSITIONS | 0x00000100 );
     resEntryHeader->vertexDeclaration = vdeclPtr->getInputLayout();
-
+    
     // copy vertex data to data structure that represents vertex in shader
     // TODO: add ability to create custom verticle types on fly,
     // currently even if mesh doesn't have colors/textures they are still filled, that could be potentional performance hit.
@@ -106,12 +110,18 @@ bool CD3D1XDefaultPipeline::Instance( void * object, RxD3D9ResEntryHeader * resE
                                  geom->morphTarget[0].normals[i].x != NAN &&
                                  geom->morphTarget[0].normals[i].y != NAN &&
                                  geom->morphTarget[0].normals[i].z != NAN ) ? geom->morphTarget[0].normals[i] : RwV3d{ 0, 0, 0 };
-        vertexData[i].uv = hasTexCoords ? geom->texCoords[0][i] : RwTexCoords{ 0, 0 };
-        vertexData[i].color = hasColors ? geom->preLitLum[i] : RwRGBA{ 255, 255, 255, 255 };
+        vertexData[i].uv =
+            hasTexCoords ? geom->texCoords[0][i] : RwTexCoords{0, 0};
+        vertexData[i].color =
+            hasColors ? geom->preLitLum[i] : RwRGBA{255, 255, 255, 255};
+        vertexData[i].tangent   = {0.0f, 0.0f, 0.0f};
+        vertexData[i].bitangent = {0.0f, 0.0f, 0.0f};
+
     }
     // if mesh doesn't have normals generate them on the fly
     if ( !hasNormals )
-        GenerateNormals( vertexData, resEntryHeader->totalNumVertex, indexBuffer );
+        GenerateNormals( resEntryHeader, vertexData,
+                         resEntryHeader->totalNumVertex, indexBuffer );
 
     D3D11_SUBRESOURCE_DATA InitData;
 
@@ -174,6 +184,7 @@ void CD3D1XDefaultPipeline::Render( RwResEntry * repEntry, void * object, RwUInt
 
 void CD3D1XDefaultPipeline::GenerateNormals( SimpleVertex * verticles, unsigned int vertexCount, RpTriangle* triangles, unsigned int triangleCount, bool isTriStrip )
 {
+    auto fast_abs = []( float x ) { return x > 0 ? x : -x; };
     // generate normal for each triangle and vertex in mesh
     for ( RwUInt32 i = 0; i < triangleCount; i++ )
     {
@@ -199,55 +210,72 @@ void CD3D1XDefaultPipeline::GenerateNormals( SimpleVertex * verticles, unsigned 
         };
         // bitangent vector
         RwV3d edge2 = {
-            vA.pos.x - vC.pos.x,
-            vA.pos.y - vC.pos.y,
-            vA.pos.z - vC.pos.z
+            vC.pos.x - vA.pos.x,
+            vC.pos.y - vA.pos.y,
+            vC.pos.z - vA.pos.z
         };
 
         RwTexCoords tex0      = verticles[iA].uv;
         RwTexCoords tex1      = verticles[iB].uv;
         RwTexCoords tex2      = verticles[iC].uv;
 
-        RwV2d uv1 = {tex1.u - tex0.u, tex1.v - tex0.v};
-        RwV2d uv2 = {tex2.u - tex0.u, tex2.v - tex0.v};
+        RwV2d uv1 = { tex1.u - tex0.u, tex1.v - tex0.v};
+        RwV2d uv2  = {tex2.u - tex0.u, tex2.v - tex0.v};
+        float diff = ( uv1.x * uv2.y - uv1.y * uv2.x );
+        RW::V3d edge01, edge02, cp;
+        edge01 = {edge1.x, uv1.x, uv1.y};
+        edge02 = {edge2.x, uv2.x, uv2.y};
+        cp     = edge01.cross( edge02 );
+        constexpr auto SMALL_FLOAT = 1e-12f;
 
-        float r = 1.0f / ( uv1.x * uv2.y - uv1.y * uv2.x );
+        if ( (RwReal)fast_abs( cp.getX() ) > SMALL_FLOAT )
+        {
+            const RwReal invcpx = 1.f / cp.getX();
 
-        RwV3d tangent{( ( edge1.x * uv2.y ) - ( -edge2.x * uv1.y ) ) * r,
-                      ( ( edge1.y * uv2.y ) - ( -edge2.y * uv1.y ) ) * r,
-                      ( ( edge1.z * uv2.y ) - ( -edge2.z * uv1.y ) ) * r};
+            verticles[iA].tangent.x += -cp.getY() * invcpx;
 
-        RwV3d bitangent{( ( edge1.x * uv2.x ) - ( -edge2.x * uv1.x ) ) * r,
-                        ( ( edge1.y * uv2.x ) - ( -edge2.y * uv1.x ) ) * r,
-                        ( ( edge1.z * uv2.x ) - ( -edge2.z * uv1.x ) ) * r};
+            verticles[iB].tangent.x += -cp.getY() * invcpx;
 
-        // fix for triangle strips
+            verticles[iC].tangent.x += -cp.getY() * invcpx;
+        }
 
-        //float normalDirection = isTriStrip?(i % 2 == 0 ? 1.0f : -1.0f):1.0f;
-        // normal vector as cross product of (tangent X bitangent)
+        /* y, s, t */
+        edge01 = {edge1.y, uv1.x, uv1.y};
+
+        edge02 = {edge2.y, uv2.x, uv2.y};
+
+        cp = edge01.cross( edge02 );
+        if ( (RwReal)fast_abs( cp.getX() ) > SMALL_FLOAT )
+        {
+            const RwReal invcpx = 1.f / cp.getX();
+
+            verticles[iA].tangent.y += -cp.getY() * invcpx;
+
+            verticles[iB].tangent.y += -cp.getY() * invcpx;
+
+            verticles[iC].tangent.y += -cp.getY() * invcpx;
+        }
+
+        /* z, s, t */
+        edge01 = {edge1.z, uv1.x, uv1.y};
+
+        edge02 = {edge2.z, uv2.x, uv2.y};
+
+        cp = edge01.cross( edge02 );
+        if ( (RwReal)fast_abs( cp.getX() ) > SMALL_FLOAT )
+        {
+            const RwReal invcpx = 1.f / cp.getX();
+
+            verticles[iA].tangent.z += -cp.getY() * invcpx;
+                                           
+            verticles[iB].tangent.z += -cp.getY() * invcpx;
+                                           
+            verticles[iC].tangent.z += -cp.getY() * invcpx;
+        }
+
         RwV3d normal = {( edge1.y * edge2.z - edge1.z * edge2.y ),
                         ( edge1.z * edge2.x - edge1.x * edge2.z ),
                         ( edge1.x * edge2.y - edge1.y * edge2.x )};
-
-        verticles[iA].tangent = {verticles[iA].tangent.x + tangent.x,
-                                 verticles[iA].tangent.y + tangent.y,
-                                 verticles[iA].tangent.z + tangent.z};
-        verticles[iB].tangent = {verticles[iB].tangent.x + tangent.x,
-                                 verticles[iB].tangent.y + tangent.y,
-                                 verticles[iB].tangent.z + tangent.z};
-        verticles[iC].tangent = {verticles[iC].tangent.x + tangent.x,
-                                 verticles[iC].tangent.y + tangent.y,
-                                 verticles[iC].tangent.z + tangent.z};
-
-        verticles[iA].bitangent = {verticles[iA].bitangent.x + bitangent.x,
-                                   verticles[iA].bitangent.y + bitangent.y,
-                                   verticles[iA].bitangent.z + bitangent.z};
-        verticles[iB].bitangent = {verticles[iB].bitangent.x + bitangent.x,
-                                   verticles[iB].bitangent.y + bitangent.y,
-                                   verticles[iB].bitangent.z + bitangent.z};
-        verticles[iC].bitangent = {verticles[iC].bitangent.x + bitangent.x,
-                                   verticles[iC].bitangent.y + bitangent.y,
-                                   verticles[iC].bitangent.z + bitangent.z};
 
         // increase normals of each vertex in triangle 
         verticles[iA].normal = {
@@ -266,33 +294,86 @@ void CD3D1XDefaultPipeline::GenerateNormals( SimpleVertex * verticles, unsigned 
             verticles[iC].normal.z + normal.z
         };
     }
-    // normalize normals
+
     for ( RwUInt32 i = 0; i < vertexCount; i++ )
     {
-        RwReal length = sqrt( verticles[i].normal.x*verticles[i].normal.x + verticles[i].normal.y*verticles[i].normal.y + verticles[i].normal.z*verticles[i].normal.z );
+        RwReal length = sqrt( verticles[i].normal.x * verticles[i].normal.x +
+                              verticles[i].normal.y * verticles[i].normal.y +
+                              verticles[i].normal.z * verticles[i].normal.z );
         if ( length > 0.001f )
             verticles[i].normal = {verticles[i].normal.x / length,
                                    verticles[i].normal.y / length,
                                    verticles[i].normal.z / length};
-        RW::V3d n = verticles[i].normal;
         RW::V3d t = verticles[i].tangent;
-        RW::V3d b = verticles[i].bitangent;
-
-        // make tangent orthoganal to normal
-        t = t - n * n.dot(t);
+        /*if ( tangentsRemapping[i] == i )
+        {*/
         t.normalize();
-
-        if ( n.cross(t).dot(b) < 0.0f )
-        {
-            t = t * -1.0f;
-        }
-
-        verticles[i].tangent = {
-            t.getX(),
-            t.getY(),
-            t.getZ()
-        };
+        verticles[i].tangent = t.getRWVector();
     }
+    /*
+    std::vector<RwUInt32> tangentsRemapping;
+    tangentsRemapping.reserve( vertexCount );
+    for ( RwUInt32 i = 0; i < vertexCount; i++ )
+    {
+        tangentsRemapping.push_back( i );
+    }
+    for ( RwUInt32 i = 0; i < vertexCount; i++ )
+    {
+        auto &currentTangent = verticles[i].tangent;
+
+        for ( RwUInt32 j = i + 1; j < vertexCount; j++ )
+        {
+            if ( tangentsRemapping[j] > i )
+            {
+                if ( fabs( verticles[i].pos.x - verticles[j].pos.x ) <=
+                         0.000001f &&
+                     fabs( verticles[i].pos.y - verticles[j].pos.y ) <=
+                         0.000001f &&
+                     fabs( verticles[i].pos.z - verticles[j].pos.z ) <=
+                         0.000001f )
+                {
+                    // Check same normal 
+                    RwReal cosangle;
+                    cosangle = RW::V3d( verticles[i].normal )
+                                   .dot( RW::V3d( verticles[j].normal ) );
+
+                    if ( cosangle >= 0.9999f )
+                    {
+                        // Check similar tangents 
+                        cosangle = RW::V3d( currentTangent )
+                                       .dot( RW::V3d( verticles[j].tangent ) );
+                        cosangle /= RW::V3d( currentTangent ).length();
+                        cosangle /= RW::V3d( verticles[j].tangent ).length();
+
+                        if ( cosangle > 0.7f )
+                        {
+                            // accumulate 
+                            currentTangent.x += verticles[j].tangent.x;
+                            currentTangent.y += verticles[j].tangent.y;
+                            currentTangent.z += verticles[j].tangent.z;
+
+                            tangentsRemapping[j] = i;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    */
+    /* normalize normals
+    for ( RwUInt32 i = 0; i < vertexCount; i++ )
+    {
+        RW::V3d t = verticles[i].tangent;
+        if ( tangentsRemapping[i] == i )
+        {/
+            t.normalize();
+            verticles[i].tangent = t.getRWVector();
+        }
+        else
+        {
+            verticles[i].tangent = verticles[tangentsRemapping[i]].tangent;
+        }
+    }*/
 }
 
 void CD3D1XDefaultPipeline::GenerateTangentsOnly( SimpleVertex *verticles,
@@ -321,25 +402,28 @@ void CD3D1XDefaultPipeline::GenerateTangentsOnly( SimpleVertex *verticles,
         RwV3d edge1 = {vB.pos.x - vA.pos.x, vB.pos.y - vA.pos.y,
                        vB.pos.z - vA.pos.z};
         // bitangent vector
-        RwV3d edge2 = {vA.pos.x - vC.pos.x, vA.pos.y - vC.pos.y,
-                       vA.pos.z - vC.pos.z};
+        RwV3d edge2 = {vC.pos.x - vA.pos.x, vC.pos.y - vA.pos.y,
+                       vC.pos.z - vA.pos.z};
 
         RwTexCoords tex0 = verticles[iA].uv;
         RwTexCoords tex1 = verticles[iB].uv;
         RwTexCoords tex2 = verticles[iC].uv;
 
-        RwV2d uv1 = {tex1.u - tex0.u, tex1.v - tex0.v};
-        RwV2d uv2 = {tex2.u - tex0.u, tex2.v - tex0.v};
+        RwV2d uv1  = {tex1.u - tex0.u, tex1.v - tex0.v};
+        RwV2d uv2  = {tex2.u - tex0.u, tex2.v - tex0.v};
+        float diff = ( uv1.x * uv2.y - uv1.y * uv2.x );
+        if ( diff < 0.00001F && diff > -0.00001F )
+           continue;
 
-        float r = 1.0f / ( uv1.x * uv2.y - uv1.y * uv2.x );
+        float r = 1.0f / diff;
 
-        RwV3d tangent{( ( edge1.x * uv2.y ) - ( -edge2.x * uv1.y ) ) * r,
-                      ( ( edge1.y * uv2.y ) - ( -edge2.y * uv1.y ) ) * r,
-                      ( ( edge1.z * uv2.y ) - ( -edge2.z * uv1.y ) ) * r};
+        RwV3d tangent{( ( edge1.x * uv2.y ) - ( edge2.x * uv1.y ) ) * r,
+                      ( ( edge1.y * uv2.y ) - ( edge2.y * uv1.y ) ) * r,
+                      ( ( edge1.z * uv2.y ) - ( edge2.z * uv1.y ) ) * r};
 
-        RwV3d bitangent{( ( edge1.x * uv2.x ) - ( -edge2.x * uv1.x ) ) * r,
-                        ( ( edge1.y * uv2.x ) - ( -edge2.y * uv1.x ) ) * r,
-                        ( ( edge1.z * uv2.x ) - ( -edge2.z * uv1.x ) ) * r};
+        RwV3d bitangent{( ( edge2.x * uv1.x ) - ( edge1.x * uv2.x ) ) * r,
+                        ( ( edge2.y * uv1.x ) - ( edge1.y * uv2.x ) ) * r,
+                        ( ( edge2.z * uv1.x ) - ( edge1.z * uv2.x ) ) * r}; 
 
         verticles[iA].tangent = {verticles[iA].tangent.x + tangent.x,
                                  verticles[iA].tangent.y + tangent.y,
@@ -374,64 +458,83 @@ void CD3D1XDefaultPipeline::GenerateTangentsOnly( SimpleVertex *verticles,
 
         if ( n.cross( t ).dot( b ) < 0.0f )
         {
-            t = t * -1.0f;
+            t = t * -1.0f; 
         }
-
         verticles[i].tangent = {t.getX(), t.getY(), t.getZ()};
     }
 }
 
-void CD3D1XDefaultPipeline::GenerateNormals( SimpleVertex * verticles, unsigned int vertexCount, const std::vector<RxVertexIndex>& indexBuffer )
+void CD3D1XDefaultPipeline::GenerateNormals(
+    RxD3D9ResEntryHeader *resEntryHeader, SimpleVertex *verticles,
+    unsigned int vertexCount, const std::vector<RxVertexIndex> &indexBuffer )
 {// generate normal for each triangle and vertex in mesh
-    for ( RwUInt32 i = 0; i < indexBuffer.size(); i++ )
+    for ( unsigned int i = 0; i < resEntryHeader->numMeshes; i++ )
     {
-        auto iA = indexBuffer[i * 3], iB = indexBuffer[i * 3 + 1], iC = indexBuffer[i * 3 + 2];
-        auto vA = verticles[iA],
-            vB = verticles[iB],
-            vC = verticles[iC];
+        auto &       meshData = GetModelsData2( resEntryHeader )[i];
+        unsigned int id_start = meshData.startIndex;
+        auto         numIndices = meshData.numIndex;
+        if ( resEntryHeader->primType == D3DPT_TRIANGLESTRIP )
+        {
+            numIndices -= 2;
+        }
+        int n = 0;
+        while ( n < numIndices ) {
+            int iA, iB, iC;
+            if ( resEntryHeader->primType == D3DPT_TRIANGLELIST )
+            {
+                iA = indexBuffer[id_start + n + 0] + meshData.minVert;
+                iB = indexBuffer[id_start + n + 1] + meshData.minVert;
+                iC = indexBuffer[id_start + n + 2] + meshData.minVert;
+                n += 3;
+            }
+            else /* if (meshHeader->primType == D3DPT_TRIANGLESTRIP) */
+            {
+                if ( i & 0x01 )
+                {
+                    iA = indexBuffer[id_start + n + 2] + meshData.minVert;
+                    iB = indexBuffer[id_start + n + 1] + meshData.minVert;
+                    iC = indexBuffer[id_start + n + 0] + meshData.minVert;
+                }
+                else
+                {
+                    iA = indexBuffer[id_start + n + 0] + meshData.minVert;
+                    iB = indexBuffer[id_start + n + 1] + meshData.minVert;
+                    iC = indexBuffer[id_start + n + 2] + meshData.minVert;
+                }
+                n++;
 
-        // tangent vector
-        RwV3d edge1 = {
-            vB.pos.x - vA.pos.x,
-            vB.pos.y - vA.pos.y,
-            vB.pos.z - vA.pos.z
-        };
-        // bitangent vector
-        RwV3d edge2 = {
-            vA.pos.x - vC.pos.x,
-            vA.pos.y - vC.pos.y,
-            vA.pos.z - vC.pos.z
-        };
+                if ( iA == iB || iA == iC || iB == iC )
+                {
+                    continue;
+                }
+            }
 
-        RwTexCoords tex0 = verticles[iA].uv;
-        RwTexCoords tex1 = verticles[iB].uv;
-        RwTexCoords tex2 = verticles[iC].uv;
+            auto vA = verticles[iA], vB = verticles[iB], vC = verticles[iC];
 
-        RwV2d uv1 = {tex1.u - tex0.u, tex1.v - tex0.v};
-        RwV2d uv2 = {tex2.u - tex0.u, tex2.v - tex0.v};
+             // tangent vector
+            RwV3d edge1 = {vB.pos.x - vA.pos.x, vB.pos.y - vA.pos.y,
+                           vB.pos.z - vA.pos.z};
+            // bitangent vector
+            RwV3d edge2 = {vC.pos.x - vA.pos.x, vC.pos.y - vA.pos.y,
+                           vC.pos.z - vA.pos.z};
 
-        float r = 1.0f / ( uv1.x * uv2.y - uv1.y * uv2.x );
-
-        RwV3d tangent{( ( edge1.x * uv2.y ) - ( edge2.x * uv1.y ) ) * r,
-                      ( ( edge1.y * uv2.y ) - ( edge2.y * uv1.y ) ) * r,
-                      ( ( edge1.z * uv2.y ) - ( edge2.z * uv1.y ) ) * r};
-
-        RwV3d bitangent{( ( edge1.x * uv2.x ) - ( edge2.x * uv1.x ) ) * r,
-                        ( ( edge1.y * uv2.x ) - ( edge2.y * uv1.x ) ) * r,
-                        ( ( edge1.z * uv2.x ) - ( edge2.z * uv1.x ) ) * r};
-
-        // normal vector as cross product of (tangent X bitangent)
-        RwV3d normal = {( tangent.y * bitangent.z - tangent.z * bitangent.y ),
-                        ( tangent.z * bitangent.x - tangent.x * bitangent.z ),
-                        ( tangent.x * bitangent.y - tangent.y * bitangent.x )};
-        // increase normals of each vertex in triangle 
-        verticles[iA].normal = {normal.x, normal.y, normal.z};
-        verticles[iB].normal = {normal.x, normal.y, normal.z};
-        verticles[iC].normal = {normal.x, normal.y, normal.z};
-        // increase normals of each vertex in triangle
-        verticles[iA].normal = {normal.x, normal.y, normal.z};
-        verticles[iB].normal = {normal.x, normal.y, normal.z};
-        verticles[iC].normal = {normal.x, normal.y, normal.z};
+            // normal vector as cross product of (tangent X bitangent)
+            RwV3d normal = {
+                ( edge1.y * edge2.z - edge1.z * edge2.y ),
+                ( edge1.z * edge2.x - edge1.x * edge2.z ),
+                ( edge1.x * edge2.y - edge1.y * edge2.x )};
+            // increase normals of each vertex in triangle       
+            // increase normals of each vertex in triangle 
+            verticles[iA].normal = {verticles[iA].normal.x + normal.x,
+                                    verticles[iA].normal.y + normal.y,
+                                    verticles[iA].normal.z + normal.z};
+            verticles[iB].normal = {verticles[iB].normal.x + normal.x,
+                                    verticles[iB].normal.y + normal.y,
+                                    verticles[iB].normal.z + normal.z};
+            verticles[iC].normal = {verticles[iC].normal.x + normal.x,
+                                    verticles[iC].normal.y + normal.y,
+                                    verticles[iC].normal.z + normal.z};
+        }
     }
     // normalize normals
     for ( RwUInt32 i = 0; i < vertexCount; i++ )
@@ -439,4 +542,5 @@ void CD3D1XDefaultPipeline::GenerateNormals( SimpleVertex * verticles, unsigned 
         RwReal length = sqrt( verticles[i].normal.x*verticles[i].normal.x + verticles[i].normal.y*verticles[i].normal.y + verticles[i].normal.z*verticles[i].normal.z );
         verticles[i].normal = { verticles[i].normal.x / length, verticles[i].normal.y / length, verticles[i].normal.z / length };
     }
+    // TANGENTs
 }

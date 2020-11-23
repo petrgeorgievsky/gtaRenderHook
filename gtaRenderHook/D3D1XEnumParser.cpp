@@ -185,7 +185,8 @@ void CD3D1XEnumParser::ConvertRasterFormat( RwRaster* raster, RwUInt32 flags )
     RwD3D1XRaster* d3dRaster = GetD3D1XRaster( raster );
     RwUInt32 rasterPixelFmt = flags & rwRASTERFORMATPIXELFORMATMASK;
 
-    if ( raster->cType == rwRASTERTYPECAMERATEXTURE )
+    if ( raster->cType == rwRASTERTYPECAMERATEXTURE ||
+         raster->cType == ( rwRASTERTYPECAMERATEXTURE + 1 ) )
     {
         if ( rasterPixelFmt == rwRASTERFORMATDEFAULT )
             d3dRaster->format = DXGI_FORMAT_R8G8B8A8_UNORM;

@@ -2,58 +2,84 @@
 #include <common_headers.h>
 #include <cstdint>
 
-namespace rh::rw::engine {
-
-namespace rwTexture {
-
-constexpr void SetFilterMode( RwTexture *_tex, RwUInt32 _filtering )
+namespace rh::rw::engine
 {
-    _tex->filterAddressing = ( _tex->filterAddressing
-                               & static_cast<RwUInt32>( ~rwTEXTUREFILTERMODEMASK ) )
-                             | ( _filtering & rwTEXTUREFILTERMODEMASK );
+
+namespace rwTexture
+{
+
+constexpr auto rwTEXTUREFILTERMODEMASK  = 0x000000FF;
+constexpr auto rwTEXTUREADDRESSINGUMASK = 0x00000F00;
+constexpr auto rwTEXTUREADDRESSINGVMASK = 0x0000F000;
+constexpr auto rwTEXTUREADDRESSINGMASK =
+    ( rwTEXTUREADDRESSINGUMASK | rwTEXTUREADDRESSINGVMASK );
+
+constexpr void SetFilterMode( RwTexture *_tex, uint32_t _filtering )
+{
+    _tex->filterAddressing =
+        ( _tex->filterAddressing &
+          static_cast<uint32_t>( ~rwTEXTUREFILTERMODEMASK ) ) |
+        ( _filtering & rwTEXTUREFILTERMODEMASK );
 }
 
-constexpr void SetAddressingU( RwTexture *_tex, RwUInt32 _addressing )
+constexpr void SetAddressingU( RwTexture *_tex, uint32_t _addressing )
 {
-    _tex->filterAddressing = ( _tex->filterAddressing
-                               & static_cast<RwUInt32>( ~rwTEXTUREADDRESSINGUMASK ) )
-                             | ( ( _addressing << 8 ) & rwTEXTUREADDRESSINGUMASK );
+    _tex->filterAddressing =
+        ( _tex->filterAddressing &
+          static_cast<uint32_t>( ~rwTEXTUREADDRESSINGUMASK ) ) |
+        ( ( _addressing << 8 ) & rwTEXTUREADDRESSINGUMASK );
 }
 
-constexpr void SetAddressingV( RwTexture *_tex, RwUInt32 _addressing )
+constexpr void SetAddressingV( RwTexture *_tex, uint32_t _addressing )
 {
-    _tex->filterAddressing = ( _tex->filterAddressing
-                               & static_cast<RwUInt32>( ~rwTEXTUREADDRESSINGVMASK ) )
-                             | ( ( _addressing << 12 ) & rwTEXTUREADDRESSINGVMASK );
+    _tex->filterAddressing =
+        ( _tex->filterAddressing &
+          static_cast<uint32_t>( ~rwTEXTUREADDRESSINGVMASK ) ) |
+        ( ( _addressing << 12 ) & rwTEXTUREADDRESSINGVMASK );
 }
 
-constexpr void SetAddressing( RwTexture *_tex, RwUInt32 _addressing )
+constexpr void SetAddressing( RwTexture *_tex, uint32_t _addressing )
 {
-    _tex->filterAddressing = ( _tex->filterAddressing
-                               & static_cast<RwUInt32>( ~rwTEXTUREADDRESSINGMASK ) )
-                             | ( ( _addressing << 8 ) & rwTEXTUREADDRESSINGUMASK )
-                             | ( ( _addressing << 12 ) & rwTEXTUREADDRESSINGVMASK );
+    _tex->filterAddressing =
+        ( _tex->filterAddressing &
+          static_cast<uint32_t>( ~rwTEXTUREADDRESSINGMASK ) ) |
+        ( ( _addressing << 8 ) & rwTEXTUREADDRESSINGUMASK ) |
+        ( ( _addressing << 12 ) & rwTEXTUREADDRESSINGVMASK );
 }
 
 } // namespace rwTexture
-namespace rwRGBA {
-constexpr RwUInt32 Long( uint8_t r, uint8_t g, uint8_t b, uint8_t a )
+namespace rwRGBA
 {
-    return static_cast<RwUInt32>( ( ( a ) << 24 ) | ( ( r ) << 16 ) | ( ( g ) << 8 ) | ( b ) );
+
+constexpr uint32_t Long( RwRGBA color )
+{
+    return static_cast<uint32_t>( ( ( color.alpha ) << 24 ) |
+                                  ( ( color.red ) << 16 ) |
+                                  ( ( color.green ) << 8 ) | ( color.blue ) );
+}
+
+constexpr uint32_t Long_RGB( RwRGBA color )
+{
+    return static_cast<uint32_t>( ( ( 0xFF ) << 24 ) | ( ( color.red ) << 16 ) |
+                                  ( ( color.green ) << 8 ) | ( color.blue ) );
+}
+constexpr uint32_t Long( uint8_t r, uint8_t g, uint8_t b, uint8_t a )
+{
+    return static_cast<uint32_t>( ( ( a ) << 24 ) | ( ( r ) << 16 ) |
+                                  ( ( g ) << 8 ) | ( b ) );
 }
 constexpr void Assign( RwRGBA *_target, RwRGBA *_source )
 {
     *_target = *_source;
 }
 } // namespace rwRGBA
-namespace rpMaterial {
-
-constexpr void AddRef( RpMaterial *_material )
+namespace rpMaterial
 {
-    _material->refCount++;
-}
 
-constexpr void SetSurfaceProperties( RpMaterial *_material, const RwSurfaceProperties &_surfProps )
+constexpr void AddRef( RpMaterial *_material ) { _material->refCount++; }
+
+constexpr void SetSurfaceProperties( RpMaterial *               _material,
+                                     const RwSurfaceProperties &_surfProps )
 {
     _material->surfaceProps = _surfProps;
 }
@@ -62,7 +88,8 @@ constexpr void SetColor( RpMaterial *_material, const RwRGBA &_color )
     _material->color = _color;
 }
 } // namespace rpMaterial
-namespace rwObject {
+namespace rwObject
+{
 
 constexpr void *GetParent( void *object )
 {
@@ -87,15 +114,13 @@ constexpr uint8_t TestPrivateFlags( void *c, uint8_t flag )
 }
 constexpr void Initialize( void *o, uint8_t t, uint8_t s )
 {
-    static_cast<RwObject *>( o )->type = t;
-    static_cast<RwObject *>( o )->subType = s;
-    static_cast<RwObject *>( o )->flags = 0;
+    static_cast<RwObject *>( o )->type         = t;
+    static_cast<RwObject *>( o )->subType      = s;
+    static_cast<RwObject *>( o )->flags        = 0;
     static_cast<RwObject *>( o )->privateFlags = 0;
-    static_cast<RwObject *>( o )->parent = nullptr;
+    static_cast<RwObject *>( o )->parent       = nullptr;
 }
-constexpr void HasFrameInitialize( void *o,
-                                   uint8_t type,
-                                   uint8_t subtype,
+constexpr void HasFrameInitialize( void *o, uint8_t type, uint8_t subtype,
                                    RwObjectHasFrameSyncFunction syncFunc )
 {
     Initialize( o, type, subtype );
@@ -110,15 +135,14 @@ constexpr void SetFlags( void *o, uint8_t f )
     static_cast<RwObject *>( o )->flags = f;
 }
 } // namespace rwObject
-namespace rwLLLink {
-constexpr auto GetNext( RwLLLink *linkvar )
+namespace rwLLLink
 {
-    return linkvar->next;
-}
-template<typename type>
+constexpr auto GetNext( RwLLLink *linkvar ) { return linkvar->next; }
+template <typename type>
 constexpr type *GetData( void *linkvar, uint32_t offset )
 {
-    return static_cast<type *>( static_cast<void *>( static_cast<RwUInt8 *>( linkvar ) - offset ) );
+    return static_cast<type *>(
+        static_cast<void *>( static_cast<uint8_t *>( linkvar ) - offset ) );
 }
 constexpr void Initialize( RwLLLink *linkvar )
 {
@@ -126,20 +150,23 @@ constexpr void Initialize( RwLLLink *linkvar )
     linkvar->next = nullptr;
 }
 } // namespace rwLLLink
-namespace rwLinkList {
+namespace rwLinkList
+{
 
 constexpr void AddLLLink( RwLinkList *list, RwLLLink *linkvar )
 {
-    linkvar->next = list->link.next;
-    linkvar->prev = &list->link;
+    linkvar->next         = list->link.next;
+    linkvar->prev         = &list->link;
     list->link.next->prev = linkvar;
-    list->link.next = linkvar;
+    list->link.next       = linkvar;
 }
 
 constexpr void RemoveLLLink( void *list )
 {
-    static_cast<RwLLLink *>( list )->prev->next = static_cast<RwLLLink *>( list )->next;
-    static_cast<RwLLLink *>( list )->next->prev = static_cast<RwLLLink *>( list )->prev;
+    static_cast<RwLLLink *>( list )->prev->next =
+        static_cast<RwLLLink *>( list )->next;
+    static_cast<RwLLLink *>( list )->next->prev =
+        static_cast<RwLLLink *>( list )->prev;
 }
 
 constexpr auto GetTerminator( void *list )
@@ -160,14 +187,17 @@ constexpr auto GetFirstLLLink( const void *list )
 }
 constexpr void Initialize( void *list )
 {
-    static_cast<RwLinkList *>( list )->link.next = static_cast<RwLLLink *>( list );
-    static_cast<RwLinkList *>( list )->link.prev = static_cast<RwLLLink *>( list );
+    static_cast<RwLinkList *>( list )->link.next =
+        static_cast<RwLLLink *>( list );
+    static_cast<RwLinkList *>( list )->link.prev =
+        static_cast<RwLLLink *>( list );
 }
 } // namespace rwLinkList
-namespace rwFrame {
+namespace rwFrame
+{
 constexpr RwFrame *GetParent( void *_f )
 {
     return static_cast<RwFrame *>( rwObject::GetParent( _f ) );
 }
 } // namespace rwFrame
-} // namespace rw_rh_engine
+} // namespace rh::rw::engine

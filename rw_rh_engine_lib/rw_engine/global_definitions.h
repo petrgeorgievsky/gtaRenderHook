@@ -1,10 +1,11 @@
 #pragma once
 #include "../common_headers.h"
 
-namespace rh::rw::engine {
+namespace rh::rw::engine
+{
 
 void *&GetInternalRaster( RwRaster *raster );
-
+/*
 struct CameraContext
 {
     DirectX::XMFLOAT4X4 viewTransform;
@@ -19,5 +20,5 @@ struct CameraContext
 };
 
 extern CameraContext *g_cameraContext;
-extern RwGlobals *g_pRwEngineInstance;
-} // namespace rw_rh_engine
+extern RwGlobals *g_pRwEngineInstance;*/
+} // namespace rh::rw::engine

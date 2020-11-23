@@ -133,9 +133,14 @@ bool CheckIsOutOfBounds( float3 LightViewPos )
 {
     float2 ShadowTexCoord = 0.5 * LightViewPos.xy + float2( 0.5, 0.5 );
     ShadowTexCoord.y      = 1.0f - ShadowTexCoord.y;
+
+    float blur_err =
+        ( fMaxShadowBlur * max( SHADOW_BLUR_KERNEL, 3 ) / ShadowSize );
     // early fail
-    if ( ShadowTexCoord.x < 0 || ShadowTexCoord.x > 1 || ShadowTexCoord.y < 0 ||
-         ShadowTexCoord.y > 1 )
+    if ( ShadowTexCoord.x < blur_err ||
+         ShadowTexCoord.x > ( 1 - blur_err ) ||
+         ShadowTexCoord.y < blur_err ||
+         ShadowTexCoord.y > ( 1 - blur_err ) )
         return true;
     return false;
 }
@@ -173,12 +178,36 @@ float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow,
         Shadow = SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos, shadowTCOffset, i);
     else if ( i < CascadeCount )
     {
-        i++;
+        i=i+1;
         near                  = LFadeDistances[i];
         shadowTCOffset = float2( (float)i / CascadeCount, 0.0f );
         LightViewPos = mul( WorldPos, DirLightViewProj[i] ).xyz;
-        Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
-                                  LightViewPos, shadowTCOffset, i );
+        if (!CheckIsOutOfBounds(LightViewPos))
+        {
+            Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
+                                      LightViewPos, shadowTCOffset, i );
+        }
+        else if ( i < CascadeCount )
+        {
+            i              = i + 1;
+            near           = LFadeDistances[i];
+            shadowTCOffset = float2( (float)i / CascadeCount, 0.0f );
+            LightViewPos   = mul( WorldPos, DirLightViewProj[i] ).xyz;
+            if ( !CheckIsOutOfBounds( LightViewPos ) )
+            {
+                Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
+                                          LightViewPos, shadowTCOffset, i );
+            }
+            else if ( i < CascadeCount )
+            {
+                i              = i + 1;
+                near           = LFadeDistances[i];
+                shadowTCOffset = float2( (float)i / CascadeCount, 0.0f );
+                LightViewPos   = mul( WorldPos, DirLightViewProj[i] ).xyz;
+                Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
+                                          LightViewPos, shadowTCOffset, i );
+            }
+        }
     }
 	
     /*for (i = 0; i < CascadeCount; i++)

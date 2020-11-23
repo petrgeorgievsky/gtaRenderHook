@@ -335,6 +335,24 @@
     <ClInclude Include="RHRayTracer.h">
       <Filter>Source\Algorithms\NextGen\RayTracing</Filter>
     </ClInclude>
+    <ClInclude Include="D3D1X3DTexture.h">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="FastNoiseSIMD.h">
+      <Filter>Source\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="FastNoiseSIMD_internal.h">
+      <Filter>Source\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="CloudRendering.h">
+      <Filter>Source\Algorithms\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderMeshPool.h">
+      <Filter>Source\RwRenderEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="SampHaxx.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -550,6 +568,39 @@
     <ClCompile Include="RHRayTracer.cpp">
       <Filter>Source\Algorithms\NextGen\RayTracing</Filter>
     </ClCompile>
+    <ClCompile Include="D3D1X3DTexture.cpp">
+      <Filter>Source\RwRenderEngine\RwD3DRenderEngine\BasicClasses\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoiseSIMD.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoiseSIMD_neon.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoiseSIMD_sse2.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoiseSIMD_sse41.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoiseSIMD_avx2.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoiseSIMD_avx512.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoiseSIMD_internal.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="CloudRendering.cpp">
+      <Filter>Source\Algorithms\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderMeshPool.cpp">
+      <Filter>Source\RwRenderEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="SampHaxx.cpp">
+      <Filter>Source\Games\GTA_SA</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt">
@@ -647,6 +698,8 @@
     <None Include="shaders\TemporalAA.hlsl">
       <Filter>Source\Shaders</Filter>
     </None>
+    <None Include="gtaRenderHook.ruleset" />
+    <None Include="shaders\CloudRendering.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\RayTracing.hlsl">

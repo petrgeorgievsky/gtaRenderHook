@@ -16,7 +16,7 @@ inline void INIT_PAYLOAD_MISS(inout PayLoad payLoad, in Ray r, in float maxDist)
 
 inline void INIT_PAYLOAD_HIT_TRIANGLE(inout PayLoad payLoad, float u, float v)
 {
-    ;
+
 }
 
 StructuredBuffer<Triangle> triangleBuffer : register(t0);

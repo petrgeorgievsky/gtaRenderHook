@@ -1,0 +1,173 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_GOOGLE_include_directive : enable
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+struct PointLight
+{
+    vec4 posAndRadius;
+    vec4 color;
+};
+
+struct Tile
+{
+    uint light_count;
+    uint light_offset;
+};
+
+layout(binding = 0, set = 0, rgba16f) uniform image2D tx_normal_depth;
+layout(binding = 1, set = 0) buffer TiledConfig
+{
+    uint max_light_count;
+    uint max_light_in_tile;
+    uint min_depth;
+    uint max_depth;
+}
+tiled_config;
+layout(binding = 2, set = 0) buffer readonly PointLights
+{
+    PointLight i[];
+}
+point_lights;
+layout(binding = 3, scalar) buffer LightIds
+{
+    uint light_ids[];
+}
+light_id_list;
+layout(binding = 4, scalar) buffer TileInfo
+{
+    Tile tiles[];
+}
+tile_info_list;
+
+layout(binding = 0, set = 1) uniform CameraProperties
+{
+    mat4 view;
+    mat4 proj;
+    mat4 viewInverse;
+    mat4 projInverse;
+    mat4 viewProj;
+    mat4 viewProjPrev;
+} cam;
+
+struct ViewFrustum
+{
+    vec4 plane[6];
+};
+shared ViewFrustum frustum;
+shared uint max_depth;
+shared uint min_depth;
+shared uint tile_light_count;
+
+ViewFrustum createFrustum(uvec2 tileID, uvec2 tileCount)
+{
+    const uint TILE_SIZE = 8;
+    ViewFrustum frustum;
+    float maxDepth = uintBitsToFloat(max_depth);
+    float minDepth = uintBitsToFloat(min_depth);
+
+    //vec2 step = 2.0 * vec2(TILE_SIZE, TILE_SIZE) / vec2(tileCount * TILE_SIZE);
+    vec2 tileScale = vec2(tileCount.xy) / (float(2));
+    vec2 tileBias = tileScale - vec2(tileID.xy);
+    vec4 c1 = vec4(cam.proj[0][0] * tileScale.x, 0.0f, tileBias.x, 0.0f);
+    vec4 c2 = vec4(0.0f, cam.proj[1][1] * tileScale.y, tileBias.y, 0.0f);
+    vec4 c4 = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+
+    // Sides
+    frustum.plane[0] = c4 - c1;
+    frustum.plane[1] = c4 + c1;
+    frustum.plane[2] = c4 - c2;
+    frustum.plane[3] = c4 + c2;
+    // Near/far
+    frustum.plane[4] = vec4(0.0f, 0.0f, 1.0f, -minDepth);
+    frustum.plane[5] = vec4(0.0f, 0.0f, -1.0f, maxDepth);
+    /*vec4 ndc[4];
+
+    ndc[0] = vec4(step * tileID - 1.0, 1.0, 1.0);// top left
+    ndc[1] = vec4(ndc[0].x, ndc[0].y + step.y, 1.0, 1.0);// bottom left
+    ndc[2] = vec4(ndc[0].x + step.x, ndc[1].y, 1.0, 1.0);// botom right
+    ndc[3] = vec4(ndc[2].x, ndc[0].y, 1.0, 1.0);// top right
+
+    for (uint i = 0; i < 4; i++)
+    {
+        ndc[i] = cam.projInverse * ndc[i];
+        ndc[i] /= ndc[i].w;
+    }
+
+    for (uint i = 0; i < 4; i++)
+    frustum.plane[i] = normalize(cross(ndc[i].xyz, ndc[(i + 1) & 3u].xyz));*/
+    for (uint i = 0; i < 4; i++)
+    frustum.plane[i] /= length(frustum.plane[i].xyz);
+    return frustum;
+}
+
+float LinearDepth(in float zw)
+{
+    return cam.proj[3][2] / (zw - cam.proj[2][2]);
+}
+
+void main()
+{
+    // Init variables
+    const uint max_lights_per_tile = 32;
+    uint tile_id = gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x;
+    uint tile_light_offset = max_lights_per_tile * tile_id;
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        tile_light_count = 0;
+        max_depth = 0;
+        min_depth = 0x7F7FFFFF;
+    }
+
+    barrier();
+
+    // Calculate min & max depth inside a workgroup
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+    vec4 normal_depth =  imageLoad(tx_normal_depth, pos);
+    float depth = normal_depth.w;///1000.0f;
+    //depth = 1.0 / (depth * cam.projInverse[2][3] + cam.projInverse[3][3]);
+
+    uint depth_int = floatBitsToUint(depth);
+    atomicMin(min_depth, depth_int);
+    atomicMax(max_depth, depth_int);
+
+    barrier();
+
+    // create frustum planes
+    if (gl_LocalInvocationIndex == 0)
+    frustum = createFrustum(gl_WorkGroupID.xy, gl_NumWorkGroups.xy);
+
+    barrier();
+
+    for (uint i = gl_LocalInvocationIndex; i < 1024; i+=8*8)
+    {
+        PointLight pl = point_lights.i[i];
+        if (pl.posAndRadius.w > 0.01){
+            vec3 position = (vec4(pl.posAndRadius.xyz, 1.0) * cam.view).xyz;
+            float radius = pl.posAndRadius.w;
+            bool inFrustum = true;
+            for (uint i = 0; i < 6; i++)
+            {
+                float distance = dot(frustum.plane[i], vec4(position, 1.0f));
+                inFrustum = inFrustum && (distance >= -radius);
+            }
+
+            if (inFrustum)
+            {
+                uint light_idx = atomicAdd(tile_light_count, uint(1));
+                if (light_idx < max_lights_per_tile)
+                light_id_list.light_ids[tile_light_offset + light_idx] = i;
+            }
+        }
+    }
+
+    barrier();
+    // Store in tiles info array
+    if (gl_LocalInvocationIndex == 0){
+        tile_info_list.tiles[tile_id].light_count = min(tile_light_count, max_lights_per_tile);
+        tile_info_list.tiles[tile_id].light_offset = tile_light_offset;
+    }
+}

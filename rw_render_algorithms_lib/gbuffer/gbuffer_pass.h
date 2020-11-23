@@ -4,7 +4,7 @@
 #include <vector>
 namespace rh::engine {
 class IRenderingContext;
-}; // namespace rh::engine
+} // namespace rh::engine
 
 struct GBufferDesc
 {

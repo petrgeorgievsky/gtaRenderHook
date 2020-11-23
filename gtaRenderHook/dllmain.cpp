@@ -36,6 +36,7 @@
 #include "CRwGameHooks.h"
 #include "GTASAHooks.h"
 #include "StreamingRH.h"
+#include "SampHaxx.h"
 #include "TemporalAA.h"
 CDebug*				g_pDebug;
 CIRwRenderEngine*	g_pRwCustomEngine;
@@ -146,6 +147,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
         CCustomBuildingPipeline::Patch();
         CCustomBuildingDNPipeline::Patch();
         CCustomCarFXPipeline::Patch();
+        SampHaxx::Patch();
 #endif // GTA_SA
 
         break;
@@ -164,6 +166,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 RxD3D9InstanceData* GetModelsData( RxInstanceData * data )
 {
     return reinterpret_cast<RxD3D9InstanceData*>( data + 1 );
+}
+
+RxD3D9InstanceData *GetModelsData2( RxD3D9ResEntryHeader *data )
+{
+    return reinterpret_cast<RxD3D9InstanceData *>( data + 1 );
 }
 
 RpMesh * GetMeshesData( RpD3DMeshHeader * data )

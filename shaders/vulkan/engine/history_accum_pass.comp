@@ -1,0 +1,66 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_GOOGLE_include_directive : enable
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// TODO: use samplers?
+layout(binding = 0, set = 0, rg16f) uniform image2D tx_new_frame;
+layout(binding = 1, set = 0, rg16f) uniform image2D tx_reprojected_frame;
+layout(binding = 2, set = 0, rg16f) uniform image2D tx_result_frame;
+layout(binding = 3, set = 0) uniform PassArgs
+{
+    float accumulation;
+    vec3 padding;
+} pass_args;
+layout(binding = 4, set = 0, r16f) uniform image2D tx_blur_strength;
+layout(binding = 5, set = 0, r8ui) uniform uimage2D tx_old_tspp_cache;
+layout(binding = 6, set = 0, r8ui) uniform uimage2D tx_new_tspp_cache;
+
+void main()
+{
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+    float current_value = imageLoad(tx_new_frame, pos).x;
+    float velocity = imageLoad(tx_new_frame, pos).y;
+    float sq_mean_value = current_value*current_value;
+    vec2 value = vec2(current_value, sq_mean_value);
+    vec2 _value = imageLoad(tx_reprojected_frame, pos).xy;
+
+    uint tspp = imageLoad(tx_old_tspp_cache, pos).r;
+    float accum = 0;
+    float blur_strength = 10;
+    float variance = 1.0f;
+    const uint min_tspp_for_temp_var = 2;
+    const uint max_tspp = 64;
+    const uint max_tspp_for_blur = 32;
+    vec2 result = value;
+    if (tspp > 0)
+    {
+        accum = pass_args.accumulation;
+        tspp = min(tspp + 1, velocity < 0.01f ? max_tspp : 1);
+        float max_value = min(_value.x + _value.y, 1.0f);
+        float min_value = max(_value.x - _value.y, 0.0f);
+
+        float inv_tspp = 1.0f/float(tspp);
+
+        result = (_value * (float(tspp) - 1) + value) / float(tspp);
+
+        float variance_temp = sq_mean_value - result.x * result.x;
+        variance_temp = max(0, variance_temp);
+        variance = tspp >= min_tspp_for_temp_var ? variance_temp : variance;
+        variance = max(0.1, variance);
+    }
+    else
+    {
+        tspp = 1;
+        result = value;
+    }
+    float tspp_ratio = min(min(tspp, max_tspp_for_blur) / float(max_tspp_for_blur), 0.75f);
+    blur_strength = pow(1 - tspp_ratio, 1.5f) * variance;
+
+    imageStore(tx_result_frame, pos, result.xyyy);
+    imageStore(tx_new_tspp_cache, pos, tspp.xxxx);
+    imageStore(tx_blur_strength, pos, blur_strength.xxxx);
+}

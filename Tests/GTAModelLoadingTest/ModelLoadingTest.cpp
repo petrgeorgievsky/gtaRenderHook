@@ -1,12 +1,11 @@
 #include "ModelLoadingTest.h"
 #include "forward_pbr_pipeline.h"
 #include <DebugUtils/DebugLogger.h>
-#include <Engine/Common/IGPUAllocator.h>
-#include <Engine/Common/IRenderingContext.h>
-#include <Engine/Common/types/constant_buffer_info.h>
-#include <Engine/Common/types/shader_stage.h>
 #include <common_headers.h>
+#include <dinput.h>
+#include <render_loop.h>
 #include <rw_engine/global_definitions.h>
+#include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rp_clump/rp_clump.h>
 #include <rw_engine/rw_camera/rw_camera.h>
 #include <rw_engine/rw_frame/rw_frame.h>
@@ -15,78 +14,90 @@
 #include <rw_engine/rw_rh_pipeline.h>
 #include <rw_engine/rw_tex_dict/rw_tex_dict.h>
 #include <rw_engine/rw_texture/rw_texture.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
+
 using namespace rh;
 
 static rw::engine::RpGeometryRw36 geometry_interface_36{};
-bool ModelLoadingTest::CustomInitialize()
+bool                              ModelLoadingTest::CustomInitialize()
 {
     if ( !rw::engine::RwTestSample::CustomInitialize() )
         return false;
-    m_sDffPath = "models/test.dff";
-    m_pPipeline = new ForwardPBRPipeline();
+    /*rw::engine::EngineState::gRendererServerGlobals->RegisterPipeline(
+        new ForwardPBRPipeline(), 0 );*/
+    m_sDffPath   = "models/test.dff";
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    char            dir_path[4096];
+    GetModuleFileNameA( nullptr, dir_path, 4096 );
+    fs::path dir_path_ = fs::path( dir_path ).parent_path() / m_sDffPath;
 
-    engine::IGPUAllocator *allocator = engine::g_pRHRenderer->GetGPUAllocator();
-
-    allocator->AllocateConstantBuffer( {sizeof( rw::engine::CameraContext )}, mBaseConstantBuffer );
-    allocator->AllocateConstantBuffer( {sizeof( DirectX::XMMATRIX )}, mPerModelConstantBuffer );
-
-    LoadDFF( m_sDffPath );
+    LoadDFF( dir_path_.generic_string() );
 
     return true;
 }
 
 void ModelLoadingTest::CustomShutdown()
 {
-    TestSample::CustomShutdown();
+    rh::rw::engine::RwTestSample::CustomShutdown();
 }
 
 void ModelLoadingTest::CustomRender()
 {
-    RwRGBA clearColor = {128, 128, 255, 255};
+    RwRGBA clearColor = { 128, 128, 255, 255 };
 
-    engine::IRenderingContext *context = static_cast<engine::IRenderingContext *>(
-        engine::g_pRHRenderer->GetCurrentContext() );
-    context->UpdateBuffer( mBaseConstantBuffer,
-                           rw::engine::g_cameraContext,
-                           sizeof( rw::engine::CameraContext ) );
-
-    rw::engine::RwCameraClear( m_pMainCamera, &clearColor, rwCAMERACLEARIMAGE | rwCAMERACLEARZ );
-
-    context->BindConstantBuffers( engine::ShaderStage::Vertex | engine::ShaderStage::Pixel,
-                                  {{0, mBaseConstantBuffer}, {1, mPerModelConstantBuffer}} );
-    for ( auto clump : m_vClumpList ) {
+    rw::engine::RwCameraClear( m_pMainCamera, &clearColor,
+                               rwCAMERACLEARIMAGE | rwCAMERACLEARZ );
+    for ( auto clump : m_vClumpList )
+    {
         RwLLLink *cur, *end, *next;
         cur = rw::engine::rwLinkList::GetFirstLLLink( &clump->atomicList );
         end = rw::engine::rwLinkList::GetTerminator( &clump->atomicList );
 
-        while ( cur != end ) {
-            RpAtomic *atomic = rw::engine::rwLLLink::GetData<RpAtomic>( cur,
-                                                                        offsetof( RpAtomic,
-                                                                                  inClumpLink ) );
+        while ( cur != end )
+        {
+            auto *atomic = rw::engine::rwLLLink::GetData<RpAtomic>(
+                cur, offsetof( RpAtomic, inClumpLink ) );
             next = rw::engine::rwLLLink::GetNext( cur );
-            if ( atomic ) {
-                auto ltm = rw::engine::RwFrameGetLTM(
-                    static_cast<RwFrame *>( rw::engine::rwObject::GetParent( atomic ) ) );
-                DirectX::XMMATRIX objTransformMatrix = {ltm->right.x,
-                                                        ltm->right.y,
-                                                        ltm->right.z,
-                                                        0,
-                                                        ltm->up.x,
-                                                        ltm->up.y,
-                                                        ltm->up.z,
-                                                        0,
-                                                        ltm->at.x,
-                                                        ltm->at.y,
-                                                        ltm->at.z,
-                                                        0,
-                                                        ltm->pos.x,
-                                                        ltm->pos.y,
-                                                        ltm->pos.z,
-                                                        1};
-                context->UpdateBuffer( mPerModelConstantBuffer,
-                                       &objTransformMatrix,
-                                       sizeof( objTransformMatrix ) );
-                rw::engine::DrawAtomic( atomic, &geometry_interface_36, context, m_pPipeline );
+            if ( atomic )
+            {
+                auto ltm = rw::engine::RwFrameGetLTM( static_cast<RwFrame *>(
+                    rw::engine::rwObject::GetParent( atomic ) ) );
+                rw::engine::DrawAtomic(
+                    atomic, &geometry_interface_36,
+                    [&ltm, atomic]( rw::engine::ResEnty *res_entry ) {
+                        rw::engine::DrawCallInfo info{};
+                        info.mDrawCallId = reinterpret_cast<uint64_t>( atomic );
+                        info.mMeshId     = res_entry->meshData;
+                        info.mWorldTransform = DirectX::XMFLOAT4X3{
+                            ltm->at.x, ltm->right.x, ltm->up.x, ltm->pos.x,
+                            ltm->at.y, ltm->right.y, ltm->up.y, ltm->pos.y,
+                            ltm->at.z, ltm->right.z, ltm->up.z, ltm->pos.z,
+                        };
+                        std::vector<rh::rw::engine::MaterialData> materials{};
+                        auto meshHeader = geometry_interface_36.GetMeshHeader();
+                        const auto *mesh_start =
+                            reinterpret_cast<const RpMesh *>( meshHeader + 1 );
+                        for ( const RpMesh *mesh = mesh_start;
+                              mesh != mesh_start + meshHeader->numMeshes;
+                              mesh++ )
+                        {
+                            auto m = mesh->material;
+
+                            int32_t tex_id = 0xBADF00D;
+                            if ( m->texture && m->texture->raster )
+                            {
+                                auto raster =
+                                    rh::rw::engine::GetBackendRasterExt(
+                                        m->texture->raster );
+                                tex_id = raster->mImageId;
+                            }
+                            materials.push_back( rh::rw::engine::MaterialData{
+                                tex_id, m->color, 0xBADF00D, 1.0f } );
+                        }
+                        rw::engine::EngineClient::gRendererGlobals
+                            .RecordDrawCall( info, materials );
+                    } );
             }
 
             cur = next;
@@ -97,89 +108,110 @@ void ModelLoadingTest::CustomRender()
 void ModelLoadingTest::CustomUpdate( float dt )
 {
     DIMOUSESTATE mouseCurrState{};
-    if ( GetKeyState( VK_CONTROL ) & 0x8000 ) {
-        if ( !m_bMouseAquired ) {
-            m_pMouse->Acquire();
+    if ( GetKeyState( VK_CONTROL ) & 0x8000 )
+    {
+        if ( !m_bMouseAquired )
+        {
+            // static_cast<LPDIRECTINPUTDEVICE>( m_pMouse )->Acquire();
             m_bMouseAquired = true;
         }
-        m_pMouse->GetDeviceState( sizeof( DIMOUSESTATE ), &mouseCurrState );
-    } else {
-        if ( m_bMouseAquired ) {
-            m_pMouse->Unacquire();
+    }
+    else
+    {
+        if ( m_bMouseAquired )
+        {
+            // static_cast<LPDIRECTINPUTDEVICE>( m_pMouse )->Unacquire();
             m_bMouseAquired = false;
         }
     }
 
-    RwV2d mousePosRw = {mouseCurrState.lX * 0.005f, mouseCurrState.lY * 0.005f};
+    RwV2d mousePosRw = { mouseCurrState.lX * 0.005f,
+                         mouseCurrState.lY * 0.005f };
 
-    DirectX::XMMATRIX currentRot = {m_pMainCameraFrame->ltm.right.x,
-                                    m_pMainCameraFrame->ltm.right.y,
-                                    m_pMainCameraFrame->ltm.right.z,
-                                    0,
-                                    m_pMainCameraFrame->ltm.up.x,
-                                    m_pMainCameraFrame->ltm.up.y,
-                                    m_pMainCameraFrame->ltm.up.z,
-                                    0,
-                                    m_pMainCameraFrame->ltm.at.x,
-                                    m_pMainCameraFrame->ltm.at.y,
-                                    m_pMainCameraFrame->ltm.at.z,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    1};
+    DirectX::XMFLOAT4X4 current_rot{ m_pMainCameraFrame->ltm.right.x,
+                                     m_pMainCameraFrame->ltm.right.y,
+                                     m_pMainCameraFrame->ltm.right.z,
+                                     0,
+                                     m_pMainCameraFrame->ltm.up.x,
+                                     m_pMainCameraFrame->ltm.up.y,
+                                     m_pMainCameraFrame->ltm.up.z,
+                                     0,
+                                     m_pMainCameraFrame->ltm.at.x,
+                                     m_pMainCameraFrame->ltm.at.y,
+                                     m_pMainCameraFrame->ltm.at.z,
+                                     0,
+                                     0,
+                                     0,
+                                     0,
+                                     1 };
 
-    DirectX::XMMATRIX rightRotAxis
-        = DirectX::XMMatrixRotationAxis( {{{m_pMainCameraFrame->ltm.right.x,
-                                            m_pMainCameraFrame->ltm.right.y,
-                                            m_pMainCameraFrame->ltm.right.z}}},
-                                         ( mousePosRw.y ) );
+    DirectX::XMMATRIX currentRot = DirectX::XMLoadFloat4x4( &current_rot );
+    auto              cam_right =
+        DirectX::XMLoadFloat4( reinterpret_cast<DirectX::XMFLOAT4 *>(
+            &m_pMainCameraFrame->ltm.right ) );
+    auto cam_up = DirectX::XMLoadFloat4(
+        reinterpret_cast<DirectX::XMFLOAT4 *>( &m_pMainCameraFrame->ltm.up ) );
 
-    DirectX::XMMATRIX upRotAxis = DirectX::XMMatrixRotationAxis( {{{-m_pMainCameraFrame->ltm.up.x,
-                                                                    -m_pMainCameraFrame->ltm.up.y,
-                                                                    -m_pMainCameraFrame->ltm.up.z}}},
-                                                                 ( mousePosRw.x ) );
+    DirectX::XMMATRIX rightRotAxis =
+        DirectX::XMMatrixRotationAxis( cam_right, ( mousePosRw.y ) );
+
+    DirectX::XMMATRIX upRotAxis =
+        DirectX::XMMatrixRotationAxis( cam_up, -( mousePosRw.x ) );
 
     const DirectX::XMMATRIX rotMat = currentRot * rightRotAxis * upRotAxis;
-    m_pMainCameraFrame->ltm.right = {rotMat.r[0].vector4_f32[0],
-                                     rotMat.r[0].vector4_f32[1],
-                                     rotMat.r[0].vector4_f32[2]};
-    m_pMainCameraFrame->ltm.up = {rotMat.r[1].vector4_f32[0],
-                                  rotMat.r[1].vector4_f32[1],
-                                  rotMat.r[1].vector4_f32[2]};
-    m_pMainCameraFrame->ltm.at = {rotMat.r[2].vector4_f32[0],
-                                  rotMat.r[2].vector4_f32[1],
-                                  rotMat.r[2].vector4_f32[2]};
-
+    DirectX::XMFLOAT4X4     rot_matrix{};
+    DirectX::XMStoreFloat4x4( &rot_matrix, rotMat );
+    m_pMainCameraFrame->ltm.right = { rot_matrix._11, rot_matrix._12,
+                                      rot_matrix._13 };
+    m_pMainCameraFrame->ltm.up    = { rot_matrix._21, rot_matrix._22,
+                                   rot_matrix._23 };
+    m_pMainCameraFrame->ltm.at    = { rot_matrix._31, rot_matrix._32,
+                                   rot_matrix._33 };
+    auto first_atom =
+        rw::engine::rwLinkList::GetFirstLLLink( &m_vClumpList[0]->atomicList );
+    auto *atomic = rw::engine::rwLLLink::GetData<RpAtomic>(
+        first_atom, offsetof( RpAtomic, inClumpLink ) );
+    auto at_ltm = rw::engine::RwFrameGetLTM(
+        static_cast<RwFrame *>( rw::engine::rwObject::GetParent( atomic ) ) );
+    static float time_stamp = 0;
+    time_stamp += dt;
+    time_stamp = fmod( time_stamp, 3.14f * 2 );
+    // at_ltm->pos.x = sin( time_stamp * 4 ) * 5;
     RwV3d &camPos = m_pMainCameraFrame->ltm.pos;
 
     const float camSpeed = dt * 10;
-    if ( GetKeyState( 0x57 ) & 0x8000 ) {
+    if ( GetKeyState( 'W' ) & 0x8000 )
+    {
         camPos.x += m_pMainCameraFrame->ltm.at.x * camSpeed;
         camPos.y += m_pMainCameraFrame->ltm.at.y * camSpeed;
         camPos.z += m_pMainCameraFrame->ltm.at.z * camSpeed;
     }
-    if ( GetKeyState( 0x53 ) & 0x8000 ) {
+    if ( GetKeyState( 'S' ) & 0x8000 )
+    {
         camPos.x -= m_pMainCameraFrame->ltm.at.x * camSpeed;
         camPos.y -= m_pMainCameraFrame->ltm.at.y * camSpeed;
         camPos.z -= m_pMainCameraFrame->ltm.at.z * camSpeed;
     }
-    if ( GetKeyState( 0x41 ) & 0x8000 ) {
+    if ( GetKeyState( 'A' ) & 0x8000 )
+    {
         camPos.x += m_pMainCameraFrame->ltm.right.x * camSpeed;
         camPos.y += m_pMainCameraFrame->ltm.right.y * camSpeed;
         camPos.z += m_pMainCameraFrame->ltm.right.z * camSpeed;
     }
-    if ( GetKeyState( 0x44 ) & 0x8000 ) {
+    if ( GetKeyState( 'D' ) & 0x8000 )
+    {
         camPos.x -= m_pMainCameraFrame->ltm.right.x * camSpeed;
         camPos.y -= m_pMainCameraFrame->ltm.right.y * camSpeed;
         camPos.z -= m_pMainCameraFrame->ltm.right.z * camSpeed;
     }
-    if ( GetKeyState( 0x45 ) & 0x8000 ) {
+    if ( GetKeyState( 'E' ) & 0x8000 )
+    {
         camPos.x += m_pMainCameraFrame->ltm.up.x * camSpeed;
         camPos.y += m_pMainCameraFrame->ltm.up.y * camSpeed;
         camPos.z += m_pMainCameraFrame->ltm.up.z * camSpeed;
     }
-    if ( GetKeyState( 0x51 ) & 0x8000 ) {
+    if ( GetKeyState( 'Q' ) & 0x8000 )
+    {
         camPos.x -= m_pMainCameraFrame->ltm.up.x * camSpeed;
         camPos.y -= m_pMainCameraFrame->ltm.up.y * camSpeed;
         camPos.z -= m_pMainCameraFrame->ltm.up.z * camSpeed;
@@ -193,20 +225,24 @@ void ModelLoadingTest::LoadDFF( const rh::engine::String &path )
         debug::DebugLogger::Error( "Failed to load clump from dff!" );
     else if ( result != nullptr )
         m_vClumpList.push_back( result );
-    for ( auto clump : m_vClumpList ) {
+    for ( auto clump : m_vClumpList )
+    {
         RwLLLink *cur, *end, *next;
         cur = rw::engine::rwLinkList::GetFirstLLLink( &clump->atomicList );
         end = rw::engine::rwLinkList::GetTerminator( &clump->atomicList );
 
-        while ( cur != end ) {
-            RpAtomic *atomic = rw::engine::rwLLLink::GetData<RpAtomic>( cur,
-                                                                        offsetof( RpAtomic,
-                                                                                  inClumpLink ) );
+        while ( cur != end )
+        {
+            auto *atomic = rw::engine::rwLLLink::GetData<RpAtomic>(
+                cur, offsetof( RpAtomic, inClumpLink ) );
             next = rw::engine::rwLLLink::GetNext( cur );
-            if ( atomic ) {
-                rw::engine::RenderStatus status
-                    = rw::engine::RwRHInstanceAtomic( atomic, &geometry_interface_36 );
-                switch ( status ) {
+            if ( atomic )
+            {
+                rw::engine::RenderStatus status =
+                    rw::engine::RwRHInstanceAtomic( atomic,
+                                                    &geometry_interface_36 );
+                switch ( status )
+                {
                 case rw::engine::RenderStatus::Failure:
                     debug::DebugLogger::Log( "Failed instance" );
                     break;

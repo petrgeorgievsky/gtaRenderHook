@@ -11,7 +11,8 @@ CD3D1XBackBufferTexture::CD3D1XBackBufferTexture( RwRaster* parent ) :
 {
     if ( !CALL_D3D_API( GET_D3D_SWAP_CHAIN->GetBuffer( 0, __uuidof( ID3D11Texture2D ), reinterpret_cast<void**>( &m_pTextureResource ) ), "Failed to get back buffer texture." ) )
         return;
-
+    if ( m_pTextureResource == nullptr )
+        return;
     if ( !CALL_D3D_API( GET_D3D_DEVICE->CreateRenderTargetView( m_pTextureResource, nullptr, &m_pRenderTargetView ), "Failed to create render target view." ) )
         return;
 

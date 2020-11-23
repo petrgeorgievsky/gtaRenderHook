@@ -1,0 +1,128 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_GOOGLE_include_directive : enable
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// TODO: Improve layout, currently it's very bad
+layout(binding = 0, set = 0, rg16f) uniform image2D tx_old_moments;
+layout(binding = 1, set = 0, rg16f) uniform image2D tx_reprojected_moments;
+
+layout(binding = 2, set = 0, rgba16f) uniform image2D tx_old_color;
+layout(binding = 3, set = 0, rgba16f) uniform image2D tx_reprojected_color;
+
+layout(binding = 4, set = 0, rgba16f) uniform image2D tx_old_normal_depth;
+layout(binding = 5, set = 0, rgba16f) uniform image2D tx_new_normal_depth;
+
+layout(binding = 6, set = 0, rg16f) uniform image2D tx_motion;
+
+layout(binding = 7, set = 0, r8ui) uniform uimage2D tx_old_tspp_cache;
+layout(binding = 8, set = 0, r8ui) uniform uimage2D tx_new_tspp_cache;
+
+
+uint SmallestPowerOf2GreaterThan(in uint x)
+{
+    // Set all the bits behind the most significant non-zero bit in x to 1.
+    // Essentially giving us the largest value that is smaller than the
+    // next power of 2 we're looking for.
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+
+    // Return the next power of two value.
+    return x + 1;
+}
+
+float FloatPrecision(in float x, in uint NumMantissaBits)
+{
+    // Find the exponent range the value is in.
+    uint nextPowerOfTwo = SmallestPowerOf2GreaterThan(uint(x));
+    float exponentRange = nextPowerOfTwo - (nextPowerOfTwo >> 1);
+
+    float MaxMantissaValue = 1 << NumMantissaBits;
+
+    return exponentRange / MaxMantissaValue;
+}
+
+// returns true if texcoord is out of bounds
+bool TexBoundsCheck(in ivec2 tc, ivec2 size)
+{
+    return tc.x > size.x || tc.y > size.y || tc.x < 0 || tc.y < 0;
+}
+
+// Reprojects old frame onto current frame via motion vectors,
+// rejecting old samples using depth texture
+void main()
+{
+    ivec2 tex_res = ivec2(1920, 1080);
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+    const vec2 velocity = imageLoad(tx_motion, pos).rg;
+    const vec2 pixelCenter = vec2(pos.xy) + vec2(0.5);
+    const vec2 uv = pixelCenter/vec2(tex_res);
+
+    vec2 _uv = uv - velocity;
+
+    ivec2 _pos = ivec2(floor(_uv * tex_res - 0.5));
+    vec2 _offset = (_uv * tex_res - 0.5) - _pos;
+
+    vec3 normals;
+    float depth;
+
+    vec4 normals_depth = imageLoad(tx_new_normal_depth, pos);
+    normals = normalize(normals_depth.xyz);
+    depth = normals_depth.w;
+
+    vec3 _normals;
+    vec4 _depth;
+    vec4 normals_diff;
+    vec4 _weights = vec4( (1 - _offset.x) * (1 - _offset.y),
+                          _offset.x       * (1 - _offset.y),
+                          (1 - _offset.x) * _offset.y,
+                          _offset.x       * _offset.y);
+    vec4 _color = vec4(0);
+    vec4 _values;
+    vec4 _values_sq;
+
+    ivec2 reproject_samples[4] = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } };
+    ivec2 tex_ids[4] = { _pos + reproject_samples[0],
+                         _pos + reproject_samples[1],
+                         _pos + reproject_samples[2],
+                         _pos + reproject_samples[3] };
+
+    for (int i = 0; i < 4; i++)
+    {
+        vec4 _normals_depth = imageLoad(tx_old_normal_depth, tex_ids[i]);
+        normals_diff[i] = length(normals - normalize(_normals_depth.xyz));
+        _depth[i] = _normals_depth.w;
+        _weights[i] *= (TexBoundsCheck(tex_ids[i], tex_res) || _depth[i] > 1000.0f) ? 0.0f : 1.0f;
+        _values[i] = imageLoad(tx_old_moments, tex_ids[i]).x;
+        _values_sq[i] = imageLoad(tx_old_moments, tex_ids[i]).y;
+        _color += _weights[i] * imageLoad(tx_old_color, tex_ids[i]);
+    }
+
+    // TODO: Use corrected epsilon
+    const float depth_eps = FloatPrecision(depth, 10);
+
+    // TODO: Allow threshold adjustment
+    bool reject_sample = abs(depth - dot(_depth, _weights)) > 0.5 || dot(normals_diff, _weights) > 0.1f;
+
+    uint _tspp = imageLoad(tx_old_tspp_cache, _pos).r;
+
+    // Reproject temporal sample per-pixel cache
+    if(reject_sample)
+    {
+        imageStore(tx_new_tspp_cache, pos, 0);
+        imageStore(tx_reprojected_moments, pos, (0).xxxx);
+        imageStore(tx_reprojected_frame, pos, (0).xxxx);
+    }
+    else
+    {
+        imageStore(tx_new_tspp_cache, pos, (_tspp).xxxx);
+        imageStore(tx_reprojected_moments, pos, vec2(dot(_values, _weights), dot(_values_sq, _weights)).xyyy);
+        imageStore(tx_reprojected_frame, pos, _color);
+    }
+}

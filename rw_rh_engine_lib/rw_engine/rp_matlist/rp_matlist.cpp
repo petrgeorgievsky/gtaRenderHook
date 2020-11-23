@@ -8,8 +8,8 @@ static uint32_t rwMATERIALLISTGRANULARITY = 20;
 
 void rh::rw::engine::_rpMaterialListInitialize( RpMaterialList &matList )
 {
-    matList.space = 0;
-    matList.materials = nullptr;
+    matList.space        = 0;
+    matList.materials    = nullptr;
     matList.numMaterials = 0;
 }
 
@@ -18,59 +18,70 @@ void rh::rw::engine::_rpMaterialListDeinitialize( RpMaterialList &matList )
     RpMaterial **materialArray;
 
     materialArray = matList.materials;
-    if ( materialArray ) {
-        RwInt32 materialCount = matList.numMaterials;
-        RwInt32 nI;
+    if ( materialArray )
+    {
+        int32_t materialCount = matList.numMaterials;
+        int32_t nI;
 
-        for ( nI = 0; nI < materialCount; nI++ ) {
+        for ( nI = 0; nI < materialCount; nI++ )
+        {
             rh::rw::engine::RpMaterialDestroy( materialArray[nI] );
             materialArray[nI] = nullptr;
         }
 
         free( materialArray );
-        materialArray = nullptr;
+        materialArray     = nullptr;
         matList.materials = materialArray;
     }
 
     /* Reset the structure */
     matList.numMaterials = 0;
-    matList.space = 0;
+    matList.space        = 0;
 }
 
-bool rh::rw::engine::_rpMaterialListSetSize( RpMaterialList &matList, int32_t size )
+bool rh::rw::engine::_rpMaterialListSetSize( RpMaterialList &matList,
+                                             int32_t         size )
 {
-    if ( matList.space < size ) {
+    if ( matList.space < size )
+    {
         RpMaterial **materials;
         size_t memSize = sizeof( RpMaterial * ) * static_cast<size_t>( size );
 
-        if ( matList.materials ) {
-            materials = static_cast<RpMaterial **>( realloc( matList.materials, memSize ) );
-        } else {
+        if ( matList.materials )
+        {
+            materials = static_cast<RpMaterial **>(
+                realloc( matList.materials, memSize ) );
+        }
+        else
+        {
             materials = static_cast<RpMaterial **>( malloc( memSize ) );
         }
 
-        if ( !materials ) {
+        if ( !materials )
+        {
             // RWERROR( ( E_RW_NOMEM, memSize ) );
             return false;
         }
 
         /* Shove in the new */
         matList.materials = materials;
-        matList.space = size;
+        matList.space     = size;
     }
 
     return true;
 }
 
-int32_t rh::rw::engine::_rpMaterialListAppendMaterial( RpMaterialList &matList, RpMaterial *material )
+int32_t rh::rw::engine::_rpMaterialListAppendMaterial( RpMaterialList &matList,
+                                                       RpMaterial *material )
 {
     RpMaterial **materials;
-    RwUInt32 count;
-    size_t memSize;
+    uint32_t     count;
+    size_t       memSize;
 
     /* See if there is a blank entry we can use */
     /* Add it to the list */
-    if ( matList.space > matList.numMaterials ) {
+    if ( matList.space > matList.numMaterials )
+    {
         materials = &( matList.materials )[matList.numMaterials];
 
         ( *materials ) = material;
@@ -82,18 +93,24 @@ int32_t rh::rw::engine::_rpMaterialListAppendMaterial( RpMaterialList &matList, 
     }
 
     /* Need to allocates some more space */
-    count = ( static_cast<RwUInt32>( matList.space ) + rwMATERIALLISTGRANULARITY );
+    count =
+        ( static_cast<uint32_t>( matList.space ) + rwMATERIALLISTGRANULARITY );
 
     memSize = sizeof( RpMaterial * ) * count;
 
-    if ( matList.materials ) {
-        materials = static_cast<RpMaterial **>( realloc( matList.materials, memSize ) );
-    } else {
-        materials = static_cast<RpMaterial **>(
-            malloc( count * sizeof( RpMaterial * ) ) ); //_rpMaterialListAlloc( count );
+    if ( matList.materials )
+    {
+        materials =
+            static_cast<RpMaterial **>( realloc( matList.materials, memSize ) );
+    }
+    else
+    {
+        materials = static_cast<RpMaterial **>( malloc(
+            count * sizeof( RpMaterial * ) ) ); //_rpMaterialListAlloc( count );
     }
 
-    if ( !materials ) {
+    if ( !materials )
+    {
         return -1;
     }
 
@@ -108,80 +125,92 @@ int32_t rh::rw::engine::_rpMaterialListAppendMaterial( RpMaterialList &matList, 
     return ( matList.numMaterials - 1 );
 }
 
-bool rh::rw::engine::_rpMaterialListStreamRead( void *stream, RpMaterialList &matList )
+bool rh::rw::engine::_rpMaterialListStreamRead( void *          stream,
+                                                RpMaterialList &matList )
 {
-    RwInt32 i, len;
-    RwInt32 *matindex;
-    RwUInt32 size, version;
+    int32_t  i, len;
+    int32_t *matindex;
+    uint32_t size, version;
 
-    if ( !RwStreamFindChunk( stream, rwID_STRUCT, &size, &version ) ) {
+    if ( !RwStreamFindChunk( stream, rwID_STRUCT, &size, &version ) )
+    {
         return false;
     }
-    RwBool status;
+    int32_t status;
 
     status = ( NULL != RwStreamRead( stream, &len, sizeof( len ) ) );
     if ( !status )
         return false;
 
-    matList.space = 0;
-    matList.materials = nullptr;
+    matList.space        = 0;
+    matList.materials    = nullptr;
     matList.numMaterials = 0;
 
-    if ( len == 0 ) {
+    if ( len == 0 )
+    {
         /* zero entry material list simply return the initialized
 matList we've created */
         return true;
     }
 
     /* make the list as large as needed */
-    if ( !_rpMaterialListSetSize( matList, len ) ) {
+    if ( !_rpMaterialListSetSize( matList, len ) )
+    {
         _rpMaterialListDeinitialize( matList );
         return false;
     }
 
-    matindex = static_cast<RwInt32 *>( malloc( sizeof( RwInt32 ) * static_cast<uint32_t>( len ) ) );
+    matindex = static_cast<int32_t *>(
+        malloc( sizeof( int32_t ) * static_cast<uint32_t>( len ) ) );
 
-    status = ( NULL
-               != RwStreamRead( stream,
-                                matindex,
-                                sizeof( RwInt32 ) * static_cast<uint32_t>( len ) ) );
+    status = ( NULL != RwStreamRead( stream, matindex,
+                                     sizeof( uint32_t ) *
+                                         static_cast<uint32_t>( len ) ) );
 
-    if ( !status ) {
+    if ( !status )
+    {
         free( matindex );
         _rpMaterialListDeinitialize( matList );
         return false;
     }
 
-    for ( i = 0; i < len; i++ ) {
+    for ( i = 0; i < len; i++ )
+    {
         RpMaterial *material;
 
         /* new material */
-        if ( matindex[i] < 0 ) {
-            if ( !RwStreamFindChunk( stream, rwID_MATERIAL, nullptr, &version ) ) {
+        if ( matindex[i] < 0 )
+        {
+            if ( !RwStreamFindChunk( stream, rwID_MATERIAL, nullptr,
+                                     &version ) )
+            {
                 free( matindex );
                 _rpMaterialListDeinitialize( matList );
                 return false;
             }
-            if ( !( material = RpMaterialStreamRead( stream ) ) ) {
+            if ( !( material = RpMaterialStreamRead( stream ) ) )
+            {
                 free( matindex );
                 _rpMaterialListDeinitialize( matList );
                 return false;
             }
-        } else {
+        }
+        else
+        {
             material = matList.materials[matindex[i]];
             //_rpMaterialListGetMaterial( matList, matindex[i] );
             rpMaterial::AddRef( material );
         }
 
         /* Add the material to the end of the list - this bumps up the
-     * reference count
-     */
+         * reference count
+         */
         _rpMaterialListAppendMaterial( matList, material );
 
         /* We want to drop the reference count back down, so that only
-     * the material list owns it (so it goes away when the material
-     * list does.
-     */
+         * the material list owns it (so it goes away when the material
+         * list does.
+         */
         rh::rw::engine::RpMaterialDestroy( material );
     }
 

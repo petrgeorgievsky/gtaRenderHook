@@ -1,54 +1,90 @@
 #include "nativetexturereadcmd.h"
 #include "../global_definitions.h"
+#include "../rh_backend/raster_backend.h"
 #include "../rw_macro_constexpr.h"
+#include "../system_funcs/rw_device_system_globals.h"
 #include <DebugUtils/DebugLogger.h>
+#include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/image_buffer_format.h>
 #include <Engine/Common/types/image_buffer_info.h>
 #include <Engine/Common/types/image_buffer_type.h>
-#include <Engine/IRenderer.h>
+#include <algorithm>
 #include <common_headers.h>
 #include <d3d9.h>
+#include <ostream>
+#include <queue>
+#include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
+#include <span>
 #include <sstream>
 
 using namespace rh::rw::engine;
 
-struct _rwNativeTexture
+struct rwNativeTexture
 {
-    RwInt32 id;               /* RwPlatformID,(rwID_D3D9) defined in batype.h */
-    RwInt32 filterAndAddress; /* Same as in babintex.c */
-    RwChar  name[rwTEXTUREBASENAMELENGTH]; /* Texture name */
-    RwChar  mask[rwTEXTUREBASENAMELENGTH]; /* Texture mask name */
+    friend std::ostream &operator<<( std::ostream &         os,
+                                     const rwNativeTexture &texture )
+    {
+        os << "NativeTexture data block:\n\tid: " << texture.id
+           << "\n\tfilterAndAddress: " << texture.filterAndAddress
+           << "\n\tname: " << texture.name << "\n\tmask: " << texture.mask;
+        return os;
+    }
+    int32_t id;               /* RwPlatformID,(rwID_D3D9) defined in batype.h */
+    int32_t filterAndAddress; /* Same as in babintex.c */
+    char    name[rwTEXTUREBASENAMELENGTH]; /* Texture name */
+    char    mask[rwTEXTUREBASENAMELENGTH]; /* Texture mask name */
 };
 
-struct _rwD3D9NativeRaster
+struct rwD3D9NativeRaster
 {
-    RwUInt32  format;       /* Raster format flags */
+    friend std::ostream &operator<<( std::ostream &            os,
+                                     const rwD3D9NativeRaster &raster )
+    {
+        os << "D3D9NativeRaster data block:\n\tformat: " << raster.format
+           << " d3dFormat: " << raster.d3dFormat << " width: " << raster.width
+           << " height: " << raster.height << " depth: " << raster.depth
+           << " numMipLevels: " << raster.numMipLevels
+           << " type: " << raster.type << " flags: " << raster.flags;
+        return os;
+    }
+    uint32_t  format;       /* Raster format flags */
     D3DFORMAT d3dFormat;    /* D3D pixel format */
-    RwUInt16  width;        /* Raster width */
-    RwUInt16  height;       /* Raster height */
-    RwUInt8   depth;        /* Raster depth */
-    RwUInt8   numMipLevels; /* The number of mip levels to load */
-    RwUInt8   type;         /* The raster type */
-    RwUInt8 flags; /* This raster has an alpha component, automipmapgen, etc */
+    uint16_t  width;        /* Raster width */
+    uint16_t  height;       /* Raster height */
+    uint8_t   depth;        /* Raster depth */
+    uint8_t   numMipLevels; /* The number of mip levels to load */
+    uint8_t   type;         /* The raster type */
+    uint8_t flags; /* This raster has an alpha component, automipmapgen, etc */
 };
 
-struct _rwD3D8NativeRaster
+struct rwD3D8NativeRaster
 {
-    RwInt32  format;       /* Raster format flags */
-    RwBool   alpha;        /* This raster has an alpha component */
-    RwUInt16 width;        /* Raster width */
-    RwUInt16 height;       /* Raster height */
-    RwUInt8  depth;        /* Raster depth */
-    RwUInt8  numMipLevels; /* The number of mip levels to load */
-    RwUInt8  type;         /* The raster type */
-    RwUInt8  dxtFormat;    /* 1-5 for DXT format 0 for normal */
+    friend std::ostream &operator<<( std::ostream &            os,
+                                     const rwD3D8NativeRaster &raster )
+    {
+        os << "D3D8NativeRaster data block:\n\tformat: " << raster.format
+           << " alpha: " << raster.alpha << " width: " << raster.width
+           << " height: " << raster.height << " depth: " << raster.depth
+           << " numMipLevels: " << raster.numMipLevels
+           << " type: " << raster.type << " dxtFormat: " << raster.dxtFormat;
+        return os;
+    }
+    int32_t  format;       /* Raster format flags */
+    int32_t  alpha;        /* This raster has an alpha component */
+    uint16_t width;        /* Raster width */
+    uint16_t height;       /* Raster height */
+    uint8_t  depth;        /* Raster depth */
+    uint8_t  numMipLevels; /* The number of mip levels to load */
+    uint8_t  type;         /* The raster type */
+    uint8_t  dxtFormat;    /* 1-5 for DXT format 0 for normal */
 };
 
-union _rwD3DNativeRaster {
-    _rwD3D8NativeRaster d3d8_;
-    _rwD3D9NativeRaster d3d9_;
+union rwD3DNativeRaster
+{
+    rwD3D8NativeRaster d3d8_;
+    rwD3D9NativeRaster d3d9_;
 };
 
 RwNativeTextureReadCmd::RwNativeTextureReadCmd( RwStream *  stream,
@@ -61,81 +97,60 @@ bool RwNativeTextureReadCmd::Execute()
 {
     RwRaster *raster = nullptr;
 
-    uint32_t           length, version;
-    _rwD3DNativeRaster nativeRaster{};
-    _rwNativeTexture   nativeTexture{};
+    uint32_t          length, version;
+    rwD3DNativeRaster nativeRaster{};
+    rwNativeTexture   nativeTexture{};
+
+    auto timestamp = std::chrono::high_resolution_clock::now();
 
     if ( !g_pIO_API.fpFindChunk( m_pStream, rwID_STRUCT, &length, &version ) )
         return false;
     g_pIO_API.fpRead( m_pStream, reinterpret_cast<void *>( &nativeTexture ),
-                      sizeof( _rwNativeTexture ) );
+                      sizeof( rwNativeTexture ) );
 
     std::stringstream debug_output;
-    debug_output << "NativeTexture data block:\n\tid:" << nativeTexture.id
-                 << "\n\tfilterAndAddress:" << nativeTexture.filterAndAddress
-                 << "\n\tname:" << nativeTexture.name
-                 << "\n\tmask:" << nativeTexture.mask << std::endl;
+    debug_output << nativeTexture;
 
     g_pIO_API.fpRead( m_pStream, reinterpret_cast<void *>( &nativeRaster ),
-                      sizeof( _rwD3DNativeRaster ) );
+                      sizeof( rwD3DNativeRaster ) );
 
     bool compressed = false, isCubemap = false;
 
     switch ( nativeTexture.id )
     {
     case rwID_PCD3D8:
-        debug_output << "D3D8NativeRaster data block:\n\tdxtFormat:"
-                     << nativeRaster.d3d8_.dxtFormat << "\n\tdepth:"
-                     << static_cast<uint32_t>( nativeRaster.d3d8_.depth )
-                     << "\n\tformat:" << nativeRaster.d3d8_.format
-                     << "\n\twidth:" << nativeRaster.d3d8_.width
-                     << "\n\theight:" << nativeRaster.d3d8_.height
-                     << "\n\tnumMipLevels:"
-                     << static_cast<uint32_t>( nativeRaster.d3d8_.numMipLevels )
-                     << "\n\ttype:"
-                     << static_cast<uint32_t>( nativeRaster.d3d8_.type )
-                     << "\n\talpha:"
-                     << static_cast<uint32_t>( nativeRaster.d3d8_.alpha )
-                     << '\n';
+        debug_output << nativeRaster.d3d8_;
         compressed = nativeRaster.d3d8_.dxtFormat != 0;
         break;
     case rwID_PCD3D9:
-        debug_output << "D3D9NativeRaster data block:\n\td3dFormat:"
-                     << nativeRaster.d3d9_.d3dFormat << "\n\tdepth:"
-                     << static_cast<uint32_t>( nativeRaster.d3d9_.depth )
-                     << "\n\tformat:" << nativeRaster.d3d9_.format
-                     << "\n\twidth:" << nativeRaster.d3d9_.width
-                     << "\n\theight:" << nativeRaster.d3d9_.height
-                     << "\n\tnumMipLevels:"
-                     << static_cast<uint32_t>( nativeRaster.d3d9_.numMipLevels )
-                     << "\n\ttype:"
-                     << static_cast<uint32_t>( nativeRaster.d3d9_.type )
-                     << '\n';
-        compressed = nativeRaster.d3d9_.flags & ( 1 << 3 );
-        isCubemap  = nativeRaster.d3d9_.flags & ( 1 << 1 );
+        debug_output << nativeRaster.d3d9_;
+        compressed =
+            static_cast<bool>( nativeRaster.d3d9_.flags & ( 1u << 3u ) );
+        isCubemap =
+            static_cast<bool>( nativeRaster.d3d9_.flags & ( 1u << 1u ) );
         break;
     }
 
     std::string debug_output_str = debug_output.str();
 
-    rh::debug::DebugLogger::Log( debug_output_str );
+    debug::DebugLogger::Log( debug_output_str );
 
     if ( compressed ) // is compressed
     {
-        rh::debug::DebugLogger::Log( "compressed raster path" );
+        debug::DebugLogger::Log( "compressed raster path" );
         // Validate format
         // ...
         // Create a raster
         raster = g_pRaster_API.fpCreateRaster(
             nativeRaster.d3d9_.width, nativeRaster.d3d9_.height,
-            static_cast<RwInt32>( nativeRaster.d3d9_.depth ),
-            static_cast<RwInt32>( nativeRaster.d3d9_.type |
+            static_cast<int32_t>( nativeRaster.d3d9_.depth ),
+            static_cast<int32_t>( nativeRaster.d3d9_.type |
                                   nativeRaster.d3d9_.format |
                                   rwRASTERDONTALLOCATE ) );
         // Attach API texture
         if ( isCubemap ) // is cubemap
         {
-            rh::debug::DebugLogger::Log( "cubemap raster path" );
+            debug::DebugLogger::Log( "cubemap raster path" );
             // Create a raster
             // ...
             // Attach API texture
@@ -143,28 +158,28 @@ bool RwNativeTextureReadCmd::Execute()
     }
     else if ( isCubemap ) // is cubemap
     {
-        rh::debug::DebugLogger::Log( "cubemap raster path" );
+        debug::DebugLogger::Log( "cubemap raster path" );
         // Create a raster
         // ...
         // Attach API texture
     }
     else if ( nativeRaster.d3d9_.format &
-              static_cast<RwUInt32>(
+              static_cast<uint32_t>(
                   ~( rwRASTERFORMATAUTOMIPMAP | rwRASTERFORMATMIPMAP ) ) )
     {
-        rh::debug::DebugLogger::Log( "rw raster path" );
+        debug::DebugLogger::Log( "rw raster path" );
         // Create a raster
         // ...
         raster = g_pRaster_API.fpCreateRaster(
             nativeRaster.d3d9_.width, nativeRaster.d3d9_.height,
-            static_cast<RwInt32>( nativeRaster.d3d9_.depth ),
-            static_cast<RwInt32>( nativeRaster.d3d9_.type |
+            static_cast<int32_t>( nativeRaster.d3d9_.depth ),
+            static_cast<int32_t>( nativeRaster.d3d9_.type |
                                   nativeRaster.d3d9_.format |
                                   rwRASTERDONTALLOCATE ) );
     }
     else
     {
-        rh::debug::DebugLogger::Log( "bullshit raster path" );
+        debug::DebugLogger::Log( "bullshit raster path" );
     }
 
     if ( raster == nullptr )
@@ -184,9 +199,7 @@ bool RwNativeTextureReadCmd::Execute()
     /* Load the palette if palletized */
     if ( nativeRaster.d3d9_.format & rwRASTERFORMATPAL4 )
     {
-        RwUInt32 size;
-
-        size = sizeof( RwRGBA ) * 32;
+        uint32_t size = sizeof( RwRGBA ) * 32;
 
         palette.resize( size / sizeof( RwRGBA ) );
 
@@ -205,9 +218,7 @@ bool RwNativeTextureReadCmd::Execute()
     }
     else if ( nativeRaster.d3d9_.format & rwRASTERFORMATPAL8 )
     {
-        RwUInt32 size;
-
-        size = sizeof( RwRGBA ) * 256;
+        constexpr uint32_t size = sizeof( RwRGBA ) * 256;
 
         palette.resize( size / sizeof( RwRGBA ) );
 
@@ -235,89 +246,122 @@ bool RwNativeTextureReadCmd::Execute()
     case rh::engine::ImageBufferFormat::BC4: bytesPerBlock = 8; break;
     default: bytesPerBlock = 16; break;
     }
-
-    std::vector<rh::engine::ImageBufferRawData> initial_data_vec(
-        nativeRaster.d3d9_.numMipLevels );
-    std::vector<RwUInt8 *> data_ptrs;
-    {
-        RwUInt32 /*autoMipmap, face,*/ numMipLevels;
-        numMipLevels = nativeRaster.d3d9_.numMipLevels;
-
-        for ( RwUInt32 i = 0; i < numMipLevels; i++ )
-        {
-            RwUInt32 size, height = max( nativeRaster.d3d9_.height >> i, 1 ),
-                           width = max( nativeRaster.d3d9_.width >> i, 1 );
-            RwUInt8 * pixels;
-            RwUInt32 *converted_pixels;
-
-            g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
-                              sizeof( size ) );
-
-            pixels = static_cast<RwUInt8 *>( malloc( size ) );
-
-            g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( pixels ),
-                              size );
-
-            // Convert paletted raster if needed
-            if ( nativeRaster.d3d9_.format & rwRASTERFORMATPAL4 ||
-                 nativeRaster.d3d9_.format & rwRASTERFORMATPAL8 )
-            {
-                converted_pixels = static_cast<RwUInt32 *>(
-                    malloc( height * width * sizeof( RwUInt32 ) ) );
-                bool has_alpha = ( nativeTexture.id == rwID_PCD3D8 )
-                                     ? nativeRaster.d3d8_.alpha
-                                     : nativeRaster.d3d9_.flags & ( 1 << 0 );
-                for ( size_t j = 0; j < size; j++ )
-                {
-                    auto color = palette[pixels[j]];
-                    converted_pixels[j] =
-                        rwRGBA::Long( color.red, color.green, color.blue,
-                                      has_alpha ? color.alpha : 255 );
-                }
-                free( pixels );
-                pixels = reinterpret_cast<RwUInt8 *>( converted_pixels );
-            }
-            data_ptrs.push_back( pixels );
-            initial_data_vec[i] = {
-                bytesPerBlock * ( ( width + 3 ) / blockSize ), pixels};
-        }
-    }
-
-    void *&internalRaster = GetInternalRaster( raster );
-
-    rh::engine::ImageBufferInfo create_info{};
-    create_info.width          = nativeRaster.d3d9_.width;
-    create_info.height         = nativeRaster.d3d9_.height;
-    create_info.mipLevels      = nativeRaster.d3d9_.numMipLevels;
-    create_info.format         = rhFormat;
-    create_info.initialDataVec = initial_data_vec;
-    create_info.type           = rh::engine::ImageBufferType::TextureBuffer;
-
-    internalRaster =
-        rh::engine::g_pRHRenderer->AllocateImageBuffer( create_info );
+    auto *internalRaster = GetBackendRasterExt( raster );
     debug_output.str( "" );
     debug_output.clear();
     debug_output << "Texture adress: 0x" << std::hex
                  << reinterpret_cast<INT_PTR>( internalRaster ) << '\n';
     rh::debug::DebugLogger::Log( debug_output.str() );
-    internalRaster = GetInternalRaster( raster );
-    for ( size_t i = 0; i < data_ptrs.size(); i++ )
-    {
-        free( data_ptrs[i] );
-        data_ptrs[i] = nullptr;
-    }
-    RwTexture *texture = g_pTexture_API.fpCreateTexture( raster );
+
+    int64_t img_id = -1;
+
+    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+        SharedMemoryTaskType::TEXTURE_LOAD,
+        [&nativeRaster, &bytesPerBlock, &blockSize, &palette, &rhFormat,
+         &nativeTexture, this]( MemoryWriter &&writer ) {
+            auto convert_paletted_mip_level =
+                [&palette, &bytesPerBlock, &blockSize](
+                    MipLevelHeader &mipLevelHeader, uint32_t width,
+                    uint32_t height, uint32_t size, uint8_t *raw_pixels,
+                    uint32_t *result_data, bool has_alpha ) {
+                    // Convert paletted raster if needed
+                    auto result_size = height * width * sizeof( uint32_t );
+
+                    if ( !has_alpha )
+                        for ( size_t j = 0; j < size; j++ )
+                            result_data[j] =
+                                rwRGBA::Long_RGB( palette[raw_pixels[j]] );
+                    else
+                        for ( size_t j = 0; j < size; j++ )
+                            result_data[j] =
+                                rwRGBA::Long( palette[raw_pixels[j]] );
+
+                    mipLevelHeader.mSize = result_size;
+                    mipLevelHeader.mStride =
+                        bytesPerBlock * ( ( width + 3 ) / blockSize );
+                };
+
+            const uint32_t numMipLevels = nativeRaster.d3d9_.numMipLevels;
+            const bool     convert_from_pal =
+                nativeRaster.d3d9_.format & rwRASTERFORMATPAL4 ||
+                nativeRaster.d3d9_.format & rwRASTERFORMATPAL8;
+            const bool has_alpha = static_cast<bool>(
+                ( nativeTexture.id == rwID_PCD3D8 )
+                    ? nativeRaster.d3d8_.alpha
+                    : nativeRaster.d3d9_.flags & ( 1u << 0u ) );
+
+            RasterHeader header{ .mWidth  = nativeRaster.d3d9_.width,
+                                 .mHeight = nativeRaster.d3d9_.height,
+                                 .mDepth  = 1,
+                                 .mFormat = static_cast<uint32_t>( rhFormat ),
+                                 .mMipLevelCount =
+                                     nativeRaster.d3d9_.numMipLevels };
+            // serialize
+            writer.Write( &header );
+
+            for ( uint32_t i = 0; i < numMipLevels; i++ )
+            {
+                auto &mipLevelHeader = writer.Current<MipLevelHeader>();
+                writer.Skip( sizeof( MipLevelHeader ) );
+
+                uint32_t height =
+                    ( std::max )( nativeRaster.d3d9_.height >> i, 1 );
+                uint32_t width =
+                    ( std::max )( nativeRaster.d3d9_.width >> i, 1 );
+
+                auto *image_memory = writer.CurrentPtr<uint32_t>();
+                if ( convert_from_pal )
+                    writer.Skip( height * width * sizeof( uint32_t ) );
+                auto *pixels = writer.CurrentPtr<uint8_t>();
+                if ( convert_from_pal )
+                    writer.SeekFromCurrent( -height * width *
+                                            sizeof( uint32_t ) );
+
+                uint32_t size;
+                g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
+                                  sizeof( size ) );
+                g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( pixels ),
+                                  size );
+
+                if ( convert_from_pal )
+                    convert_paletted_mip_level( mipLevelHeader, width, height,
+                                                size, pixels, image_memory,
+                                                has_alpha );
+                else
+                {
+                    mipLevelHeader.mSize = size;
+                    mipLevelHeader.mStride =
+                        bytesPerBlock * ( ( width + 3 ) / blockSize );
+                }
+                writer.Skip( mipLevelHeader.mSize );
+            }
+        },
+        [&img_id]( MemoryReader &&memory_reader ) {
+            // deserialize
+            img_id = *memory_reader.Read<int64_t>();
+        } );
+
+    internalRaster->mImageId = img_id >= 0 ? img_id : gEmptyTextureId;
+    RwTexture *texture       = g_pTexture_API.fpCreateTexture( raster );
     if ( texture == nullptr )
         return false;
-    rwTexture::SetFilterMode( texture, nativeTexture.filterAndAddress & 0xFF );
-    rwTexture::SetAddressingU( texture,
-                               ( nativeTexture.filterAndAddress >> 8 ) & 0x0F );
+    rwTexture::SetFilterMode(
+        texture, ( (uint32_t)nativeTexture.filterAndAddress ) & 0xFFu );
+    rwTexture::SetAddressingU(
+        texture, ( (uint32_t)nativeTexture.filterAndAddress >> 8u ) & 0x0Fu );
     rwTexture::SetAddressingV(
-        texture, ( nativeTexture.filterAndAddress >> 12 ) & 0x0F );
+        texture, ( (uint32_t)nativeTexture.filterAndAddress >> 12u ) & 0x0Fu );
     if ( g_pTexture_API.fpTextureSetName )
         g_pTexture_API.fpTextureSetName( texture, nativeTexture.name );
     if ( g_pTexture_API.fpTextureSetMaskName )
         g_pTexture_API.fpTextureSetMaskName( texture, nativeTexture.mask );
     *m_pTexture = texture;
+    debug_output.clear();
+    debug_output << "Texture loading : " << std::dec
+                 << std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::high_resolution_clock::now() - timestamp )
+                        .count()
+                 << " mcs.";
+    debug::DebugLogger::Log( debug_output.str() );
     return true;
 }

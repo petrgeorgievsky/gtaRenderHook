@@ -41,6 +41,9 @@ CD3D1XTexture::CD3D1XTexture( RwRaster* pParent, bool mipMaps, bool hasPalette )
         if ( !CALL_D3D_API( dev->CreateTexture3D( &desc, NULL, &m_p3DTexture ), "Failed to create 3D texture buffer." ) )
             return;
 
+        if ( m_p3DTexture == nullptr )
+            return;
+
         g_pDebug->SetD3DName( m_p3DTexture, "CD3D1XTexture::UAV3DTexture" );
 
         D3D11_UNORDERED_ACCESS_VIEW_DESC uavdesc;
@@ -86,6 +89,8 @@ CD3D1XTexture::CD3D1XTexture( RwRaster* pParent, bool mipMaps, bool hasPalette )
             desc.MiscFlags = 0;
             if ( !CALL_D3D_API( dev->CreateTexture2D( &desc, NULL, &m_pTexture ), "Failed to create texture" ) )
                 return;
+            if ( m_pTexture == nullptr )
+                return;
             g_pDebug->SetD3DName( m_pTexture, "CD3D1XTexture::Texture" );
 
             // shader resource view
@@ -114,7 +119,8 @@ CD3D1XTexture::CD3D1XTexture( RwRaster* pParent, bool mipMaps, bool hasPalette )
 
             if ( !CALL_D3D_API( dev->CreateTexture2D( &desc, NULL, &m_pTexture ), "Failed to create depth texture" ) )
                 return;
-
+            if ( m_pTexture == nullptr )
+                return;
             g_pDebug->SetD3DName( m_pTexture, "CD3D1XTexture::DSTexture" );
 
             D3D11_DEPTH_STENCIL_VIEW_DESC descDSV{};
@@ -159,6 +165,8 @@ void CD3D1XTexture::InitCameraTextureRaster( ID3D11Device * dev, D3D11_TEXTURE2D
 
     if ( !CALL_D3D_API( dev->CreateTexture2D( desc, NULL, &m_pTexture ), "Failed to create camera texture" ) )
         return;
+    if ( m_pTexture == nullptr )
+        return;
     g_pDebug->SetD3DName( m_pTexture, "CD3D1XTexture::CameraTexTexture" );
 
     D3D11_RENDER_TARGET_VIEW_DESC descRTSV{};
@@ -184,6 +192,8 @@ void CD3D1XTexture::InitCameraRaster( ID3D11Device * dev )
     ID3D11Texture2D* pBackBuffer = nullptr;
 
     if ( !CALL_D3D_API( GET_D3D_SWAP_CHAIN->GetBuffer( 0, __uuidof( ID3D11Texture2D ), reinterpret_cast<void**>( &pBackBuffer ) ), "Failed to get back buffer texture." ) )
+        return;
+    if ( pBackBuffer == nullptr )
         return;
 
     if ( !CALL_D3D_API( dev->CreateRenderTargetView( pBackBuffer, nullptr, &m_renderTargetRV ), "Failed to create render target view." ) )
@@ -272,6 +282,9 @@ void* CD3D1XTexture::LockToRead()
             return nullptr;
         g_pDebug->SetD3DName( m_pStagingTexture, "CD3D1XTexture::StagingTexture" );
     }
+
+    if ( m_pStagingTexture == nullptr )
+        return nullptr;
     if ( !m_hasPalette )
     {
         m_mappedSubRes = {};
@@ -371,7 +384,8 @@ void CD3D1XTexture::Resize( UINT newWidth, UINT newHeight )
 
         if ( !CALL_D3D_API( dev->CreateTexture2D( &desc, NULL, &m_pTexture ), "Failed to create depth texture" ) )
             return;
-
+        if ( m_pTexture == nullptr )
+            return;
         g_pDebug->SetD3DName( m_pTexture, "CD3D1XTexture::DSTexture" );
 
         D3D11_DEPTH_STENCIL_VIEW_DESC descDSV{};
@@ -447,6 +461,9 @@ void CD3D1XTexture::Reload()
         desc.MiscFlags = 0;
 
         if ( !CALL_D3D_API( dev->CreateTexture2D( &desc, NULL, &m_pTexture ), "Failed to create depth texture" ) )
+            return;
+
+        if ( m_pTexture == nullptr )
             return;
 
         g_pDebug->SetD3DName( m_pTexture, "CD3D1XTexture::DSTexture" );

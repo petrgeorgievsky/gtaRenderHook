@@ -545,14 +545,14 @@ RendererVisibility CRendererRH::SetupMapEntityVisibility( CEntity * entity, CBas
     }
     if ( !rwObject )
     {
-        if ( pLOD_Object && pLOD_Object->m_nNumLodChildren > 1u && (distance + renderDistance - 20.0) < drawDist )
+        if ( pLOD_Object && pLOD_Object->m_nNumLodChildren > 1u && (1.0*distance + renderDistance - 20.0) < drawDist )
         {
             CRendererRH::AddToLodRenderList( entity, renderDistance );
             return RendererVisibility::NOT_LOADED;
         }
         goto LABEL_39;
     }
-    if ( (distance + renderDistance - 20.0) >= drawDist )
+    if ( ( 1.0 * distance + renderDistance - 20.0 ) >= drawDist )
     {
     LABEL_39:
         //if (entity->entity.m_Flags.m_bDontStream)

@@ -48,23 +48,23 @@ bool rh::rw::engine::RwStreamFindChunk( void *stream,
     return false;
 }
 
-static RwChar *StringStreamRead( RwChar *nativeString, void *stream, RwUInt32 length )
+static char *StringStreamRead( char *nativeString, void *stream, uint32_t length )
 {
-    RWALIGN( char multiByteString[64], 64 );
-    RwChar *baseString;
-    RwBool mallocced;
+    char multiByteString[64];
+    char *baseString;
+    bool mallocced;
     if ( nativeString == nullptr ) {
         nativeString = static_cast<char *>( malloc( length * sizeof( char ) ) );
         if ( !nativeString ) {
             return nullptr;
         }
-        mallocced = TRUE;
+        mallocced = true;
     }
 
     baseString = nativeString;
     while ( length > 0 ) {
-        RwUInt32 bytesToRead = ( length > 64 ) ? 64 : length;
-        RwUInt32 i;
+        uint32_t bytesToRead = ( length > 64 ) ? 64 : length;
+        uint32_t i;
 
         if ( rh::rw::engine::RwStreamRead( stream, multiByteString, bytesToRead ) != bytesToRead ) {
             return nullptr;

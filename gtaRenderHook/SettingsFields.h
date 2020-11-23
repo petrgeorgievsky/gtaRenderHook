@@ -1,6 +1,8 @@
 #pragma once
+#pragma warning( push, 0 )
 #include <tinyxml2.h>
 #include <AntTweakBar.h>
+#pragma warning( pop )
 /*!
     \class SettingsField
     \brief Abstract settings field class.
@@ -64,7 +66,7 @@ public:
     bool GetValue();
 private:
     /// Current value
-    bool m_bValue;
+    bool m_bValue=false;
     /// Default value
     bool m_bDefaultValue = false;
 };
@@ -91,7 +93,7 @@ public:
     int GetValue();
 private:
     /// Current value
-    int m_nValue;
+  int m_nValue{};
     /// Lower bound of integer
     int m_nMinValue;
     /// Upper bound of integer
@@ -124,7 +126,7 @@ public:
     unsigned int GetValue();
 private:
     /// Current value
-    unsigned int m_nValue;
+  unsigned int m_nValue{};
     /// Lower bound of integer
     unsigned int m_nMinValue;
     /// Upper bound of integer
@@ -157,7 +159,7 @@ public:
     float GetValue();
 private:
     /// Current value
-    float m_fValue;
+  float m_fValue{};
     /// Lower bound of float
     float m_fMinValue;
     /// Upper bound of integer

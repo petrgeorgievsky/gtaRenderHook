@@ -6,7 +6,7 @@ class IRenderingContext;
 class D3D11ConstantBuffer;
 class D3D11PrimitiveBatch;
 class IGPUResource;
-}; // namespace rh::engine
+} // namespace rh::engine
 
 struct MaterialCB
 {
