@@ -22,11 +22,18 @@ jobs:
         # We'll use this as our working directory for all subsequent commands
         run: cmake -E make_directory ${{runner.workspace}}/build
 
+      - name: Cache Vulkan SDK
+        id: cache-vulkan-sdk
+        uses: actions/cache@v1
+        with:
+           path: "C:\\VulkanSDK\\1.2.135.0"
+           key: vulkan-sdk-1.2.135.0
       - name: Setup Vulkan
-          run: |
-            Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe" -OutFile VulkanSDK.exe
-            $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
-            $installer.WaitForExit();
+        if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
+        run: |
+         Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.135.0/windows/VulkanSDK-1.2.135.0-Installer.exe" -OutFile VulkanSDK.exe
+         $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
+         $installer.WaitForExit();
 
       # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
       - name: Restore from cache and install vcpkg
@@ -48,7 +55,7 @@ jobs:
         # Note the current convention is to use the -S and -B options here to specify source
         # and build directories, but this is only available with CMake 3.13 and higher.
         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=${{runner.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
+        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
           -DARCH_64BIT=ON
           -DBUILD_32BIT_LIBS=ON
           -DGTA_3_FOLDER="$GITHUB_WORKSPACE\artifacts\gta3"
