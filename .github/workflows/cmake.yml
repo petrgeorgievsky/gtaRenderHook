@@ -83,7 +83,7 @@ jobs:
         working-directory: ${{runner.workspace}}/build_x64
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: cmake --build . --config $BUILD_TYPE
+        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_driver
 
       - name: Configure CMake x86
         # Use a bash shell so we can use the same syntax for environment variable
@@ -108,7 +108,19 @@ jobs:
         working-directory: ${{runner.workspace}}/build_x86
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: cmake --build . --config $BUILD_TYPE
+        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_hook
+
+      - name: 64bit artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: 64bit_build
+          path: ${{runner.workspace}}/build_x64
+
+      - name: 32bit artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: 86bit_build
+          path: ${{runner.workspace}}/build_x86
 
       - name: Artifacts GTA 3
         uses: actions/upload-artifact@v2

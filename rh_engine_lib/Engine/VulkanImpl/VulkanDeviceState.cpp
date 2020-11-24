@@ -29,10 +29,11 @@ using namespace rh;
 using namespace rh::engine;
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT             messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData )
+static VKAPI_ATTR VkBool32 VKAPI_CALL
+VkDebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT /*messageSeverity*/,
+                 VkDebugUtilsMessageTypeFlagsEXT /* messageType*/,
+                 const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                 void * /*pUserData */ )
 {
     debug::DebugLogger::Log( ToRHString( pCallbackData->pMessage ) );
     return VK_FALSE;
@@ -242,9 +243,10 @@ bool VulkanDeviceState::Init()
     info.pNext             = &enabledFeatures2;
 #endif
 
-    info.pQueueCreateInfos       = &queueCreateInfo;
-    info.queueCreateInfoCount    = 1;
-    info.enabledExtensionCount   = device_extensions.size();
+    info.pQueueCreateInfos    = &queueCreateInfo;
+    info.queueCreateInfoCount = 1;
+    info.enabledExtensionCount =
+        static_cast<uint32_t>( device_extensions.size() );
     info.ppEnabledExtensionNames = device_extensions.data();
 
     m_vkDevice = m_aAdapters[m_uiCurrentAdapter].createDevice( info );
@@ -277,7 +279,7 @@ bool VulkanDeviceState::Shutdown()
 
 bool VulkanDeviceState::GetAdaptersCount( unsigned int &count )
 {
-    count = m_aAdapters.size();
+    count = static_cast<unsigned int>( m_aAdapters.size() );
     return true;
 }
 
@@ -310,7 +312,7 @@ bool VulkanDeviceState::GetOutputCount( unsigned int  adapterId,
     if ( adapterId > m_aAdapters.size() )
         return false;
 
-    count = m_aDisplayInfos.size();
+    count = static_cast<uint32_t>( m_aDisplayInfos.size() );
     return true;
 }
 
@@ -340,7 +342,8 @@ bool VulkanDeviceState::SetCurrentOutput( unsigned int id )
 bool VulkanDeviceState::GetDisplayModeCount( unsigned int  outputId,
                                              unsigned int &count )
 {
-    count = m_aDisplayInfos[outputId].m_aDisplayModes.size();
+    count = static_cast<uint32_t>(
+        m_aDisplayInfos[outputId].m_aDisplayModes.size() );
     return true;
 }
 
