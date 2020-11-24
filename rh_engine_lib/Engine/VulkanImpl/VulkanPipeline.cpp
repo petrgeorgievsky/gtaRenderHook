@@ -12,8 +12,8 @@
 using namespace rh::engine;
 namespace rh::engine
 {
-constexpr vk::PipelineColorBlendAttachmentState
-Convert( AttachmentBlendState state )
+vk::PipelineColorBlendAttachmentState
+Convert( const AttachmentBlendState &state )
 {
     vk::PipelineColorBlendAttachmentState res{};
     res.blendEnable         = state.enableBlending;
