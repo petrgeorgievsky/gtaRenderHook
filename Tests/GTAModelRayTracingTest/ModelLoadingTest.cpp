@@ -236,13 +236,15 @@ void ModelLoadingTest::CustomUpdate( float dt )
                                            0,
                                            0,
                                            1 };
+        DirectX::XMFLOAT4   right_vec{ ltm->right.x, ltm->right.y, ltm->right.z,
+                                     1 };
+        DirectX::XMFLOAT4   up_vec{ -ltm->up.x, -ltm->up.y, -ltm->up.z, 1 };
 
         DirectX::XMMATRIX rightRotAxis = DirectX::XMMatrixRotationAxis(
-            { { { ltm->right.x, ltm->right.y, ltm->right.z } } },
-            ( mousePosRw.y ) );
+            DirectX::XMLoadFloat4( &right_vec ), ( mousePosRw.y ) );
 
         DirectX::XMMATRIX upRotAxis = DirectX::XMMatrixRotationAxis(
-            { { { -ltm->up.x, -ltm->up.y, -ltm->up.z } } }, ( mousePosRw.x ) );
+            DirectX::XMLoadFloat4( &up_vec ), ( mousePosRw.x ) );
 
         DirectX::XMMATRIX current_rot_xm =
             DirectX::XMLoadFloat4x4( &currentRot );
