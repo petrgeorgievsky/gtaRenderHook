@@ -5,8 +5,7 @@ project(DisplayModeSelectionTest)
 
 set(SOURCES
         main.cpp
-        Im2DRenderer.cpp
-        ../REDarkSouls/main.cpp)
+        Im2DRenderer.cpp)
 
 include_directories(. ../../rh_engine_lib ${DEPENDENCY_INCLUDE_LIST})
 

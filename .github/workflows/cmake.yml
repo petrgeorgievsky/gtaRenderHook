@@ -26,14 +26,14 @@ jobs:
         id: cache-vulkan-sdk
         uses: actions/cache@v1
         with:
-           path: "C:\\VulkanSDK\\1.2.135.0"
-           key: vulkan-sdk-1.2.135.0
+          path: "C:\\VulkanSDK\\1.2.135.0"
+          key: vulkan-sdk-1.2.135.0
       - name: Setup Vulkan
         if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
         run: |
-         Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.135.0/windows/VulkanSDK-1.2.135.0-Installer.exe" -OutFile VulkanSDK.exe
-         $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
-         $installer.WaitForExit();
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.135.0/windows/VulkanSDK-1.2.135.0-Installer.exe" -OutFile VulkanSDK.exe
+          $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
+          $installer.WaitForExit();
 
       # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
       - name: Restore from cache and install vcpkg
@@ -47,31 +47,61 @@ jobs:
           $VCPKG_ROOT/vcpkg install @response_file.txt
         shell: bash
 
-      - name: Configure CMake
+      - name: Configure CMake x64
         # Use a bash shell so we can use the same syntax for environment variable
         # access regardless of the host operating system
         shell: bash
-        working-directory: ${{runner.workspace}}/build
+        working-directory: ${{runner.workspace}}/build_x64
         # Note the current convention is to use the -S and -B options here to specify source
         # and build directories, but this is only available with CMake 3.13 and higher.
         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
         run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
           -DARCH_64BIT=ON
           -DBUILD_32BIT_LIBS=ON
-          -DGTA_3_FOLDER="$GITHUB_WORKSPACE\artifacts\gta3"
-          -DGTA_VC_FOLDER="$GITHUB_WORKSPACE\artifacts\gtavc"
-          -DGTA_SA_FOLDER="$GITHUB_WORKSPACE\artifacts\gtasa"
+          -DGTA_3_FOLDER="$GITHUB_WORKSPACE/artifacts/gta3"
+          -DGTA_VC_FOLDER="$GITHUB_WORKSPACE/artifacts/gtavc"
+          -DGTA_SA_FOLDER="$GITHUB_WORKSPACE/artifacts/gtasa"
           -DVCPKG_TARGET_TRIPLET=x64-windows-static
 
-      - name: Build
-        working-directory: ${{runner.workspace}}/build
+      - name: Build x64
+        working-directory: ${{runner.workspace}}/build_x64
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config $BUILD_TYPE
 
-      - name: Test
-        working-directory: ${{runner.workspace}}/build
+      - name: Configure CMake x86
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
         shell: bash
-        # Execute tests defined by the CMake configuration.
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest -C $BUILD_TYPE
+        working-directory: ${{runner.workspace}}/build_x86
+        # Note the current convention is to use the -S and -B options here to specify source
+        # and build directories, but this is only available with CMake 3.13 and higher.
+        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
+          -DBUILD_32BIT_LIBS=ON
+          -DGTA_3_FOLDER="$GITHUB_WORKSPACE/artifacts/gta3"
+          -DGTA_VC_FOLDER="$GITHUB_WORKSPACE/artifacts/gtavc"
+          -DGTA_SA_FOLDER="$GITHUB_WORKSPACE/artifacts/gtasa"
+          -DVCPKG_TARGET_TRIPLET=x86-windows-static
+
+      - name: Build x86
+        working-directory: ${{runner.workspace}}/build_x86
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: cmake --build . --config $BUILD_TYPE
+
+      - name: Artifacts
+          - uses: actions/upload-artifact@v2
+            with:
+              name: gta3_rh
+              path: $GITHUB_WORKSPACE/artifacts/gta3
+
+          - uses: actions/upload-artifact@v2
+            with:
+              name: gtavc_rh
+              path: $GITHUB_WORKSPACE/artifacts/gtavc
+
+          - uses: actions/upload-artifact@v2
+            with:
+              name: gtasa_rh
+              path: $GITHUB_WORKSPACE/artifacts/gtasa

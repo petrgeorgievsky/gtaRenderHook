@@ -350,7 +350,7 @@ void DisplayModeTest::CustomRender()
     // Submit command buffer
     mDeviceState->ExecuteCommandBuffer( cmdbuffer, img_aq, render_exec );
     mPerFrameResources[current_frame].mBufferIsRecorded = true;
-    swapchain->Present( frame, render_exec );
+    swapchain->Present( frame.mImageId, render_exec );
 
     static bool res_switch = true;
     if ( res_switch )

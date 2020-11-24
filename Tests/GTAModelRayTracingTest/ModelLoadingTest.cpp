@@ -101,65 +101,66 @@ bool            ModelLoadingTest::CustomInitialize()
        mPerModelConstantBuffer );
     */
     PrepareDFFs();
-    rh::rw::engine::g_cameraContext->deltas.x = 0;
+    // rh::rw::engine::g_cameraContext->deltas.x = 0;
 
-    rh::rw::engine::g_cameraContext->deltas.z = 1;
+    // rh::rw::engine::g_cameraContext->deltas.z = 1;
     return true;
 }
 
 void ModelLoadingTest::RenderUI()
 {
     // ImGui::ShowDemoWindow();
-    ImGui::Begin( "Info" );
+    /*ImGui::Begin( "Info" );
     ImGui::Text( "FrameRate:%f", m_fFrameRate );
     if ( m_fFrameRate > 0.0 )
         ImGui::Text( "FrameTime:%f", 1.0 / m_fFrameRate );
-    ImGui::End();
+    ImGui::End();*/
 }
 
 void ModelLoadingTest::CustomShutdown() { TestSample::CustomShutdown(); }
 void ModelLoadingTest::GenerateQuad( float w, float h )
 {
-    m_vQuad.clear();
+    /* m_vQuad.clear();
 
-    RwIm2DVertex vtx{};
-    vtx.x = vtx.y = vtx.u = vtx.v = 0;
-    vtx.emissiveColor             = 0xFFFFFFFF;
-    m_vQuad.push_back( vtx );
-    vtx.x = w;
-    vtx.y = h;
-    vtx.u = vtx.v = 1;
-    m_vQuad.push_back( vtx );
-    vtx.x = vtx.u = 0;
-    vtx.y         = h;
-    vtx.v         = 1;
-    m_vQuad.push_back( vtx );
-    vtx.x = vtx.y = vtx.u = vtx.v = 0;
-    m_vQuad.push_back( vtx );
-    vtx.x = w;
-    vtx.y = vtx.v = 0;
-    vtx.u         = 1;
-    m_vQuad.push_back( vtx );
-    vtx.x = w;
-    vtx.y = h;
-    vtx.u = vtx.v = 1;
-    m_vQuad.push_back( vtx );
+     RwIm2DVertex vtx{};
+     vtx.x = vtx.y = vtx.u = vtx.v = 0;
+     vtx.emissiveColor             = 0xFFFFFFFF;
+     m_vQuad.push_back( vtx );
+     vtx.x = w;
+     vtx.y = h;
+     vtx.u = vtx.v = 1;
+     m_vQuad.push_back( vtx );
+     vtx.x = vtx.u = 0;
+     vtx.y         = h;
+     vtx.v         = 1;
+     m_vQuad.push_back( vtx );
+     vtx.x = vtx.y = vtx.u = vtx.v = 0;
+     m_vQuad.push_back( vtx );
+     vtx.x = w;
+     vtx.y = vtx.v = 0;
+     vtx.u         = 1;
+     m_vQuad.push_back( vtx );
+     vtx.x = w;
+     vtx.y = h;
+     vtx.u = vtx.v = 1;
+     m_vQuad.push_back( vtx );*/
 }
 
 void ModelLoadingTest::CustomRender()
 {
     RwRGBA clearColor = { 128, 128, 255, 255 };
 
-    rh::engine::IRenderingContext *context =
-        static_cast<rh::engine::IRenderingContext *>(
-            rh::engine::g_pRHRenderer->GetCurrentContext() );
-    context->UpdateBuffer( mBaseConstantBuffer, rh::rw::engine::g_cameraContext,
-                           sizeof( *rh::rw::engine::g_cameraContext ) );
+    // rh::engine::IRenderingContext *context =
+    //    static_cast<rh::engine::IRenderingContext *>(
+    //        rh::engine::g_pRHRenderer->GetCurrentContext() );
+    // context->UpdateBuffer( mBaseConstantBuffer,
+    // rh::rw::engine::g_cameraContext,
+    //                       sizeof( *rh::rw::engine::g_cameraContext ) );
 
     rh::rw::engine::RwCameraClear( m_pMainCamera, &clearColor,
                                    rwCAMERACLEARIMAGE | rwCAMERACLEARZ );
 
-    context->BindConstantBuffers(
+    /*context->BindConstantBuffers(
         rh::engine::ShaderStage::Vertex | rh::engine::ShaderStage::Pixel |
             rh::engine::ShaderStage::Compute,
         { { 0, mBaseConstantBuffer }, { 1, mPerModelConstantBuffer } } );
@@ -186,7 +187,7 @@ void ModelLoadingTest::CustomRender()
         rwRENDERSTATETEXTURERASTER, 0 );
     rh::rw::engine::g_cameraContext->deltas.z =
         min( rh::rw::engine::g_cameraContext->deltas.z + 1,
-             max( max_rt_iterations, 2 ) );
+             max( max_rt_iterations, 2 ) );*/
     RenderUI();
     // bvh_builder->DrawDebug();
 }
@@ -195,8 +196,8 @@ void ModelLoadingTest::CustomUpdate( float dt )
 {
     if ( dt >= 0.0f )
         m_fFrameRate = 1.0f / dt;
-    rh::rw::engine::g_cameraContext->deltas.x = ( rand() % 1000 ) / 1000.0f;
-    rh::rw::engine::g_cameraContext->deltas.y = ( rand() % 1000 ) / 1000.0f;
+    // rh::rw::engine::g_cameraContext->deltas.x = ( rand() % 1000 ) / 1000.0f;
+    // rh::rw::engine::g_cameraContext->deltas.y = ( rand() % 1000 ) / 1000.0f;
     // DIMOUSESTATE mouseCurrState{};
     if ( GetKeyState( VK_CONTROL ) & 0x8000 )
     {
@@ -248,12 +249,12 @@ void ModelLoadingTest::CustomUpdate( float dt )
 
         const DirectX::XMMATRIX rotMat =
             current_rot_xm * rightRotAxis * upRotAxis;
-        ltm->right = { rotMat.r[0].vector4_f32[0], rotMat.r[0].vector4_f32[1],
-                       rotMat.r[0].vector4_f32[2] };
-        ltm->up    = { rotMat.r[1].vector4_f32[0], rotMat.r[1].vector4_f32[1],
-                    rotMat.r[1].vector4_f32[2] };
-        ltm->at    = { rotMat.r[2].vector4_f32[0], rotMat.r[2].vector4_f32[1],
-                    rotMat.r[2].vector4_f32[2] };
+        /* ltm->right = { rotMat.r[0].vector4_f32[0],
+         rotMat.r[0].vector4_f32[1], rotMat.r[0].vector4_f32[2] }; ltm->up    =
+         { rotMat.r[1].vector4_f32[0], rotMat.r[1].vector4_f32[1],
+                     rotMat.r[1].vector4_f32[2] };
+         ltm->at    = { rotMat.r[2].vector4_f32[0], rotMat.r[2].vector4_f32[1],
+                     rotMat.r[2].vector4_f32[2] };*/
     }
     RwV3d &camPos = ltm->pos;
 
@@ -313,6 +314,6 @@ DirectX::XMMATRIX GetWorldMat( float x )
 
 void ModelLoadingTest::PrepareDFFs()
 {
-    m_pMapLoader->BuildScene( rt_scene, ray_tracer,
-                              rh::rw::engine::g_cameraContext->viewPos );
+    // m_pMapLoader->BuildScene( rt_scene, ray_tracer,
+    //                          rh::rw::engine::g_cameraContext->viewPos );
 }
