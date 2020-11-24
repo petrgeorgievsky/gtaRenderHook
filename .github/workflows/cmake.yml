@@ -9,6 +9,7 @@ env:
 
 jobs:
   build:
+    # TODO: Cleanup, improve build times
     # The CMake configure and build commands are platform agnostic and should work equally
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
@@ -22,18 +23,10 @@ jobs:
         # Some projects don't allow in-source building, so create a separate build directory
         # We'll use this as our working directory for all subsequent commands
         run: cmake -E make_directory ${{runner.workspace}}/build_x64
-
-      - name: Create Build Environment 1
-        run: cmake -E make_directory ${{runner.workspace}}/build_x86
-
-      - name: Create Build Environment 2
-        run: cmake -E make_directory ${{runner.workspace}}/artifacts/gta3
-
-      - name: Create Build Environment 3
-        run: cmake -E make_directory ${{runner.workspace}}/artifacts/gtavc
-
-      - name: Create Build Environment 4
-        run: cmake -E make_directory ${{runner.workspace}}/artifacts/gtasa
+          ${{runner.workspace}}/build_x86
+          ${{runner.workspace}}/artifacts/gta3
+          ${{runner.workspace}}/artifacts/gtavc
+          ${{runner.workspace}}/artifacts/gtasa
 
       - name: Cache Vulkan SDK
         id: cache-vulkan-sdk
@@ -41,6 +34,7 @@ jobs:
         with:
           path: "C:\\VulkanSDK\\1.2.135.0"
           key: vulkan-sdk-1.2.135.0
+
       - name: Setup Vulkan
         if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
         run: |
@@ -83,7 +77,7 @@ jobs:
         working-directory: ${{runner.workspace}}/build_x64
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_driver
+        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_driver gta_vc_render_driver gta_sa_render_driver
 
       - name: Configure CMake x86
         # Use a bash shell so we can use the same syntax for environment variable
@@ -108,19 +102,7 @@ jobs:
         working-directory: ${{runner.workspace}}/build_x86
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_hook
-
-      - name: 64bit artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: 64bit_build
-          path: ${{runner.workspace}}/build_x64
-
-      - name: 32bit artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: 86bit_build
-          path: ${{runner.workspace}}/build_x86
+        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_hook gta_vc_render_hook gta_sa_render_hook
 
       - name: Artifacts GTA 3
         uses: actions/upload-artifact@v2
@@ -128,13 +110,11 @@ jobs:
           name: gta3_rh
           path: ${{runner.workspace}}/artifacts/gta3
 
-
       - name: Artifacts GTA VC
         uses: actions/upload-artifact@v2
         with:
           name: gtavc_rh
           path: ${{runner.workspace}}/artifacts/gtavc
-
 
       - name: Artifacts GTA SA
         uses: actions/upload-artifact@v2

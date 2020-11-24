@@ -713,7 +713,7 @@ void VulkanDeviceState::UpdateDescriptorSets(
         vk::WriteDescriptorSetAccelerationStructureNV
             writeDescriptorSetAccelerationStructureNv{};
         writeDescriptorSetAccelerationStructureNv.accelerationStructureCount =
-            params.mASUpdateInfo.Size();
+            static_cast<uint32_t>( params.mASUpdateInfo.Size() );
         std::vector<vk::AccelerationStructureNV> as_list;
 
         std::ranges::transform(

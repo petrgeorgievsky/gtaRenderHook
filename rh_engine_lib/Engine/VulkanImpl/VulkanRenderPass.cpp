@@ -59,14 +59,16 @@ vk::SubpassDescription Convert( const SubpassDescription &desc,
     vk_desc_cpp.mColorAttachments = Convert( desc.mColorAttachments );
     if ( !vk_desc_cpp.mColorAttachments.empty() )
     {
-        vk_desc.colorAttachmentCount = vk_desc_cpp.mColorAttachments.size();
-        vk_desc.pColorAttachments    = vk_desc_cpp.mColorAttachments.data();
+        vk_desc.colorAttachmentCount =
+            static_cast<uint32_t>( vk_desc_cpp.mColorAttachments.size() );
+        vk_desc.pColorAttachments = vk_desc_cpp.mColorAttachments.data();
     }
     vk_desc_cpp.mInputAttachments = Convert( desc.mInputAttachments );
     if ( !vk_desc_cpp.mInputAttachments.empty() )
     {
-        vk_desc.inputAttachmentCount = vk_desc_cpp.mInputAttachments.size();
-        vk_desc.pInputAttachments    = vk_desc_cpp.mInputAttachments.data();
+        vk_desc.inputAttachmentCount =
+            static_cast<uint32_t>( vk_desc_cpp.mInputAttachments.size() );
+        vk_desc.pInputAttachments = vk_desc_cpp.mInputAttachments.data();
     }
 
     if ( desc.mDepthStencilAttachment.has_value() )
