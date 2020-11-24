@@ -77,7 +77,7 @@ jobs:
           -DGTA_3_FOLDER="$GITHUB_WORKSPACE\\artifacts\\gta3\\"
           -DGTA_VC_FOLDER="$GITHUB_WORKSPACE\\artifacts\\gtavc\\"
           -DGTA_SA_FOLDER="$GITHUB_WORKSPACE\\artifacts\\gtasa\\"
-          -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static -A x64
 
       - name: Build x64
         working-directory: ${{runner.workspace}}/build_x64
@@ -102,7 +102,7 @@ jobs:
           -DGTA_3_FOLDER="$GITHUB_WORKSPACE/artifacts/gta3"
           -DGTA_VC_FOLDER="$GITHUB_WORKSPACE/artifacts/gtavc"
           -DGTA_SA_FOLDER="$GITHUB_WORKSPACE/artifacts/gtasa"
-          -DVCPKG_TARGET_TRIPLET=x86-windows-static
+          -DVCPKG_TARGET_TRIPLET=x86-windows-static -A Win32
 
       - name: Build x86
         working-directory: ${{runner.workspace}}/build_x86

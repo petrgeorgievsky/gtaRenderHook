@@ -104,8 +104,8 @@ void D3D11CommandBuffer::BeginRenderPass( const RenderPassBeginInfo &params )
         }
     }
     // Bind Views to OM PipelineState...
-    mContext->OMSetRenderTargets( d3d_rtv_vec.size(), d3d_rtv_vec.data(),
-                                  d3d_dsv );
+    mContext->OMSetRenderTargets( static_cast<UINT>( d3d_rtv_vec.size() ),
+                                  d3d_rtv_vec.data(), d3d_dsv );
 }
 
 void D3D11CommandBuffer::BindPipeline( IPipeline *pipeline )
@@ -128,7 +128,7 @@ void D3D11CommandBuffer::BindVertexBuffers(
         vertex_offsets.push_back( binding.mOffset );
     } );
 
-    mContext->IASetVertexBuffers( start_id, buffers.Size(),
+    mContext->IASetVertexBuffers( start_id, static_cast<UINT>( buffers.Size() ),
                                   vertex_buffers.data(), vertex_strides.data(),
                                   vertex_offsets.data() );
 }
@@ -181,13 +181,13 @@ void rh::engine::D3D11CommandBuffer::BindDescriptorSets(
 }
 
 void rh::engine::D3D11CommandBuffer::CopyBufferToImage(
-    const BufferToImageCopyInfo &copy_info )
+    const BufferToImageCopyInfo & /*copy_info*/ )
 {
     // mContext->CopySubresourceRegion()
 }
 
 void rh::engine::D3D11CommandBuffer::PipelineBarrier(
-    const PipelineBarrierInfo &info )
+    const PipelineBarrierInfo & /*info*/ )
 {
 }
 
@@ -210,7 +210,7 @@ void D3D11CommandBuffer::SetViewports( uint32_t                    start_id,
                                     return view_port;
                                 } );
 
-        mContext->RSSetViewports( vp.size(), vp.data() );
+        mContext->RSSetViewports( static_cast<UINT>( vp.size() ), vp.data() );
     }
 }
 

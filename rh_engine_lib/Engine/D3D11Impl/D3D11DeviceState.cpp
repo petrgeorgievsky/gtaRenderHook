@@ -451,7 +451,7 @@ IDescriptorSetLayout *rh::engine::D3D11DeviceState::CreateDescriptorSetLayout(
 }
 
 IPipelineLayout *rh::engine::D3D11DeviceState::CreatePipelineLayout(
-    const PipelineLayoutCreateParams &params )
+    const PipelineLayoutCreateParams & /*params*/ )
 {
     return nullptr;
 }
