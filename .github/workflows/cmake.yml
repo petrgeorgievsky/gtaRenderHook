@@ -68,7 +68,10 @@ jobs:
         # Note the current convention is to use the -S and -B options here to specify source
         # and build directories, but this is only available with CMake 3.13 and higher.
         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
+        run: cmake $GITHUB_WORKSPACE
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+          -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
+          -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
           -DARCH_64BIT=ON
           -DBUILD_32BIT_LIBS=ON
           -DGTA_3_FOLDER="$GITHUB_WORKSPACE\\artifacts\\gta3\\"
@@ -90,7 +93,11 @@ jobs:
         # Note the current convention is to use the -S and -B options here to specify source
         # and build directories, but this is only available with CMake 3.13 and higher.
         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
+        run: cmake $GITHUB_WORKSPACE
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+          -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
+          -DCMAKE_C_FLAGS="-m32"
+          -DCMAKE_CXX_FLAGS="-m32 /DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
           -DBUILD_32BIT_LIBS=ON
           -DGTA_3_FOLDER="$GITHUB_WORKSPACE/artifacts/gta3"
           -DGTA_VC_FOLDER="$GITHUB_WORKSPACE/artifacts/gtavc"
