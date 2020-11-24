@@ -4,7 +4,7 @@
 using namespace rh::engine;
 
 D3D11DescriptorSetAllocator::D3D11DescriptorSetAllocator(
-    const DescriptorSetAllocatorCreateParams &desc )
+    const DescriptorSetAllocatorCreateParams & /*desc*/ )
 {
 }
 

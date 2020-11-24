@@ -37,7 +37,8 @@ D3D11DescriptorSet::D3D11DescriptorSet(
 
         mBindings.push_back( current_cb_binding );
         mBindingMap[binding.mBindingId] = std::make_pair<int, int>(
-            mBindings.size() - 1, current_cb_binding.mResources.size() - 1 );
+            (int)mBindings.size() - 1,
+            (int)current_cb_binding.mResources.size() - 1 );
     }
 }
 
@@ -97,13 +98,15 @@ void D3D11DescriptorSet::BindToContext( ID3D11DeviceContext *context )
         if ( binding.mShaderStages & ShaderStage::Vertex )
         {
             vs_bind_cmds[static_cast<int32_t>( binding.mResourceType )](
-                context, binding.mStartId, binding.mResources.size(),
+                context, binding.mStartId,
+                static_cast<uint32_t>( binding.mResources.size() ),
                 binding.mResources.data() );
         }
         if ( binding.mShaderStages & ShaderStage::Pixel )
         {
             ps_bind_cmds[static_cast<int32_t>( binding.mResourceType )](
-                context, binding.mStartId, binding.mResources.size(),
+                context, binding.mStartId,
+                static_cast<uint32_t>( binding.mResources.size() ),
                 binding.mResources.data() );
         }
     }

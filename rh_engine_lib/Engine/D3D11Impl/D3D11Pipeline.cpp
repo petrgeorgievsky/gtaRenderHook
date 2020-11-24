@@ -18,6 +18,8 @@ constexpr D3D11_PRIMITIVE_TOPOLOGY Convert( Topology el_type )
         return D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
     case Topology::PointList:
         return D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+    default:
+        return D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_UNDEFINED;
     }
 }
 
@@ -26,25 +28,25 @@ D3D11Pipeline::D3D11Pipeline(
 {
     ID3DBlob *vs_blob = nullptr;
     // fill shader binding table
-    for ( auto shader_stage : create_info.mShaderStages )
+    for ( const auto &shader_stage : create_info.mShaderStages )
     {
         auto shader = static_cast<ID3D11DeviceChild *>(
-            *static_cast<D3D11Shader *>( shader_stage.mShader ) );
+            *dynamic_cast<D3D11Shader *>( shader_stage.mShader ) );
         if ( shader_stage.mStage == ShaderStage::Vertex )
         {
             // fill vertex shader ptr
             mShaderBindTable.mVertexShader =
-                static_cast<ID3D11VertexShader *>( shader );
+                dynamic_cast<ID3D11VertexShader *>( shader );
             mShaderBindTable.mVertexShader->AddRef();
             // extract vs_blob
             vs_blob = static_cast<ID3DBlob *>(
-                *static_cast<D3D11Shader *>( shader_stage.mShader ) );
+                *dynamic_cast<D3D11Shader *>( shader_stage.mShader ) );
         }
         else if ( shader_stage.mStage == ShaderStage::Pixel )
         {
             // fill pixel shader ptr
             mShaderBindTable.mPixelShader =
-                static_cast<ID3D11PixelShader *>( shader );
+                dynamic_cast<ID3D11PixelShader *>( shader );
             mShaderBindTable.mPixelShader->AddRef();
         }
     }
@@ -78,7 +80,7 @@ D3D11Pipeline::D3D11Pipeline(
     }
 
     create_info.mDevice->CreateInputLayout(
-        input_elements.data(), input_elements.size(),
+        input_elements.data(), static_cast<UINT>( input_elements.size() ),
         vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &mInputLayout );
     mTopology = Convert( create_info.mTopology );
 
@@ -102,7 +104,7 @@ D3D11Pipeline::D3D11Pipeline(
     assert( result == S_OK );
 }
 
-D3D11Pipeline::~D3D11Pipeline() {}
+D3D11Pipeline::~D3D11Pipeline() = default;
 
 void D3D11Pipeline::BindToContext( ID3D11DeviceContext *context )
 {
