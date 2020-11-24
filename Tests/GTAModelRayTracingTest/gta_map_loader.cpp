@@ -242,14 +242,14 @@ void GTAMapLoader::BuildScene( rw_raytracing_lib::RayTracingScene *rt_scene,
     for ( auto &ipl_entry : mIPLEntries )
     {
         DirectX::XMVECTOR cam_pos     = DirectX::XMLoadFloat4( &camPos );
-        DirectX::XMVECTOR obj_pos     = { ipl_entry.world_transform.m[3][0],
+        DirectX::XMFLOAT4 obj_pos     = { ipl_entry.world_transform.m[3][0],
                                       ipl_entry.world_transform.m[3][1],
                                       ipl_entry.world_transform.m[3][2],
                                       ipl_entry.world_transform.m[3][3] };
         float             dist_to_cam = 1000;
         DirectX::XMStoreFloat(
-            &dist_to_cam, DirectX::XMVector3Length(
-                              DirectX::XMVectorSubtract( cam_pos, obj_pos ) ) );
+            &dist_to_cam, DirectX::XMVector3Length( DirectX::XMVectorSubtract(
+                              cam_pos, DirectX::XMLoadFloat4( &obj_pos ) ) ) );
         ipl_entry.current_dist_to_cam = dist_to_cam;
     }
 

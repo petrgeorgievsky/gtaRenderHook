@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 project(TextureLoadingTest)
 
@@ -24,9 +24,10 @@ add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
         ${CMAKE_SOURCE_DIR}\\shaders $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders)
 
 # Copy shaders to build destination
-add_custom_command(TARGET TextureLoadingTest POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Tests/TextureLoadingTest/textures $<TARGET_FILE_DIR:TextureLoadingTest>/textures)
+# todo: create test textures
+#add_custom_command(TARGET TextureLoadingTest POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        ${CMAKE_SOURCE_DIR}/Tests/TextureLoadingTest/textures $<TARGET_FILE_DIR:TextureLoadingTest>/textures)
 
 # Copy shaders to build destination
 add_custom_command(TARGET TextureLoadingTest POST_BUILD
