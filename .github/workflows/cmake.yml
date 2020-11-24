@@ -74,9 +74,9 @@ jobs:
           -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
           -DARCH_64BIT=ON
           -DBUILD_32BIT_LIBS=ON
-          -DGTA_3_FOLDER=$GITHUB_WORKSPACE\\artifacts\\gta3\\
-          -DGTA_VC_FOLDER=$GITHUB_WORKSPACE\\artifacts\\gtavc\\
-          -DGTA_SA_FOLDER=$GITHUB_WORKSPACE\\artifacts\\gtasa\\
+          -DGTA_3_FOLDER="${{runner.workspace}}\\artifacts\\gta3\\"
+          -DGTA_VC_FOLDER="${{runner.workspace}}\\artifacts\\gtavc\\"
+          -DGTA_SA_FOLDER="${{runner.workspace}}\\artifacts\\gtasa\\"
           -DVCPKG_TARGET_TRIPLET=x64-windows-static -A x64
 
       - name: Build x64
@@ -99,9 +99,9 @@ jobs:
           -DCMAKE_C_FLAGS="-m32"
           -DCMAKE_CXX_FLAGS="-m32 /DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
           -DBUILD_32BIT_LIBS=ON
-          -DGTA_3_FOLDER=$GITHUB_WORKSPACE\\artifacts\\gta3\\
-          -DGTA_VC_FOLDER=$GITHUB_WORKSPACE\\artifacts\\gtavc\\
-          -DGTA_SA_FOLDER=$GITHUB_WORKSPACE\\artifacts\\gtasa\\
+          -DGTA_3_FOLDER="${{runner.workspace}}\\artifacts\\gta3\\"
+          -DGTA_VC_FOLDER="${{runner.workspace}}\\artifacts\\gtavc\\"
+          -DGTA_SA_FOLDER="${{runner.workspace}}\\artifacts\\gtasa\\"
           -DVCPKG_TARGET_TRIPLET=x86-windows-static -A Win32
 
       - name: Build x86

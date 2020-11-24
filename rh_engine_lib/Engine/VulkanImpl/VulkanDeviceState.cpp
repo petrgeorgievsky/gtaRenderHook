@@ -673,12 +673,11 @@ void VulkanDeviceState::UpdateDescriptorSets(
 {
     vk::WriteDescriptorSet write_desc_set{};
     write_desc_set.dstSet = *dynamic_cast<VulkanDescriptorSet *>( params.mSet );
-    write_desc_set.dstBinding     = params.mBinding;
-    write_desc_set.descriptorType = Convert( params.mDescriptorType );
-    write_desc_set.descriptorCount =
-        ( std::max )( params.mBufferUpdateInfo.Size(),
-                      ( std::max )( params.mASUpdateInfo.Size(),
-                                    params.mImageUpdateInfo.Size() ) );
+    write_desc_set.dstBinding      = params.mBinding;
+    write_desc_set.descriptorType  = Convert( params.mDescriptorType );
+    write_desc_set.descriptorCount = static_cast<uint32_t>( ( std::max )(
+        { params.mBufferUpdateInfo.Size(), params.mASUpdateInfo.Size(),
+          params.mImageUpdateInfo.Size() } ) );
 
     std::vector<vk::DescriptorBufferInfo> buffer_list;
     std::ranges::transform(
@@ -792,14 +791,15 @@ void VulkanDeviceState::DispatchToGPU(
                 std::ranges::transform(
                     submitInfo.mWaitForDep,
                     std::back_inserter( q_sm_stage_flags_vec.back() ),
-                    []( ISyncPrimitive *s ) {
+                    []( ISyncPrimitive * /*s*/ ) {
                         return vk::PipelineStageFlagBits::eTopOfPipe;
                     } );
             }
             if ( !q_sm_waitable_vec.back().empty() )
             {
-                vk_submit.pWaitSemaphores    = q_sm_waitable_vec.back().data();
-                vk_submit.waitSemaphoreCount = q_sm_waitable_vec.back().size();
+                vk_submit.pWaitSemaphores = q_sm_waitable_vec.back().data();
+                vk_submit.waitSemaphoreCount =
+                    static_cast<uint32_t>( q_sm_waitable_vec.back().size() );
                 vk_submit.pWaitDstStageMask =
                     q_sm_stage_flags_vec.back().data();
             }

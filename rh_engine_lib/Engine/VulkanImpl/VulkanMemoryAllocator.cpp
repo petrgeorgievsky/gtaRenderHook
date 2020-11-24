@@ -7,6 +7,7 @@
 #ifdef max
 #undef max
 #endif
+
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 
