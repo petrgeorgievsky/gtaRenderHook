@@ -27,18 +27,10 @@ VulkanDescriptorSetAllocator::VulkanDescriptorSetAllocator(
     ci_impl.pPoolSizes    = pool_sizes.data();
     ci_impl.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
     mPool         = mDevice.createDescriptorPool( ci_impl );
-    std::stringstream ss;
-    ss << "create dpool" << std::hex
-       << reinterpret_cast<uint64_t>( (VkDescriptorPool)mPool );
-    rh::debug::DebugLogger::Log( ss.str() );
 }
 
 VulkanDescriptorSetAllocator::~VulkanDescriptorSetAllocator()
 {
-    std::stringstream ss;
-    ss << "destroy dpool" << std::hex
-       << reinterpret_cast<uint64_t>( (VkDescriptorPool)mPool );
-    rh::debug::DebugLogger::Log( ss.str() );
     mDevice.destroyDescriptorPool( mPool );
 }
 

@@ -6,12 +6,8 @@
 //
 #include <utility>
 
-// d3d11 forwards:
-enum DXGI_FORMAT;
-enum D3D11_COMPARISON_FUNC;
-enum D3D11_STENCIL_OP;
-enum D3D11_BLEND;
-enum D3D11_BLEND_OP;
+// d3d11:
+#include <d3d11.h>
 struct D3D11_DEPTH_STENCIL_DESC;
 struct D3D11_RENDER_TARGET_BLEND_DESC;
 struct D3D11_BLEND_DESC;

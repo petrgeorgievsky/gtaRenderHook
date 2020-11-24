@@ -30,23 +30,10 @@ bool rh::engine::D3D11DeviceOutputView::Present()
 
 bool rh::engine::D3D11DeviceOutputView::Resize( IGPUAllocator *allocator,
                                                 size_t height, size_t width )
-{ /*
-    RECT rc;
-    GetClientRect( m_hWnd, &rc );
-
-    auto windowWidth = static_cast<size_t>( rc.right - rc.left );
-    auto windowHeight = static_cast<size_t>( rc.bottom - rc.top );
-
-    if ( windowWidth == width && windowHeight == height )
-        return true;
-    if ( !SetWindowPos(
-             m_hWnd, nullptr, 0, 0, static_cast<int>( width ), static_cast<int>(
-    height ), 0 ) ) { rh::debug::DebugLogger::Error( TEXT( "Failure while
-    changing window size." ) ); return false;
-    }*/
+{
     DXGI_MODE_DESC desc;
-    desc.Width  = width;
-    desc.Height = height;
+    desc.Width  = static_cast<UINT>( width );
+    desc.Height = static_cast<UINT>( height );
     m_pSwapChain->ResizeTarget( &desc );
 
     if ( m_pBackBufferView )
@@ -60,7 +47,7 @@ bool rh::engine::D3D11DeviceOutputView::Resize( IGPUAllocator *allocator,
              TEXT( "Fatal failure while changing screen size" ) ) )
         return false;
 
-    auto d3d_allocator = static_cast<D3D11GPUAllocator *>( allocator );
+    auto d3d_allocator = dynamic_cast<D3D11GPUAllocator *>( allocator );
     if ( m_pBackBufferView )
         m_pBackBufferView->RecreateViews( d3d_allocator->GetDevice(),
                                           m_pSwapChain );
@@ -87,19 +74,19 @@ IDXGISwapChain *rh::engine::D3D11DeviceOutputView::GetSwapChainImpl()
 }
 
 uint32_t rh::engine::D3D11DeviceOutputView::GetFreeSwapchainImage(
-    rh::engine::ISyncPrimitive *signal_prim )
+    rh::engine::ISyncPrimitive * /*signal_prim */ )
 {
     return 0;
 }
 
 bool rh::engine::D3D11DeviceOutputView::Present(
-    uint32_t swapchain_img, rh::engine::ISyncPrimitive *waitFor )
+    uint32_t /*swapchain_img*/, rh::engine::ISyncPrimitive * /*waitFor */ )
 {
     return false;
 }
 
 rh::engine::IImageView *
-rh::engine::D3D11DeviceOutputView::GetImageView( uint32_t id )
+    rh::engine::D3D11DeviceOutputView::GetImageView( uint32_t /*id*/ )
 {
     return nullptr;
 }
