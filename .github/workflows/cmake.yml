@@ -91,18 +91,22 @@ jobs:
         # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config $BUILD_TYPE
 
-      - name: Artifacts
-          - uses: actions/upload-artifact@v2
-            with:
-              name: gta3_rh
-              path: $GITHUB_WORKSPACE/artifacts/gta3
+      - name: Artifacts GTA 3
+        uses: actions/upload-artifact@v2
+        with:
+          name: gta3_rh
+          path: $GITHUB_WORKSPACE/artifacts/gta3
 
-          - uses: actions/upload-artifact@v2
-            with:
-              name: gtavc_rh
-              path: $GITHUB_WORKSPACE/artifacts/gtavc
 
-          - uses: actions/upload-artifact@v2
-            with:
-              name: gtasa_rh
-              path: $GITHUB_WORKSPACE/artifacts/gtasa
+      - name: Artifacts GTA VC
+        uses: actions/upload-artifact@v2
+        with:
+          name: gtavc_rh
+          path: $GITHUB_WORKSPACE/artifacts/gtavc
+
+
+      - name: Artifacts GTA SA
+        uses: actions/upload-artifact@v2
+        with:
+          name: gtasa_rh
+          path: $GITHUB_WORKSPACE/artifacts/gtasa
