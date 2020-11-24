@@ -43,6 +43,7 @@ DXGI_FORMAT GetDXGIResourceFormat( ImageBufferFormat format )
     case ImageBufferFormat::A8: return DXGI_FORMAT_A8_UNORM;
     case ImageBufferFormat::D24S8: return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
     }
+    return DXGI_FORMAT_UNKNOWN;
 }
 
 String GetD3DShaderPrefix()
@@ -85,9 +86,9 @@ std::pair<DXGI_FORMAT, uint32_t> GetVertexFormat( InputElementType format )
         return std::make_pair( DXGI_FORMAT_R8G8B8A8_UNORM, 4 );
     case InputElementType::Uint32:
         return std::make_pair( DXGI_FORMAT_R32_UINT, 4 );
-    case InputElementType::Unknown:
-        return std::make_pair( DXGI_FORMAT_UNKNOWN, 0 );
+    case InputElementType::Unknown: break;
     }
+    return std::make_pair( DXGI_FORMAT_UNKNOWN, 0 );
 }
 
 D3D11_COMPARISON_FUNC
