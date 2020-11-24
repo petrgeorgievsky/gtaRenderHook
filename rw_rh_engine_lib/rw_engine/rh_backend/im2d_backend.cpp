@@ -48,10 +48,12 @@ int32_t rh::rw::engine::Im2DRenderPrimitiveFunction( RwPrimitiveType primType,
     auto vert_count  = numVertices;
     if ( primType == RwPrimitiveType::rwPRIMTYPETRIFAN )
     {
-        RwIm2DVertex vertices_2[( numVertices - 1 ) * 3];
+        std::vector<RwIm2DVertex> vertices_2;
+        vertices_2.resize( ( numVertices - 1 ) * 3 );
 
         // convert trifan to trilist
-        to_vertices = TriFanToTriList( vertices, vertices_2, vert_count );
+        to_vertices =
+            TriFanToTriList( vertices, vertices_2.data(), vert_count );
 
         EngineClient::gIm2DGlobals.RecordDrawCall( to_vertices, vert_count );
     }
@@ -70,8 +72,11 @@ int32_t rh::rw::engine::Im2DRenderIndexedPrimitiveFunction(
     auto vert_count  = numVertices;
     if ( primType == RwPrimitiveType::rwPRIMTYPETRIFAN )
     {
-        RwIm2DVertex vertices_2[( numVertices - 1 ) * 3];
-        to_vertices = TriFanToTriList( vertices, vertices_2, vert_count );
+        std::vector<RwIm2DVertex> vertices_2;
+        vertices_2.resize( ( numVertices - 1 ) * 3 );
+
+        to_vertices =
+            TriFanToTriList( vertices, vertices_2.data(), vert_count );
         EngineClient::gIm2DGlobals.RecordDrawCall( to_vertices, vert_count,
                                                    indices, numIndices );
     }
