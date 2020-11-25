@@ -37,7 +37,7 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
         mGeometry.push_back( geometryNv );
     }
 
-    mAccelInfo.geometryCount = mGeometry.size();
+    mAccelInfo.geometryCount = static_cast<uint32_t>( mGeometry.size() );
     mAccelInfo.pGeometries   = mGeometry.data();
     mAccelInfo.type          = vk::AccelerationStructureTypeNV::eBottomLevel;
     mAccelInfo.flags =

@@ -178,11 +178,12 @@ RwTextureSetAutoMipmapping( TRUE );
     }
 
     /* Get the textures */
-    if ( !( texture = nullptr /*RwTextureRead( textureName, textureMask )*/ ) )
-    {
-        RwStreamFindChunk( stream, rwID_EXTENSION, nullptr, nullptr );
-        return nullptr;
-    }
+    // if ( !( texture = nullptr /*RwTextureRead( textureName, textureMask )*/ )
+    // )
+    //{
+    RwStreamFindChunk( stream, rwID_EXTENSION, nullptr, nullptr );
+    return nullptr;
+    //}
     //{
     //    /* Skip any extension chunks */
     //    _rwPluginRegistrySkipDataChunks( &textureTKList, stream );

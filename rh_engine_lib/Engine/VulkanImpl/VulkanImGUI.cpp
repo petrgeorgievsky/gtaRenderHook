@@ -113,12 +113,8 @@ VulkanImGUI::VulkanImGUI( const VulkanImGUIStartParams &params )
         VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 } };
 
     VkDescriptorPoolCreateInfo poolCreateInfo{
-        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        nullptr,
-        0,
-        2000,
-        pools.size(),
-        pools.data() };
+        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, nullptr,     0, 2000,
+        static_cast<uint32_t>( pools.size() ),         pools.data() };
 
     vkCreateDescriptorPool( mDevice, &poolCreateInfo, nullptr,
                             &mDescriptorPool );
@@ -136,7 +132,7 @@ void VulkanImGUI::Init( const VulkanImGUIInitParams &params )
     init_info.PipelineCache             = VK_NULL_HANDLE;
     init_info.DescriptorPool            = mDescriptorPool;
     init_info.Allocator                 = VK_NULL_HANDLE;
-    init_info.CheckVkResultFn           = []( VkResult err ) {};
+    init_info.CheckVkResultFn           = []( VkResult ) {};
     init_info.MinImageCount             = 2;
     init_info.ImageCount                = 2;
 

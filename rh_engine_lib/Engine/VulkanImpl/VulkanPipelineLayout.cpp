@@ -17,8 +17,9 @@ rh::engine::VulkanPipelineLayout::VulkanPipelineLayout(
                             } );
 
     vk::PipelineLayoutCreateInfo create_info_impl{};
-    create_info_impl.pSetLayouts    = desc_set_layouts_impl.data();
-    create_info_impl.setLayoutCount = desc_set_layouts_impl.size();
+    create_info_impl.pSetLayouts = desc_set_layouts_impl.data();
+    create_info_impl.setLayoutCount =
+        static_cast<uint32_t>( desc_set_layouts_impl.size() );
 
     mPipelineLayoutImpl = mDevice.createPipelineLayout( create_info_impl );
 }

@@ -14,7 +14,7 @@ VulkanDescriptorSet::~VulkanDescriptorSet()
     mDevice.freeDescriptorSets( mPool, { mDescSet } );
 }
 
-DescriptorType VulkanDescriptorSet::GetType( uint32_t binding_id )
+DescriptorType VulkanDescriptorSet::GetType( uint32_t /*binding_id*/ )
 {
     return DescriptorType::Sampler;
 }

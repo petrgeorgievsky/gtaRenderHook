@@ -160,9 +160,9 @@ void VulkanCommandBuffer::BeginRenderPass( const RenderPassBeginInfo &params )
             return cv_res;
         } );
 
-    auto frame_buffer_info              = params.m_pFrameBuffer->GetInfo();
-    begin_info.pClearValues             = clear_values.data();
-    begin_info.clearValueCount          = clear_values.size();
+    auto frame_buffer_info     = params.m_pFrameBuffer->GetInfo();
+    begin_info.pClearValues    = clear_values.data();
+    begin_info.clearValueCount = static_cast<uint32_t>( clear_values.size() );
     begin_info.renderArea.extent.width  = frame_buffer_info.width;
     begin_info.renderArea.extent.height = frame_buffer_info.height;
     m_vkCmdBuffer.beginRenderPass( begin_info, vk::SubpassContents::eInline );

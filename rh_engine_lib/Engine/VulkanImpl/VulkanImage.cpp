@@ -14,6 +14,7 @@ constexpr vk::ImageType Convert( ImageDimensions dims )
     case ImageDimensions::d2D: return vk::ImageType::e2D;
     case ImageDimensions::d3D: return vk::ImageType::e3D;
     }
+    terminate();
 }
 
 constexpr vk::ImageTiling Convert( ImageTiling tiling )
@@ -23,6 +24,7 @@ constexpr vk::ImageTiling Convert( ImageTiling tiling )
     case ImageTiling::Linear: return vk::ImageTiling::eLinear;
     case ImageTiling::PlatformSpecific: return vk::ImageTiling::eOptimal;
     }
+    terminate();
 }
 
 constexpr vk::SampleCountFlagBits Convert( ImageSampleCount tiling )
@@ -37,6 +39,7 @@ constexpr vk::SampleCountFlagBits Convert( ImageSampleCount tiling )
     case ImageSampleCount::Sample32PPX: return vk::SampleCountFlagBits::e32;
     case ImageSampleCount::Sample64PPX: return vk::SampleCountFlagBits::e64;
     }
+    terminate();
 }
 
 constexpr vk::ImageUsageFlags ConvertImageUsage( uint32_t flags )

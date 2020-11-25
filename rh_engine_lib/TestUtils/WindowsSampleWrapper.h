@@ -74,7 +74,6 @@ class WindowsSampleWrapper
     void *InitWindow();
 
   private:
-    void *              m_pDirectInput = nullptr;
     static void *       m_pMouse;
     WindowsSampleParams m_sParams;
     void *              m_hWnd = nullptr;

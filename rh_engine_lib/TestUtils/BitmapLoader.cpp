@@ -48,7 +48,7 @@ void rh::tests::LoadBMPImage( std::string_view       path,
         texture_buff_rgba[idx * 4]     = texture_buff[idx * 3];
         texture_buff_rgba[idx * 4 + 1] = texture_buff[idx * 3 + 1];
         texture_buff_rgba[idx * 4 + 2] = texture_buff[idx * 3 + 2];
-        texture_buff_rgba[idx * 4 + 3] = 0xFF;
+        texture_buff_rgba[idx * 4 + 3] = 0xF;
     }
 
     engine::ImageBufferCreateParams image_buffer_ci{

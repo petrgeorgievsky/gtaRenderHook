@@ -188,7 +188,8 @@ matList we've created */
                 _rpMaterialListDeinitialize( matList );
                 return false;
             }
-            if ( !( material = RpMaterialStreamRead( stream ) ) )
+            material = RpMaterialStreamRead( stream );
+            if ( !material )
             {
                 free( matindex );
                 _rpMaterialListDeinitialize( matList );

@@ -16,6 +16,7 @@ RendererFactory::CreateRenderer( RenderingAPI api, HWND window, HINSTANCE inst )
     case RenderingAPI::Vulkan:
         return nullptr; // std::make_unique<VulkanRenderer>( window, inst );
     }
+    return nullptr;
 }
 
 std::unique_ptr<ISimple2DRenderer>

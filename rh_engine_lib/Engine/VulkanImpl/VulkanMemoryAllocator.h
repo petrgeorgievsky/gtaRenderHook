@@ -28,6 +28,6 @@ class VulkanMemoryAllocator
   private:
     vk::PhysicalDevice mPhysDevice;
     vk::Device         mDevice;
-    VmaAllocator       mAllocator;
+    VmaAllocator       mAllocator{};
 };
 } // namespace rh::engine

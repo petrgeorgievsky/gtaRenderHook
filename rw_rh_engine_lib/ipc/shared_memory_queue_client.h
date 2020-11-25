@@ -62,10 +62,9 @@ class SharedMemoryTaskQueue
     [[maybe_unused]] void
     RegisterTask( int64_t id, std::unique_ptr<SharedMemoryTask> &&task );
     [[maybe_unused]] void ExecuteTask(
-        int64_t                                               id,
-        std::function<void( MemoryWriter &&memory_writer )> &&serializer =
-            EmptySerializer,
-        std::function<void( MemoryReader &&memory_reader )> &&deserializer =
+        int64_t                                  id,
+        std::function<void( MemoryWriter && )> &&serializer = EmptySerializer,
+        std::function<void( MemoryReader && )> &&deserializer =
             EmptyDeserializer );
     [[maybe_unused]] void TaskLoop();
 

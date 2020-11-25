@@ -43,7 +43,7 @@ D3D11Buffer::~D3D11Buffer()
 {
     debug::DebugLogger::Log( "D3D11Buffer destructor..." );
     std::stringstream ss;
-    ss << "buffer_ptr:" << std::hex << reinterpret_cast<uint32_t>( m_pBuffer )
+    ss << "buffer_ptr:" << std::hex << static_cast<const void *>( m_pBuffer )
        << ";buffer_refcount=";
 
     if ( m_pBuffer )

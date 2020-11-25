@@ -109,10 +109,12 @@ VulkanRenderPass::VulkanRenderPass(
             Convert( subpass_desc, subpass_desc_list_temp.back() ) );
     }
 
-    vk_create_info.pAttachments    = vk_attachment_descs.data();
-    vk_create_info.attachmentCount = vk_attachment_descs.size();
-    vk_create_info.pSubpasses      = subpass_desc_list.data();
-    vk_create_info.subpassCount    = subpass_desc_list.size();
+    vk_create_info.pAttachments = vk_attachment_descs.data();
+    vk_create_info.attachmentCount =
+        static_cast<uint32_t>( vk_attachment_descs.size() );
+    vk_create_info.pSubpasses = subpass_desc_list.data();
+    vk_create_info.subpassCount =
+        static_cast<uint32_t>( subpass_desc_list.size() );
 
     m_vkRenderPass = m_vkDevice.createRenderPass( vk_create_info );
 }

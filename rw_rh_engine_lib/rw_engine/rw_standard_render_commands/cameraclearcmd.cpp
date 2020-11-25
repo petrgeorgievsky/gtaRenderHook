@@ -17,11 +17,6 @@ RwCameraClearCmd::RwCameraClearCmd( RwCamera *camera, RwRGBA *color,
 RwCameraClearCmd::~RwCameraClearCmd() {}
 bool RwCameraClearCmd::Execute()
 {
-    auto *cameraBackendExt = GetBackendCameraExt( m_pCamera );
-    /*cameraBackendExt->mClearFlags = static_cast<uint32_t>( m_nClearMode );
-    cameraBackendExt->mClearColor = *m_aClearColor;
-    cameraBackendExt->mClearDepth = 1.0f;
-*/
     auto &frame       = GetCurrentSceneGraph()->mFrameInfo;
     frame.mClearColor = *m_aClearColor;
     frame.mClearFlags = m_nClearMode;

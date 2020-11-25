@@ -8,12 +8,14 @@
 #undef max
 #endif
 
+#pragma warning( push, 0 )
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
+#pragma warning( pop )
 
 rh::engine::VulkanMemoryAllocator::VulkanMemoryAllocator(
     const VulkanMemoryAllocatorCreateInfo &create_info )
-    : mDevice( create_info.mDevice ), mPhysDevice( create_info.mPhysicalDevice )
+    : mPhysDevice( create_info.mPhysicalDevice ), mDevice( create_info.mDevice )
 {
     VmaAllocatorCreateInfo allocatorInfo = {};
     allocatorInfo.physicalDevice         = mPhysDevice;
@@ -40,18 +42,19 @@ vk::DeviceMemory rh::engine::VulkanMemoryAllocator::AllocateDeviceMemory(
     auto memory_props = mPhysDevice.getMemoryProperties();
 
     auto select_memory_type_id =
-        [&memory_props]( uint32_t                              memoryTypeBits,
-                         vk::Flags<vk::MemoryPropertyFlagBits> properties ) {
+        [&memory_props](
+            uint32_t                                     memoryTypeBits,
+            const vk::Flags<vk::MemoryPropertyFlagBits> &properties ) {
             auto        memory_type_count = memory_props.memoryTypeCount;
             const auto &memory_types      = memory_props.memoryTypes;
-            for ( int32_t i = 0; i < memory_type_count; ++i )
+            for ( uint32_t i = 0; i < memory_type_count; ++i )
             {
-                if ( ( memoryTypeBits & ( 1 << i ) ) &&
+                if ( ( memoryTypeBits & ( 1u << i ) ) &&
                      ( ( memory_types[i].propertyFlags & properties ) ==
                        properties ) )
                     return i;
             }
-            return -1;
+            return ~1u;
         };
 
     vk::MemoryAllocateInfo memory_alloc_info{};

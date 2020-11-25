@@ -50,10 +50,10 @@ VulkanRayTracingPipeline::VulkanRayTracingPipeline(
         } );
 
     createInfoNv.pStages    = shader_stages.data();
-    createInfoNv.stageCount = shader_stages.size();
+    createInfoNv.stageCount = static_cast<uint32_t>( shader_stages.size() );
     createInfoNv.pGroups    = shader_groups.data();
-    createInfoNv.groupCount = shader_groups.size();
-    mGroupCount             = shader_groups.size();
+    createInfoNv.groupCount = static_cast<uint32_t>( shader_groups.size() );
+    mGroupCount             = static_cast<uint32_t>( shader_groups.size() );
     createInfoNv.layout =
         *static_cast<VulkanPipelineLayout *>( create_info.mLayout );
     mPipelineLayout = createInfoNv.layout;

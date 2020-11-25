@@ -18,7 +18,7 @@ void RasterGlobals::Init()
         return;
 
     SceneRasterPool = new rh::engine::ResourcePool<RasterData>(
-        11000, []( RasterData &obj, uint64_t id ) {
+        11000, []( RasterData &obj, uint64_t ) {
             delete obj.mImageView;
             delete obj.mImageBuffer;
         } );
@@ -52,7 +52,7 @@ void *BackendRasterDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
             // serialize
             memory_writer.Write( &img_id );
         },
-        [&img_id]( MemoryReader &&memory_reader ) {} );
+        []( MemoryReader && ) {} );
 
     rasExt->mImageId = 0xBADF00D;
 

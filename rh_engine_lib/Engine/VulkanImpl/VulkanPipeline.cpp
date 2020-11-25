@@ -43,7 +43,7 @@ Convert( const BlendState &                                  state,
     for ( auto s : state.renderTargetBlendState )
         state_store.push_back( Convert( s ) );
     res.pAttachments    = state_store.data();
-    res.attachmentCount = state_store.size();
+    res.attachmentCount = static_cast<uint32_t>( state_store.size() );
 
     return res;
 }
@@ -61,6 +61,7 @@ constexpr vk::CompareOp Convert( ComparisonFunc func )
     case ComparisonFunc::GreaterEqual: return vk::CompareOp::eGreaterOrEqual;
     case ComparisonFunc::Always: return vk::CompareOp::eAlways;
     }
+    return vk::CompareOp::eNever;
 }
 constexpr vk::PipelineDepthStencilStateCreateInfo
 Convert( const DepthStencilState &state )
@@ -105,7 +106,7 @@ VulkanPipeline::VulkanPipeline( const VulkanPipelineCreateInfo &create_info )
         } );
 
     vk_create_info.pStages    = shader_stages.data();
-    vk_create_info.stageCount = shader_stages.size();
+    vk_create_info.stageCount = static_cast<uint32_t>( shader_stages.size() );
 
     // Vertex Input State initialization
 
@@ -141,11 +142,13 @@ VulkanPipeline::VulkanPipeline( const VulkanPipelineCreateInfo &create_info )
 
     vk::PipelineVertexInputStateCreateInfo vertex_state{};
 
-    vertex_state.pVertexBindingDescriptions    = binding_desc.data();
-    vertex_state.vertexBindingDescriptionCount = binding_desc.size();
+    vertex_state.pVertexBindingDescriptions = binding_desc.data();
+    vertex_state.vertexBindingDescriptionCount =
+        static_cast<uint32_t>( binding_desc.size() );
 
-    vertex_state.pVertexAttributeDescriptions    = input_attributes.data();
-    vertex_state.vertexAttributeDescriptionCount = input_attributes.size();
+    vertex_state.pVertexAttributeDescriptions = input_attributes.data();
+    vertex_state.vertexAttributeDescriptionCount =
+        static_cast<uint32_t>( input_attributes.size() );
 
     vk_create_info.pVertexInputState = &vertex_state;
 
@@ -186,11 +189,12 @@ VulkanPipeline::VulkanPipeline( const VulkanPipelineCreateInfo &create_info )
     vk_create_info.pViewportState = &viewport_state;
 
     vk::PipelineDynamicStateCreateInfo dynamic_state{};
-    array dynamic_states            = { vk::DynamicState::eViewport,
+    array dynamic_states         = { vk::DynamicState::eViewport,
                              vk::DynamicState::eScissor };
-    dynamic_state.pDynamicStates    = dynamic_states.data();
-    dynamic_state.dynamicStateCount = dynamic_states.size();
-    vk_create_info.pDynamicState    = &dynamic_state;
+    dynamic_state.pDynamicStates = dynamic_states.data();
+    dynamic_state.dynamicStateCount =
+        static_cast<uint32_t>( dynamic_states.size() );
+    vk_create_info.pDynamicState = &dynamic_state;
 
     // --------------------------------TODO TERRITORY
     mPipelineImpl = mDevice.createGraphicsPipeline( nullptr, vk_create_info );
