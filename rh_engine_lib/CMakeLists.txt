@@ -39,16 +39,11 @@ set(VULKAN_SOURCES
         Engine/VulkanImpl/VulkanImGUI.cpp)
 
 set(D3D11_SOURCES
-
-        #Engine/D3D11Impl/D3D11Renderer.cpp
         Engine/D3D11Impl/D3D11DeviceState.cpp
-        Engine/D3D11Impl/D3D11RenderingContext.cpp
         Engine/D3D11Impl/D3D11CommandBuffer.cpp
-        #Engine/D3D11Impl/D3D11GPUAllocator.cpp
         Engine/D3D11Impl/D3D11Convert.cpp
         Engine/D3D11Impl/D3D11InputLayout.cpp
         Engine/D3D11Impl/D3D11DeviceOutputView.cpp
-        Engine/D3D11Impl/D3D11Im2DPipeline.cpp
         Engine/D3D11Impl/D3D11PrimitiveBatch.cpp
         Engine/D3D11Impl/D3D11Window.cpp
         Engine/D3D11Impl/D3D11Swapchain.cpp
@@ -63,14 +58,6 @@ set(D3D11_SOURCES
         Engine/D3D11Impl/D3D11DescriptorSet.cpp
         Engine/D3D11Impl/D3D11Buffer.cpp
         Engine/D3D11Impl/D3D11Pipeline.cpp
-
-        Engine/D3D11Impl/RenderStateCache/D3D11RenderStateCache.cpp
-        Engine/D3D11Impl/RenderStateCache/D3D11RasterizerStateCache.cpp
-        Engine/D3D11Impl/RenderStateCache/D3D11SampleStateCache.cpp
-        Engine/D3D11Impl/RenderStateCache/D3D11ShaderResourceCache.cpp
-        Engine/D3D11Impl/RenderStateCache/D3D11BlendStateCache.cpp
-        Engine/D3D11Impl/RenderStateCache/D3D11DepthStencilStateCache.cpp
-        Engine/D3D11Impl/RenderStateCache/D3D11RenderTargetCache.cpp
 
         Engine/D3D11Impl/Buffers/D3D11Buffer.cpp
         Engine/D3D11Impl/Buffers/D3D11IndexBuffer.cpp
@@ -109,7 +96,6 @@ else ()
 endif ()
 
 set(SOURCES ${SOURCES}
-        Engine/RendererFactory.cpp
         TestUtils/TestSample.cpp
         DebugUtils/DebugLogger.cpp
         Engine/VulkanImpl/VulkanDebugUtils.cpp

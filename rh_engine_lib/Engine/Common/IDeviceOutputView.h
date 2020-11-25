@@ -4,7 +4,6 @@
 
 namespace rh::engine
 {
-class IGPUAllocator;
 class ISyncPrimitive;
 
 /**
@@ -26,8 +25,6 @@ class IDeviceOutputView
     IDeviceOutputView &operator=( IDeviceOutputView && ) = delete;
 
     virtual bool Present()                      = 0;
-    virtual bool Resize( IGPUAllocator *allocator, size_t height,
-                         size_t width )         = 0;
     virtual bool SetFullscreenFlag( bool flag ) = 0;
 
     virtual uint32_t GetFreeSwapchainImage( ISyncPrimitive *signal_prim ) = 0;

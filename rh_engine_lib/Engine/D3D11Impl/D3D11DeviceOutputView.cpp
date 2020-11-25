@@ -1,6 +1,5 @@
 #include "D3D11DeviceOutputView.h"
 #include "D3D11Common.h"
-#include "Engine/D3D11Impl/D3D11GPUAllocator.h"
 #include "Engine/D3D11Impl/ImageBuffers/D3D11BackBuffer.h"
 #include <d3d11_3.h>
 
@@ -26,32 +25,6 @@ bool rh::engine::D3D11DeviceOutputView::Present()
         m_pSwapChain->Present( 0, 0 ),
         TEXT( "Fatal failure: either your GPU was removed, or some other nasty "
               "thing happend, please restart application" ) );
-}
-
-bool rh::engine::D3D11DeviceOutputView::Resize( IGPUAllocator *allocator,
-                                                size_t height, size_t width )
-{
-    DXGI_MODE_DESC desc;
-    desc.Width  = static_cast<UINT>( width );
-    desc.Height = static_cast<UINT>( height );
-    m_pSwapChain->ResizeTarget( &desc );
-
-    if ( m_pBackBufferView )
-        m_pBackBufferView->ReleaseViews();
-    // TODO: RELEASE ALL BBuffs before resize, and recreate them after
-
-    if ( !CALL_D3D_API(
-             m_pSwapChain->ResizeBuffers( 0, static_cast<UINT>( width ),
-                                          static_cast<UINT>( height ),
-                                          DXGI_FORMAT_UNKNOWN, 0 ),
-             TEXT( "Fatal failure while changing screen size" ) ) )
-        return false;
-
-    auto d3d_allocator = dynamic_cast<D3D11GPUAllocator *>( allocator );
-    if ( m_pBackBufferView )
-        m_pBackBufferView->RecreateViews( d3d_allocator->GetDevice(),
-                                          m_pSwapChain );
-    return true;
 }
 
 bool rh::engine::D3D11DeviceOutputView::SetFullscreenFlag( bool flag )

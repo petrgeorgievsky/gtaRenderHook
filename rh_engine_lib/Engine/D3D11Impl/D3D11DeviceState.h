@@ -1,8 +1,6 @@
 #pragma once
 #include "../Common/IDeviceState.h"
 #include "D3D11DeviceOutputView.h"
-#include "D3D11GPUAllocator.h"
-#include "D3D11RenderingContext.h"
 #include <d3dcommon.h>
 
 // d3d11 struct forwards:
@@ -39,8 +37,6 @@ class D3D11DeviceState : public IDeviceState
     bool SetCurrentDisplayMode( unsigned int id ) override;
     ICommandBuffer *GetMainCommandBuffer() override;
 
-    bool InitRenderingContext( D3D11RenderingContext &context,
-                               D3D11GPUAllocator *allocator, bool deferred );
     [[nodiscard]] D3D_FEATURE_LEVEL GetFeatureLevel() const;
 
     IWindow *CreateDeviceWindow( HWND window, const OutputInfo &info ) override;
@@ -52,7 +48,7 @@ class D3D11DeviceState : public IDeviceState
     void ExecuteCommandBuffer( ICommandBuffer *buffer, ISyncPrimitive *waitFor,
                                ISyncPrimitive *signal ) override;
     virtual IPipeline *
-             CreateRasterPipeline( const RasterPipelineCreateParams &params ) override;
+    CreateRasterPipeline( const RasterPipelineCreateParams &params ) override;
     IShader *CreateShader( const ShaderDesc &params ) override;
     IBuffer *CreateBuffer( const BufferCreateInfo &params ) override;
     IImageBuffer *
@@ -110,33 +106,25 @@ class D3D11DeviceState : public IDeviceState
 
     ICommandBuffer *mMainCmdBuffer = nullptr;
 
-    // Унаследовано через IDeviceState
     virtual IDescriptorSetLayout *CreateDescriptorSetLayout(
         const DescriptorSetLayoutCreateParams &params ) override;
 
-    // Унаследовано через IDeviceState
     virtual IPipelineLayout *
     CreatePipelineLayout( const PipelineLayoutCreateParams &params ) override;
 
-    // Унаследовано через IDeviceState
     virtual void WaitForGPU() override;
 
-    // Унаследовано через IDeviceState
     virtual IDescriptorSetAllocator *CreateDescriptorSetAllocator(
         const DescriptorSetAllocatorCreateParams &params ) override;
 
-    // Унаследовано через IDeviceState
     virtual void
     UpdateDescriptorSets( const DescriptorSetUpdateInfo &params ) override;
 
-    // Унаследовано через IDeviceState
     virtual ISampler *CreateSampler( const SamplerDesc &params ) override;
 
-    // Унаследовано через IDeviceState
     virtual IImageView *
     CreateImageView( const ImageViewCreateInfo &params ) override;
 
-    // Унаследовано через IDeviceState
     virtual ICommandBuffer *CreateCommandBuffer() override;
 };
 

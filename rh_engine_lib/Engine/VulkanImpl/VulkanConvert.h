@@ -46,6 +46,7 @@ constexpr vk::ImageLayout Convert( ImageLayout rh_layout )
     case ImageLayout::FragmentDensityMapOptimal:
         return vk::ImageLayout::eFragmentDensityMapOptimalEXT;
     }
+    return vk::ImageLayout::eUndefined;
 }
 
 constexpr vk::Format Convert( ImageBufferFormat rh_format )
@@ -84,6 +85,7 @@ constexpr vk::Format Convert( ImageBufferFormat rh_format )
     case ImageBufferFormat::BGRA4: return vk::Format::eB4G4R4A4UnormPack16;
     case ImageBufferFormat::D24S8: return vk::Format::eD32SfloatS8Uint;
     }
+    return vk::Format::eUndefined;
 }
 
 constexpr vk::AttachmentLoadOp Convert( LoadOp rh_load_op )
@@ -94,6 +96,7 @@ constexpr vk::AttachmentLoadOp Convert( LoadOp rh_load_op )
     case LoadOp::Clear: return vk::AttachmentLoadOp::eClear;
     case LoadOp::DontCare: return vk::AttachmentLoadOp::eDontCare;
     }
+    return vk::AttachmentLoadOp::eDontCare;
 }
 
 constexpr vk::AttachmentStoreOp Convert( StoreOp rh_store_op )
@@ -103,6 +106,7 @@ constexpr vk::AttachmentStoreOp Convert( StoreOp rh_store_op )
     case StoreOp::Store: return vk::AttachmentStoreOp::eStore;
     case StoreOp::DontCare: return vk::AttachmentStoreOp::eDontCare;
     }
+    return vk::AttachmentStoreOp::eDontCare;
 }
 
 constexpr vk::PipelineBindPoint Convert( PipelineBindPoint rh_pipe_point )
@@ -114,6 +118,7 @@ constexpr vk::PipelineBindPoint Convert( PipelineBindPoint rh_pipe_point )
     case PipelineBindPoint::RayTracing:
         return vk::PipelineBindPoint::eRayTracingNV;
     }
+    return vk::PipelineBindPoint::eGraphics;
 }
 
 constexpr vk::DescriptorType Convert( DescriptorType type )
@@ -135,6 +140,7 @@ constexpr vk::DescriptorType Convert( DescriptorType type )
     case DescriptorType::StorageTexture:
         return vk::DescriptorType::eStorageImage;
     }
+    return {};
 }
 
 constexpr vk::PipelineStageFlagBits Convert( PipelineStage rh_pipe_stage )
@@ -177,6 +183,7 @@ constexpr vk::PipelineStageFlagBits Convert( PipelineStage rh_pipe_stage )
     case PipelineStage::RayTracing:
         return vk::PipelineStageFlagBits::eRayTracingShaderNV;
     }
+    return {};
 }
 
 constexpr vk::AccessFlagBits Convert( MemoryAccessFlags rh_pipe_stage )
@@ -218,6 +225,7 @@ constexpr vk::AccessFlagBits Convert( MemoryAccessFlags rh_pipe_stage )
     case MemoryAccessFlags::AccelerationStructureWrite:
         return vk::AccessFlagBits::eAccelerationStructureWriteNV;
     }
+    return {};
 }
 
 constexpr vk::ShaderStageFlagBits Convert( ShaderStage stage )
@@ -235,6 +243,7 @@ constexpr vk::ShaderStageFlagBits Convert( ShaderStage stage )
     case RayHit: return vk::ShaderStageFlagBits::eClosestHitNV;
     case RayAnyHit: return vk::ShaderStageFlagBits::eAnyHitNV;
     }
+    return {};
 }
 
 constexpr vk::VertexInputRate Convert( VertexBindingRate rate )
@@ -244,6 +253,7 @@ constexpr vk::VertexInputRate Convert( VertexBindingRate rate )
     case VertexBindingRate::PerInstance: return vk::VertexInputRate::eInstance;
     case VertexBindingRate::PerVertex: return vk::VertexInputRate::eVertex;
     }
+    return {};
 }
 
 constexpr vk::Format Convert( InputElementType el_type )
@@ -261,6 +271,7 @@ constexpr vk::Format Convert( InputElementType el_type )
     case InputElementType::Uint32: return vk::Format::eR32Uint;
     case InputElementType::Unknown: return vk::Format::eUndefined;
     }
+    return vk::Format::eUndefined;
 }
 
 constexpr vk::PrimitiveTopology Convert( Topology el_type )
@@ -271,6 +282,7 @@ constexpr vk::PrimitiveTopology Convert( Topology el_type )
     case Topology::LineList: return vk::PrimitiveTopology::eLineList;
     case Topology::PointList: return vk::PrimitiveTopology::ePointList;
     }
+    return {};
 }
 
 constexpr vk::BlendFactor Convert( BlendOp op )
@@ -296,5 +308,6 @@ constexpr vk::BlendFactor Convert( BlendOp op )
     case BlendOp::Src1Alpha: return vk::BlendFactor::eSrc1Alpha;
     case BlendOp::InvSrc1Alpha: return vk::BlendFactor::eOneMinusSrc1Alpha;
     }
+    return {};
 }
 } // namespace rh::engine

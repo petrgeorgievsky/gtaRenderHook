@@ -38,8 +38,6 @@ class VulkanDeviceOutputView : public IDeviceOutputView
     bool Present( uint32_t swapchain_img, ISyncPrimitive *waitFor ) override;
 
     bool Present() override;
-    bool Resize( rh::engine::IGPUAllocator *allocator, size_t height,
-                 size_t width ) override;
     bool SetFullscreenFlag( bool flag ) override;
 
     IImageView *GetImageView( uint32_t id ) override;

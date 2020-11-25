@@ -377,15 +377,6 @@ bool D3D11DeviceState::SetCurrentDisplayMode( unsigned int id )
     return true;
 }
 
-bool rh::engine::D3D11DeviceState::InitRenderingContext(
-    D3D11RenderingContext &context, D3D11GPUAllocator *allocator,
-    bool /*deferred*/ )
-{
-    // TODO: Add deferred context creation
-    context.Init( m_pImmediateContext, allocator );
-    return true;
-}
-
 D3D_FEATURE_LEVEL rh::engine::D3D11DeviceState::GetFeatureLevel() const
 {
     return m_featureLevel;

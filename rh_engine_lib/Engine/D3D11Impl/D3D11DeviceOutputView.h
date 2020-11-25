@@ -10,17 +10,16 @@ struct ID3D11Device;
 struct ID3D11DeviceContext;
 struct IDXGISwapChain;
 
-namespace rh::engine {
+namespace rh::engine
+{
 class D3D11BackBuffer;
 class D3D11DeviceOutputView : public IDeviceOutputView
 {
-public:
+  public:
     D3D11DeviceOutputView( HWND window, IDXGISwapChain *swapChainPtr );
     ~D3D11DeviceOutputView() override;
 
     bool Present() override;
-
-    bool Resize( IGPUAllocator *allocator, size_t height, size_t width ) override;
 
     bool SetFullscreenFlag( bool flag ) override;
 
@@ -32,7 +31,7 @@ public:
     bool Present( uint32_t swapchain_img, ISyncPrimitive *waitFor ) override;
     IImageView *GetImageView( uint32_t id ) override;
 
-private:
+  private:
     /// Back-buffer swap-chain. Stores 2 or more image buffers,
     /// one being processed in this frame, and other from previous frames.
     IDXGISwapChain *m_pSwapChain = nullptr;

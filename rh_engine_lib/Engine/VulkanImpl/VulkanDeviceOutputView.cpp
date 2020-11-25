@@ -125,12 +125,6 @@ bool VulkanDeviceOutputView::Present()
     return true;
 }
 
-bool rh::engine::VulkanDeviceOutputView::Resize( rh::engine::IGPUAllocator *,
-                                                 size_t, size_t )
-{
-    return false;
-}
-
 bool rh::engine::VulkanDeviceOutputView::SetFullscreenFlag( bool flag )
 {
     return flag;

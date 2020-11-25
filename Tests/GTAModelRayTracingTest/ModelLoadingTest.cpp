@@ -10,7 +10,6 @@
 #include <Engine/Common/types/image_buffer_info.h>
 #include <Engine/Common/types/image_buffer_type.h>
 #include <Engine/Common/types/shader_stage.h>
-#include <Engine/D3D11Impl/D3D11Renderer.h>
 #include <common_headers.h>
 #include <filesystem>
 #include <gbuffer/gbuffer_pass.h>
