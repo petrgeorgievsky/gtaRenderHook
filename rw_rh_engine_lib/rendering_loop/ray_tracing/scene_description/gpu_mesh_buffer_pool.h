@@ -31,7 +31,7 @@ class GPUModelBuffersPool
         auto slot_id = GetModelId( id );
         if ( slot_id < 0 )
             return;
-        mSlotAvailability[slot_id] = 0;
+        mSlotAvailability[slot_id] = 1;
         mBuffersRemap[id]          = -1;
     }
 

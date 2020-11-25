@@ -103,6 +103,9 @@ VulkanDeviceState::VulkanDeviceState()
     VULKAN_HPP_DEFAULT_DISPATCHER.init( m_vkInstance );
     // Enumerate GPUS
     m_aAdapters = m_vkInstance.enumeratePhysicalDevices();
+    // Query GPU info
+    for ( auto gpu : m_aAdapters )
+        m_aAdaptersInfo.push_back( { gpu } );
 
     // TODO: Move to constexpr debug checks
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
@@ -744,7 +747,9 @@ VulkanDeviceState::CreateTLAS( const TLASCreateInfo &create_info )
 VulkanRayTracingPipeline *VulkanDeviceState::CreateRayTracingPipeline(
     const RayTracingPipelineCreateInfo &create_info )
 {
-    return new VulkanRayTracingPipeline( { create_info, m_vkDevice } );
+    return new VulkanRayTracingPipeline(
+        { create_info, m_vkDevice,
+          m_aAdaptersInfo[m_uiCurrentAdapter].GetRayTracingInfo() } );
 }
 
 VulkanComputePipeline *VulkanDeviceState::CreateComputePipeline(

@@ -11,11 +11,12 @@ namespace rh::engine
 
 VulkanRayTracingPipeline::VulkanRayTracingPipeline(
     const VulkanRayTracingPipelineCreateInfo &create_info )
-    : mDevice( create_info.mDevice )
+    : mDevice( create_info.mDevice ), mGPUInfo( create_info.mGPUInfo )
 {
     vk::RayTracingPipelineCreateInfoNV createInfoNv{};
-    createInfoNv.maxRecursionDepth = 10;
-
+    // TODO: allow to change
+    createInfoNv.maxRecursionDepth =
+        ( std::max )( 10u, create_info.mGPUInfo.mMaxRecursionDepth );
     std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{};
     shader_stages.reserve( create_info.mShaderStages.Size() );
     std::ranges::transform(
@@ -68,9 +69,18 @@ VulkanRayTracingPipeline::~VulkanRayTracingPipeline()
 std::vector<uint8_t> VulkanRayTracingPipeline::GetShaderBindingTable()
 {
     std::vector<uint8_t> data{};
-    data.resize( mGroupCount * 32 );
+    auto aligned_handle_size = mGPUInfo.GetAlignedSGHandleSize();
+    data.resize( mGroupCount * aligned_handle_size );
     mDevice.getRayTracingShaderGroupHandlesNV( mPipelineImpl, 0, mGroupCount,
                                                data.size(), data.data() );
     return data;
+}
+uint32_t VulkanRayTracingPipeline::GetSBTHandleSize()
+{
+    return mGPUInfo.GetAlignedSGHandleSize();
+}
+uint32_t VulkanRayTracingPipeline::GetSBTHandleSizeUnalign()
+{
+    return mGPUInfo.mShaderGroupHandleSize;
 }
 } // namespace rh::engine

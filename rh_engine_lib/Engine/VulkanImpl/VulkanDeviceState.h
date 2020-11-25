@@ -12,6 +12,7 @@
 #include "Engine/VulkanImpl/VulkanRayTracingPipeline.h"
 #include "Engine/VulkanImpl/VulkanTopLevelAccelerationStructure.h"
 #include "VulkanComputePipeline.h"
+#include "VulkanGPUInfo.h"
 #include "VulkanImGUI.h"
 
 #include <common.h>
@@ -109,6 +110,9 @@ class VulkanDeviceState : public IDeviceState
 
     // Avaliable physical devices
     std::vector<vk::PhysicalDevice> m_aAdapters;
+
+    // Physical devices info
+    std::vector<VulkanGPUInfo> m_aAdaptersInfo;
 
     // Vulkan debug callback
     VkDebugUtilsMessengerEXT m_debugCallback{};

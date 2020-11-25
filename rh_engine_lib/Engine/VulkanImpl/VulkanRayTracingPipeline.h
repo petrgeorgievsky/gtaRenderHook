@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "VulkanGPUInfo.h"
 #include <Engine/Common/ArrayProxy.h>
 #include <Engine/Common/IPipeline.h>
 #include <common.h>
@@ -34,7 +35,8 @@ struct RayTracingPipelineCreateInfo
 struct VulkanRayTracingPipelineCreateInfo : RayTracingPipelineCreateInfo
 {
     // Dependencies...
-    vk::Device mDevice;
+    vk::Device                  mDevice;
+    const VulkanRayTracingInfo &mGPUInfo;
 };
 
 class VulkanRayTracingPipeline
@@ -44,13 +46,16 @@ class VulkanRayTracingPipeline
         const VulkanRayTracingPipelineCreateInfo &create_info );
     ~VulkanRayTracingPipeline();
     std::vector<uint8_t> GetShaderBindingTable();
+    uint32_t             GetSBTHandleSize();
+    uint32_t             GetSBTHandleSizeUnalign();
 
     operator vk::Pipeline() { return mPipelineImpl; }
 
   private:
-    vk::Pipeline       mPipelineImpl;
-    vk::PipelineLayout mPipelineLayout;
-    vk::Device         mDevice;
-    uint32_t           mGroupCount;
+    vk::Pipeline                mPipelineImpl;
+    vk::PipelineLayout          mPipelineLayout;
+    vk::Device                  mDevice;
+    uint32_t                    mGroupCount;
+    const VulkanRayTracingInfo &mGPUInfo;
 };
 } // namespace rh::engine

@@ -17,7 +17,7 @@ void InitClient()
     /// initialize SM task queue
     DeviceGlobals::SharedMemoryTaskQueue =
         new SharedMemoryTaskQueue( { .mName  = "RenderHookTaskQueue",
-                                     .mSize  = 1024 * 1024 * 32,
+                                     .mSize  = 1024 * 1024 * 64,
                                      .mOwner = true } );
     /// Create sub-process
     STARTUPINFOA start_info{ .cb = sizeof( start_info ) };
@@ -40,7 +40,7 @@ void InitRenderer()
     /// initialize SM task queue
     DeviceGlobals::SharedMemoryTaskQueue = new SharedMemoryTaskQueue(
         { .mName = "RenderHookTaskQueue",
-          .mSize = 1024 * 1024 * 32,
+          .mSize = 1024 * 1024 * 64,
           .mOwner =
               IPCSettings::mMode == IPCRenderMode::MultiThreadedRenderer } );
 

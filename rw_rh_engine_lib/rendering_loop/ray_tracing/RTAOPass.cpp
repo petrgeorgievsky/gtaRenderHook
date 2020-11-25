@@ -180,8 +180,18 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     mShaderBindTable =
         device.CreateBuffer( { .mSize  = static_cast<uint32_t>( sbt.size() ),
                                .mUsage = BufferUsage::RayTracingScratch,
-                               .mFlags = BufferFlags::Immutable,
-                               .mInitDataPtr = sbt.data() } );
+                               .mFlags = BufferFlags::Dynamic } );
+    /// Weird stuff from nvidia tutorial, I guess they fill in some data with
+    /// garbage?
+    // TODO: move somewhere else
+    auto *pData = reinterpret_cast<uint8_t *>( mShaderBindTable->Lock() );
+    for ( uint32_t g = 0; g < rt_groups.size(); g++ )
+    {
+        memcpy( pData, sbt.data() + g * mPipeline->GetSBTHandleSizeUnalign(),
+                mPipeline->GetSBTHandleSizeUnalign() );
+        pData += mPipeline->GetSBTHandleSize();
+    }
+    mShaderBindTable->Unlock();
 
     mVarianceTAFilter = params.mTAFilterPipeline->GetFilter(
         VATAPassParam{ .mDevice        = device,
@@ -233,7 +243,7 @@ void RTAOPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer )
           .mPipelineLayout    = mPipeLayout,
           .mDescriptorSets    = desc_sets } );
 
-    uint32_t sbt_size = 32;
+    uint32_t sbt_size = mPipeline->GetSBTHandleSize();
     vk_cmd_buff->BindRayTracingPipeline( mPipeline );
     vk_cmd_buff->DispatchRays( { .mRayGenBuffer = mShaderBindTable,
                                  .mMissBuffer   = mShaderBindTable,

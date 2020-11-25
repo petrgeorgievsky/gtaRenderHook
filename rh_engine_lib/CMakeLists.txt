@@ -36,7 +36,8 @@ set(VULKAN_SOURCES
         Engine/VulkanImpl/VulkanTopLevelAccelerationStructure.cpp
         Engine/VulkanImpl/VulkanRayTracingPipeline.cpp
         Engine/VulkanImpl/VulkanComputePipeline.cpp
-        Engine/VulkanImpl/VulkanImGUI.cpp)
+        Engine/VulkanImpl/VulkanImGUI.cpp
+        Engine/VulkanImpl/VulkanGPUInfo.cpp)
 
 set(D3D11_SOURCES
         Engine/D3D11Impl/D3D11DeviceState.cpp
