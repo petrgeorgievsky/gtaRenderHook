@@ -11,10 +11,11 @@ VulkanGPUInfo::VulkanGPUInfo( vk::PhysicalDevice gpu )
 
     // fill rt properties
 
-    auto properties =
-        gpu.getProperties2<vk::PhysicalDeviceProperties2,
-                           vk::PhysicalDeviceRayTracingPropertiesNV>();
-    auto rt_props = properties.get<vk::PhysicalDeviceRayTracingPropertiesNV>();
+    VkPhysicalDeviceRayTracingPropertiesNV rt_props{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV, nullptr };
+    VkPhysicalDeviceProperties2 props{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &rt_props };
+    vkGetPhysicalDeviceProperties2( gpu, &props );
     mRTInfo.mShaderGroupHandleSize  = rt_props.shaderGroupHandleSize;
     mRTInfo.mShaderGroupHandleAlign = rt_props.shaderGroupBaseAlignment;
     mRTInfo.mMaxRecursionDepth      = rt_props.maxRecursionDepth;

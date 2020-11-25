@@ -24,7 +24,7 @@ VulkanComputePipeline::VulkanComputePipeline(
         *dynamic_cast<VulkanShader *>( create_info.mShaderStage.mShader );
     vk_ci.stage = vk_desc;
 
-    mPipelineImpl = mDevice.createComputePipeline( nullptr, vk_ci );
+    mPipelineImpl = mDevice.createComputePipeline( nullptr, vk_ci ).value;
 }
 VulkanComputePipeline::~VulkanComputePipeline()
 {

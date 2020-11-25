@@ -197,7 +197,8 @@ VulkanPipeline::VulkanPipeline( const VulkanPipelineCreateInfo &create_info )
     vk_create_info.pDynamicState = &dynamic_state;
 
     // --------------------------------TODO TERRITORY
-    mPipelineImpl = mDevice.createGraphicsPipeline( nullptr, vk_create_info );
+    mPipelineImpl =
+        mDevice.createGraphicsPipeline( nullptr, vk_create_info ).value;
 }
 VulkanPipeline::~VulkanPipeline()
 {

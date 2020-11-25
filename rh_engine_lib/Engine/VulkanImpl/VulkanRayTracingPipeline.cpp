@@ -58,7 +58,8 @@ VulkanRayTracingPipeline::VulkanRayTracingPipeline(
     createInfoNv.layout =
         *static_cast<VulkanPipelineLayout *>( create_info.mLayout );
     mPipelineLayout = createInfoNv.layout;
-    mPipelineImpl = mDevice.createRayTracingPipelineNV( nullptr, createInfoNv );
+    mPipelineImpl =
+        mDevice.createRayTracingPipelineNV( nullptr, createInfoNv ).value;
 }
 
 VulkanRayTracingPipeline::~VulkanRayTracingPipeline()
@@ -71,8 +72,10 @@ std::vector<uint8_t> VulkanRayTracingPipeline::GetShaderBindingTable()
     std::vector<uint8_t> data{};
     auto aligned_handle_size = mGPUInfo.GetAlignedSGHandleSize();
     data.resize( mGroupCount * aligned_handle_size );
-    mDevice.getRayTracingShaderGroupHandlesNV( mPipelineImpl, 0, mGroupCount,
-                                               data.size(), data.data() );
+
+    (void)VULKAN_HPP_DEFAULT_DISPATCHER.vkGetRayTracingShaderGroupHandlesNV(
+        mDevice, mPipelineImpl, 0, mGroupCount, (uint32_t)data.size(),
+        (void *)data.data() );
     return data;
 }
 uint32_t VulkanRayTracingPipeline::GetSBTHandleSize()
