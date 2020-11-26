@@ -44,6 +44,7 @@ class RTAOPass;
 class RTShadowsPass;
 class DeferredCompositionPass;
 class VarAwareTempAccumFilterPipe;
+class VarAwareTempAccumColorFilterPipe;
 class TiledLightCulling;
 class RTReflectionRaysPass;
 class DebugPipeline;
@@ -79,7 +80,9 @@ class RayTracingRenderer : public IFrameRenderer
     ScopedPointer<rh::engine::IImageView>   mDepthBufferView;
 
     ScopedPointer<VarAwareTempAccumFilterPipe> mVarTempAcummFilterPipe;
-    ScopedPointer<BilateralFilterPipeline>     mBilPipe;
+    ScopedPointer<VarAwareTempAccumColorFilterPipe>
+                                           mVarTempAccumColorFilterPipe;
+    ScopedPointer<BilateralFilterPipeline> mBilPipe;
     ScopedPointer<rh::engine::VulkanTopLevelAccelerationStructure> mTLAS;
     std::vector<DrawCallInfo>              mSkinDrawCallList;
     ScopedPointer<DebugPipeline>           mDebugPipeline;

@@ -80,18 +80,18 @@ void main()
     vec4 _depth;
     vec4 normals_diff;
     vec4 _weights = vec4( (1 - _offset.x) * (1 - _offset.y),
-                          _offset.x       * (1 - _offset.y),
-                          (1 - _offset.x) * _offset.y,
-                          _offset.x       * _offset.y);
+    _offset.x       * (1 - _offset.y),
+    (1 - _offset.x) * _offset.y,
+    _offset.x       * _offset.y);
     vec4 _color = vec4(0);
     vec4 _values;
     vec4 _values_sq;
 
     ivec2 reproject_samples[4] = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } };
     ivec2 tex_ids[4] = { _pos + reproject_samples[0],
-                         _pos + reproject_samples[1],
-                         _pos + reproject_samples[2],
-                         _pos + reproject_samples[3] };
+    _pos + reproject_samples[1],
+    _pos + reproject_samples[2],
+    _pos + reproject_samples[3] };
 
     for (int i = 0; i < 4; i++)
     {
@@ -115,14 +115,14 @@ void main()
     // Reproject temporal sample per-pixel cache
     if(reject_sample)
     {
-        imageStore(tx_new_tspp_cache, pos, 0);
+        imageStore(tx_new_tspp_cache, pos, (0).xxxx);
         imageStore(tx_reprojected_moments, pos, (0).xxxx);
-        imageStore(tx_reprojected_frame, pos, (0).xxxx);
+        imageStore(tx_reprojected_color, pos, (0).xxxx);
     }
     else
     {
         imageStore(tx_new_tspp_cache, pos, (_tspp).xxxx);
         imageStore(tx_reprojected_moments, pos, vec2(dot(_values, _weights), dot(_values_sq, _weights)).xyyy);
-        imageStore(tx_reprojected_frame, pos, _color);
+        imageStore(tx_reprojected_color, pos, _color);
     }
 }

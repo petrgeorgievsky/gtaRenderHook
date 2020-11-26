@@ -6,7 +6,7 @@
 #include "BilateralFilterPass.h"
 #include "CameraDescription.h"
 #include "RTSceneDescription.h"
-#include "VarAwareTempAccumFilter.h"
+#include "VarAwareTempAccumFilterColor.h"
 #include "rendering_loop/DescriptorGenerator.h"
 #include "utils.h"
 #include <Engine/Common/IDeviceState.h>
@@ -257,13 +257,13 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
 
     // Filtering
     mVarianceTAFilter = params.mTAFilterPipeline->GetFilter(
-        VATAPassParam{ .mDevice        = device,
-                       .mWidth         = mWidth,
-                       .mHeight        = mHeight,
-                       .mInputValue    = mShadowsBufferView,
-                       .mPrevDepth     = params.mPrevNormalsView,
-                       .mCurrentDepth  = params.mNormalsView,
-                       .mMotionVectors = params.mMotionVectorsView } );
+        VATAColorPassParam{ .mDevice        = device,
+                            .mWidth         = mWidth,
+                            .mHeight        = mHeight,
+                            .mInputValue    = mShadowsBufferView,
+                            .mPrevDepth     = params.mPrevNormalsView,
+                            .mCurrentDepth  = params.mNormalsView,
+                            .mMotionVectors = params.mMotionVectorsView } );
     mBilFil0 = params.mBilFilterPipe->GetPass( BilateralFilterPassParams{
         .mInputImage        = mVarianceTAFilter->GetAccumulatedValue(),
         .mTempImage         = mTempBlurShadowsBufferView,
@@ -315,8 +315,8 @@ void RTShadowsPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
                                  sbt_size, sbt_size, mShaderBindTable,
                                  sbt_size * 2, sbt_size, nullptr, 0, 0, mWidth,
                                  mHeight, 1 } );
-    // mVarianceTAFilter->Execute( vk_cmd_buff );
-    // mBilFil0->Execute( vk_cmd_buff );
+    mVarianceTAFilter->Execute( vk_cmd_buff );
+    mBilFil0->Execute( vk_cmd_buff );
     /*
         ImageMemoryBarrierInfo shader_ro_barrier = GetLayoutTransformBarrier(
             mShadowsBuffer, ImageLayout::General, ImageLayout::ShaderReadOnly );
@@ -331,8 +331,7 @@ void RTShadowsPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
 }
 rh::engine::IImageView *RTShadowsPass::GetShadowsView()
 {
-    return mShadowsBufferView; // mBlurredShadowsBufferView; //
-                               // mVarianceTAFilter->GetAccumulatedValue();
+    return mBlurredShadowsBufferView;
 }
 
 } // namespace rh::rw::engine

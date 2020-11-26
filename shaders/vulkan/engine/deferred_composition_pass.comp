@@ -53,7 +53,7 @@ void main()
         vec3 vSkyLightCol = sky_cfg.skyColor.xyz;//vec3(90.0/255.0, 205.0/255.0, 255.0/255.0);
         float AmbientOcclusion = imageLoad(tx_ao, pos).r;
         // Diffuse term consists of diffuse lighting, and sky ambient
-        vec3 DiffuseTerm = ((Lighting.rba) + AmbientOcclusion * vSkyLightCol.rgb);
+        vec3 DiffuseTerm = ((Lighting.rgb) + AmbientOcclusion * vSkyLightCol.rgb);
         // Specular term consists of specular highlights
         // vec3 SpecularTerm = (Lighting.w * Lighting.xyz) * AmbientOcclusion;
         // Reflection term is computed before deferred

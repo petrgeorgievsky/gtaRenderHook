@@ -104,7 +104,7 @@ struct ImageRegion
     int32_t                mOffsetZ;
     uint32_t               mExtentW;
     uint32_t               mExtentH;
-    uint32_t               mExtentD;
+    uint32_t               mExtentD = 1;
 };
 
 struct BufferToImageCopySubInfo

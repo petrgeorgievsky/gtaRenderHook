@@ -28,17 +28,22 @@ template <typename T> using SPtr = ScopedPointer<T>;
 class CameraDescription;
 class BilateralFilterPipeline;
 class BilateralFilterPass;
+class VATAColorFilterPass;
+class VarAwareTempAccumColorFilterPipe;
 
 struct RTReflectionInitParams
 {
-    uint32_t                 mWidth;
-    uint32_t                 mHeight;
-    RTSceneDescription *     mScene;
-    CameraDescription *      mCamera;
-    BilateralFilterPipeline *mBilateralFilterPipe;
-    rh::engine::IImageView * mNormalsView;
-    rh::engine::IImageView * mMaterialsView;
-    rh::engine::IBuffer *    mSkyCfg;
+    uint32_t                          mWidth;
+    uint32_t                          mHeight;
+    RTSceneDescription *              mScene;
+    CameraDescription *               mCamera;
+    VarAwareTempAccumColorFilterPipe *mVarTAColorFilterPipe;
+    BilateralFilterPipeline *         mBilateralFilterPipe;
+    rh::engine::IImageView *          mNormalsView;
+    rh::engine::IImageView *          mPrevNormalsView;
+    rh::engine::IImageView *          mMotionVectorsView;
+    rh::engine::IImageView *          mMaterialsView;
+    rh::engine::IBuffer *             mSkyCfg;
 };
 
 class RTReflectionRaysPass
@@ -60,6 +65,7 @@ class RTReflectionRaysPass
     RTSceneDescription *               mScene;
     CameraDescription *                mCamera;
     ScopedPointer<BilateralFilterPass> mBilFil0;
+    ScopedPointer<VATAColorFilterPass> mVarTAColorPass;
 
     SPtr<rh::engine::IDescriptorSetAllocator> mDescSetAlloc;
     SPtr<rh::engine::IDescriptorSetLayout>    mRayTraceSetLayout;
@@ -96,5 +102,15 @@ class RTReflectionRaysPass
     SPtr<rh::engine::IImageView>   mNoiseBufferView;
 
     SPtr<rh::engine::ISampler> mTextureSampler;
+
+    ScopedPointer<rh::engine::IBuffer> mParamsBuffer;
+
+    struct ReflParams
+    {
+        float    min_distance  = 0.001f;
+        float    max_distance  = 10.0f;
+        float    max_draw_dist = 1000.0f;
+        uint32_t time_stamp    = 0;
+    } mParams;
 };
 } // namespace rh::rw::engine

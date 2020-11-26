@@ -13,6 +13,7 @@
 #include "RTShadowsPass.h"
 #include "RTTlasBuildPass.h"
 #include "VarAwareTempAccumFilter.h"
+#include "VarAwareTempAccumFilterColor.h"
 #include "debug_pipeline.h"
 #include "scene_description/gpu_mesh_buffer_pool.h"
 #include "scene_description/gpu_texture_pool.h"
@@ -41,8 +42,9 @@ RayTracingRenderer::RayTracingRenderer()
     mSkinAnimationPipe = new SkinAnimationPipeline( 110 );
 
     // Filters
-    mVarTempAcummFilterPipe = new VarAwareTempAccumFilterPipe();
-    mBilPipe                = new BilateralFilterPipeline();
+    mVarTempAcummFilterPipe      = new VarAwareTempAccumFilterPipe();
+    mVarTempAccumColorFilterPipe = new VarAwareTempAccumColorFilterPipe();
+    mBilPipe                     = new BilateralFilterPipeline();
 
     // RT Stuff
     mBlasBuildPass    = new RTBlasBuildPass();
@@ -71,7 +73,7 @@ RayTracingRenderer::RayTracingRenderer()
         rtx_resolution_h,
         mSceneDescription,
         mCameraDescription,
-        mVarTempAcummFilterPipe,
+        mVarTempAccumColorFilterPipe,
         mBilPipe,
         mTiledLightCulling->GetTileListBuffer(),
         mTiledLightCulling->GetLightIdxListBuffer(),
@@ -82,14 +84,17 @@ RayTracingRenderer::RayTracingRenderer()
         mPrimaryRaysPass->GetSkyCfg(),
     } );
     mRTReflectionPass = new RTReflectionRaysPass( RTReflectionInitParams{
-        .mWidth               = rtx_resolution_w,
-        .mHeight              = rtx_resolution_h,
-        .mScene               = mSceneDescription,
-        .mCamera              = mCameraDescription,
-        .mBilateralFilterPipe = mBilPipe,
-        .mNormalsView         = mPrimaryRaysPass->GetNormalsView(),
-        .mMaterialsView       = mPrimaryRaysPass->GetMaterialsView(),
-        .mSkyCfg              = mPrimaryRaysPass->GetSkyCfg() } );
+        .mWidth                = rtx_resolution_w,
+        .mHeight               = rtx_resolution_h,
+        .mScene                = mSceneDescription,
+        .mCamera               = mCameraDescription,
+        .mVarTAColorFilterPipe = mVarTempAccumColorFilterPipe,
+        .mBilateralFilterPipe  = mBilPipe,
+        .mNormalsView          = mPrimaryRaysPass->GetNormalsView(),
+        .mPrevNormalsView      = mPrimaryRaysPass->GetPrevNormalsView(),
+        .mMotionVectorsView    = mPrimaryRaysPass->GetMotionView(),
+        .mMaterialsView        = mPrimaryRaysPass->GetMaterialsView(),
+        .mSkyCfg               = mPrimaryRaysPass->GetSkyCfg() } );
 
     // Opaque object composition:
     mDeferredComposePass =

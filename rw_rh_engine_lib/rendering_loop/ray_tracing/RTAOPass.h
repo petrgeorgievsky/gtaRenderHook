@@ -80,11 +80,10 @@ class RTAOPass
     ScopedPointer<rh::engine::IImageBuffer> mNoiseBuffer;
     ScopedPointer<rh::engine::IImageView>   mNoiseBufferView;
 
-    ScopedPointer<rh::engine::IBuffer> mParamsBuffer;
-
     ScopedPointer<rh::engine::ISampler> mTextureSampler;
     uint32_t                            mWidth;
     uint32_t                            mHeight;
+    ScopedPointer<rh::engine::IBuffer>  mParamsBuffer;
 
     struct AOParams
     {

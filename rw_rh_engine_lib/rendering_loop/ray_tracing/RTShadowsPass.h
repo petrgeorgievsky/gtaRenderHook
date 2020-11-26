@@ -28,8 +28,8 @@ namespace rh::rw::engine
 using rh::engine::ScopedPointer;
 class RTSceneDescription;
 class CameraDescription;
-class VarAwareTempAccumFilterPipe;
-class VATAFilterPass;
+class VarAwareTempAccumColorFilterPipe;
+class VATAColorFilterPass;
 class BilateralFilterPipeline;
 class BilateralFilterPass;
 struct Light
@@ -41,19 +41,19 @@ struct Light
 
 struct RTShadowsInitParams
 {
-    uint32_t                     mWidth;
-    uint32_t                     mHeight;
-    RTSceneDescription *         mScene;
-    CameraDescription *          mCamera;
-    VarAwareTempAccumFilterPipe *mTAFilterPipeline;
-    BilateralFilterPipeline *    mBilFilterPipe;
-    rh::engine::IBuffer *        mTileBuffer;
-    rh::engine::IBuffer *        mLightIdxBuffer;
-    rh::engine::IBuffer *        mLightBuffer;
-    rh::engine::IImageView *     mNormalsView;
-    rh::engine::IImageView *     mPrevNormalsView;
-    rh::engine::IImageView *     mMotionVectorsView;
-    rh::engine::IBuffer *        mSkyCfg;
+    uint32_t                          mWidth;
+    uint32_t                          mHeight;
+    RTSceneDescription *              mScene;
+    CameraDescription *               mCamera;
+    VarAwareTempAccumColorFilterPipe *mTAFilterPipeline;
+    BilateralFilterPipeline *         mBilFilterPipe;
+    rh::engine::IBuffer *             mTileBuffer;
+    rh::engine::IBuffer *             mLightIdxBuffer;
+    rh::engine::IBuffer *             mLightBuffer;
+    rh::engine::IImageView *          mNormalsView;
+    rh::engine::IImageView *          mPrevNormalsView;
+    rh::engine::IImageView *          mMotionVectorsView;
+    rh::engine::IBuffer *             mSkyCfg;
 };
 
 class RTShadowsPass
@@ -71,7 +71,7 @@ class RTShadowsPass
     RTSceneDescription *               mScene;
     CameraDescription *                mCamera;
     ScopedPointer<BilateralFilterPass> mBilFil0;
-    ScopedPointer<VATAFilterPass>      mVarianceTAFilter;
+    ScopedPointer<VATAColorFilterPass> mVarianceTAFilter;
 
     ScopedPointer<rh::engine::IDescriptorSetAllocator> mDescSetAlloc;
     ScopedPointer<rh::engine::IDescriptorSetLayout>    mRayTraceSetLayout;

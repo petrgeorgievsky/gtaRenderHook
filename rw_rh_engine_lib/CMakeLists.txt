@@ -51,8 +51,38 @@ set(SOURCES
         rw_engine/system_funcs/rw_device_system_handler.cpp
         scene_graph.cpp ipc/ipc_utils.cpp ipc/shared_memory_queue_client.cpp
         ipc/shared_memory_queue_client.h rw_engine/rh_backend/mesh_rendering_backend.cpp
-        rw_engine/rh_backend/mesh_rendering_backend.h rendering_loop/ray_tracing/RayTracingRenderer.cpp
-        rendering_loop/ray_tracing/RayTracingRenderer.h rendering_loop/frame_renderer.h rendering_loop/deferred_render/GBufferPass.cpp rendering_loop/deferred_render/GBufferPass.h rw_engine/rh_backend/material_backend.cpp rw_engine/rh_backend/material_backend.h rw_engine/rw_rh_skin_pipeline.cpp rw_engine/rw_rh_skin_pipeline.h rw_engine/rh_backend/skinned_mesh_backend.cpp rw_engine/rh_backend/skinned_mesh_backend.h rendering_loop/ray_tracing/scene_description/gpu_texture_pool.cpp rendering_loop/ray_tracing/scene_description/gpu_texture_pool.h rendering_loop/ray_tracing/scene_description/gpu_mesh_buffer_pool.cpp rendering_loop/ray_tracing/scene_description/gpu_mesh_buffer_pool.h rendering_loop/compute_skin_animation.cpp rendering_loop/compute_skin_animation.h rw_engine/rh_backend/Im2DRenderer.cpp rw_engine/rh_backend/Im2DRenderer.h ipc/MemoryWriter.cpp ipc/MemoryWriter.h ipc/MemoryReader.cpp ipc/MemoryReader.h rendering_loop/ray_tracing/RTBlasBuildPass.cpp rendering_loop/ray_tracing/RTBlasBuildPass.h rendering_loop/ray_tracing/RTTlasBuildPass.cpp rendering_loop/ray_tracing/RTTlasBuildPass.h rendering_loop/ray_tracing/RTSceneDescription.cpp rendering_loop/ray_tracing/RTSceneDescription.h rendering_loop/ray_tracing/RTPrimaryRaysPass.cpp rendering_loop/ray_tracing/RTPrimaryRaysPass.h rendering_loop/ray_tracing/RTAOPass.cpp rendering_loop/ray_tracing/RTAOPass.h rendering_loop/ray_tracing/CameraDescription.cpp rendering_loop/ray_tracing/CameraDescription.h rendering_loop/DescriptorGenerator.cpp rendering_loop/DescriptorGenerator.h rendering_loop/ray_tracing/utils.cpp rendering_loop/ray_tracing/utils.h rendering_loop/ray_tracing/BilateralFilterPass.cpp rendering_loop/ray_tracing/BilateralFilterPass.h rendering_loop/ray_tracing/DeferredCompositionPass.cpp rendering_loop/ray_tracing/DeferredCompositionPass.h rendering_loop/ray_tracing/ComputeVelocityBuffer.cpp rendering_loop/ray_tracing/ComputeVelocityBuffer.h rendering_loop/ray_tracing/RTShadowsPass.cpp rendering_loop/ray_tracing/RTShadowsPass.h rendering_loop/main_renderer.cpp rendering_loop/ray_tracing/VarAwareTempAccumFilter.cpp rendering_loop/ray_tracing/VarAwareTempAccumFilter.h rendering_loop/ray_tracing/scene_description/gpu_scene_materials_pool.cpp rendering_loop/ray_tracing/tiled_light_culling.cpp rendering_loop/ray_tracing/tiled_light_culling.h rendering_loop/ray_tracing/RTReflectionRaysPass.cpp rendering_loop/ray_tracing/RTReflectionRaysPass.h rendering_loop/ray_tracing/debug_pipeline.cpp rendering_loop/ray_tracing/debug_pipeline.h rw_engine/rh_backend/im3d_backend.cpp rw_engine/rh_backend/im3d_backend.h rw_engine/rh_backend/im3d_renderer.cpp rw_engine/rh_backend/im3d_renderer.h)
+        rendering_loop/ray_tracing/RayTracingRenderer.cpp
+        rendering_loop/deferred_render/GBufferPass.cpp
+        rw_engine/rh_backend/material_backend.cpp
+        rw_engine/rw_rh_skin_pipeline.cpp
+        rw_engine/rh_backend/skinned_mesh_backend.cpp
+        rendering_loop/ray_tracing/scene_description/gpu_texture_pool.cpp
+        rendering_loop/ray_tracing/scene_description/gpu_mesh_buffer_pool.cpp
+        rendering_loop/compute_skin_animation.cpp
+        rw_engine/rh_backend/Im2DRenderer.cpp
+        ipc/MemoryWriter.cpp
+        ipc/MemoryReader.cpp
+        rendering_loop/ray_tracing/RTBlasBuildPass.cpp
+        rendering_loop/ray_tracing/RTTlasBuildPass.cpp
+        rendering_loop/ray_tracing/RTSceneDescription.cpp
+        rendering_loop/ray_tracing/RTPrimaryRaysPass.cpp
+        rendering_loop/ray_tracing/RTAOPass.cpp
+        rendering_loop/ray_tracing/CameraDescription.cpp
+        rendering_loop/DescriptorGenerator.cpp
+        rendering_loop/ray_tracing/utils.cpp
+        rendering_loop/ray_tracing/BilateralFilterPass.cpp
+        rendering_loop/ray_tracing/DeferredCompositionPass.cpp
+        rendering_loop/ray_tracing/ComputeVelocityBuffer.cpp
+        rendering_loop/ray_tracing/RTShadowsPass.cpp
+        rendering_loop/main_renderer.cpp
+        rendering_loop/ray_tracing/VarAwareTempAccumFilter.cpp
+        rendering_loop/ray_tracing/VarAwareTempAccumFilterColor.cpp
+        rendering_loop/ray_tracing/scene_description/gpu_scene_materials_pool.cpp
+        rendering_loop/ray_tracing/tiled_light_culling.cpp
+        rendering_loop/ray_tracing/RTReflectionRaysPass.cpp
+        rendering_loop/ray_tracing/debug_pipeline.cpp
+        rw_engine/rh_backend/im3d_backend.cpp
+        rw_engine/rh_backend/im3d_renderer.cpp)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 #set_property(TARGET rw_rh_engine_lib PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

@@ -1,0 +1,77 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_GOOGLE_include_directive : enable
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// TODO: use samplers?
+layout(binding = 0, set = 0, rgba16f) uniform image2D tx_new_frame;
+layout(binding = 1, set = 0, rgba16f) uniform image2D tx_reprojected_frame;
+layout(binding = 2, set = 0, rgba16f) uniform image2D tx_blended_frame;
+layout(binding = 3, set = 0, rg16f) uniform image2D tx_reprojected_moments;
+layout(binding = 4, set = 0, rg16f) uniform image2D tx_blended_moments;
+layout(binding = 5, set = 0) uniform PassArgs
+{
+    float accumulation;
+    vec3 padding;
+} pass_args;
+layout(binding = 6, set = 0, r16f) uniform image2D tx_blur_strength;
+layout(binding = 7, set = 0, r8ui) uniform uimage2D tx_old_tspp_cache;
+layout(binding = 8, set = 0, r8ui) uniform uimage2D tx_new_tspp_cache;
+
+void main()
+{
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+    const vec3 g_luma = vec3(.299, .587, .114);
+    vec4 value = imageLoad(tx_new_frame, pos);
+
+    float velocity = value.w;
+    float current_luma = dot(value.xyz,g_luma);
+    float sq_mean_luma = current_luma*current_luma;
+
+    vec2 moments = vec2(current_luma, sq_mean_luma);
+    vec2 _moments = imageLoad(tx_reprojected_moments, pos).xy;
+    vec4 _value = imageLoad(tx_reprojected_frame, pos);
+
+    uint tspp = imageLoad(tx_old_tspp_cache, pos).r;
+    float accum = 0;
+    float blur_strength = 10;
+    float variance = 1.0f;
+    const uint min_tspp_for_temp_var = 2;
+    const uint max_tspp = 64;
+    const uint max_tspp_for_blur = 32;
+    vec4 result = imageLoad(tx_reprojected_moments, pos);
+    vec2 result_moments = moments;
+    if (tspp > 0)
+    {
+        accum = pass_args.accumulation;
+        tspp = min(tspp + 1, velocity < 0.01f ? max_tspp : 1);
+        float max_value = min(_moments.x + _moments.y, 1.0f);
+        float min_value = max(_moments.x - _moments.y, 0.0f);
+
+        float inv_tspp = 1.0f/float(tspp);
+
+        result_moments = (_moments * (float(tspp) - 1) + moments) / float(tspp);
+        result = (_value * (float(tspp) - 1) + value) / float(tspp);
+
+        float variance_temp = sq_mean_luma - result.x * result.x;
+        variance_temp = max(0, variance_temp);
+        variance = tspp >= min_tspp_for_temp_var ? variance_temp : variance;
+        variance = max(0.1, variance);
+    }
+    else
+    {
+        tspp = 1;
+        result = value;
+        result_moments = moments;
+    }
+    float tspp_ratio = min(min(tspp, max_tspp_for_blur) / float(max_tspp_for_blur), 0.75f);
+    blur_strength = pow(1 - tspp_ratio, 1.5f) * variance;
+
+    imageStore(tx_blended_moments, pos, result_moments.xyyy);
+    imageStore(tx_blended_frame, pos, result);
+    imageStore(tx_new_tspp_cache, pos, tspp.xxxx);
+    imageStore(tx_blur_strength, pos, blur_strength.xxxx);
+}

@@ -6,6 +6,8 @@
 #include "BilateralFilterPass.h"
 #include "CameraDescription.h"
 #include "DescriptorUpdater.h"
+#include "VarAwareTempAccumFilter.h"
+#include "VarAwareTempAccumFilterColor.h"
 #include "utils.h"
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/sampler_filter.h>
@@ -14,6 +16,7 @@
 #include <rendering_loop/DescriptorGenerator.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
+
 namespace rh::rw::engine
 {
 using namespace rh::engine;
@@ -59,6 +62,8 @@ RTReflectionRaysPass::RTReflectionRaysPass(
                         ShaderStage::RayGen )
         .AddDescriptor( 0, 6, 0, DescriptorType::ROTexture, 1,
                         ShaderStage::RayGen )
+        .AddDescriptor( 0, 7, 0, DescriptorType::ROBuffer, 1,
+                        ShaderStage::RayGen )
         .AddDescriptor( 1, 0, 0, DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
         .AddDescriptor( 1, 1, 0, DescriptorType::StorageTexture, 1,
@@ -74,6 +79,9 @@ RTReflectionRaysPass::RTReflectionRaysPass(
     mBlurStrPipeLayout =
         device.CreatePipelineLayout( { .mSetLayouts = { mBlurStrSetLayout } } );
 
+    mParamsBuffer =
+        device.CreateBuffer( { .mSize  = sizeof( ReflParams ),
+                               .mUsage = BufferUsage::ConstantBuffer } );
     // Desc set allocator
     mDescSetAlloc = descriptorGenerator.FinalizeAllocator();
 
@@ -135,10 +143,20 @@ RTReflectionRaysPass::RTReflectionRaysPass(
         { mReflectionBlurStrBuffer, ImageBufferFormat::R16,
           ImageViewUsage::RWTexture } );
 
+    mVarTAColorPass = params.mVarTAColorFilterPipe->GetFilter( {
+        .mDevice        = device,
+        .mWidth         = mWidth,
+        .mHeight        = mHeight,
+        .mInputValue    = mReflectionBufferView,
+        .mPrevDepth     = params.mPrevNormalsView,
+        .mCurrentDepth  = params.mNormalsView,
+        .mMotionVectors = params.mMotionVectorsView,
+    } );
+
     BilateralFilterPassParams p{};
     p.mNormalDepthBuffer = params.mNormalsView;
-    p.mInputImage        = mReflectionBufferView;
-    p.mBlurStrength      = mReflectionBlurStrBufferView;
+    p.mInputImage        = mVarTAColorPass->GetAccumulatedValue();
+    p.mBlurStrength      = mVarTAColorPass->GetBlurIntensity();
     p.mOutputImage       = mFilteredReflectionBufferView;
     p.mTempImage         = mTempBlurReflectionBufferView;
     p.mOutputImageBuffer = mFilteredReflectionBuffer;
@@ -169,6 +187,9 @@ RTReflectionRaysPass::RTReflectionRaysPass(
             { { ImageLayout::General, params.mMaterialsView, nullptr } } )
         .UpdateImage( 6, DescriptorType::ROTexture,
                       { { ImageLayout::General, mNoiseBufferView, nullptr } } )
+        .UpdateBuffer(
+            7, DescriptorType::ROBuffer,
+            { { 0, sizeof( ReflParams ), (IBuffer *)mParamsBuffer } } )
         .End()
         // blur str
         .Begin( mBlurStrSet )
@@ -249,6 +270,8 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,
           .mASUpdateInfo   = { { tlas } } } );
+    mParams.time_stamp++;
+    mParamsBuffer->Update( &mParams, sizeof( mParams ) );
 
     /// TRANSFORM TO GENERAL
     // Prepare image memory to transfer to
@@ -292,6 +315,7 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
     vk_cmd_buff->BindComputePipeline( mBlurStrPipeline );
     vk_cmd_buff->DispatchCompute( { 1920 / 8, 1080 / 8, 1 } );
 
+    mVarTAColorPass->Execute( vk_cmd_buff );
     mBilFil0->Execute( vk_cmd_buff );
 }
 } // namespace rh::rw::engine
