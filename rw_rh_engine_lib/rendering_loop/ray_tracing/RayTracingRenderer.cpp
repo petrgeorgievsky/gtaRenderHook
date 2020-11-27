@@ -100,7 +100,8 @@ RayTracingRenderer::RayTracingRenderer()
     mDeferredComposePass =
         new DeferredCompositionPass( DeferredCompositionPassParams{
             mPrimaryRaysPass->GetAlbedoView(),
-            mPrimaryRaysPass->GetNormalsView(), mRTAOPass->GetAOView(),
+            mPrimaryRaysPass->GetNormalsView(),
+            mPrimaryRaysPass->GetMaterialsView(), mRTAOPass->GetAOView(),
             mRTShadowsPass->GetShadowsView(),
             mRTReflectionPass->GetReflectionView(),
             mPrimaryRaysPass->GetSkyCfg() } );

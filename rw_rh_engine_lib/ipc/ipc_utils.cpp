@@ -4,6 +4,7 @@
 #include "ipc_utils.h"
 
 #include <Engine/Common/IDeviceState.h>
+#include <Engine/EngineConfigBlock.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 
@@ -15,10 +16,11 @@ static PROCESS_INFORMATION child_proc_info{};
 void InitClient()
 {
     /// initialize SM task queue
-    DeviceGlobals::SharedMemoryTaskQueue =
-        new SharedMemoryTaskQueue( { .mName  = "RenderHookTaskQueue",
-                                     .mSize  = 1024 * 1024 * 64,
-                                     .mOwner = true } );
+    DeviceGlobals::SharedMemoryTaskQueue = new SharedMemoryTaskQueue(
+        { .mName = "RenderHookTaskQueue",
+          .mSize = 1024 * 1024 *
+                   rh::engine::EngineConfigBlock::It.SharedMemorySizeMB,
+          .mOwner = true } );
     /// Create sub-process
     STARTUPINFOA start_info{ .cb = sizeof( start_info ) };
     CreateProcess( IPCSettings::mProcessName.c_str(), nullptr, nullptr, nullptr,
@@ -40,7 +42,8 @@ void InitRenderer()
     /// initialize SM task queue
     DeviceGlobals::SharedMemoryTaskQueue = new SharedMemoryTaskQueue(
         { .mName = "RenderHookTaskQueue",
-          .mSize = 1024 * 1024 * 64,
+          .mSize = 1024 * 1024 *
+                   rh::engine::EngineConfigBlock::It.SharedMemorySizeMB,
           .mOwner =
               IPCSettings::mMode == IPCRenderMode::MultiThreadedRenderer } );
 

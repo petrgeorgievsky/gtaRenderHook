@@ -18,6 +18,11 @@ static_assert( sizeof( WorldSector ) == 0x28,
 class World
 {
   public:
+    static constexpr auto SECTOR_SIZE_X = ( 40.0f );
+    static constexpr auto SECTOR_SIZE_Y = ( 40.0f );
+    static constexpr auto WORLD_MIN_X   = ( -2000.0f );
+    static constexpr auto WORLD_MIN_Y   = ( -2000.0f );
+
     static void  AdvanceScanCode();
     static void  ClearScanCodes();
     static float GetSectorX( float f );

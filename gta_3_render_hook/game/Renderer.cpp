@@ -25,19 +25,23 @@ Entity **Renderer::mVisibleEntityPtrs = reinterpret_cast<Entity **>( 0x6E9920 );
 std::array<Entity *, 8000> Renderer::mVisibleEntities{};
 RwV3d &  Renderer::mCameraPosition = *reinterpret_cast<RwV3d *>( 0x8E2CF0 );
 uint32_t Renderer::mLightCount     = 0;
-void     Renderer::ScanWorld()
+
+void Renderer::ScanWorld()
 {
     World::AdvanceScanCode();
 
     // Fuck logic go all out
     auto sector_x = static_cast<int>( World::GetSectorX( mCameraPosition.x ) );
     auto sector_y = static_cast<int>( World::GetSectorY( mCameraPosition.y ) );
-    int  sector_scan_s = 10;
 
-    auto min_sector_y = ( std::max )( 0, sector_y - sector_scan_s );
-    auto max_sector_y = ( std::min )( 100, sector_y + sector_scan_s );
-    auto min_sector_x = ( std::max )( 0, sector_x - sector_scan_s );
-    auto max_sector_x = ( std::min )( 100, sector_x + sector_scan_s );
+    float view_distance = GameRendererConfigBlock::It.SectorScanDistance;
+    int   sector_scan_x = ceil( view_distance / World::SECTOR_SIZE_X );
+    int   sector_scan_y = ceil( view_distance / World::SECTOR_SIZE_Y );
+
+    auto min_sector_y = ( std::max )( 0, sector_y - sector_scan_y );
+    auto max_sector_y = ( std::min )( 100, sector_y + sector_scan_y );
+    auto min_sector_x = ( std::max )( 0, sector_x - sector_scan_x );
+    auto max_sector_x = ( std::min )( 100, sector_x + sector_scan_x );
 
     for ( int y = min_sector_y; y < max_sector_y; y++ )
         for ( int x = min_sector_x; x < max_sector_x; x++ )
@@ -58,7 +62,8 @@ void     Renderer::ScanWorld()
                     mVisibleEntities[mNoOfVisibleEntities++] = obj;
                 break;
             case VIS_STREAMME:
-                if ( Streaming::mNumModelsRequested < 1000 )
+                if ( Streaming::mNumModelsRequested <
+                     GameRendererConfigBlock::It.ModelStreamLimit )
                     Streaming::RequestModel( obj->mModelIndex, 0 );
                 break;
             case VIS_INVISIBLE: continue;
@@ -94,7 +99,8 @@ void Renderer::ScanSectorList( const WorldSector &sector )
                     mVisibleEntities[mNoOfVisibleEntities++] = obj;
                 break;
             case VIS_STREAMME:
-                if ( Streaming::mNumModelsRequested < 1000 )
+                if ( Streaming::mNumModelsRequested <
+                     GameRendererConfigBlock::It.ModelStreamLimit )
                     Streaming::RequestModel( obj->mModelIndex, 0 );
                 break;
             }
@@ -401,7 +407,8 @@ int32_t Renderer::SetupBigBuildingVisibility( Entity *ent )
     // Find out whether to draw below near distance.
     // This is only the case if there is a non-LOD which is either not
     // loaded or not completely faded in yet.
-    if ( dist < mi->GetNearDistance() && dist < 300.0f * 3.2f )
+    if ( dist < mi->GetNearDistance() &&
+         dist < 300.0f * GameRendererConfigBlock::It.LodMultiplier )
     {
         // No non-LOD or non-LOD is completely visible.
         if ( nonLOD == nullptr || nonLOD->mAtomics[0] && nonLOD->mAlpha == 255 )
@@ -419,4 +426,35 @@ int32_t Renderer::SetupBigBuildingVisibility( Entity *ent )
         return VIS_VISIBLE;
     }
     return VIS_INVISIBLE;
+}
+
+GameRendererConfigBlock GameRendererConfigBlock::It{};
+GameRendererConfigBlock::GameRendererConfigBlock() noexcept
+{
+    Reset();
+    rh::engine::ConfigurationManager::Instance().AddConfigBlock(
+        static_cast<rh::engine::ConfigBlock *>( this ) );
+}
+void GameRendererConfigBlock::Serialize(
+    rh::engine::Serializable *serializable )
+{
+    assert( serializable != nullptr );
+
+    serializable->Set<float>( "SectorScanDistance", SectorScanDistance );
+    serializable->Set<float>( "LodMultiplier", LodMultiplier );
+    serializable->Set<uint32_t>( "LodMultiplier", ModelStreamLimit );
+}
+void GameRendererConfigBlock::Deserialize(
+    rh::engine::Serializable *serializable )
+{
+    assert( serializable != nullptr );
+    SectorScanDistance = serializable->Get<float>( "SectorScanDistance" );
+    LodMultiplier      = serializable->Get<float>( "LodMultiplier" );
+    ModelStreamLimit   = serializable->Get<uint32_t>( "ModelStreamLimit" );
+}
+void GameRendererConfigBlock::Reset()
+{
+    SectorScanDistance = 400.0f;
+    LodMultiplier      = 3.0f;
+    ModelStreamLimit   = 100;
 }

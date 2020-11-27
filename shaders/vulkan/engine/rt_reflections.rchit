@@ -114,9 +114,9 @@ void main()
     vec3 lighting = vec3(ndotl) + sky_cfg.skyColor.rgb * 0.3f;
     if (material.txd_id > 0) {
         vec4 tex_color = texture(sampler2D(textures[material.txd_id], baseSampler), tc);
-        pay_load.reflection_color = tex_color * unpackUnorm4x8(material.color) * color;
+        pay_load.reflection_color = tex_color * unpackUnorm4x8(material.color);
     }
     else
-    pay_load.reflection_color = vec4(unpackUnorm4x8(material.color) * color);
+    pay_load.reflection_color = vec4(unpackUnorm4x8(material.color));
     pay_load.reflection_color.rgb *= lighting;
 }

@@ -14,7 +14,7 @@ namespace rh::rw::engine
 struct SharedMemoryTaskQueueInfo
 {
     std::string mName;
-    int32_t     mSize;
+    uint32_t    mSize;
     bool        mOwner;
 };
 

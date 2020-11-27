@@ -269,5 +269,5 @@ void main()
     //velocity /= float(sample_count + 3);
     res_color += normals_d.w < 5000 ? vec3(ao_accum) : vec3(0.0f);
 
-    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(res_color.xyz, velocity));
+    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(res_color.xyz, velocity * 100.0f));
 }

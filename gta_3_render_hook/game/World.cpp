@@ -9,10 +9,6 @@ uint16_t &World::mCurrentScanCode = *reinterpret_cast<uint16_t *>( 0x95CE1C );
 WorldSector *    World::mSectors  = reinterpret_cast<WorldSector *>( 0x665608 );
 PtrList<Entity> *World::mBigBuildings =
     reinterpret_cast<PtrList<Entity> *>( 0x6FAB60 );
-constexpr auto SECTOR_SIZE_X = ( 40.0f );
-constexpr auto SECTOR_SIZE_Y = ( 40.0f );
-constexpr auto WORLD_MIN_X   = ( -2000.0f );
-constexpr auto WORLD_MIN_Y   = ( -2000.0f );
 
 void World::AdvanceScanCode()
 {

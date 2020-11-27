@@ -50,7 +50,7 @@ void main()
     float blur_str =  imageLoad(blur_strength, pos).x;
     float weight_summ = 0;
     float center_dist = max(dot(pos, tex_res*0.5f), 0.0f);
-    float sigma_spatial = 40.0 * blur_str + 0.1;
+    float sigma_spatial = 40.0 * blur_str;
     float sigma_closseness = 0.05;
     float sigma_normals = 0.05;
     const int window_size = 3;

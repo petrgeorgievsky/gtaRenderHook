@@ -35,7 +35,9 @@ DeferredCompositionPass::DeferredCompositionPass(
                                        1, ShaderStage::Compute );
     descriptorGenerator.AddDescriptor( 0, 5, 5, DescriptorType::StorageTexture,
                                        1, ShaderStage::Compute );
-    descriptorGenerator.AddDescriptor( 0, 6, 6, DescriptorType::ROBuffer, 1,
+    descriptorGenerator.AddDescriptor( 0, 6, 6, DescriptorType::StorageTexture,
+                                       1, ShaderStage::Compute );
+    descriptorGenerator.AddDescriptor( 0, 7, 7, DescriptorType::ROBuffer, 1,
                                        ShaderStage::Compute );
 
     mDescSetLayout = descriptorGenerator.FinalizeDescriptorSet( 0, 4 );
@@ -86,8 +88,11 @@ DeferredCompositionPass::DeferredCompositionPass(
                       { { ImageLayout::General, mPassParams.mReflectionBuffer,
                           nullptr } } )
         .UpdateImage( 5, DescriptorType::StorageTexture,
+                      { { ImageLayout::General,
+                          mPassParams.mMaterialParamsBuffer, nullptr } } )
+        .UpdateImage( 6, DescriptorType::StorageTexture,
                       { { ImageLayout::General, mOutputBufferView, nullptr } } )
-        .UpdateBuffer( 6, DescriptorType::ROBuffer,
+        .UpdateBuffer( 7, DescriptorType::ROBuffer,
                        { { 0, VK_WHOLE_SIZE, params.mSkyCfg } } )
         .End();
 }

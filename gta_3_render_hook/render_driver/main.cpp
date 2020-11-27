@@ -1,6 +1,7 @@
 //
 // Created by peter on 20.04.2020.
 //
+#include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
 #include <ipc/ipc_utils.h>
 #include <ipc/shared_memory_queue_client.h>
@@ -60,6 +61,12 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DebugLogger::Init( "render_driver.log", LogLevel::Info );
 
     IPCSettings::mMode = IPCRenderMode::CrossProcessRenderer;
+
+    /// Init config
+    auto cfg_mgr  = rh::engine::ConfigurationManager::Instance();
+    auto cfg_path = "renderer_config.cfg";
+    if ( !cfg_mgr.LoadFromFile( cfg_path ) )
+        cfg_mgr.SaveToFile( cfg_path );
 
     /// Init renderer
     RwGameHooks::Patch(

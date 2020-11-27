@@ -15,7 +15,7 @@ class ConfigurationManager
   public:
     static ConfigurationManager &Instance();
 
-    void LoadFromFile( const std::string &path );
+    bool LoadFromFile( const std::string &path );
     void SaveToFile( const std::string &path );
     void AddConfigBlock( ConfigBlock *block );
 

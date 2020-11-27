@@ -23,6 +23,7 @@ struct DeferredCompositionPassParams
 {
     rh::engine::IImageView *mAlbedoBuffer;
     rh::engine::IImageView *mNormalDepthBuffer;
+    rh::engine::IImageView *mMaterialParamsBuffer;
     rh::engine::IImageView *mAOBuffer;
     rh::engine::IImageView *mLightingBuffer;
     rh::engine::IImageView *mReflectionBuffer;

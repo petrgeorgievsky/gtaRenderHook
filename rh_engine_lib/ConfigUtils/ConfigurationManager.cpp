@@ -16,20 +16,24 @@ ConfigurationManager &ConfigurationManager::Instance()
     return config_mgr;
 }
 
-void ConfigurationManager::LoadFromFile( const std::string &path )
+bool ConfigurationManager::LoadFromFile( const std::string &path )
 {
     using namespace nlohmann;
     json          settings;
     std::ifstream file( path );
     if ( !file.is_open() )
-        return;
+        return false;
     file >> settings;
     for ( auto &cfg_block : mConfigBlocks )
     {
-        Serializable s(
-            std::make_unique<JsonSerializer>( settings[cfg_block->Name()] ) );
-        cfg_block->Deserialize( &s );
+        if ( settings.contains( cfg_block->Name() ) )
+        {
+            Serializable s( std::make_unique<JsonSerializer>(
+                settings[cfg_block->Name()] ) );
+            cfg_block->Deserialize( &s );
+        }
     }
+    return true;
 }
 
 void ConfigurationManager::SaveToFile( const std::string &path )

@@ -47,7 +47,8 @@ void main()
     if (tspp > 0)
     {
         accum = pass_args.accumulation;
-        tspp = min(tspp + 1, velocity < 0.01f ? max_tspp : 1);
+        // high velocity reduce sample count, to avoid overblurring of moving objects
+        tspp = min(tspp + 1,  uint(float(max_tspp) * max(1 - velocity, 0)) + 1);
         float max_value = min(_moments.x + _moments.y, 1.0f);
         float min_value = max(_moments.x - _moments.y, 0.0f);
 

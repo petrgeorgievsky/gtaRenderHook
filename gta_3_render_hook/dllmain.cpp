@@ -4,6 +4,7 @@
 #include "game_patches/base_model_pipeline.h"
 #include "game_patches/car_path_bug_fix.h"
 #include "gta3_geometry_proxy.h"
+#include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <filesystem>
@@ -288,6 +289,32 @@ RpMaterial *RpMaterialStreamRead( void *stream )
     return material;
 }
 
+class CShadows
+{
+  public:
+    static void StoreShadowForPedObject( CEntity *, float, float, float, float,
+                                         float, float )
+    {
+    }
+    static void StoreShadowForPole( CEntity *, float, float, float, float,
+                                    float, uint32_t )
+    {
+    }
+    static void StoreCarLightShadow( CEntity *, int32_t, RwTexture *, CVector *,
+                                     float, float, float, float, uint8_t,
+                                     uint8_t, uint8_t, float )
+    {
+    }
+
+    static void StoreStaticShadow( uint32_t, uint8_t, RwTexture *, CVector *,
+                                   float, float, float, float, int16_t, uint8_t,
+                                   uint8_t, uint8_t, float, float, float, bool,
+                                   float )
+    {
+    }
+    static void StoreShadowForCar( CEntity * ) {}
+};
+
 BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
                      LPVOID lpReserved )
 {
@@ -295,6 +322,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
     {
     case DLL_PROCESS_ATTACH:
     {
+        /// Init logging
         rh::debug::DebugLogger::Init( "gta3_logs.log",
                                       rh::debug::LogLevel::Info );
 
@@ -302,9 +330,14 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
             rh::rw::engine::IPCRenderMode::CrossProcessClient;
 
         rh::rw::engine::IPCSettings::mProcessName = "gta_3_render_driver.exe";
+
+        /// Init config
+        auto cfg_mgr  = rh::engine::ConfigurationManager::Instance();
+        auto cfg_path = "gta3_rh_config.cfg";
+        if ( !cfg_mgr.LoadFromFile( cfg_path ) )
+            cfg_mgr.SaveToFile( cfg_path );
+
         RwPointerTable gta3_ptr_table{};
-        auto &         x = *(int *)0x662EFC;
-        x                = 0;
 
         gta3_ptr_table.mRwDevicePtr                  = 0x618B50;
         gta3_ptr_table.mRwRwDeviceGlobalsPtr         = 0x6F1D08;
@@ -327,6 +360,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         //  pipeline ptr
         RwGameHooks::Patch( gta3_ptr_table );
         BaseModelPipelines::Patch();
+        /// TODO: Move to another cpp/hpp file
         RedirectJump( 0x581830,
                       reinterpret_cast<void *>( _psGetVideoModeList ) );
 
@@ -362,17 +396,27 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         // Hide default sky
         RedirectJump( 0x4F7FE0, reinterpret_cast<void *>( true_ret_hook ) );
 
-        // fuck everyone
         RedirectJump( 0x4A8A60,
                       reinterpret_cast<void *>( Renderer::ScanWorld ) );
         RedirectJump( 0x4A7930,
                       reinterpret_cast<void *>( Renderer::PreRender ) );
         RedirectJump( 0x48E0F0, reinterpret_cast<void *>( Renderer::Render ) );
 
-        InitClient();
+        /// Remove ingame static shadows
 
-        // RedirectCall( 0x48E6B9, reinterpret_cast<void *>( RenderScene )
-        // );
+        RedirectJump( 0x513EC0, reinterpret_cast<void *>(
+                                    CShadows::StoreShadowForPedObject ) );
+        RedirectJump( 0x514020, reinterpret_cast<void *>(
+                                    CShadows::StoreShadowForPole ) );
+        RedirectJump( 0x513C80, reinterpret_cast<void *>(
+                                    CShadows::StoreCarLightShadow ) );
+        RedirectJump( 0x5132B0,
+                      reinterpret_cast<void *>( CShadows::StoreStaticShadow ) );
+        RedirectJump( 0x513A40,
+                      reinterpret_cast<void *>( CShadows::StoreShadowForCar ) );
+
+        InitClient();
+        //
     }
     break;
     case DLL_THREAD_ATTACH:

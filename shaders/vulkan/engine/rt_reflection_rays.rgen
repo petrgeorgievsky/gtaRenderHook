@@ -54,7 +54,7 @@ void main()
     vec4 direction = cam.viewInverse * vec4(normalize(target.xyz), 0);
 
     uint  rayFlags = gl_RayFlagsNoneNV;
-    float tMin     = 0.1;
+    float tMin     = 0.001;
     float tMax     = 10000.0;
 
     pay_load.reflection_color    = vec4(0);
@@ -70,10 +70,10 @@ void main()
         return;
     }
 
-    vec3 jitter = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64)/64.0f).xyz * 2.0f - 1.0f.xxx;
+    vec3 jitter = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64)/64.0f).xyz;
     const float c_goldenRatioConjugate = 0.61803398875;
 
-    vec3 random_s_dir = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64+ jitter.xy * (refl_params.time_stamp%64))/64.0f).xyz;
+    vec3 random_s_dir = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64+ jitter.xy * (refl_params.time_stamp%64))/64.0f).xyz * 2.0f - 1.0f.xxx;
 
     vec3 hitValue = vec3(0);
     float roughness = (1 - mat_params.g);
@@ -90,5 +90,5 @@ void main()
     tMax, // ray max range
     0// payload (location = 0)
     );
-    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(pay_load.reflection_color.rgb * mat_params.r * refl_int, 0));
+    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(pay_load.reflection_color.rgb * mat_params.r * refl_int, max(1.0 - roughness, 0.0f)));
 }
