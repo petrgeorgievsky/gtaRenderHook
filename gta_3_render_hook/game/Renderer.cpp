@@ -442,7 +442,7 @@ void GameRendererConfigBlock::Serialize(
 
     serializable->Set<float>( "SectorScanDistance", SectorScanDistance );
     serializable->Set<float>( "LodMultiplier", LodMultiplier );
-    serializable->Set<uint32_t>( "LodMultiplier", ModelStreamLimit );
+    serializable->Set<uint32_t>( "ModelStreamLimit", ModelStreamLimit );
 }
 void GameRendererConfigBlock::Deserialize(
     rh::engine::Serializable *serializable )
