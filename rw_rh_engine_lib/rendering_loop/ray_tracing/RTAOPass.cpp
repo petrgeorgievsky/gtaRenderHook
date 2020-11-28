@@ -209,7 +209,10 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
         .mNormalDepthBuffer = params.mNormalsView,
         .mBlurStrength      = mVarianceTAFilter->GetBlurIntensity(),
         .mTempImageBuffer   = mTempBlurAOBuffer,
-        .mOutputImageBuffer = mBlurredAOBuffer } );
+        .mOutputImageBuffer = mBlurredAOBuffer,
+        .mWidth             = mWidth,
+        .mHeight            = mHeight,
+    } );
 }
 
 void RTAOPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer )

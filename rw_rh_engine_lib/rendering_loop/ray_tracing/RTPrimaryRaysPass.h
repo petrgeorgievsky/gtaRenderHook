@@ -25,10 +25,21 @@ namespace rh::rw::engine
 template <typename T> using SPtr = ScopedPointer<T>;
 
 class CameraDescription;
+
+struct PrimaryRaysConfig
+{
+    // Dependencies
+    RTSceneDescription *mScene;
+    CameraDescription * mCamera;
+
+    uint32_t mWidth;
+    uint32_t mHeight;
+};
+
 class RTPrimaryRaysPass
 {
   public:
-    RTPrimaryRaysPass( RTSceneDescription *scene, CameraDescription *camera );
+    RTPrimaryRaysPass( const PrimaryRaysConfig &config );
 
     void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
                   const FrameInfo &frame );
@@ -71,6 +82,8 @@ class RTPrimaryRaysPass
     SPtr<rh::engine::IImageBuffer> mMaterialsBuffer;
     SPtr<rh::engine::IImageView>   mMaterialsBufferView;
     uint32_t                       mFrame = 0;
+    uint32_t                       mWidth;
+    uint32_t                       mHeight;
 
     SPtr<rh::engine::ISampler> mTextureSampler;
 };

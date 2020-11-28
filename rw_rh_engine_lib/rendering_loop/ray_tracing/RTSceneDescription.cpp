@@ -38,7 +38,6 @@ RTSceneDescription::RTSceneDescription()
     mSceneMaterials.resize( material_count_limit );
 
     DescriptorGenerator descriptorGenerator{};
-
     // Scene desc
     descriptorGenerator.AddDescriptor(
         0, scene_desc_bind_id, 0, DescriptorType::RWBuffer, 1,
@@ -50,23 +49,21 @@ RTSceneDescription::RTSceneDescription()
     // Verts
     descriptorGenerator.AddDescriptor(
         0, vertex_buff_desc_bind_id, 0, DescriptorType::RWBuffer,
-        model_count_limit, ShaderStage::RayHit | ShaderStage::RayAnyHit );
+        model_count_limit, ShaderStage::RayHit | ShaderStage::RayAnyHit,
+        DescriptorFlags::dfPartiallyBound |
+            DescriptorFlags::dfUpdateUnusedWhilePending );
     // Indices
     descriptorGenerator.AddDescriptor(
         0, index_buff_bind_id, 0, DescriptorType::RWBuffer, model_count_limit,
-        ShaderStage::RayHit | ShaderStage::RayAnyHit );
+        ShaderStage::RayHit | ShaderStage::RayAnyHit,
+        DescriptorFlags::dfPartiallyBound |
+            DescriptorFlags::dfUpdateUnusedWhilePending );
     // Textures
     descriptorGenerator.AddDescriptor(
         0, texture_desc_bind_id, 0, DescriptorType::ROTexture,
-        texture_count_limit, ShaderStage::RayHit | ShaderStage::RayAnyHit );
-
-    /// Per instance materials
-    /* descriptorGenerator.AddDescriptor(
-         0, materials_bind_id, 0, DescriptorType::RWBuffer, draw_count_limit,
-         ShaderStage::RayHit | ShaderStage::RayAnyHit );
-     descriptorGenerator.AddDescriptor(
-         0, materials_idx_remap_bind_id, 0, DescriptorType::RWBuffer,
-         draw_count_limit, ShaderStage::RayHit | ShaderStage::RayAnyHit );*/
+        texture_count_limit, ShaderStage::RayHit | ShaderStage::RayAnyHit,
+        DescriptorFlags::dfPartiallyBound |
+            DescriptorFlags::dfUpdateUnusedWhilePending );
 
     // descriptor layout
     mSceneSetLayout = descriptorGenerator.FinalizeDescriptorSet( 0, 1 );

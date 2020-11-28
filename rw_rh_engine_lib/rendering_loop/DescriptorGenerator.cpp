@@ -48,10 +48,11 @@ rh::engine::IDescriptorSetAllocator *DescriptorGenerator::FinalizeAllocator()
 
 DescriptorGenerator &DescriptorGenerator::AddDescriptor(
     uint32_t set, uint32_t binding, uint32_t register_id,
-    rh::engine::DescriptorType type, uint32_t count, uint32_t shader_stages )
+    rh::engine::DescriptorType type, uint32_t count, uint32_t shader_stages,
+    uint16_t flags )
 {
     mDescriptorSets[set].bindings.push_back(
-        { binding, type, count, shader_stages, register_id } );
+        { binding, type, count, shader_stages, flags, register_id } );
     return *this;
 }
 } // namespace rh::rw::engine

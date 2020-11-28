@@ -25,8 +25,8 @@ class DescriptorGenerator
     DescriptorGenerator &AddDescriptor( uint32_t set, uint32_t binding,
                                         uint32_t                   register_id,
                                         rh::engine::DescriptorType type,
-                                        uint32_t                   count,
-                                        uint32_t shader_stages );
+                                        uint32_t count, uint32_t shader_stages,
+                                        uint16_t flags = 0 );
 
     rh::engine::IDescriptorSetLayout *
     FinalizeDescriptorSet( uint32_t set, uint32_t max_count );

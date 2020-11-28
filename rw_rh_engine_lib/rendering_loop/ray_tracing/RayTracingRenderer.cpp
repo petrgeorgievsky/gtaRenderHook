@@ -51,8 +51,10 @@ RayTracingRenderer::RayTracingRenderer()
     mTlasBuildPass    = new RTTlasBuildPass();
     mSceneDescription = new RTSceneDescription();
 
-    mPrimaryRaysPass =
-        new RTPrimaryRaysPass( mSceneDescription, mCameraDescription );
+    mPrimaryRaysPass = new RTPrimaryRaysPass( { .mScene  = mSceneDescription,
+                                                .mCamera = mCameraDescription,
+                                                .mWidth  = rtx_resolution_w,
+                                                .mHeight = rtx_resolution_h } );
 
     mTiledLightCulling = new TiledLightCulling( TiledLightCullingParams{
         .mDevice       = *DeviceGlobals::RenderHookDevice,
@@ -104,7 +106,8 @@ RayTracingRenderer::RayTracingRenderer()
             mPrimaryRaysPass->GetMaterialsView(), mRTAOPass->GetAOView(),
             mRTShadowsPass->GetShadowsView(),
             mRTReflectionPass->GetReflectionView(),
-            mPrimaryRaysPass->GetSkyCfg() } );
+            mPrimaryRaysPass->GetSkyCfg(), rtx_resolution_w,
+            rtx_resolution_h } );
 
     // Utility TODO: Make it less painful
     mDebugPipeline = new DebugPipeline( DebugPipelineInitParams{

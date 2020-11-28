@@ -63,8 +63,8 @@ DeferredCompositionPass::DeferredCompositionPass(
                             .mShader     = mCompositionShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mOutputBuffer =
-        Create2DRenderTargetBuffer( 1920, 1080, ImageBufferFormat::RGBA16 );
+    mOutputBuffer = Create2DRenderTargetBuffer(
+        mPassParams.mWidth, mPassParams.mHeight, ImageBufferFormat::RGBA16 );
     mOutputBufferView =
         device.CreateImageView( { mOutputBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );
@@ -114,6 +114,7 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
           .mPipelineLayout    = mPipelineLayout,
           .mDescriptorSets = { static_cast<IDescriptorSet *>( mDescSet ) } } );
 
-    vk_cmd->DispatchCompute( { 1920 / 8, 1080 / 8, 1 } );
+    vk_cmd->DispatchCompute(
+        { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
 }
 } // namespace rh::rw::engine

@@ -51,7 +51,7 @@ bool TexBoundsCheck(in ivec2 tc, ivec2 size)
 // rejecting old samples using depth texture
 void main()
 {
-    ivec2 tex_res = ivec2(1920, 1080);
+    ivec2 tex_res = imageSize(tx_motion);
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
     const vec2 velocity = imageLoad(tx_motion, pos).rg;

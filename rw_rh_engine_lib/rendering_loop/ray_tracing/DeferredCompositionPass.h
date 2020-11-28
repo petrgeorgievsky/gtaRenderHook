@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <Engine/Common/ScopedPtr.h>
+#include <cstdint>
 namespace rh::engine
 {
 class IImageView;
@@ -28,6 +29,8 @@ struct DeferredCompositionPassParams
     rh::engine::IImageView *mLightingBuffer;
     rh::engine::IImageView *mReflectionBuffer;
     rh::engine::IBuffer *   mSkyCfg;
+    uint32_t                mWidth;
+    uint32_t                mHeight;
 };
 class DeferredCompositionPass
 {

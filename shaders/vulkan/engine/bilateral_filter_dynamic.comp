@@ -45,7 +45,7 @@ void main()
 {
     vec4 img_c_sample = vec4(0);
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 tex_res = ivec2(1920, 1080);
+    ivec2 tex_res = imageSize(normal_depth);
     vec4 center_sample =  imageLoad(normal_depth, pos);
     float blur_str =  imageLoad(blur_strength, pos).x;
     float weight_summ = 0;
@@ -99,7 +99,7 @@ void vertical_blur()
 {
     vec4 img_c_sample = vec4(0);
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 tex_res = ivec2(1920, 1080);
+    ivec2 tex_res = imageSize(normal_depth);
     vec4 center_sample =  imageLoad(normal_depth, pos);
     float blur_str =  imageLoad(blur_strength, pos).x;
     float weight_summ = 0;
@@ -133,7 +133,7 @@ void horizontal_blur()
 {
     vec4 img_c_sample = vec4(0);
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 tex_res = ivec2(1920, 1080);
+    ivec2 tex_res = imageSize(normal_depth);
     vec4 center_sample =  imageLoad(normal_depth, pos);
     float blur_str =  imageLoad(blur_strength, pos).x;
     float weight_summ = 0;

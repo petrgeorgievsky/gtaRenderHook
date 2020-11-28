@@ -30,6 +30,9 @@ struct BilateralFilterPassParams
 
     rh::engine::IImageBuffer *mTempImageBuffer;
     rh::engine::IImageBuffer *mOutputImageBuffer;
+
+    uint32_t mWidth;
+    uint32_t mHeight;
 };
 class BilateralFilterPipeline;
 

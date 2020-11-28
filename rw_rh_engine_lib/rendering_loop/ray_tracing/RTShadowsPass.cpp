@@ -271,7 +271,9 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
         .mNormalDepthBuffer = params.mNormalsView,
         .mBlurStrength      = mVarianceTAFilter->GetBlurIntensity(),
         .mTempImageBuffer   = mTempBlurShadowsBuffer,
-        .mOutputImageBuffer = mBlurredShadowsBuffer } );
+        .mOutputImageBuffer = mBlurredShadowsBuffer,
+        .mWidth             = mWidth,
+        .mHeight            = mHeight } );
 }
 
 void RTShadowsPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,

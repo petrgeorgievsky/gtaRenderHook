@@ -17,9 +17,6 @@ namespace rh::rw::engine
 {
 using namespace rh::engine;
 
-const uint32_t rtx_resolution_w = 1920;
-const uint32_t rtx_resolution_h = 1080;
-
 struct SkyCfg
 {
     float sunDir[4];
@@ -29,9 +26,9 @@ struct SkyCfg
 };
 SkyCfg gSkyCfg{};
 
-RTPrimaryRaysPass::RTPrimaryRaysPass( RTSceneDescription *scene,
-                                      CameraDescription * camera )
-    : mScene( scene ), mCamera( camera )
+RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
+    : mScene( config.mScene ), mCamera( config.mCamera ),
+      mWidth( config.mWidth ), mHeight( config.mHeight )
 {
     auto &              device = *DeviceGlobals::RenderHookDevice;
     DescriptorGenerator descriptorGenerator{};
@@ -101,15 +98,15 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( RTSceneDescription *scene,
                                .mShaderStage = ShaderStage::RayMiss } );
 
     // create rt buffers
-    mAlbedoBuffer = Create2DRenderTargetBuffer(
-        rtx_resolution_w, rtx_resolution_h, ImageBufferFormat::RGBA16 );
+    mAlbedoBuffer = Create2DRenderTargetBuffer( mWidth, mHeight,
+                                                ImageBufferFormat::RGBA16 );
     mAlbedoBufferView =
         device.CreateImageView( { mAlbedoBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );
     for ( auto i = 0; i < 2; i++ )
     {
         mNormalsBuffer[i] = Create2DRenderTargetBuffer(
-            rtx_resolution_w, rtx_resolution_h, ImageBufferFormat::RGBA16,
+            mWidth, mHeight, ImageBufferFormat::RGBA16,
             ImageBufferUsage::Storage | ImageBufferUsage::Sampled |
                 ImageBufferUsage::TransferDst | ImageBufferUsage::TransferSrc );
         mNormalsBufferView[i] = device.CreateImageView(
@@ -117,13 +114,13 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( RTSceneDescription *scene,
               ImageViewUsage::RWTexture } );
     }
 
-    mMotionBuffer = Create2DRenderTargetBuffer(
-        rtx_resolution_w, rtx_resolution_h, ImageBufferFormat::RG16 );
+    mMotionBuffer =
+        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::RG16 );
     mMotionBufferView = device.CreateImageView(
         { mMotionBuffer, ImageBufferFormat::RG16, ImageViewUsage::RWTexture } );
 
-    mMaterialsBuffer = Create2DRenderTargetBuffer(
-        rtx_resolution_w, rtx_resolution_h, ImageBufferFormat::RGBA16 );
+    mMaterialsBuffer = Create2DRenderTargetBuffer( mWidth, mHeight,
+                                                   ImageBufferFormat::RGBA16 );
     mMaterialsBufferView =
         device.CreateImageView( { mMaterialsBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );
@@ -251,13 +248,13 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
           .mRegions   = { { .mSrc =
                               {
                                   .mSubresource = { .layerCount = 1 },
-                                  .mExtentW     = rtx_resolution_w,
-                                  .mExtentH     = rtx_resolution_h,
+                                  .mExtentW     = mWidth,
+                                  .mExtentH     = mHeight,
                               },
                           .mDest = {
                               .mSubresource = { .layerCount = 1 },
-                              .mExtentW     = rtx_resolution_w,
-                              .mExtentH     = rtx_resolution_h,
+                              .mExtentW     = mWidth,
+                              .mExtentH     = mHeight,
                           } } } } );
 
     vk_cmd_buff->PipelineBarrier(
@@ -269,7 +266,7 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
                                          ImageLayout::General ),
               GetLayoutTransformBarrier( mNormalsBuffer[1],
                                          ImageLayout::TransferDst,
-                                         ImageLayout::ShaderReadOnly ) } } );
+                                         ImageLayout::General ) } } );
     // bind pipeline
 
     vk_cmd_buff->BindDescriptorSets(
@@ -287,8 +284,8 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
                                  .mHitBuffer    = mShaderBindTable,
                                  .mHitOffset    = sbt_size * 2,
                                  .mHitStride    = sbt_size,
-                                 .mX            = rtx_resolution_w,
-                                 .mY            = rtx_resolution_h,
+                                 .mX            = mWidth,
+                                 .mY            = mHeight,
                                  .mZ            = 1 } );
     vk_cmd_buff->PipelineBarrier(
         { .mSrcStage            = PipelineStage::RayTracing,
@@ -296,7 +293,7 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
           .mImageMemoryBarriers = {
               { .mImage           = mNormalsBuffer[0],
                 .mSrcLayout       = ImageLayout::General,
-                .mDstLayout       = ImageLayout::ShaderReadOnly,
+                .mDstLayout       = ImageLayout::General,
                 .mSrcMemoryAccess = MemoryAccessFlags::MemoryWrite,
                 .mDstMemoryAccess = MemoryAccessFlags::MemoryRead,
                 .mSubresRange     = { 0, 1, 0, 1 } } } } );

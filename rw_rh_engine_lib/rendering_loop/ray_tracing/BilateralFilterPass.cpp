@@ -79,13 +79,13 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
               .mRegions   = { { .mSrc =
                                   {
                                       .mSubresource = { .layerCount = 1 },
-                                      .mExtentW     = 1920,
-                                      .mExtentH     = 1080,
+                                      .mExtentW     = mPassParams.mWidth,
+                                      .mExtentH     = mPassParams.mHeight,
                                   },
                               .mDest = {
                                   .mSubresource = { .layerCount = 1 },
-                                  .mExtentW     = 1920,
-                                  .mExtentH     = 1080,
+                                  .mExtentW     = mPassParams.mWidth,
+                                  .mExtentH     = mPassParams.mHeight,
                               } } } } );
 
         vk_cmd->PipelineBarrier(
@@ -107,7 +107,8 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
           .mPipelineLayout    = mParent->mPipelineDynamicBlurLayout,
           .mDescriptorSets    = { mDescSetH } } );
 
-    vk_cmd->DispatchCompute( { 1920 / 8, 1080 / 8, 1 } );
+    vk_cmd->DispatchCompute(
+        { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
 
     copy_output_to_temp();
 
@@ -118,7 +119,8 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
           .mPipelineLayout    = mParent->mPipelineDynamicBlurLayout,
           .mDescriptorSets    = { mDescSetV } } );
 
-    vk_cmd->DispatchCompute( { 1920 / 8, 1080 / 8, 1 } );
+    vk_cmd->DispatchCompute(
+        { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
 
     for ( int i = 0; i < 2; i++ )
     {
@@ -127,7 +129,8 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
 
         vk_cmd->BindComputePipeline( mParent->mPipelineDynamicBlurH );
 
-        vk_cmd->DispatchCompute( { 1920 / 8, 1080 / 8, 1 } );
+        vk_cmd->DispatchCompute(
+            { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
 
         copy_output_to_temp();
 
@@ -138,7 +141,8 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
               .mPipelineLayout    = mParent->mPipelineDynamicBlurLayout,
               .mDescriptorSets    = { mDescSetV } } );
 
-        vk_cmd->DispatchCompute( { 1920 / 8, 1080 / 8, 1 } );
+        vk_cmd->DispatchCompute(
+            { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
     }
 
     // copy

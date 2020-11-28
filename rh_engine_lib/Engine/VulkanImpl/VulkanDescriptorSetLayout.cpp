@@ -23,6 +23,19 @@ constexpr vk::ShaderStageFlags ConvertShaderStage( uint32_t stage )
         flags |= vk::ShaderStageFlagBits::eAnyHitNV;
     return flags;
 }
+constexpr vk::DescriptorBindingFlags ConvertDescriptorFlags( uint32_t flags )
+{
+    vk::DescriptorBindingFlags result{};
+    if ( flags & DescriptorFlags::dfUpdateAfterBind )
+        result |= vk::DescriptorBindingFlagBits::eUpdateAfterBind;
+    if ( flags & DescriptorFlags::dfUpdateUnusedWhilePending )
+        result |= vk::DescriptorBindingFlagBits::eUpdateUnusedWhilePending;
+    if ( flags & DescriptorFlags::dfVariableDescriptorCount )
+        result |= vk::DescriptorBindingFlagBits::eVariableDescriptorCount;
+    if ( flags & DescriptorFlags::dfPartiallyBound )
+        result |= vk::DescriptorBindingFlagBits::ePartiallyBound;
+    return result;
+}
 namespace rh::engine
 {
 vk::DescriptorSetLayoutBinding Convert( const DescriptorBinding &desc )
@@ -47,13 +60,10 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(
     std::ranges::transform(
         create_info.mBindingList, std::back_inserter( layout_bindings ),
         []( const DescriptorBinding &binding ) { return Convert( binding ); } );
-
-    // TODO: FIXME
+    
     std::vector<vk::DescriptorBindingFlags> flags;
     for ( const auto &b : create_info.mBindingList )
-        flags.push_back(
-            vk::DescriptorBindingFlagBits::ePartiallyBound |
-            vk::DescriptorBindingFlagBits::eUpdateUnusedWhilePending );
+        flags.push_back( ConvertDescriptorFlags( b.mFlags ) );
 
     vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCreateInfo{};
     bindingFlagsCreateInfo.bindingCount =

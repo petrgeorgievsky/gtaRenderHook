@@ -145,6 +145,8 @@ RTReflectionRaysPass::RTReflectionRaysPass(
     p.mTempImage         = mTempBlurReflectionBufferView;
     p.mOutputImageBuffer = mFilteredReflectionBuffer;
     p.mTempImageBuffer   = mTempBlurReflectionBuffer;
+    p.mWidth             = mWidth;
+    p.mHeight            = mHeight;
     mBilFil0             = params.mBilateralFilterPipe->GetPass( p );
 
     auto noise       = ReadBMP( "resources/blue_noise.bmp" );
@@ -297,7 +299,7 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
           .mPipelineLayout    = mBlurStrPipeLayout,
           .mDescriptorSets    = { mBlurStrSet } } );
     vk_cmd_buff->BindComputePipeline( mBlurStrPipeline );
-    vk_cmd_buff->DispatchCompute( { 1920 / 8, 1080 / 8, 1 } );
+    vk_cmd_buff->DispatchCompute( { mWidth / 8, mHeight / 8, 1 } );
 
     mVarTAColorPass->Execute( vk_cmd_buff );
     mBilFil0->Execute( vk_cmd_buff );
