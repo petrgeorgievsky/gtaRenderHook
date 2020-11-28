@@ -361,8 +361,8 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         RwGameHooks::Patch( gta3_ptr_table );
         BaseModelPipelines::Patch();
         /// TODO: Move to another cpp/hpp file
-        RedirectJump( 0x581830,
-                      reinterpret_cast<void *>( _psGetVideoModeList ) );
+        // RedirectJump( 0x581830,
+        //             reinterpret_cast<void *>( _psGetVideoModeList ) );
 
         // RedirectJump( 0x405DB0, reinterpret_cast<void *>( debug_log ) );
         // RedirectJump( 0x59E720, reinterpret_cast<void *>( debug_log ) );

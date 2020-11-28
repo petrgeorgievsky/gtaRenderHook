@@ -3,7 +3,11 @@
 //
 
 #include "EngineConfigBlock.h"
+#include "../ConfigUtils/ConfigurationManager.h"
+#include "../ConfigUtils/Serializable.h"
 #include "Definitions.h"
+#include <cassert>
+
 namespace rh::engine
 {
 

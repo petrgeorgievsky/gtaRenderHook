@@ -2,7 +2,8 @@
 // Created by peter on 13.06.2020.
 //
 #pragma once
-#include "../ConfigUtils/ConfigurationManager.h"
+#include "../ConfigUtils/ConfigBlock.h"
+
 namespace rh::engine
 {
 

@@ -43,5 +43,4 @@
 #include <d3dcompiler.h>
 #endif // !ANDROID_BUILD
 
-//#include <game_sa/RenderWare.h>
 #pragma warning( pop )

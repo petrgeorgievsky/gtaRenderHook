@@ -6,6 +6,8 @@
 #include "../call_redirection_util.h"
 #include "ModelInfo.h"
 #include "Streaming.h"
+#include <ConfigUtils/ConfigurationManager.h>
+#include <ConfigUtils/Serializable.h>
 #include <algorithm>
 #include <cmath>
 #include <scene_graph.h>
@@ -429,12 +431,14 @@ int32_t Renderer::SetupBigBuildingVisibility( Entity *ent )
 }
 
 GameRendererConfigBlock GameRendererConfigBlock::It{};
+
 GameRendererConfigBlock::GameRendererConfigBlock() noexcept
 {
     Reset();
     rh::engine::ConfigurationManager::Instance().AddConfigBlock(
         static_cast<rh::engine::ConfigBlock *>( this ) );
 }
+
 void GameRendererConfigBlock::Serialize(
     rh::engine::Serializable *serializable )
 {
@@ -444,6 +448,7 @@ void GameRendererConfigBlock::Serialize(
     serializable->Set<float>( "LodMultiplier", LodMultiplier );
     serializable->Set<uint32_t>( "ModelStreamLimit", ModelStreamLimit );
 }
+
 void GameRendererConfigBlock::Deserialize(
     rh::engine::Serializable *serializable )
 {
@@ -452,6 +457,7 @@ void GameRendererConfigBlock::Deserialize(
     LodMultiplier      = serializable->Get<float>( "LodMultiplier" );
     ModelStreamLimit   = serializable->Get<uint32_t>( "ModelStreamLimit" );
 }
+
 void GameRendererConfigBlock::Reset()
 {
     SectorScanDistance = 400.0f;

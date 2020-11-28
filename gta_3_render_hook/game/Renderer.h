@@ -4,7 +4,7 @@
 #pragma once
 #include "PtrList.h"
 #include "World.h"
-#include <ConfigUtils/ConfigurationManager.h>
+#include <ConfigUtils/ConfigBlock.h>
 #include <array>
 
 class Renderer

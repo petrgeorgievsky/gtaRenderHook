@@ -20,23 +20,7 @@
 namespace rh::rw::engine
 {
 using namespace rh::engine;
-struct CVector2D
-{
-    float x, y;
-};
-struct CCarPathLink
-{
-    CVector2D pos;
-    CVector2D dir;
-    int16_t   pathNodeIndex;
-    int8_t    numLeftLanes;
-    int8_t    numRightLanes;
-    uint8_t   trafficLightType;
 
-    uint8_t bBridgeLights : 1;
-    // more?
-};
-static_assert( sizeof( CCarPathLink ) == 0x18 );
 RTReflectionRaysPass::RTReflectionRaysPass(
     const RTReflectionInitParams &params )
     : mCamera( params.mCamera ), mScene( params.mScene ),

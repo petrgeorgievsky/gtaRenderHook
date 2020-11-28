@@ -3,6 +3,8 @@
 //
 
 #include "ConfigurationManager.h"
+#include "ConfigBlock.h"
+#include "Serializable.h"
 #include <nlohmann/json.hpp>
 
 #include <fstream>
@@ -26,12 +28,10 @@ bool ConfigurationManager::LoadFromFile( const std::string &path )
     file >> settings;
     for ( auto &cfg_block : mConfigBlocks )
     {
-        if ( settings.contains( cfg_block->Name() ) )
-        {
-            Serializable s( std::make_unique<JsonSerializer>(
-                settings[cfg_block->Name()] ) );
-            cfg_block->Deserialize( &s );
-        }
+        if ( !settings.contains( cfg_block->Name() ) )
+            continue;
+        Serializable s( settings[cfg_block->Name()] );
+        cfg_block->Deserialize( &s );
     }
     return true;
 }
@@ -43,60 +43,16 @@ void ConfigurationManager::SaveToFile( const std::string &path )
     json settings;
     for ( const auto &cfg_block : mConfigBlocks )
     {
-        Serializable s(
-            std::make_unique<JsonSerializer>( settings[cfg_block->Name()] ) );
+        Serializable s( settings[cfg_block->Name()] );
         cfg_block->Serialize( &s );
     }
     std::ofstream file( path );
     file << settings;
 }
 
-class JsonSerializer
-{
-  public:
-    explicit JsonSerializer( nlohmann::json &data ) : mImpl( data ) {}
-    friend class Serializable;
-
-  private:
-    nlohmann::json &mImpl;
-};
-
 void ConfigurationManager::AddConfigBlock( ConfigBlock *block )
 {
     mConfigBlocks.push_back( block );
-}
-
-Serializable::~Serializable() = default;
-Serializable::Serializable( std::unique_ptr<JsonSerializer> impl )
-    : mImpl( std::move( impl ) )
-{
-}
-
-template <> float Serializable::Get( const std::string &name )
-{
-    return mImpl->mImpl[name].get<float>();
-}
-
-template <> bool Serializable::Get( const std::string &name )
-{
-    return mImpl->mImpl[name].get<bool>();
-}
-template <> uint32_t Serializable::Get( const std::string &name )
-{
-    return mImpl->mImpl[name].get<uint32_t>();
-}
-
-template <> void Serializable::Set( const std::string &name, float v )
-{
-    mImpl->mImpl[name] = v;
-}
-template <> void Serializable::Set( const std::string &name, bool v )
-{
-    mImpl->mImpl[name] = v;
-}
-template <> void Serializable::Set( const std::string &name, uint32_t v )
-{
-    mImpl->mImpl[name] = v;
 }
 
 } // namespace rh::engine

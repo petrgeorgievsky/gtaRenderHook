@@ -18,7 +18,6 @@ void rh::tests::TestSample::Update()
     using namespace std::chrono;
     high_resolution_clock::time_point t1;
     high_resolution_clock::time_point t2;
-    long double                       currentFrameTime;
 
     while ( m_bUpdate )
     {
@@ -27,16 +26,8 @@ void rh::tests::TestSample::Update()
         Render();
         t2           = high_resolution_clock::now();
         m_fDeltaTime = duration_cast<duration<float>>( t2 - t1 ).count();
-        currentFrameTime =
-            duration_cast<duration<long double>>( t2 - t1 ).count();
-        frameCount++;
-        averageTimePerFrame =
-            ( averageTimePerFrame * ( frameCount - 1 ) + currentFrameTime ) /
-            frameCount;
     }
-    rh::debug::DebugLogger::Log( ToRHString(
-        "avg. frametime:" + std::to_string( averageTimePerFrame * 1000 ) +
-        " ms." ) );
+
     CustomShutdown();
 }
 
