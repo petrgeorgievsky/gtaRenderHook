@@ -31,6 +31,16 @@ struct Im3DDrawCall
     DirectX::XMFLOAT4X3 mWorldTransform;
     Im3DState           mState;
 };
+
+void *  Im3DTransform( void *pVerts, uint32_t numVerts, RwMatrix *ltm,
+                       uint32_t flags );
+int32_t Im3DRenderIndexedPrimitive( RwPrimitiveType primType, uint16_t *indices,
+                                    int32_t numIndices );
+int32_t Im3DRenderPrimitive( RwPrimitiveType primType );
+int32_t Im3DRenderLine( int32_t vert1, int32_t vert2 );
+int32_t Im3DRenderTriangle( int32_t vert1, int32_t vert2, int32_t vert3 );
+int32_t Im3DEnd();
+
 class Im3DClient
 {
   public:

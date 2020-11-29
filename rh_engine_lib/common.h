@@ -26,9 +26,13 @@
 
 // Windows and graphics API headers
 #ifdef USE_VULKAN_API
+#pragma clang diagnostic push
+// vulkan.hpp has such warnings in c++20 mode on clang
+#pragma clang diagnostic ignored "-Wdefaulted-function-deleted"
 #define VULKAN_HPP_TYPESAFE_CONVERSION
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
+#pragma clang diagnostic pop
 #endif
 
 #ifndef ANDROID_BUILD

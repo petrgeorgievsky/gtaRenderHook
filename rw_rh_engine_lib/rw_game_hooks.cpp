@@ -20,6 +20,13 @@ void *_rwIm3DClose( void *instance, [[maybe_unused]] int32_t offset,
     return instance;
 }
 
+void RedirectJumpIfExists( INT_PTR address, void *func )
+{
+    if ( address == 0 )
+        return;
+    RedirectJump( address, func );
+}
+
 void RwGameHooks::Patch( const RwPointerTable &pointerTable )
 {
     if ( pointerTable.mRwDevicePtr )
@@ -106,41 +113,30 @@ void RwGameHooks::Patch( const RwPointerTable &pointerTable )
         SetPointer( pointerTable.mIm3DClose,
                     reinterpret_cast<void *>( _rwIm3DClose ) );
 
-    if ( pointerTable.m_fpCheckEnviromentMapSupport )
-        RedirectJump( pointerTable.m_fpCheckEnviromentMapSupport,
-                      reinterpret_cast<void *>( CheckEnviromentMapSupport ) );
+    RedirectJumpIfExists(
+        pointerTable.m_fpCheckEnviromentMapSupport,
+        reinterpret_cast<void *>( CheckEnviromentMapSupport ) );
 
     if ( pointerTable.m_fpCheckNativeTextureSupport )
         RedirectCall( pointerTable.m_fpCheckNativeTextureSupport,
                       reinterpret_cast<void *>( CheckNativeTextureSupport ) );
 
-    if ( pointerTable.m_fpSetRefreshRate )
-        RedirectJump( pointerTable.m_fpSetRefreshRate,
-                      reinterpret_cast<void *>( SetRefreshRate ) );
+    RedirectJumpIfExists( pointerTable.m_fpSetRefreshRate,
+                          reinterpret_cast<void *>( SetRefreshRate ) );
 
-    if ( pointerTable.m_fpSetVideoMode )
-        RedirectJump( pointerTable.m_fpSetVideoMode,
-                      reinterpret_cast<void *>( SetVideoMode ) );
+    RedirectJumpIfExists( pointerTable.m_fpSetVideoMode,
+                          reinterpret_cast<void *>( SetVideoMode ) );
 
-    /*    if ( pointerTable.m_fpIm2DRenderPrim )
-        SetPointer( pointerTable.m_fpIm2DRenderPrim,
-                    reinterpret_cast<void *>( Im2DRenderPrim ) );
-
-    if ( pointerTable.m_fpIm2DRenderIndexedPrim )
-        SetPointer( pointerTable.m_fpIm2DRenderIndexedPrim,
-                    reinterpret_cast<void *>( Im2DRenderIndexedPrim ) );
-
-    if ( pointerTable.m_fpIm2DRenderLine )
-        SetPointer( pointerTable.m_fpIm2DRenderLine,
-                    reinterpret_cast<void *>( Im2DRenderLine ) );
-
-    if ( pointerTable.m_fpSetRenderState )
-        SetPointer( pointerTable.m_fpSetRenderState,
-                    reinterpret_cast<void *>( SetRenderState ) );
-
-    if ( pointerTable.m_fpGetRenderState )
-        SetPointer( pointerTable.m_fpGetRenderState,
-                    reinterpret_cast<void *>( GetRenderState ) );*/
+    RedirectJumpIfExists( pointerTable.mIm3DTransform,
+                          reinterpret_cast<void *>( Im3DTransform ) );
+    RedirectJumpIfExists(
+        pointerTable.mIm3DRenderIndexedPrimitive,
+        reinterpret_cast<void *>( Im3DRenderIndexedPrimitive ) );
+    RedirectJumpIfExists( pointerTable.mIm3DRenderLine,
+                          reinterpret_cast<void *>( Im3DRenderLine ) );
+    // Im3DEnd
+    RedirectJumpIfExists( pointerTable.mIm3DEnd,
+                          reinterpret_cast<void *>( Im3DEnd ) );
 }
 
 int32_t RwGameHooks::SetRenderState( RwRenderState nState, void *pParam )

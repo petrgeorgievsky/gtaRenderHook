@@ -4,12 +4,12 @@
 
 #include "car_path_bug_fix.h"
 #include "../call_redirection_util.h"
-#include <span>
+#include <MemoryInjectionUtils/InjectorHelpers.h>
 
-void CPathFind::CalcNodeCoors( short x, short y, short z, int id, CVector *out )
+void CPathFind::CalcNodeCoors( short x, short y, short z, int id, Vector *out )
 {
     InMemoryFunc<void( __thiscall * )( CPathFind *, short, short, short, int,
-                                       CVector * ),
+                                       Vector * ),
                  0x429560>{}()( this, x, y, z, id, out );
 }
 
@@ -35,8 +35,8 @@ void CPathFind::PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
                                         float maxdist, void *detachednodes,
                                         int unused )
 {
-    static CVector CoorsXFormed{};
-    int            oldNumPathNodes, oldNumLinks;
+    static Vector CoorsXFormed{};
+    int           oldNumPathNodes, oldNumLinks;
     oldNumPathNodes  = m_numPathNodes;
     oldNumLinks      = m_numConnections;
     auto OBJECTINDEX = [this]( auto n ) -> auto &
@@ -52,7 +52,7 @@ void CPathFind::PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
     for ( auto i = 0; i < m_numMapObjects; i++ )
     {
         auto obj   = m_mapObjects[i];
-        auto start = 12 * obj->m_modelIndex;
+        auto start = 12 * obj->mModelIndex;
         for ( auto j = 0; j < 12; j++ )
         {
             if ( objectpathinfo[start + j].type != NodeTypeIntern )
@@ -74,7 +74,7 @@ void CPathFind::PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
     for ( auto i = 0; i < m_numMapObjects; i++ )
     {
         auto obj   = m_mapObjects[i];
-        auto start = 12 * obj->m_modelIndex;
+        auto start = 12 * obj->mModelIndex;
         for ( auto j = 0; j < 12; j++ )
         {
             const auto &path_info = objectpathinfo[start + j];
@@ -145,9 +145,9 @@ void CPathFind::PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
                 auto dy = m_pathNodes[nearest_node.link1].GetY() -
                           m_pathNodes[nearest_node.link2].GetY();
                 nearest_node.pos =
-                    CVector{ ( nearest_node.pos.x + CoorsXFormed.x ) * 0.5f,
-                             ( nearest_node.pos.y + CoorsXFormed.y ) * 0.5f,
-                             ( nearest_node.pos.z + CoorsXFormed.z ) * 0.5f };
+                    Vector{ ( nearest_node.pos.x + CoorsXFormed.x ) * 0.5f,
+                            ( nearest_node.pos.y + CoorsXFormed.y ) * 0.5f,
+                            ( nearest_node.pos.z + CoorsXFormed.z ) * 0.5f };
                 auto mag          = sqrt( dx * dx + dy * dy );
                 nearest_node.dirX = dx / mag;
                 nearest_node.dirY = dy / mag;
@@ -246,7 +246,7 @@ void CPathFind::PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
             if ( OBJECTINDEX( j ) == OBJECTINDEX( i ) )
                 iseg++;
 
-        auto istart = 12 * m_mapObjects[node.objectIndex]->m_modelIndex;
+        auto istart = 12 * m_mapObjects[node.objectIndex]->mModelIndex;
         // Add links to other internal nodes
         for ( auto j = max( oldNumPathNodes, i - 12 );
               j < min( m_numPathNodes, i + 12 ); j++ )
@@ -257,7 +257,7 @@ void CPathFind::PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
             auto jseg = j - i + iseg;
 
             auto jstart =
-                12 * m_mapObjects[m_pathNodes[j].objectIndex]->m_modelIndex;
+                12 * m_mapObjects[m_pathNodes[j].objectIndex]->mModelIndex;
             if ( objectpathinfo[istart + iseg].next == jseg ||
                  objectpathinfo[jstart + jseg].next == iseg )
             {
@@ -462,10 +462,12 @@ void CPathFind::PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
             m_numPathNodes--;
         }
 }
+
 const CPathNode &CPathFind::GetLinkedPathNode( CPathNode &node, int16_t idx )
 {
     return m_pathNodes[m_connections[node.firstLink + idx]];
 }
+
 void __thiscall CPathFind::PreparePathDataForType_Jmp(
     CPathFind *_obj, uint8_t type, CTempNode *tempnodes,
     CPathInfoForObject *objectpathinfo, float maxdist, void *detachednodes,
@@ -473,4 +475,11 @@ void __thiscall CPathFind::PreparePathDataForType_Jmp(
 {
     _obj->PreparePathDataForType( type, tempnodes, objectpathinfo, maxdist,
                                   detachednodes, unused );
+}
+void CPathFind::Patch()
+{
+    // "Fix" car paths, ugly bug appears for no reason that trashes all
+    // memory for some reason
+    RedirectCall( 0x4298F7, reinterpret_cast<void *>(
+                                CPathFind::PreparePathDataForType_Jmp ) );
 }

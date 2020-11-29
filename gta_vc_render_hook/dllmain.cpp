@@ -436,6 +436,12 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         gtavc_ptr_table.mGetSkinToBoneMatrices   = 0x6499E0; //
         gtavc_ptr_table.mGetVertexBoneWeights    = 0x6499D0; //
         gtavc_ptr_table.mGetVertexBoneIndices    = 0;
+
+        gtavc_ptr_table.mIm3DTransform              = 0x65AE90;
+        gtavc_ptr_table.mIm3DRenderIndexedPrimitive = 0x65AF90;
+        gtavc_ptr_table.mIm3DRenderLine             = 0x649C00;
+        gtavc_ptr_table.mIm3DEnd                    = 0x65AF60;
+
         RwGameHooks::Patch( gtavc_ptr_table );
         //
 
@@ -455,13 +461,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         RedirectJump( 0x642B70,
                       reinterpret_cast<void *>( MyRwEngineGetVideoModeInfo ) );
         // Im3D
-        SetPointer( 0x6DF754, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
-
-        RedirectJump( 0x65AE90, reinterpret_cast<void *>( RwIm3DTransform ) );
-        RedirectJump( 0x65AF90, reinterpret_cast<void *>(
-                                    RwIm3DRenderIndexedPrimitive ) );
-        RedirectJump( 0x649C00, reinterpret_cast<void *>( RwIm3DRenderLine ) );
-        RedirectJump( 0x65AF60, reinterpret_cast<void *>( RwIm3DEnd ) );
+        // SetPointer( 0x6DF754, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
 
         // check dxt support
         RedirectJump( 0x61E310, reinterpret_cast<void *>( true_hook ) );

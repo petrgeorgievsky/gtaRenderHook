@@ -34,10 +34,15 @@ struct RwPointerTable
     INT_PTR m_fpSetRefreshRate = 0;
     INT_PTR m_fpSetVideoMode   = 0;
     // Immediate 3D pointers
-    INT_PTR m_fpIm3DOpen   = 0;
-    INT_PTR mIm3DOpen      = 0;
-    INT_PTR mIm3DClose     = 0;
-    INT_PTR m_fpIm3DSubmit = 0;
+    INT_PTR mIm3DOpen                   = 0;
+    INT_PTR mIm3DClose                  = 0;
+    INT_PTR mIm3DTransform              = 0;
+    INT_PTR mIm3DRenderIndexedPrimitive = 0;
+    INT_PTR mIm3DRenderPrimitive        = 0;
+    INT_PTR mIm3DRenderLine             = 0;
+    INT_PTR mIm3DRenderTriangle         = 0;
+    INT_PTR mIm3DEnd                    = 0;
+
     // Default pipelines nodes and callbacks
     [[maybe_unused]] INT_PTR m_fpAtomicAllInOneNode      = 0;
     INT_PTR                  m_fpSkinAllInOneNode        = 0;

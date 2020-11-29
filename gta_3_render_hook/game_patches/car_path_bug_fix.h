@@ -4,22 +4,12 @@
 
 #pragma once
 
+#include "../game/Entity.h"
+#include "../game/Vector.h"
 #include <cmath>
 #include <common_headers.h>
 #include <cstdint>
 #include <span>
-
-// TODO: Move out
-class CVector
-{
-  public:
-    float x, y, z;
-    float Magnitude( void ) const { return sqrt( x * x + y * y + z * z ); }
-};
-inline CVector operator-( const CVector &left, const CVector &right )
-{
-    return CVector{ left.x - right.x, left.y - right.y, left.z - right.z };
-}
 
 class CVector2D
 {
@@ -30,94 +20,8 @@ class CVector2D
 class CReference
 {
 };
-class CMatrix
-{
-  public:
-    void *    vtable;
-    RwMatrix  m_matrix;
-    RwMatrix *m_attachment;
-    bool      m_hasRwMatrix; // are we the owner?
-};
-class CPlaceable
-{
-  public:
-    // disable allocation
-    static void *operator new( size_t ) = delete;
 
-    CMatrix m_matrix;
-};
-static_assert( sizeof( CPlaceable ) == 0x4C );
-class CEntity : public CPlaceable
-{
-  public:
-    RwObject *m_rwObject;
-
-  protected:
-    uint32_t m_type : 3;
-
-  private:
-    uint32_t m_status : 5;
-
-  public:
-    // flagsA
-    uint32_t bUsesCollision : 1;      // does entity use collision
-    uint32_t bCollisionProcessed : 1; // has object been processed by a
-    // ProcessEntityCollision function
-    uint32_t bIsStatic : 1;     // is entity static
-    uint32_t bHasContacted : 1; // has entity processed some contact forces
-    uint32_t bPedPhysics : 1;
-    uint32_t bIsStuck : 1; // is entity stuck
-    uint32_t
-        bIsInSafePosition : 1; // is entity in a collision free safe position
-    uint32_t bUseCollisionRecords : 1;
-
-    // flagsB
-    uint32_t bWasPostponed : 1; // was entity control processing postponed
-    uint32_t bExplosionProof : 1;
-    uint32_t bIsVisible : 1; // is the entity visible
-    uint32_t bHasCollided : 1;
-    uint32_t bRenderScorched : 1;
-    uint32_t bHasBlip : 1;
-    uint32_t bIsBIGBuilding : 1; // Set if this entity is a big building
-    uint32_t bRenderDamaged : 1; // use damaged LOD models for objects with
-    // applicable damage
-
-    // flagsC
-    uint32_t bBulletProof : 1;
-    uint32_t bFireProof : 1;
-    uint32_t bCollisionProof : 1;
-    uint32_t bMeleeProof : 1;
-    uint32_t bOnlyDamagedByPlayer : 1;
-    uint32_t bStreamingDontDelete : 1; // Dont let the streaming remove this
-    uint32_t bZoneCulled : 1;
-    uint32_t bZoneCulled2 : 1; // only treadables+10m
-
-    // flagsD
-    uint32_t bRemoveFromWorld : 1; // remove this entity next time it should be
-    // processed
-    uint32_t bHasHitWall : 1; // has collided with a building (changes
-    // subsequent collisions)
-    uint32_t bImBeingRendered : 1; // don't delete me because I'm being rendered
-    uint32_t bTouchingWater : 1;   // used by cBuoyancy::ProcessBuoyancy
-    uint32_t bIsSubway : 1; // set when subway, but maybe different meaning?
-    uint32_t bDrawLast : 1; // draw object last
-    uint32_t bNoBrightHeadLights : 1;
-    uint32_t bDoNotRender : 1;
-
-    // flagsE
-    uint32_t bDistanceFade : 1; // Fade entity because it is far away
-    uint32_t m_flagE2 : 1;
-
-    uint16_t    m_scanCode;
-    uint16_t    m_randomSeed;
-    int16_t     m_modelIndex;
-    uint16_t    m_level; // int16
-    CReference *m_pFirstReference;
-};
-
-static_assert( sizeof( CEntity ) == 0x64 );
-
-class CBuilding : public CEntity
+class CBuilding : public Entity
 {
 };
 static_assert( sizeof( CBuilding ) == 0x64 );
@@ -136,7 +40,7 @@ constexpr auto NUM_PATHNODES = 4930, NUM_CARPATHLINKS = 2076,
 
 struct CPathNode
 {
-    CVector    pos;
+    Vector     pos;
     CPathNode *prev;
     CPathNode *next;
     int16_t    distance; // in path search
@@ -151,11 +55,11 @@ struct CPathNode
 
     int8_t group;
 
-    CVector &GetPosition( void ) { return pos; }
-    void     SetPosition( const CVector &p ) { pos = p; }
-    float    GetX( void ) { return pos.x; }
-    float    GetY( void ) { return pos.y; }
-    float    GetZ( void ) { return pos.z; }
+    Vector &GetPosition( void ) { return pos; }
+    void    SetPosition( const Vector &p ) { pos = p; }
+    float   GetX( void ) { return pos.x; }
+    float   GetY( void ) { return pos.y; }
+    float   GetZ( void ) { return pos.z; }
 
     CPathNode *GetPrev( void ) { return prev; }
     CPathNode *GetNext( void ) { return next; }
@@ -204,7 +108,7 @@ union CConnectionFlags
 
 struct CTempNode
 {
-    CVector pos;
+    Vector  pos;
     float   dirX;
     float   dirY;
     int16_t link1;
@@ -231,7 +135,7 @@ class CPathFind
 {
   public:
     /// Calculate node coordinates, todo: describe
-    void CalcNodeCoors( short x, short y, short z, int id, CVector *out );
+    void CalcNodeCoors( short x, short y, short z, int id, Vector *out );
     void PreparePathDataForType( uint8_t type, CTempNode *tempnodes,
                                  CPathInfoForObject *objectpathinfo,
                                  float maxdist, void *detachednodes,
@@ -240,6 +144,8 @@ class CPathFind
         CPathFind *_obj, uint8_t type, CTempNode *tempnodes,
         CPathInfoForObject *objectpathinfo, float maxdist, void *detachednodes,
         int unused );
+
+    static void Patch();
 
     CPathNode        m_pathNodes[NUM_PATHNODES];
     CCarPathLink     m_carPathLinks[NUM_CARPATHLINKS];

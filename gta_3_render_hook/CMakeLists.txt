@@ -18,16 +18,15 @@ set(SOURCES
         dllmain.cpp
         gta3_geometry_proxy.cpp
         game/Renderer.cpp
-        game/Renderer.h
-        game/PtrList.h
         game/World.cpp
-        game/World.h
         game/Entity.cpp
-        game/Entity.h
         game/Streaming.cpp
-        game/Streaming.h
         game/ModelInfo.cpp
-        game/ModelInfo.h game_patches/base_model_pipeline.cpp game_patches/base_model_pipeline.h game/PointLights.cpp game/PointLights.h game_patches/car_path_bug_fix.cpp game_patches/car_path_bug_fix.h call_redirection_util.h)
+        game/PointLights.cpp
+        game/Shadows.cpp
+        game/Vector.cpp
+        game_patches/car_path_bug_fix.cpp
+        game_patches/base_model_pipeline.cpp)
 
 #set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
 

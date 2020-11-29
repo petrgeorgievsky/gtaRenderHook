@@ -1,6 +1,7 @@
 #include "call_redirection_util.h"
 #include "game/PointLights.h"
 #include "game/Renderer.h"
+#include "game/Shadows.h"
 #include "game_patches/base_model_pipeline.h"
 #include "game_patches/car_path_bug_fix.h"
 #include "gta3_geometry_proxy.h"
@@ -46,29 +47,9 @@ void debug_log( char *format... )
 
 static int32_t rxD3D8SubmitNode( void *, const void * ) { return 1; }
 
-bool    false_ret_hook() { return false; }
-bool    true_ret_hook() { return true; }
-void    empty_hook() {}
-int32_t RwIm3DRenderLine( int32_t vert1, int32_t vert2 ) { return 1; }
-int32_t RwIm3DRenderTriangle( int32_t vert1, int32_t vert2, int32_t vert3 )
-{
-    return 1;
-}
-int32_t RwIm3DRenderIndexedPrimitive( RwPrimitiveType primType,
-                                      uint16_t *indices, int32_t numIndices )
-{
-    rh::rw::engine::EngineClient::gIm3DGlobals.RenderIndexedPrimitive(
-        primType, indices, numIndices );
-    return 1;
-}
-int32_t RwIm3DRenderPrimitive( RwPrimitiveType primType ) { return 1; }
-void *  RwIm3DTransform( void *pVerts, uint32_t numVerts, RwMatrix *ltm,
-                         uint32_t flags )
-{
-    rh::rw::engine::EngineClient::gIm3DGlobals.Transform(
-        static_cast<RwIm3DVertex *>( pVerts ), numVerts, ltm, flags );
-    return pVerts;
-}
+bool false_ret_hook() { return false; }
+bool true_ret_hook() { return true; }
+void empty_hook() {}
 
 int32_t rwD3D8FindCorrectRasterFormat( RwRasterType type, uint32_t flags )
 {
@@ -289,32 +270,6 @@ RpMaterial *RpMaterialStreamRead( void *stream )
     return material;
 }
 
-class CShadows
-{
-  public:
-    static void StoreShadowForPedObject( CEntity *, float, float, float, float,
-                                         float, float )
-    {
-    }
-    static void StoreShadowForPole( CEntity *, float, float, float, float,
-                                    float, uint32_t )
-    {
-    }
-    static void StoreCarLightShadow( CEntity *, int32_t, RwTexture *, CVector *,
-                                     float, float, float, float, uint8_t,
-                                     uint8_t, uint8_t, float )
-    {
-    }
-
-    static void StoreStaticShadow( uint32_t, uint8_t, RwTexture *, CVector *,
-                                   float, float, float, float, int16_t, uint8_t,
-                                   uint8_t, uint8_t, float, float, float, bool,
-                                   float )
-    {
-    }
-    static void StoreShadowForCar( CEntity * ) {}
-};
-
 BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
                      LPVOID lpReserved )
 {
@@ -355,44 +310,28 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         gta3_ptr_table.mGetSkinToBoneMatrices        = 0x5B1390;
         gta3_ptr_table.mGetVertexBoneWeights         = 0;
         gta3_ptr_table.mGetVertexBoneIndices         = 0;
+        gta3_ptr_table.mIm3DTransform                = 0x5B69E0;
+        gta3_ptr_table.mIm3DRenderIndexedPrimitive   = 0x5B6AE0;
+        gta3_ptr_table.mIm3DRenderLine               = 0x5B6C40;
+        gta3_ptr_table.mIm3DEnd                      = 0x5B6AB0;
 
-        // 5C3430
-        //  pipeline ptr
         RwGameHooks::Patch( gta3_ptr_table );
         BaseModelPipelines::Patch();
+
         /// TODO: Move to another cpp/hpp file
         // RedirectJump( 0x581830,
         //             reinterpret_cast<void *>( _psGetVideoModeList ) );
 
-        // RedirectJump( 0x405DB0, reinterpret_cast<void *>( debug_log ) );
-        // RedirectJump( 0x59E720, reinterpret_cast<void *>( debug_log ) );
         RedirectCall( 0x5C9126,
                       reinterpret_cast<void *>( RpMaterialStreamRead ) );
 
         RedirectJump( 0x510980,
                       reinterpret_cast<void *>( PointLights::AddLight ) );
 
-        // RedirectCall( 0x478902, reinterpret_cast<void *>( load_threadable
-        // )
-        // );
-
-        RedirectJump( 0x5B69E0, reinterpret_cast<void *>( RwIm3DTransform ) );
-        RedirectJump( 0x5B6AE0, reinterpret_cast<void *>(
-                                    RwIm3DRenderIndexedPrimitive ) );
-        RedirectJump( 0x5B6C40, reinterpret_cast<void *>( RwIm3DRenderLine ) );
-        // Im3DEnd
-        RedirectJump( 0x5B6AB0, reinterpret_cast<void *>( empty_hook ) );
-
-        // RedirectJump( 0x429C00, reinterpret_cast<void *>( true_ret_hook )
-        // );
         RedirectJump( 0x59A610, reinterpret_cast<void *>(
                                     rwD3D8FindCorrectRasterFormat ) );
-        SetPointer( 0x61AADC, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
+        // SetPointer( 0x61AADC, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
 
-        // "Fix" car paths, ugly bug appears for no reason that trashes all
-        // memory for some reason
-        RedirectCall( 0x4298F7, reinterpret_cast<void *>(
-                                    CPathFind::PreparePathDataForType_Jmp ) );
         // Hide default sky
         RedirectJump( 0x4F7FE0, reinterpret_cast<void *>( true_ret_hook ) );
 
@@ -402,18 +341,8 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
                       reinterpret_cast<void *>( Renderer::PreRender ) );
         RedirectJump( 0x48E0F0, reinterpret_cast<void *>( Renderer::Render ) );
 
-        /// Remove ingame static shadows
-
-        RedirectJump( 0x513EC0, reinterpret_cast<void *>(
-                                    CShadows::StoreShadowForPedObject ) );
-        RedirectJump( 0x514020, reinterpret_cast<void *>(
-                                    CShadows::StoreShadowForPole ) );
-        RedirectJump( 0x513C80, reinterpret_cast<void *>(
-                                    CShadows::StoreCarLightShadow ) );
-        RedirectJump( 0x5132B0,
-                      reinterpret_cast<void *>( CShadows::StoreStaticShadow ) );
-        RedirectJump( 0x513A40,
-                      reinterpret_cast<void *>( CShadows::StoreShadowForCar ) );
+        CPathFind::Patch();
+        Shadows::Patch();
 
         InitClient();
         //
