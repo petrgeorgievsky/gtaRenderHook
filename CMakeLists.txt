@@ -5,7 +5,7 @@ project(RenderHook)
 # Compile with this option OFF if you want full compatibility
 # with older videocards
 option(USE_VULKAN_API "Add RenderHook Vulkan API implementation" ON)
-option(BUILD_TESTS "Compile tests" ON)
+option(BUILD_TESTS "Compile tests" OFF)
 option(ARCH_64BIT "Compile tests with x64 architecture" OFF)
 option(BUILD_32BIT_LIBS "Compile libs with x86 architecture" OFF)
 

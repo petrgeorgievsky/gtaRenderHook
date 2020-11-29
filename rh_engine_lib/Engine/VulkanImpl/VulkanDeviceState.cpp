@@ -1,4 +1,5 @@
-#include "VulkanDeviceState.h"
+#include <common.h>
+
 #include "SyncPrimitives/VulkanCPUSyncPrimitive.h"
 #include "SyncPrimitives/VulkanGPUSyncPrimitive.h"
 #include "VulkanBuffer.h"
@@ -9,6 +10,7 @@
 #include "VulkanDescriptorSetAllocator.h"
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanDeviceOutputView.h"
+#include "VulkanDeviceState.h"
 #include "VulkanFrameBuffer.h"
 #include "VulkanImage.h"
 #include "VulkanImageView.h"
@@ -20,7 +22,6 @@
 #include "VulkanWin32Window.h"
 
 #include <Engine/Common/ScopedPtr.h>
-#include <common.h>
 #include <memory_resource>
 #include <numeric>
 #include <ranges>
@@ -649,7 +650,9 @@ void VulkanDeviceState::Wait(
             return *fence_impl;
         } );
 
-    m_vkDevice.waitForFences( fence_list, true, ~0u );
+    if ( !CALL_VK_API( m_vkDevice.waitForFences( fence_list, true, ~0u ),
+                       "Wait for fences failed!" ) )
+        return;
     m_vkDevice.resetFences( fence_list );
 }
 

@@ -36,8 +36,6 @@ void GPUModelBuffersPool::StoreModel( const BackendMeshData &model,
     while ( id < mSlotAvailability.size() && mSlotAvailability[id] == 0 )
         id++;
 
-    // if ( id > mSlotAvailability.size() )
-    //    throw std::logic_error( "Fuck" );
     {
         std::array<BufferUpdateInfo, 1> vb_list{
             { 0, VK_WHOLE_SIZE, model.mVertexBuffer->Get() } };

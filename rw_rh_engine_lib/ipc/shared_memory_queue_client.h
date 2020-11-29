@@ -50,8 +50,8 @@ class SharedMemoryTask
     friend class SharedMemoryTaskQueue;
 };
 
-constexpr auto EmptySerializer   = []( MemoryWriter &&memory_writer ) {};
-constexpr auto EmptyDeserializer = []( MemoryReader &&memory_reader ) {};
+constexpr auto EmptySerializer   = []( MemoryWriter && ) {};
+constexpr auto EmptyDeserializer = []( MemoryReader && ) {};
 
 class SharedMemoryTaskQueue
 {

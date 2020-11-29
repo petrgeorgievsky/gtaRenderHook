@@ -164,7 +164,7 @@ int main()
     render_pass_desc.mSubpasses.push_back( main_subpass );
 
     gRenderPass = gDeviceState->CreateRenderPass( render_pass_desc );
-    // Retrieve window handle via multiprocess crap
+    // Retrieve window handle via multiprocess
     // 0. Create shared memory
     HANDLE  hMapFile;
     LPCTSTR pBuf;
@@ -214,7 +214,6 @@ int main()
     WaitForSingleObject( window_init_handle, INFINITE );
     ResetEvent( window_init_handle );
     rh::debug::DebugLogger::Log( "Wait is over now!" );
-    // Draw shit
     HWND hwnd_ptr;
     CopyMemory( &hwnd_ptr, pBuf, ( sizeof( HWND ) ) );
 

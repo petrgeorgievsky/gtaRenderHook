@@ -1,6 +1,7 @@
 #include "VulkanDeviceOutputView.h"
 #include "DebugUtils/DebugLogger.h"
 #include "SyncPrimitives/VulkanGPUSyncPrimitive.h"
+#include "VulkanCommon.h"
 #include "VulkanImageView.h"
 
 using namespace rh::engine;
@@ -109,8 +110,9 @@ bool VulkanDeviceOutputView::Present( uint32_t        swapchain_img,
         present_info.pWaitSemaphores    = &vk_wait_prim_impl;
     }
     present_info.pImageIndices = &swapchain_img;
-    m_vkPresentQueue.presentKHR( present_info );
-    return true;
+
+    return CALL_VK_API( m_vkPresentQueue.presentKHR( present_info ),
+                        "Failed to present image to surface" );
 }
 
 bool VulkanDeviceOutputView::Present()
@@ -121,8 +123,8 @@ bool VulkanDeviceOutputView::Present()
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores    = &m_vkImageAquireSemaphore;
     // present_info.pImageIndices = &m_uiSwapchainIdx;
-    m_vkPresentQueue.presentKHR( present_info );
-    return true;
+    return CALL_VK_API( m_vkPresentQueue.presentKHR( present_info ),
+                        "Failed to present image to surface" );
 }
 
 bool rh::engine::VulkanDeviceOutputView::SetFullscreenFlag( bool flag )

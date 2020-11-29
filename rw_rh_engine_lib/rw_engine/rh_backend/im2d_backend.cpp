@@ -28,7 +28,7 @@ RwIm2DVertex *TriFanToTriList( RwIm2DVertex *vertices_in,
                                int32_t &     vertex_count )
 {
     uint32_t k = 0;
-    for ( uint32_t i = 1; i < vertex_count - 1; i++ )
+    for ( int32_t i = 1; i < vertex_count - 1; i++ )
     {
         vertices_out[k++] = ( vertices_in[0] );
         vertices_out[k++] = ( vertices_in[i] );

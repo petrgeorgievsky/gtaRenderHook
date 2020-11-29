@@ -46,10 +46,7 @@ void CCustomBuildingPipeline::Patch()
     SetPointer( 0x5D7B0B, CCustomBuildingPipeline__Render );
     SetPointer( 0x7578AE, CCustomBuildingPipeline__Render );
 }
-void CCustomBuildingPipeline::ResetAlphaList()
-{
-    m_aAlphaMeshList.Clean();
-}
+void CCustomBuildingPipeline::ResetAlphaList() { m_aAlphaMeshList.Clean(); }
 
 // Render all collected alpha meshes
 void CCustomBuildingPipeline::RenderAlphaList()
@@ -108,13 +105,12 @@ void CCustomBuildingPipeline::Render( RwResEntry *repEntry, void *object,
         return;
     // if (entryData->header.primType != rwPRIMTYPETRISTRIP)
     //	return;
-    // Render shit
     // if (CD3D1XVertexDeclarationManager::currentVDecl !=
     // entryData->header.vertexDeclaration) {
     g_pStateMgr->SetInputLayout(
         (ID3D11InputLayout *)entryData->header.vertexDeclaration );
     //	CD3D1XVertexDeclarationManager::currentVDecl =
-    //entryData->header.vertexDeclaration;
+    // entryData->header.vertexDeclaration;
     //}
     UINT stride = sizeof( SimpleVertex );
     UINT offset = 0;
@@ -166,9 +162,9 @@ void CCustomBuildingPipeline::Render( RwResEntry *repEntry, void *object,
         else
             g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(
                 mesh.material->color );
-        float fSpec       = (std::max)( CWeather::WetRoads,
-                           CCustomCarEnvMapPipeline__GetFxSpecSpecularity(
-                               mesh.material ) );
+        float fSpec = ( std::max )(
+            CWeather::WetRoads,
+            CCustomCarEnvMapPipeline__GetFxSpecSpecularity( mesh.material ) );
         float fGlossiness = RpMaterialGetFxEnvShininess( mesh.material );
         g_pRenderBuffersMgr->UpdateMaterialSpecularInt( fSpec );
         g_pRenderBuffersMgr->UpdateMaterialGlossiness( fGlossiness );
@@ -201,10 +197,10 @@ void CCustomBuildingPipeline::Render( RwResEntry *repEntry, void *object,
             g_pStateMgr->SetAlphaBlendEnable( FALSE );
             if ( bAlphaEnable > 0 )
             {
-                m_aAlphaMeshList.Push( {entryData,
-                                        RwFrameGetLTM( static_cast<RwFrame *>(
-                                            atomic->object.object.parent ) ),
-                                        (int)i} );
+                m_aAlphaMeshList.Push( { entryData,
+                                         RwFrameGetLTM( static_cast<RwFrame *>(
+                                             atomic->object.object.parent ) ),
+                                         (int)i } );
                 continue;
             }
         }

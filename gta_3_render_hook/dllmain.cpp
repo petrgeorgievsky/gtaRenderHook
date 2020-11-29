@@ -238,10 +238,9 @@ RpMaterial *RpMaterialStreamReadImpl( void *stream )
 
 RwTexture *RwTextureRead( const char *name, const char *maskName )
 {
-    return (
-        reinterpret_cast<RwTexture *(__cdecl *)( const char *, const char * )>(
-            0x5A7840 ) )( name, maskName );
+    return InMemoryFuncCall<RwTexture *, 0x5A7840>( name, maskName );
 }
+
 RpMaterial *RpMaterialStreamRead( void *stream )
 {
     auto material = RpMaterialStreamReadImpl( stream );
@@ -330,7 +329,6 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
 
         RedirectJump( 0x59A610, reinterpret_cast<void *>(
                                     rwD3D8FindCorrectRasterFormat ) );
-        // SetPointer( 0x61AADC, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
 
         // Hide default sky
         RedirectJump( 0x4F7FE0, reinterpret_cast<void *>( true_ret_hook ) );

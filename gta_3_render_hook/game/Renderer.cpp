@@ -32,7 +32,6 @@ void Renderer::ScanWorld()
 {
     World::AdvanceScanCode();
 
-    // Fuck logic go all out
     auto sector_x = static_cast<int>( World::GetSectorX( mCameraPosition.x ) );
     auto sector_y = static_cast<int>( World::GetSectorY( mCameraPosition.y ) );
 

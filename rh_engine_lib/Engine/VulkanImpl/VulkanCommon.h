@@ -9,18 +9,19 @@
  * @param errorMessage - message, that should be written if error occurs
  * @return true if call resulted in success
  */
-inline bool CALL_VK_API( VkResult callResult, const rh::engine::String &errorMessage )
+inline bool CALL_VK_API( VkResult                  callResult,
+                         const rh::engine::String &errorMessage )
 {
     rh::engine::StringStream ss;
 
-    if ( callResult != VkResult::VK_SUCCESS ) {
+    if ( callResult != VkResult::VK_SUCCESS )
+    {
         MessageBox( nullptr, errorMessage.c_str(), TEXT( "RUNTIME ERROR" ), 0 );
 
         rh::debug::DebugLogger::Error( errorMessage );
 
-        // TODO: add more readable results(for ex. convert HRESULT to string, based
-        // on result description)
-        ss << TEXT( "ERROR_CODE:" ) << callResult << '\n';
+        ss << TEXT( "ERROR_CODE:" ) << vk::to_string( vk::Result( callResult ) )
+           << '\n';
 
         rh::debug::DebugLogger::Log( ss.str(), rh::debug::LogLevel::Error );
 
@@ -38,18 +39,18 @@ inline bool CALL_VK_API( VkResult callResult, const rh::engine::String &errorMes
  * @param errorMessage - message, that should be written if error occurs
  * @return true if call resulted in success
  */
-inline bool CALL_VK_API( vk::Result callResult, const rh::engine::String &errorMessage )
+inline bool CALL_VK_API( vk::Result                callResult,
+                         const rh::engine::String &errorMessage )
 {
     rh::engine::StringStream ss;
 
-    if ( callResult != vk::Result::eSuccess ) {
+    if ( callResult != vk::Result::eSuccess )
+    {
         MessageBox( nullptr, errorMessage.c_str(), TEXT( "RUNTIME ERROR" ), 0 );
 
         rh::debug::DebugLogger::Error( errorMessage );
 
-        // TODO: add more readable results(for ex. convert HRESULT to string, based
-        // on result description)
-        ss << TEXT( "ERROR_CODE:" ) << callResult << '\n';
+        ss << TEXT( "ERROR_CODE:" ) << vk::to_string( callResult ) << '\n';
 
         rh::debug::DebugLogger::Log( ss.str(), rh::debug::LogLevel::Error );
 

@@ -162,7 +162,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
-// TODO: move this crap out of here
+// TODO: move this out of here
 RxD3D9InstanceData* GetModelsData( RxInstanceData * data )
 {
     return reinterpret_cast<RxD3D9InstanceData*>( data + 1 );

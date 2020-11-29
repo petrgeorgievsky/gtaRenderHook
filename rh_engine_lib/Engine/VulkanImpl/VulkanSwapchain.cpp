@@ -1,5 +1,6 @@
 #include "VulkanSwapchain.h"
 #include "SyncPrimitives/VulkanGPUSyncPrimitive.h"
+#include "VulkanCommon.h"
 #include "VulkanImageView.h"
 
 using namespace rh::engine;
@@ -118,6 +119,6 @@ bool VulkanSwapchain::Present( uint32_t swapchain_img, ISyncPrimitive *waitFor )
         present_info.pWaitSemaphores    = &vk_wait_prim_impl;
     }
     present_info.pImageIndices = &swapchain_img;
-    m_vkPresentQueue.presentKHR( present_info );
-    return true;
+    return CALL_VK_API( m_vkPresentQueue.presentKHR( present_info ),
+                        "Failed to present image to surface" );
 }

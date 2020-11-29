@@ -27,13 +27,9 @@ bool RwRasterCreateCmd::Execute()
     m_pRaster->cpPixels = nullptr;
     m_pRaster->palette  = nullptr;
 
-    auto format = static_cast<RwRasterFormat>( m_nFlags & rwRASTERFORMATMASK );
-
     /* Retrieve a pointer to internal raster */
     auto *internalRaster     = GetBackendRasterExt( m_pRaster );
     internalRaster->mImageId = 0xBADF00D;
-    // if ( m_pRaster->cType & rwRASTERTYPECAMERA )
-    //    internalRaster->mWindow = DeviceGlobals::MainWindow;
 
     if ( m_nFlags & rwRASTERDONTALLOCATE )
         return true;

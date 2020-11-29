@@ -179,7 +179,7 @@ bool RwNativeTextureReadCmd::Execute()
     }
     else
     {
-        debug::DebugLogger::Log( "bullshit raster path" );
+        debug::DebugLogger::Log( "weird raster path" );
     }
 
     if ( raster == nullptr )
@@ -314,8 +314,9 @@ bool RwNativeTextureReadCmd::Execute()
                     writer.Skip( height * width * sizeof( uint32_t ) );
                 auto *pixels = writer.CurrentPtr<uint8_t>();
                 if ( convert_from_pal )
-                    writer.SeekFromCurrent( -height * width *
-                                            sizeof( uint32_t ) );
+                    writer.SeekFromCurrent(
+                        -static_cast<int64_t>( height * width ) *
+                        sizeof( uint32_t ) );
 
                 uint32_t size;
                 g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
