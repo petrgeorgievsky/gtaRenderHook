@@ -103,6 +103,13 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
     auto *vk_cmd = reinterpret_cast<VulkanCommandBuffer *>( dest );
 
     vk_cmd->PipelineBarrier(
+        { .mSrcStage            = PipelineStage::RayTracing,
+          .mDstStage            = PipelineStage::ComputeShader,
+          .mImageMemoryBarriers = { GetLayoutTransformBarrier(
+              (rh::engine::IImageBuffer *)mOutputBuffer, ImageLayout::Undefined,
+              ImageLayout::General ) } } );
+
+    vk_cmd->PipelineBarrier(
         { .mSrcStage       = PipelineStage::RayTracing,
           .mDstStage       = PipelineStage::ComputeShader,
           .mMemoryBarriers = { { MemoryAccessFlags::MemoryWrite,
@@ -116,5 +123,14 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
 
     vk_cmd->DispatchCompute(
         { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
+
+    ImageMemoryBarrierInfo shader_ro_barrier = GetLayoutTransformBarrier(
+        (rh::engine::IImageBuffer *)mOutputBuffer, ImageLayout::General,
+        ImageLayout::ShaderReadOnly );
+    shader_ro_barrier.mDstMemoryAccess = MemoryAccessFlags::ShaderRead;
+
+    dest->PipelineBarrier( { .mSrcStage = PipelineStage::ComputeShader,
+                             .mDstStage = PipelineStage::PixelShader,
+                             .mImageMemoryBarriers = { shader_ro_barrier } } );
 }
 } // namespace rh::rw::engine

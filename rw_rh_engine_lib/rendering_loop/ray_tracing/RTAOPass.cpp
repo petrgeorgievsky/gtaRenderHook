@@ -137,8 +137,9 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
         .UpdateImage( rtaoDefaultSampler, DescriptorType::Sampler,
                       { ImageUpdateInfo{ ImageLayout::ShaderReadOnly, nullptr,
                                          mTextureSampler } } )
-        .UpdateImage( rtaoNoiseTexture, DescriptorType::ROTexture,
-                      { { ImageLayout::General, mNoiseBufferView, nullptr } } )
+        .UpdateImage(
+            rtaoNoiseTexture, DescriptorType::ROTexture,
+            { { ImageLayout::ShaderReadOnly, mNoiseBufferView, nullptr } } )
         .UpdateImage(
             rtaoMotionVectors, DescriptorType::StorageTexture,
             { { ImageLayout::General, params.mMotionVectorsView, nullptr } } )
@@ -231,8 +232,13 @@ void RTAOPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer )
     /// TRANSFORM TO GENERAL
     // Prepare image memory to transfer to
     // TODO: Add some sort of memory barrier mgr
-    std::array image_barriers = { GetLayoutTransformBarrier(
-        mAOBuffer[0], ImageLayout::Undefined, ImageLayout::General ) };
+    std::array image_barriers = {
+        GetLayoutTransformBarrier( mAOBuffer[0], ImageLayout::Undefined,
+                                   ImageLayout::General ),
+        GetLayoutTransformBarrier( mTempBlurAOBuffer, ImageLayout::Undefined,
+                                   ImageLayout::General ),
+        GetLayoutTransformBarrier( mBlurredAOBuffer, ImageLayout::Undefined,
+                                   ImageLayout::General ) };
 
     vk_cmd_buff->PipelineBarrier( { .mSrcStage = PipelineStage::Host,
                                     .mDstStage = PipelineStage::Transfer,

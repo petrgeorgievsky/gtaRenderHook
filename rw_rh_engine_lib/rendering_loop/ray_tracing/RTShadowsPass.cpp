@@ -154,7 +154,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
     }
     {
         std::array<ImageUpdateInfo, 1> img_ui = {
-            { ImageLayout::General, mNoiseBufferView, nullptr } };
+            { ImageLayout::ShaderReadOnly, mNoiseBufferView, nullptr } };
         device.UpdateDescriptorSets(
             { .mSet             = mRayTraceSet,
               .mBinding         = 4,
@@ -300,6 +300,12 @@ void RTShadowsPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
           .mDstStage            = PipelineStage::Transfer,
           .mImageMemoryBarriers = {
               GetLayoutTransformBarrier( mShadowsBuffer, ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mBlurredShadowsBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mTempBlurShadowsBuffer,
+                                         ImageLayout::Undefined,
                                          ImageLayout::General ) } } );
     // bind pipeline
 

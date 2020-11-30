@@ -237,6 +237,9 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
                                          ImageLayout::Undefined,
                                          ImageLayout::TransferDst ),
               GetLayoutTransformBarrier( mMotionBuffer, ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mMaterialsBuffer,
+                                         ImageLayout::Undefined,
                                          ImageLayout::General ) } } );
 
     // Copy to prev normals before rendering
@@ -297,14 +300,19 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
                 .mSrcMemoryAccess = MemoryAccessFlags::MemoryWrite,
                 .mDstMemoryAccess = MemoryAccessFlags::MemoryRead,
                 .mSubresRange     = { 0, 1, 0, 1 } } } } );
-    /*ImageMemoryBarrierInfo shader_ro_barrier = GetLayoutTransformBarrier(
-        mNormalsBuffer, ImageLayout::General, ImageLayout::ShaderReadOnly );
+    /**/
+}
+void RTPrimaryRaysPass::ConvertNormalsToShaderRO(
+    rh::engine::ICommandBuffer *dest )
+{
+    ImageMemoryBarrierInfo shader_ro_barrier = GetLayoutTransformBarrier(
+        (rh::engine::IImageBuffer *)mNormalsBuffer[0], ImageLayout::General,
+        ImageLayout::ShaderReadOnly );
     shader_ro_barrier.mDstMemoryAccess = MemoryAccessFlags::ShaderRead;
 
-    vk_cmd_buff->PipelineBarrier(
-        { .mSrcStage            = PipelineStage::RayTracing,
-          .mDstStage            = PipelineStage::PixelShader,
-          .mImageMemoryBarriers = { shader_ro_barrier } } );*/
+    dest->PipelineBarrier( { .mSrcStage = PipelineStage::ComputeShader,
+                             .mDstStage = PipelineStage::PixelShader,
+                             .mImageMemoryBarriers = { shader_ro_barrier } } );
 }
 
 } // namespace rh::rw::engine

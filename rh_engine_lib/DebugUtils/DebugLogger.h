@@ -76,6 +76,14 @@ class DebugLogger
 
     static void SyncDebugFile();
 
+    /**
+     * @brief Prints formatted Error message to console and debug file
+     *
+     * @param msg - error message
+     */
+    template <typename... Args>
+    static void ErrorFmt( const engine::String &msg, Args... args );
+
   private:
     static std::unique_ptr<engine::OutFileStream> m_pLogStream;
 

@@ -1,5 +1,6 @@
 #include "DebugLogger.h"
 #include <Windows.h>
+#include <array>
 #include <fstream>
 
 using namespace rh::debug;
@@ -161,4 +162,28 @@ void DebugLogger::SyncDebugFile()
     }
     CloseHandle( g_hDebugPipeReadHandle );
     g_hDebugPipeReadHandle = nullptr;
+}
+
+template <typename... Args>
+void DebugLogger::ErrorFmt( const rh::engine::String &msg, Args... args )
+{
+    static std::array<char, 4096> temp_buff{};
+    std::unique_ptr<char[]>       dyn_buf;
+
+    size_t size = snprintf( nullptr, 0, msg.c_str(), args... ) + 1;
+
+    char *data_ptr;
+
+    // Use bigger heap buffer for big strings, should be rare
+    if ( size > 4096 )
+    {
+        dyn_buf  = std::make_unique<char[]>( size );
+        data_ptr = dyn_buf.get();
+    }
+    else
+        data_ptr = temp_buff.data();
+
+    snprintf( data_ptr, size, msg.c_str(), args... );
+
+    Error( std::string( data_ptr, data_ptr + size - 1 ) );
 }

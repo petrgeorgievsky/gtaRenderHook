@@ -29,7 +29,7 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
             { camera_desc_set_bindings } );
 
     std::array desc_set_bindings = { DescriptorBinding{
-        0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 1 } };
+        0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 0, 1 } };
     mModelSetLayout =
         DeviceGlobals::RenderHookDevice->CreateDescriptorSetLayout(
             { desc_set_bindings } );

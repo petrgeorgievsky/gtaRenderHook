@@ -562,8 +562,8 @@ VulkanDeviceState::CreateImageBuffer( const ImageBufferCreateParams &params )
     for ( uint32_t offset = 0, i = 0; i < params.mMipLevels; i++ )
     {
         const auto &pre_init_data = params.mPreinitData[i];
-        auto        mip_w         = params.mWidth >> i;
-        auto        mip_h         = params.mHeight >> i;
+        auto        mip_w         = ( std::max )( params.mWidth >> i, 1u );
+        auto        mip_h         = ( std::max )( params.mHeight >> i, 1u );
 
         // Ignore zero sized mipmaps, can happen on some textures due to some
         // error in mip-map generation software

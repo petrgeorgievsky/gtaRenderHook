@@ -172,6 +172,7 @@ RayTracingRenderer::Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
         mRTShadowsPass->Execute( mTLAS, dest, *scene->mFrameInfo );
         mRTReflectionPass->Execute( mTLAS, dest, *scene->mFrameInfo );
         mDeferredComposePass->Execute( dest );
+        mPrimaryRaysPass->ConvertNormalsToShaderRO( dest );
         // mDebugPipeline->Execute( dest );
     }
 

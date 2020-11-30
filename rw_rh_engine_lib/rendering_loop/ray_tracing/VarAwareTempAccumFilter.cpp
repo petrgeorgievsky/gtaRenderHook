@@ -206,6 +206,25 @@ VATAFilterPass::VATAFilterPass( VarAwareTempAccumFilterPipe *pipeline,
 void VATAFilterPass::Execute( rh::engine::ICommandBuffer *dest )
 {
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( dest );
+    vk_cmd_buff->PipelineBarrier(
+        { .mSrcStage            = PipelineStage::Host,
+          .mDstStage            = PipelineStage::ComputeShader,
+          .mImageMemoryBarriers = {
+              GetLayoutTransformBarrier( mAccumulateValueBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mBlurStrengthBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mReProjectValueBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mTemporalSamplePerPixel[0],
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mTemporalSamplePerPixel[1],
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ) } } );
     vk_cmd_buff->BindComputePipeline( mParent->mReProjectPipeline );
     vk_cmd_buff->BindDescriptorSets( { PipelineBindPoint::Compute,
                                        mParent->mReProjectLayout,

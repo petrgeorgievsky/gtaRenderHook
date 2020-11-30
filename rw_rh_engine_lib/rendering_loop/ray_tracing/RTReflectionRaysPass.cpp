@@ -171,8 +171,9 @@ RTReflectionRaysPass::RTReflectionRaysPass(
         .UpdateImage(
             5, DescriptorType::StorageTexture,
             { { ImageLayout::General, params.mMaterialsView, nullptr } } )
-        .UpdateImage( 6, DescriptorType::ROTexture,
-                      { { ImageLayout::General, mNoiseBufferView, nullptr } } )
+        .UpdateImage(
+            6, DescriptorType::ROTexture,
+            { { ImageLayout::ShaderReadOnly, mNoiseBufferView, nullptr } } )
         .UpdateBuffer(
             7, DescriptorType::ROBuffer,
             { { 0, sizeof( ReflParams ), (IBuffer *)mParamsBuffer } } )
@@ -266,9 +267,19 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
     vk_cmd_buff->PipelineBarrier(
         { .mSrcStage            = PipelineStage::Host,
           .mDstStage            = PipelineStage::RayTracing,
-          .mImageMemoryBarriers = { GetLayoutTransformBarrier(
-              mReflectionBuffer, ImageLayout::Undefined,
-              ImageLayout::General ) } } );
+          .mImageMemoryBarriers = {
+              GetLayoutTransformBarrier( mReflectionBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mReflectionBlurStrBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mTempBlurReflectionBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ),
+              GetLayoutTransformBarrier( mFilteredReflectionBuffer,
+                                         ImageLayout::Undefined,
+                                         ImageLayout::General ) } } );
     // bind pipeline
 
     vk_cmd_buff->BindDescriptorSets(

@@ -75,10 +75,12 @@ void GenerateNormals( VertexDescPosColorUVNormals *verticles,
     // generate normal for each triangle and vertex in mesh
     for ( uint32_t i = 0; i < triangleCount; i++ )
     {
-        auto triangle = triangles[i];
-        auto iA = triangle.vertIndex[2], iB = triangle.vertIndex[1],
+        const auto triangle = triangles[i];
+        auto       iA = triangle.vertIndex[2], iB = triangle.vertIndex[1],
              iC = triangle.vertIndex[0];
 
+        if ( iA == iB || iB == iC || iA == iC )
+            continue;
         const auto vA = verticles[iA], vB = verticles[iB], vC = verticles[iC];
         // tangent vector
         RwV3d tangent = { vB.x - vA.x, vB.y - vA.y, vB.z - vA.z };
@@ -114,11 +116,18 @@ void GenerateNormals( VertexDescPosColorUVNormals *verticles,
         float length = sqrt( verticles[i].nx * verticles[i].nx +
                              verticles[i].ny * verticles[i].ny +
                              verticles[i].nz * verticles[i].nz );
-        if ( length > 0.000001f )
+        if ( length > 0.0f )
         {
             verticles[i].nx = verticles[i].nx / length;
             verticles[i].ny = verticles[i].ny / length;
             verticles[i].nz = verticles[i].nz / length;
+        }
+        else
+        {
+            // Better than 0 length vector
+            verticles[i].nx = 0.5f;
+            verticles[i].ny = 0.5f;
+            verticles[i].nz = 0.5f;
         }
     }
 }

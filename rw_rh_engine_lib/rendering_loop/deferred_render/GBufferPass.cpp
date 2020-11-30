@@ -49,13 +49,13 @@ void GBufferPass::InitializePipeline()
     using namespace rh::engine;
     // layouts
     std::array<DescriptorBinding, 1> camera_desc_set_bindings = {
-        { { 0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 0 } } };
+        { { 0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 0, 0 } } };
     mCameraSetLayout =
         DeviceGlobals::RenderHookDevice->CreateDescriptorSetLayout(
             { camera_desc_set_bindings } );
 
     std::array desc_set_bindings = { DescriptorBinding{
-        0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 1 } };
+        0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 0, 1 } };
     mModelSetLayout =
         DeviceGlobals::RenderHookDevice->CreateDescriptorSetLayout(
             { desc_set_bindings } );

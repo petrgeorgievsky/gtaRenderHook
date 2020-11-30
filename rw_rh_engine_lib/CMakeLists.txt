@@ -82,7 +82,8 @@ set(SOURCES
         rendering_loop/ray_tracing/RTReflectionRaysPass.cpp
         rendering_loop/ray_tracing/debug_pipeline.cpp
         rw_engine/rh_backend/im3d_backend.cpp
-        rw_engine/rh_backend/im3d_renderer.cpp)
+        rw_engine/rh_backend/im3d_renderer.cpp
+        material_storage.cpp)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 #set_property(TARGET rw_rh_engine_lib PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

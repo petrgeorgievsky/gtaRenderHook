@@ -41,13 +41,13 @@ SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
 
     constexpr std::array desc_set_bindings = {
         DescriptorBinding{ 0, DescriptorType::RWBuffer, 1, ShaderStage::Compute,
-                           0 },
+                           0, 0 },
         DescriptorBinding{ 1, DescriptorType::RWBuffer, 1, ShaderStage::Compute,
-                           0 },
+                           0, 0 },
         DescriptorBinding{ bone_matrix_bind_idx, DescriptorType::RWBuffer, 1,
-                           ShaderStage::Compute, bone_matrix_bind_idx },
+                           ShaderStage::Compute, 0, bone_matrix_bind_idx },
         DescriptorBinding{ prev_bone_matrix_bind_idx, DescriptorType::RWBuffer,
-                           1, ShaderStage::Compute,
+                           1, ShaderStage::Compute, 0,
                            prev_bone_matrix_bind_idx } };
 
     mDescSetLayout = device.CreateDescriptorSetLayout( { desc_set_bindings } );

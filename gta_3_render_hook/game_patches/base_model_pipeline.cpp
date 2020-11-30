@@ -79,10 +79,10 @@ struct RpHAnimHierarchy35
     int32_t           rootParentOffset;      /**< Internal use */
 };
 
-class AnimHierarcyRw35 : public IAnimHierarcy
+class AnimHierarcyRw35 final : public IAnimHierarcy
 {
   private:
-    RpHAnimHierarchy35 *base;
+    RpHAnimHierarchy35 *base{};
 
   public:
     void Init( void *_base ) override
@@ -130,8 +130,6 @@ FillMaterialBuffer( const RpGeometryInterface &geometry )
     return materials;
 }
 
-/// Currently unused due to lack of index buffers, probably it's a older rw
-/// thing
 static int32_t SkinD3D8AtomicAllInOneNode( void * /*self*/,
                                            const RxPipelineNodeParam *params )
 {

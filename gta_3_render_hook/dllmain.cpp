@@ -10,7 +10,7 @@
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <filesystem>
 #include <ipc/ipc_utils.h>
-#include <nlohmann/json.hpp>
+#include <material_storage.h>
 #include <render_loop.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_api_injectors.h>
@@ -155,12 +155,6 @@ char **_psGetVideoModeList()
     return videomode_list.data();
 }
 
-struct MaterialDescription
-{
-    std::string          mTextureDictName;
-    std::array<char, 32> mSpecularTextureName{};
-};
-
 class TxdStore
 {
   public:
@@ -176,64 +170,9 @@ class TxdStore
     }
 };
 
-class MaterialExtensionSystem
-{
-  public:
-    static MaterialExtensionSystem &GetInstance()
-    {
-        static MaterialExtensionSystem m;
-        return m;
-    }
-
-    std::optional<MaterialDescription> GetMatDesc( const std::string &name )
-    {
-        auto x = mMaterials.find( name );
-        return x != mMaterials.end() ? x->second
-                                     : std::optional<MaterialDescription>{};
-    }
-
-  private:
-    MaterialExtensionSystem()
-    {
-        namespace fs  = std::filesystem;
-        auto dir_path = fs::current_path() / "materials";
-        if ( !fs::exists( dir_path ) )
-            return;
-        for ( auto &p : fs::directory_iterator( dir_path ) )
-        {
-            const fs::path &file_path = p.path();
-            if ( file_path.extension() != ".mat" )
-                continue;
-            ParseMaterialDesc( file_path );
-        }
-    }
-    void ParseMaterialDesc( const std::filesystem::path &mat_desc )
-    {
-        std::ifstream filestream( mat_desc );
-        if ( !filestream.is_open() )
-        {
-            rh::debug::DebugLogger::Error(
-                "Failed to open material description" );
-            return;
-        }
-        auto &desc = mMaterials[mat_desc.stem().generic_string()];
-
-        nlohmann::json desc_json{};
-        filestream >> desc_json;
-        auto tex_name = desc_json["spec_tex"].get<std::string>();
-        desc.mSpecularTextureName.fill( 0 );
-        std::copy( tex_name.begin(), tex_name.end(),
-                   desc.mSpecularTextureName.begin() );
-        desc.mTextureDictName =
-            desc_json["tex_dict_slot_name"].get<std::string>();
-    }
-    std::unordered_map<std::string, MaterialDescription> mMaterials;
-};
-
 RpMaterial *RpMaterialStreamReadImpl( void *stream )
 {
-    return ( reinterpret_cast<RpMaterial *(__cdecl *)( void * )>( 0x5AE060 ) )(
-        stream );
+    return InMemoryFuncCall<RpMaterial *, 0x5AE060>( stream );
 }
 
 RwTexture *RwTextureRead( const char *name, const char *maskName )
@@ -247,25 +186,30 @@ RpMaterial *RpMaterialStreamRead( void *stream )
     if ( material == nullptr )
         return nullptr;
     auto mat_ext = GetBackendMaterialExt( material );
-    if ( material->texture )
+    if ( !material->texture )
+        return material;
+
+    auto &m_ext_sys = MaterialExtensionSystem::GetInstance();
+
+    auto string_s_name = std::string( material->texture->name );
+    auto desc          = m_ext_sys.GetMatDesc( string_s_name );
+    if ( !desc )
+        return material;
+
+    if ( auto txd_slot =
+             TxdStore::FindTxdSlot( desc->mTextureDictName.c_str() );
+         txd_slot != -1 )
     {
-        auto &m_ext_sys     = MaterialExtensionSystem::GetInstance();
-        auto  string_s_name = std::string( material->texture->name );
-        auto  desc          = m_ext_sys.GetMatDesc( string_s_name );
-        if ( desc )
-        {
-            auto txd_slot =
-                TxdStore::FindTxdSlot( desc->mTextureDictName.c_str() );
-            if ( txd_slot != -1 )
-            {
-                TxdStore::PushCurrentTxd();
-                TxdStore::SetCurrentTxd( txd_slot );
-                mat_ext->mSpecTex =
-                    RwTextureRead( desc->mSpecularTextureName.data(), nullptr );
-                TxdStore::PopCurrentTxd();
-            }
-        }
+        TxdStore::PushCurrentTxd();
+        TxdStore::SetCurrentTxd( txd_slot );
+
+        // Read textures
+        mat_ext->mSpecTex =
+            RwTextureRead( desc->mSpecularTextureName.data(), nullptr );
+
+        TxdStore::PopCurrentTxd();
     }
+
     return material;
 }
 
@@ -286,8 +230,8 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         rh::rw::engine::IPCSettings::mProcessName = "gta_3_render_driver.exe";
 
         /// Init config
-        auto cfg_mgr  = rh::engine::ConfigurationManager::Instance();
-        auto cfg_path = "gta3_rh_config.cfg";
+        auto       cfg_mgr  = rh::engine::ConfigurationManager::Instance();
+        const auto cfg_path = "gta3_rh_config.cfg";
         if ( !cfg_mgr.LoadFromFile( cfg_path ) )
             cfg_mgr.SaveToFile( cfg_path );
 

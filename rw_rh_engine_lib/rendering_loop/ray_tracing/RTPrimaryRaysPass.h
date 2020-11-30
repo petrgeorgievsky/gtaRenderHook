@@ -53,6 +53,7 @@ class RTPrimaryRaysPass
     rh::engine::IImageView *GetMotionView() { return mMotionBufferView; }
     rh::engine::IImageView *GetMaterialsView() { return mMaterialsBufferView; }
     rh::engine::IBuffer *   GetSkyCfg() { return mSkyCfg; }
+    void ConvertNormalsToShaderRO( rh::engine::ICommandBuffer *dest );
 
   private:
     RTSceneDescription *                      mScene;
