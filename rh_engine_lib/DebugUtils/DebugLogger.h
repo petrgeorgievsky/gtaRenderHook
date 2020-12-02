@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "Engine/Common/types/string_typedefs.h"
+#include <array>
 #include <memory>
 
 /// converts from string to RH string
@@ -68,6 +69,38 @@ class DebugLogger
                      LogLevel              logLevel = LogLevel::Info );
 
     /**
+     * @brief Prints formatted Log message to console and debug file
+     *
+     * @param msg - error message
+     */
+    template <typename... Args>
+    static void LogFmt( const engine::String &msg,
+                        LogLevel logLevel = LogLevel::Info, Args... args )
+    {
+        if ( logLevel < m_MinLogLevel )
+            return;
+        static std::array<char, 4096> temp_buff{};
+        std::unique_ptr<char[]>       dyn_buf;
+
+        size_t size = snprintf( nullptr, 0, msg.c_str(), args... ) + 1;
+
+        char *data_ptr;
+
+        // Use bigger heap buffer for big strings, should be rare
+        if ( size > 4096 )
+        {
+            dyn_buf  = std::make_unique<char[]>( size );
+            data_ptr = dyn_buf.get();
+        }
+        else
+            data_ptr = temp_buff.data();
+
+        snprintf( data_ptr, size, msg.c_str(), args... );
+
+        Log( std::string( data_ptr, data_ptr + size - 1 ) );
+    }
+
+    /**
      * @brief Prints Error message to console and debug file
      *
      * @param msg - log message
@@ -82,7 +115,28 @@ class DebugLogger
      * @param msg - error message
      */
     template <typename... Args>
-    static void ErrorFmt( const engine::String &msg, Args... args );
+    static void ErrorFmt( const engine::String &msg, Args... args )
+    {
+        static std::array<char, 4096> temp_buff{};
+        std::unique_ptr<char[]>       dyn_buf;
+
+        size_t size = snprintf( nullptr, 0, msg.c_str(), args... ) + 1;
+
+        char *data_ptr;
+
+        // Use bigger heap buffer for big strings, should be rare
+        if ( size > 4096 )
+        {
+            dyn_buf  = std::make_unique<char[]>( size );
+            data_ptr = dyn_buf.get();
+        }
+        else
+            data_ptr = temp_buff.data();
+
+        snprintf( data_ptr, size, msg.c_str(), args... );
+
+        Error( std::string( data_ptr, data_ptr + size - 1 ) );
+    }
 
   private:
     static std::unique_ptr<engine::OutFileStream> m_pLogStream;

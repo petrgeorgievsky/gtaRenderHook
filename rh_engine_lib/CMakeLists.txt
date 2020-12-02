@@ -102,7 +102,7 @@ set(SOURCES ${SOURCES}
         Engine/VulkanImpl/VulkanDebugUtils.cpp
         ConfigUtils/ConfigurationManager.cpp
         Engine/EngineConfigBlock.cpp
-        TestUtils/BitmapLoader.cpp ConfigUtils/ConfigBlock.h ConfigUtils/Serializable.cpp ConfigUtils/Serializable.h Engine/FastPimpl.h)
+        TestUtils/BitmapLoader.cpp ConfigUtils/ConfigBlock.h ConfigUtils/Serializable.cpp ConfigUtils/Serializable.h Engine/FastPimpl.h DebugUtils/Win32UncaughtExceptionHandler.cpp DebugUtils/Win32UncaughtExceptionHandler.h)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 

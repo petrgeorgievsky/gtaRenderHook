@@ -3,7 +3,8 @@
 //
 
 #include "ModelInfo.h"
-#include "Renderer.h"
+#include "../config/GameRendererConfigBlock.h"
+
 BaseModelInfo **ModelInfo::mModelInfoPtrs =
     reinterpret_cast<BaseModelInfo **>( 0x83D408 );
 ;

@@ -13,16 +13,14 @@ namespace rh::engine
 class Serializable
 {
   public:
-    Serializable( const nlohmann::json &impl );
+    Serializable( nlohmann::json &impl );
     ~Serializable();
 
     template <typename T> T    Get( const std::string &name );
     template <typename T> void Set( const std::string &name, T ) {}
 
   private:
-    static constexpr auto JsonSerializerS = 16;
-    static constexpr auto JsonSerializerA = 8;
-    FastPimpl<nlohmann::json, JsonSerializerA, JsonSerializerS> mImpl;
+    nlohmann::json &mImpl;
 };
 
 template <> float    Serializable::Get( const std::string &name );

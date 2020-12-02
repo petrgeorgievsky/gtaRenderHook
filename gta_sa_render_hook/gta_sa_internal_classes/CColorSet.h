@@ -60,3 +60,5 @@ class CColourSet
     float          m_fIllumination;
     float          m_fLodDistMult;
 };
+
+static_assert( sizeof( CColourSet ) == 0xAC, "CColourSet: error" );

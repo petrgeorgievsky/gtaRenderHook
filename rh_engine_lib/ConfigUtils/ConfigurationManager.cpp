@@ -41,7 +41,7 @@ void ConfigurationManager::SaveToFile( const std::string &path )
     using namespace nlohmann;
 
     json settings;
-    for ( const auto &cfg_block : mConfigBlocks )
+    for ( ConfigBlock *cfg_block : mConfigBlocks )
     {
         Serializable s( settings[cfg_block->Name()] );
         cfg_block->Serialize( &s );

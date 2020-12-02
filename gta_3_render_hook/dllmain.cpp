@@ -7,6 +7,7 @@
 #include "gta3_geometry_proxy.h"
 #include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
+#include <DebugUtils/Win32UncaughtExceptionHandler.h>
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <filesystem>
 #include <ipc/ipc_utils.h>
@@ -32,24 +33,16 @@ RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
     reinterpret_cast<RwTextureSetName_FN>( 0x5A7670 ),
     reinterpret_cast<RwTextureSetName_FN>( 0x5A76E0 ) };
 
-void debug_log( char *format... )
-{
-    std::string str( 250, '\0' );
-    va_list     args;
-    va_start( args, format );
-
-    vsprintf_s( str.data(), 250, format, args );
-
-    va_end( args );
-
-    rh::debug::DebugLogger::Log( "GTA3LOGS:" + str );
-}
-
-static int32_t rxD3D8SubmitNode( void *, const void * ) { return 1; }
-
-bool false_ret_hook() { return false; }
 bool true_ret_hook() { return true; }
-void empty_hook() {}
+
+class Clouds
+{
+    void RenderBackground( int16_t topred, int16_t topgreen, int16_t topblue,
+                           int16_t botred, int16_t botgreen, int16_t botblue,
+                           int16_t alpha )
+    {
+    }
+};
 
 int32_t rwD3D8FindCorrectRasterFormat( RwRasterType type, uint32_t flags )
 {
@@ -223,6 +216,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         /// Init logging
         rh::debug::DebugLogger::Init( "gta3_logs.log",
                                       rh::debug::LogLevel::Info );
+        rh::debug::InitExceptionHandler();
 
         rh::rw::engine::IPCSettings::mMode =
             rh::rw::engine::IPCRenderMode::CrossProcessClient;

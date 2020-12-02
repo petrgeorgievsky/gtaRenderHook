@@ -19,6 +19,7 @@
 #include "scene_description/gpu_texture_pool.h"
 #include "tiled_light_culling.h"
 #include <Engine/Common/ISwapchain.h>
+#include <Engine/EngineConfigBlock.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <imgui.h>
@@ -30,11 +31,12 @@
 namespace rh::rw::engine
 {
 
-const uint32_t rtx_resolution_w = 1920;
-const uint32_t rtx_resolution_h = 1080;
-
 RayTracingRenderer::RayTracingRenderer()
 {
+    const uint32_t rtx_resolution_w =
+        rh::engine::EngineConfigBlock::It.RendererWidth;
+    const uint32_t rtx_resolution_h =
+        rh::engine::EngineConfigBlock::It.RendererHeight;
     // Non-RT stuff:
     for ( auto &fb : mFramebufferCache )
         fb = nullptr;

@@ -4,10 +4,9 @@
 
 #include "Renderer.h"
 #include "../call_redirection_util.h"
+#include "../config/GameRendererConfigBlock.h"
 #include "ModelInfo.h"
 #include "Streaming.h"
-#include <ConfigUtils/ConfigurationManager.h>
-#include <ConfigUtils/Serializable.h>
 #include <algorithm>
 #include <cmath>
 #include <scene_graph.h>
@@ -27,6 +26,11 @@ Entity **Renderer::mVisibleEntityPtrs = reinterpret_cast<Entity **>( 0x6E9920 );
 std::array<Entity *, 8000> Renderer::mVisibleEntities{};
 RwV3d &  Renderer::mCameraPosition = *reinterpret_cast<RwV3d *>( 0x8E2CF0 );
 uint32_t Renderer::mLightCount     = 0;
+
+void RpAtomicSetGeometry( RpAtomic *atomic, RpGeometry *geometry, int flags )
+{
+    InMemoryFuncCall<void, 0x59F260>( atomic, geometry, flags );
+}
 
 void Renderer::ScanWorld()
 {
@@ -215,12 +219,9 @@ int32_t Renderer::SetupEntityVisibility( Entity *ent )
         auto *rwobj = (RpAtomic *)ent->mRwObject;
         // Make sure our atomic uses the right geometry and not
         // that of an atomic for another draw distance.
-        // if ( a->geometry != rwobj->geometry )
-        //    rwobj->geometry = a->geometry;
-        /*if ( RpAtomicGetGeometry( a ) != RpAtomicGetGeometry( rwobj ) )
-            RpAtomicSetGeometry(
-                rwobj, RpAtomicGetGeometry( a ),
-                rpATOMICSAMEBOUNDINGSPHERE );*/
+        if ( a->geometry != rwobj->geometry )
+            RpAtomicSetGeometry( rwobj, a->geometry,
+                                 /*rpATOMICSAMEBOUNDINGSPHERE*/ 0x1 );
         mi->IncreaseAlpha();
         //
         if ( ent->mRwObject == nullptr || !ent->bIsVisible )
@@ -230,16 +231,16 @@ int32_t Renderer::SetupEntityVisibility( Entity *ent )
         {
             mi->m_alpha = 255;
             return VIS_OFFSCREEN;
-        }
+        }*/
 
-        if ( mi->m_alpha != 255 )
+        if ( mi->mAlpha != 255 )
         {
-            CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
+            // CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
             ent->bDistanceFade = true;
-            return VIS_INVISIBLE;
+            // return VIS_INVISIBLE;
         }
 
-        if ( mi->m_drawLast || ent->bDrawLast )
+        /*if ( mi->m_drawLast || ent->bDrawLast )
         {
             CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
             ent->bDistanceFade = false;
@@ -282,7 +283,7 @@ int32_t Renderer::SetupEntityVisibility( Entity *ent )
         RpAtomicSetGeometry(
             rwobj, RpAtomicGetGeometry( a ),
             rpATOMICSAMEBOUNDINGSPHERE ); */
-    // mi->IncreaseAlpha();
+    mi->IncreaseAlpha();
     if ( ent->mRwObject == nullptr || !ent->bIsVisible )
         return VIS_INVISIBLE;
     return VIS_OFFSCREEN;
@@ -427,39 +428,4 @@ int32_t Renderer::SetupBigBuildingVisibility( Entity *ent )
         return VIS_VISIBLE;
     }
     return VIS_INVISIBLE;
-}
-
-GameRendererConfigBlock GameRendererConfigBlock::It{};
-
-GameRendererConfigBlock::GameRendererConfigBlock() noexcept
-{
-    Reset();
-    rh::engine::ConfigurationManager::Instance().AddConfigBlock(
-        static_cast<rh::engine::ConfigBlock *>( this ) );
-}
-
-void GameRendererConfigBlock::Serialize(
-    rh::engine::Serializable *serializable )
-{
-    assert( serializable != nullptr );
-
-    serializable->Set<float>( "SectorScanDistance", SectorScanDistance );
-    serializable->Set<float>( "LodMultiplier", LodMultiplier );
-    serializable->Set<uint32_t>( "ModelStreamLimit", ModelStreamLimit );
-}
-
-void GameRendererConfigBlock::Deserialize(
-    rh::engine::Serializable *serializable )
-{
-    assert( serializable != nullptr );
-    SectorScanDistance = serializable->Get<float>( "SectorScanDistance" );
-    LodMultiplier      = serializable->Get<float>( "LodMultiplier" );
-    ModelStreamLimit   = serializable->Get<uint32_t>( "ModelStreamLimit" );
-}
-
-void GameRendererConfigBlock::Reset()
-{
-    SectorScanDistance = 400.0f;
-    LodMultiplier      = 3.0f;
-    ModelStreamLimit   = 100;
 }

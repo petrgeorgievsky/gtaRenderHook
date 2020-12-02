@@ -3,6 +3,7 @@
 //
 #include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
+#include <DebugUtils/Win32UncaughtExceptionHandler.h>
 #include <ipc/ipc_utils.h>
 #include <ipc/shared_memory_queue_client.h>
 #include <rw_game_hooks.h>
@@ -57,8 +58,10 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPSTR lpCmdLine, int nCmdShow )
 {
     using namespace rh::debug;
+
     /// Init logs
     DebugLogger::Init( "render_driver.log", LogLevel::Info );
+    InitExceptionHandler();
 
     IPCSettings::mMode = IPCRenderMode::CrossProcessRenderer;
 

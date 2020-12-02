@@ -66,6 +66,9 @@ void DestroyDebugUtilsMessengerEXT( vk::Instance             instance,
 
 VulkanDeviceState::VulkanDeviceState()
 {
+    using namespace rh::debug;
+    DebugLogger::Log( "VulkanDeviceState initialization" );
+
     auto vkGetInstanceProcAddr =
         dl.getProcAddress<PFN_vkGetInstanceProcAddr>( "vkGetInstanceProcAddr" );
     VULKAN_HPP_DEFAULT_DISPATCHER.init( vkGetInstanceProcAddr );
@@ -74,12 +77,60 @@ VulkanDeviceState::VulkanDeviceState()
     m_aExtensions.emplace_back( VK_KHR_WIN32_SURFACE_EXTENSION_NAME );
     m_aExtensions.emplace_back(
         VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME );
+
 #ifdef _DEBUG
     m_aExtensions.emplace_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
     m_aLayers.emplace_back( "VK_LAYER_KHRONOS_validation" );
     m_aLayers.emplace_back( "VK_LAYER_LUNARG_monitor" );
 #endif
+    // Validate layer support
+    {
+        auto layer_properties = vk::enumerateInstanceLayerProperties();
+        std::vector<const char *> unsupported_layers{};
+        std::ranges::set_difference(
+            m_aLayers,
+            layer_properties |
+                std::views::transform(
+                    []( vk::LayerProperties &x ) -> const char * {
+                        return x.layerName;
+                    } ),
+            std::back_inserter( unsupported_layers ) );
+        if ( !unsupported_layers.empty() )
+        {
+            DebugLogger::Error(
+                "VulkanDeviceState initialization failed, required "
+                "instance layers are unsupported:" );
+            for ( const auto &l : unsupported_layers )
+                DebugLogger::ErrorFmt( "\tinstance layer %s is unsupported!",
+                                       LogLevel::Info, l );
+            return;
+        }
+    }
+    // Validate extension support
+    {
+        auto extension_properties = vk::enumerateInstanceExtensionProperties();
+
+        std::vector<const char *> unsupported_extensions{};
+        std::ranges::set_difference(
+            m_aLayers,
+            extension_properties |
+                std::views::transform(
+                    []( vk::ExtensionProperties &x ) -> const char * {
+                        return x.extensionName;
+                    } ),
+            std::back_inserter( unsupported_extensions ) );
+        if ( !unsupported_extensions.empty() )
+        {
+            DebugLogger::Error(
+                "VulkanDeviceState initialization failed, required "
+                "instance extensions are unsupported:" );
+            for ( const auto &ext : unsupported_extensions )
+                DebugLogger::ErrorFmt( "\textension %s is unsupported!",
+                                       LogLevel::Info, ext );
+            return;
+        }
+    }
 
     // App info
     vk::ApplicationInfo app_info{};
@@ -106,7 +157,7 @@ VulkanDeviceState::VulkanDeviceState()
     m_aAdapters = m_vkInstance.enumeratePhysicalDevices();
     // Query GPU info
     for ( auto gpu : m_aAdapters )
-        m_aAdaptersInfo.push_back( { gpu } );
+        m_aAdaptersInfo.emplace_back( gpu );
 
     // TODO: Move to constexpr debug checks
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
@@ -201,6 +252,9 @@ VulkanDeviceState::~VulkanDeviceState()
 
 bool VulkanDeviceState::Init()
 {
+    using namespace rh::debug;
+    DebugLogger::LogFmt( "VulkanDeviceState initialization for GPU %u:",
+                         LogLevel::Info, m_uiCurrentAdapter );
 
     auto queue_family_properties =
         m_aAdapters[m_uiCurrentAdapter].getQueueFamilyProperties();
@@ -211,6 +265,8 @@ bool VulkanDeviceState::Init()
             m_iGraphicsQueueFamilyIdx = i;
         i++;
     }
+    DebugLogger::LogFmt( "Graphics Queue id - %u", LogLevel::Info,
+                         m_iGraphicsQueueFamilyIdx );
 
     float                     queuePriority[] = { 1.0f };
     std::vector<const char *> device_extensions;

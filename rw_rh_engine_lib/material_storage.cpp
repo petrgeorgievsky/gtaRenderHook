@@ -46,7 +46,7 @@ void MaterialExtensionSystem::ParseMaterialDesc(
     if ( !filestream.is_open() )
     {
         rh::debug::DebugLogger::ErrorFmt(
-            "Failed to open material description at %s", mat_desc );
+            "Failed to open material description at %s", mat_desc.c_str() );
         return;
     }
     auto &desc = mMaterials[mat_desc.stem().generic_string()];

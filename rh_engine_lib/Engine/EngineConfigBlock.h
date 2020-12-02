@@ -26,5 +26,7 @@ class EngineConfigBlock : public ConfigBlock
     bool     IsWindowed{};
     uint32_t SharedMemorySizeMB = 32;
     uint32_t RenderingAPI_id    = 0;
+    uint32_t RendererWidth      = 1920;
+    uint32_t RendererHeight     = 1080;
 };
 } // namespace rh::engine

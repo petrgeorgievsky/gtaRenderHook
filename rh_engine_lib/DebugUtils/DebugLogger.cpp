@@ -96,21 +96,21 @@ void DebugLogger::Init( const rh::engine::String &fileName,
 
 void DebugLogger::Log( const engine::String &msg, LogLevel logLevel )
 {
-    if ( logLevel >= m_MinLogLevel )
+    if ( logLevel < m_MinLogLevel )
+        return;
+
+    if ( m_pLogStream )
     {
-        if ( m_pLogStream )
-        {
-            if ( !m_pLogStream->is_open() )
-                m_pLogStream->open( m_sFileName,
-                                    std::fstream::out | std::fstream::app );
+        if ( !m_pLogStream->is_open() )
+            m_pLogStream->open( m_sFileName,
+                                std::fstream::out | std::fstream::app );
 
-            *m_pLogStream << TEXT( "LOG: " ) << msg << TEXT( "\n" );
+        *m_pLogStream << TEXT( "LOG: " ) << msg << TEXT( "\n" );
 
-            m_pLogStream->close();
-        }
-
-        OutputDebugString( ( msg + TEXT( "\n" ) ).c_str() );
+        m_pLogStream->close();
     }
+
+    OutputDebugString( ( msg + TEXT( "\n" ) ).c_str() );
 }
 
 void DebugLogger::Error( const engine::String &msg )
@@ -162,28 +162,4 @@ void DebugLogger::SyncDebugFile()
     }
     CloseHandle( g_hDebugPipeReadHandle );
     g_hDebugPipeReadHandle = nullptr;
-}
-
-template <typename... Args>
-void DebugLogger::ErrorFmt( const rh::engine::String &msg, Args... args )
-{
-    static std::array<char, 4096> temp_buff{};
-    std::unique_ptr<char[]>       dyn_buf;
-
-    size_t size = snprintf( nullptr, 0, msg.c_str(), args... ) + 1;
-
-    char *data_ptr;
-
-    // Use bigger heap buffer for big strings, should be rare
-    if ( size > 4096 )
-    {
-        dyn_buf  = std::make_unique<char[]>( size );
-        data_ptr = dyn_buf.get();
-    }
-    else
-        data_ptr = temp_buff.data();
-
-    snprintf( data_ptr, size, msg.c_str(), args... );
-
-    Error( std::string( data_ptr, data_ptr + size - 1 ) );
 }
