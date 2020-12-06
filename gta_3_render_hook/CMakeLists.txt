@@ -26,7 +26,9 @@ set(SOURCES
         game/Shadows.cpp
         game/Vector.cpp
         game_patches/car_path_bug_fix.cpp
-        game_patches/base_model_pipeline.cpp config/GameRendererConfigBlock.cpp config/GameRendererConfigBlock.h)
+        game_patches/base_model_pipeline.cpp
+        config/GameRendererConfigBlock.cpp
+        call_redirection_util.cpp)
 
 #set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
 

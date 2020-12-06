@@ -3,6 +3,7 @@
 //
 
 #include "base_model_pipeline.h"
+#include "../call_redirection_util.h"
 #include "../gta3_geometry_proxy.h"
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <ranges>
@@ -28,7 +29,8 @@ struct RpSkinGlobals
     int       mPipeline;
 };
 
-auto &gSkinGlobals = *(RpSkinGlobals *)0x663C8C;
+auto &gSkinGlobals =
+    *(RpSkinGlobals *)GetAddressByGame( 0x663C8C, 0x663C8C, 0 );
 
 struct RxPipelineNodeParam
 {
@@ -203,8 +205,9 @@ void BaseModelPipelines::Patch()
         auto old_skin = (RpSkinOld *)skin;
         return old_skin->indicies_;
     };
-    SetPointer( 0x61AD6C, reinterpret_cast<void *>( D3D8AtomicAllInOneNode ) );
+    SetPointer( GetAddressByGame( 0x61B6A4, 0x61AD6C, 0 ),
+                reinterpret_cast<void *>( D3D8AtomicAllInOneNode ) );
     SetPointer(
-        0x61B274,
+        GetAddressByGame( 0x61BBAC, 0x61B274, 0 ),
         reinterpret_cast<void *>( SkinD3D8AtomicAllInOneNode ) ); // skin
 }

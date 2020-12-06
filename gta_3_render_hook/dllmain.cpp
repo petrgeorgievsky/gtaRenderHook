@@ -23,15 +23,22 @@
 using namespace rh::rw::engine;
 
 RwIOPointerTable rh::rw::engine::g_pIO_API = {
-    reinterpret_cast<RwStreamFindChunk_FN>( 0x5AA800 ),
-    reinterpret_cast<RwStreamRead_FN>( 0x5A3D90 ) };
+    reinterpret_cast<RwStreamFindChunk_FN>(
+        GetAddressByGame( 0x5AA540, 0x5AA800, 0 ) ),
+    reinterpret_cast<RwStreamRead_FN>(
+        GetAddressByGame( 0x5A3AD0, 0x5A3D90, 0 ) ) };
 RwRasterPointerTable rh::rw::engine::g_pRaster_API = {
-    reinterpret_cast<RwRasterCreate_FN>( 0x5ADBF0 ),
-    reinterpret_cast<RwRasterDestroy_FN>( 0x5ADA40 ) };
+    reinterpret_cast<RwRasterCreate_FN>(
+        GetAddressByGame( 0x5AD930, 0x5ADBF0, 0 ) ),
+    reinterpret_cast<RwRasterDestroy_FN>(
+        GetAddressByGame( 0x5AD780, 0x5ADA40, 0 ) ) };
 RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
-    reinterpret_cast<RwTextureCreate_FN>( 0x5A7590 ),
-    reinterpret_cast<RwTextureSetName_FN>( 0x5A7670 ),
-    reinterpret_cast<RwTextureSetName_FN>( 0x5A76E0 ) };
+    reinterpret_cast<RwTextureCreate_FN>(
+        GetAddressByGame( 0x5A72D0, 0x5A7590, 0 ) ),
+    reinterpret_cast<RwTextureSetName_FN>(
+        GetAddressByGame( 0x5A73B0, 0x5A7670, 0 ) ),
+    reinterpret_cast<RwTextureSetName_FN>(
+        GetAddressByGame( 0x5A7420, 0x5A76E0, 0 ) ) };
 
 bool true_ret_hook() { return true; }
 
@@ -153,24 +160,36 @@ class TxdStore
   public:
     static int32_t FindTxdSlot( const char *name )
     {
-        return InMemoryFuncCall<int32_t, 0x527810>( name );
+        return InMemoryFuncCall<int32_t>(
+            GetAddressByGame( 0x5275D0, 0x527810, 0 ), name );
     }
-    static void PushCurrentTxd() { return InMemoryFuncCall<void, 0x527B40>(); }
-    static void PopCurrentTxd() { return InMemoryFuncCall<void, 0x527B50>(); }
+    static void PushCurrentTxd()
+    {
+        return InMemoryFuncCall<void>(
+            GetAddressByGame( 0x527900, 0x527B40, 0 ) );
+    }
+    static void PopCurrentTxd()
+    {
+        return InMemoryFuncCall<void>(
+            GetAddressByGame( 0x527910, 0x527B50, 0 ) );
+    }
     static void SetCurrentTxd( int32_t id )
     {
-        return InMemoryFuncCall<void, 0x527B00>( id );
+        return InMemoryFuncCall<void>(
+            GetAddressByGame( 0x5278C0, 0x527B00, 0 ), id );
     }
 };
 
 RpMaterial *RpMaterialStreamReadImpl( void *stream )
 {
-    return InMemoryFuncCall<RpMaterial *, 0x5AE060>( stream );
+    uint32_t address = GetAddressByGame( 0x5ADDA0, 0x5AE060, 0 );
+    return InMemoryFuncCall<RpMaterial *>( address, stream );
 }
 
 RwTexture *RwTextureRead( const char *name, const char *maskName )
 {
-    return InMemoryFuncCall<RwTexture *, 0x5A7840>( name, maskName );
+    uint32_t address = GetAddressByGame( 0x5A7580, 0x5A7840, 0 );
+    return InMemoryFuncCall<RwTexture *>( address, name, maskName );
 }
 
 RpMaterial *RpMaterialStreamRead( void *stream )
@@ -231,26 +250,40 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
 
         RwPointerTable gta3_ptr_table{};
 
-        gta3_ptr_table.mRwDevicePtr                  = 0x618B50;
-        gta3_ptr_table.mRwRwDeviceGlobalsPtr         = 0x6F1D08;
-        gta3_ptr_table.mIm3DOpen                     = 0x5A17DF;
-        gta3_ptr_table.mIm3DClose                    = 0x5A17D8;
-        gta3_ptr_table.m_fpCheckNativeTextureSupport = 0x584F4B;
-        gta3_ptr_table.m_fpSetRefreshRate            = 0x5B9890;
-        gta3_ptr_table.mRasterRegisterPluginPtr      = 0x5ADAD0;
-        gta3_ptr_table.mCameraRegisterPluginPtr      = 0x5A55B0;
-        gta3_ptr_table.mMaterialRegisterPluginPtr    = 0x5AE000;
-        gta3_ptr_table.mAllocateResourceEntry        = 0x5C3430;
-        gta3_ptr_table.mFreeResourceEntry            = 0x5C3340;
-        gta3_ptr_table.mAtomicGetHAnimHierarchy      = 0x5B1330;
-        gta3_ptr_table.mGeometryGetSkin              = 0x5B1340;
-        gta3_ptr_table.mGetSkinToBoneMatrices        = 0x5B1390;
-        gta3_ptr_table.mGetVertexBoneWeights         = 0;
-        gta3_ptr_table.mGetVertexBoneIndices         = 0;
-        gta3_ptr_table.mIm3DTransform                = 0x5B69E0;
-        gta3_ptr_table.mIm3DRenderIndexedPrimitive   = 0x5B6AE0;
-        gta3_ptr_table.mIm3DRenderLine               = 0x5B6C40;
-        gta3_ptr_table.mIm3DEnd                      = 0x5B6AB0;
+        gta3_ptr_table.mRwDevicePtr = GetAddressByGame( 0x619488, 0x618B50, 0 );
+        gta3_ptr_table.mRwRwDeviceGlobalsPtr =
+            GetAddressByGame( 0x6F1D08, 0x6F1D08, 0 );
+        gta3_ptr_table.mIm3DOpen  = GetAddressByGame( 0x5A151F, 0x5A17DF, 0 );
+        gta3_ptr_table.mIm3DClose = GetAddressByGame( 0x5A1518, 0x5A17D8, 0 );
+        gta3_ptr_table.m_fpCheckNativeTextureSupport =
+            GetAddressByGame( 0x584C0B, 0x584F4B, 0 );
+        gta3_ptr_table.m_fpSetRefreshRate =
+            GetAddressByGame( 0x5B95D0, 0x5B9890, 0 );
+        gta3_ptr_table.mRasterRegisterPluginPtr =
+            GetAddressByGame( 0x5AD810, 0x5ADAD0, 0 );
+        gta3_ptr_table.mCameraRegisterPluginPtr =
+            GetAddressByGame( 0x5A52F8, 0x5A55B0, 0 );
+        gta3_ptr_table.mMaterialRegisterPluginPtr =
+            GetAddressByGame( 0x5ADD40, 0x5AE000, 0 );
+        gta3_ptr_table.mAllocateResourceEntry =
+            GetAddressByGame( 0x5C3170, 0x5C3430, 0 );
+        gta3_ptr_table.mFreeResourceEntry =
+            GetAddressByGame( 0x5C3080, 0x5C3340, 0 );
+        gta3_ptr_table.mAtomicGetHAnimHierarchy =
+            GetAddressByGame( 0x5B1070, 0x5B1330, 0 );
+        gta3_ptr_table.mGeometryGetSkin =
+            GetAddressByGame( 0x5B1080, 0x5B1340, 0 );
+        gta3_ptr_table.mGetSkinToBoneMatrices =
+            GetAddressByGame( 0x5B10D0, 0x5B1390, 0 );
+        gta3_ptr_table.mGetVertexBoneWeights = 0;
+        gta3_ptr_table.mGetVertexBoneIndices = 0;
+        gta3_ptr_table.mIm3DTransform =
+            GetAddressByGame( 0x5B6720, 0x5B69E0, 0 );
+        gta3_ptr_table.mIm3DRenderIndexedPrimitive =
+            GetAddressByGame( 0x5B6820, 0x5B6AE0, 0 );
+        gta3_ptr_table.mIm3DRenderLine =
+            GetAddressByGame( 0x5B6980, 0x5B6C40, 0 );
+        gta3_ptr_table.mIm3DEnd = GetAddressByGame( 0x5B67F0, 0x5B6AB0, 0 );
 
         RwGameHooks::Patch( gta3_ptr_table );
         BaseModelPipelines::Patch();
@@ -259,23 +292,26 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         // RedirectJump( 0x581830,
         //             reinterpret_cast<void *>( _psGetVideoModeList ) );
 
-        RedirectCall( 0x5C9126,
+        RedirectCall( GetAddressByGame( 0x5C8E66, 0x5C9126, 0 ),
                       reinterpret_cast<void *>( RpMaterialStreamRead ) );
 
-        RedirectJump( 0x510980,
+        RedirectJump( GetAddressByGame( 0x510790, 0x510980, 0 ),
                       reinterpret_cast<void *>( PointLights::AddLight ) );
 
-        RedirectJump( 0x59A610, reinterpret_cast<void *>(
-                                    rwD3D8FindCorrectRasterFormat ) );
+        RedirectJump(
+            GetAddressByGame( 0x59A350, 0x59A610, 0 ),
+            reinterpret_cast<void *>( rwD3D8FindCorrectRasterFormat ) );
 
         // Hide default sky
-        RedirectJump( 0x4F7FE0, reinterpret_cast<void *>( true_ret_hook ) );
+        RedirectJump( GetAddressByGame( 0x4F7F00, 0x4F7FE0, 0 ),
+                      reinterpret_cast<void *>( true_ret_hook ) );
 
-        RedirectJump( 0x4A8A60,
+        RedirectJump( GetAddressByGame( 0x4A8970, 0x4A8A60, 0 ),
                       reinterpret_cast<void *>( Renderer::ScanWorld ) );
-        RedirectJump( 0x4A7930,
+        RedirectJump( GetAddressByGame( 0x4A7840, 0x4A7930, 0 ),
                       reinterpret_cast<void *>( Renderer::PreRender ) );
-        RedirectJump( 0x48E0F0, reinterpret_cast<void *>( Renderer::Render ) );
+        RedirectJump( GetAddressByGame( 0x48E030, 0x48E0F0, 0 ),
+                      reinterpret_cast<void *>( Renderer::Render ) );
 
         CPathFind::Patch();
         Shadows::Patch();

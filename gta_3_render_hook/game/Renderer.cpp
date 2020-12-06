@@ -21,15 +21,18 @@ enum Visbility
 };
 
 int32_t &Renderer::mNoOfVisibleEntities =
-    *reinterpret_cast<int32_t *>( 0x9408E8 );
-Entity **Renderer::mVisibleEntityPtrs = reinterpret_cast<Entity **>( 0x6E9920 );
+    *reinterpret_cast<int32_t *>( GetAddressByGame( 0x940730, 0x9408E8, 0 ) );
+Entity **Renderer::mVisibleEntityPtrs =
+    reinterpret_cast<Entity **>( GetAddressByGame( 0x6E9920, 0x6E9920, 0 ) );
 std::array<Entity *, 8000> Renderer::mVisibleEntities{};
-RwV3d &  Renderer::mCameraPosition = *reinterpret_cast<RwV3d *>( 0x8E2CF0 );
-uint32_t Renderer::mLightCount     = 0;
+RwV3d &                    Renderer::mCameraPosition =
+    *reinterpret_cast<RwV3d *>( GetAddressByGame( 0x8E2C3C, 0x8E2CF0, 0 ) );
+uint32_t Renderer::mLightCount = 0;
 
 void RpAtomicSetGeometry( RpAtomic *atomic, RpGeometry *geometry, int flags )
 {
-    InMemoryFuncCall<void, 0x59F260>( atomic, geometry, flags );
+    InMemoryFuncCall<void>( GetAddressByGame( 0x59EFA0, 0x59F260, 0 ), atomic,
+                            geometry, flags );
 }
 
 void Renderer::ScanWorld()
@@ -331,20 +334,29 @@ class CPointLight
 };
 static_assert( sizeof( CPointLight ) == 0x2C );
 
-void RenderWater() { InMemoryFuncCall<void, 0x48E11E>(); }
+void RenderWater()
+{
+    InMemoryFuncCall<void>( GetAddressByGame( 0x5554E0, 0x555610, 0 ) );
+}
 
 void Renderer::Render()
 {
     // Setup timecycle(move out of here)
     auto &frame_info = rh::rw::engine::GetCurrentSceneGraph()->mFrameInfo;
-    int & m_nCurrentSkyBottomBlue  = *(int *)0x8F6414;
-    int & m_nCurrentSkyBottomGreen = *(int *)0x8F2C84;
-    int & m_nCurrentSkyBottomRed   = *(int *)0x941688;
-    int & m_nCurrentSkyTopBlue     = *(int *)0x8F2A6C;
-    int & m_nCurrentSkyTopGreen    = *(int *)0x94322C;
-    int & m_nCurrentSkyTopRed      = *(int *)0x940578;
-    int & current_tc_value         = *(int *)0x940734;
-    auto *vec_to_sun_arr           = (RwV3d *)0x665548;
+    int & m_nCurrentSkyBottomBlue =
+        *(int *)GetAddressByGame( 0x8F2BD0, 0x8F6414, 0 );
+    int &m_nCurrentSkyBottomGreen =
+        *(int *)GetAddressByGame( 0x8F2BD0, 0x8F2C84, 0 );
+    int &m_nCurrentSkyBottomRed =
+        *(int *)GetAddressByGame( 0x9414D0, 0x941688, 0 );
+    int &m_nCurrentSkyTopBlue =
+        *(int *)GetAddressByGame( 0x8F29B8, 0x8F2A6C, 0 );
+    int &m_nCurrentSkyTopGreen =
+        *(int *)GetAddressByGame( 0x943074, 0x94322C, 0 );
+    int &m_nCurrentSkyTopRed =
+        *(int *)GetAddressByGame( 0x9403C0, 0x940578, 0 );
+    int & current_tc_value = *(int *)GetAddressByGame( 0x94057C, 0x940734, 0 );
+    auto *vec_to_sun_arr   = (RwV3d *)GetAddressByGame( 0x665548, 0x665548, 0 );
 
     frame_info.mSkyTopColor[0]    = float( m_nCurrentSkyTopRed ) / 255.0f;
     frame_info.mSkyTopColor[1]    = float( m_nCurrentSkyTopGreen ) / 255.0f;
@@ -361,7 +373,7 @@ void Renderer::Render()
     frame_info.mSunDir[3] = 1.0f;
 
     auto * point_lights    = (CPointLight *)0x7096D0;
-    short &point_light_cnt = *(short *)0x95CDF6;
+    short &point_light_cnt = *(short *)GetAddressByGame( 0, 0x95CDF6, 0 );
 
     for ( auto i = frame_info.mLightCount; i < 1024; i++ )
     {
@@ -375,23 +387,24 @@ void Renderer::Render()
         frame_info.mFirst4PointLights[i].mColor[3] = 1;
     }
 
-    std::sort( std::begin( frame_info.mFirst4PointLights ),
-               std::end( frame_info.mFirst4PointLights ),
-               [&frame_info]( const rh::rw::engine::PointLight &x,
-                              const rh::rw::engine::PointLight &y ) {
-                   auto dist = []( const rh::rw::engine::PointLight &p,
-                                   const DirectX::XMFLOAT4X4 &       viewInv ) {
-                       float dir[3];
-                       dir[0] = p.mPos[0] - viewInv._14;
-                       dir[1] = p.mPos[1] - viewInv._24;
-                       dir[2] = p.mPos[2] - viewInv._34;
-                       return dir[0] * dir[0] + dir[1] * dir[1] +
-                              dir[2] * dir[2];
-                   };
+    std::sort(
+        std::begin( frame_info.mFirst4PointLights ),
+        std::begin( frame_info.mFirst4PointLights ) + frame_info.mLightCount,
+        [&frame_info]( const rh::rw::engine::PointLight &x,
+                       const rh::rw::engine::PointLight &y ) {
+            auto dist = []( const rh::rw::engine::PointLight &p,
+                            const DirectX::XMFLOAT4X4 &       viewInv ) {
+                float dir[3];
+                dir[0] = p.mPos[0] - viewInv._41;
+                dir[1] = p.mPos[1] - viewInv._42;
+                dir[2] = p.mPos[2] - viewInv._43;
+                return dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2];
+            };
 
-                   return x.mRadius > 0 && dist( x, frame_info.mViewInv ) <=
-                                               dist( y, frame_info.mViewInv );
-               } );
+            return dist( x, frame_info.mViewInv ) <
+                       dist( y, frame_info.mViewInv ) &&
+                   ( x.mRadius > y.mRadius );
+        } );
 
     for ( uint32_t id = 0; id < mNoOfVisibleEntities; id++ )
         mVisibleEntities[id]->Render();

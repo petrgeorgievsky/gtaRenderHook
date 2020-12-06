@@ -5,10 +5,12 @@
 #include "World.h"
 #include "../call_redirection_util.h"
 
-uint16_t &World::mCurrentScanCode = *reinterpret_cast<uint16_t *>( 0x95CE1C );
-WorldSector *    World::mSectors  = reinterpret_cast<WorldSector *>( 0x665608 );
-PtrList<Entity> *World::mBigBuildings =
-    reinterpret_cast<PtrList<Entity> *>( 0x6FAB60 );
+uint16_t &World::mCurrentScanCode =
+    *reinterpret_cast<uint16_t *>( GetAddressByGame( 0x95CC64, 0x95CE1C, 0 ) );
+WorldSector *World::mSectors = reinterpret_cast<WorldSector *>(
+    GetAddressByGame( 0x665608, 0x665608, 0 ) );
+PtrList<Entity> *World::mBigBuildings = reinterpret_cast<PtrList<Entity> *>(
+    GetAddressByGame( 0x6FAB60, 0x6FAB60, 0 ) );
 
 void World::AdvanceScanCode()
 {
@@ -19,7 +21,10 @@ void World::AdvanceScanCode()
     mCurrentScanCode = 1;
 }
 
-void World::ClearScanCodes() { InMemoryFuncCall<void, 0x4B2050>(); }
+void World::ClearScanCodes()
+{
+    InMemoryFuncCall<void>( GetAddressByGame( 0x4B1F60, 0x4B2050, 0 ) );
+}
 
 float World::GetSectorX( float f )
 {

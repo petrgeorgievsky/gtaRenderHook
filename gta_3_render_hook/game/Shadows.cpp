@@ -3,19 +3,21 @@
 //
 
 #include "Shadows.h"
+#include "../call_redirection_util.h"
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 
 void Shadows::Patch()
 {
-    RedirectJump( 0x513EC0, reinterpret_cast<void *>(
-                                Shadows::StoreShadowForPedObject ) );
-    RedirectJump( 0x514020,
+    RedirectJump(
+        GetAddressByGame( 0x513CB0, 0x513EC0, 0 ),
+        reinterpret_cast<void *>( Shadows::StoreShadowForPedObject ) );
+    RedirectJump( GetAddressByGame( 0x513E10, 0x514020, 0 ),
                   reinterpret_cast<void *>( Shadows::StoreShadowForPole ) );
-    RedirectJump( 0x513C80,
+    RedirectJump( GetAddressByGame( 0x513A70, 0x513C80, 0 ),
                   reinterpret_cast<void *>( Shadows::StoreCarLightShadow ) );
-    RedirectJump( 0x5132B0,
+    RedirectJump( GetAddressByGame( 0x5130A0, 0x5132B0, 0 ),
                   reinterpret_cast<void *>( Shadows::StoreStaticShadow ) );
-    RedirectJump( 0x513A40,
+    RedirectJump( GetAddressByGame( 0x513830, 0x513A40, 0 ),
                   reinterpret_cast<void *>( Shadows::StoreShadowForCar ) );
 }
 

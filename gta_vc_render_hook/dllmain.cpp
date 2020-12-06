@@ -296,24 +296,24 @@ int32_t water_render()
         frame_info.mFirst4PointLights[i].mRadius = -1;
     }
 
-    std::sort( std::begin( frame_info.mFirst4PointLights ),
-               std::end( frame_info.mFirst4PointLights ),
-               [&frame_info]( const rh::rw::engine::PointLight &x,
-                              const rh::rw::engine::PointLight &y ) {
-                   auto dist = []( const rh::rw::engine::PointLight &p,
-                                   const DirectX::XMFLOAT4X4 &       viewInv ) {
-                       float dir[3];
-                       dir[0] = p.mPos[0] - viewInv._14;
-                       dir[1] = p.mPos[1] - viewInv._24;
-                       dir[2] = p.mPos[2] - viewInv._34;
-                       return dir[0] * dir[0] + dir[1] * dir[1] +
-                              dir[2] * dir[2];
-                   };
+    std::sort(
+        std::begin( frame_info.mFirst4PointLights ),
+        std::begin( frame_info.mFirst4PointLights ) + frame_info.mLightCount,
+        [&frame_info]( const rh::rw::engine::PointLight &x,
+                       const rh::rw::engine::PointLight &y ) {
+            auto dist = []( const rh::rw::engine::PointLight &p,
+                            const DirectX::XMFLOAT4X4 &       viewInv ) {
+                float dir[3];
+                dir[0] = p.mPos[0] - viewInv._41;
+                dir[1] = p.mPos[1] - viewInv._42;
+                dir[2] = p.mPos[2] - viewInv._43;
+                return dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2];
+            };
 
-                   return ( dist( x, frame_info.mViewInv ) <
-                            dist( y, frame_info.mViewInv ) ) &&
-                          ( x.mRadius > y.mRadius );
-               } );
+            return ( dist( x, frame_info.mViewInv ) <
+                     dist( y, frame_info.mViewInv ) ) &&
+                   ( x.mRadius > y.mRadius );
+        } );
     return 1;
 }
 

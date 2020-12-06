@@ -220,9 +220,9 @@ void prepare_timecyc()
                    auto dist = []( const rh::rw::engine::PointLight &p,
                                    const DirectX::XMFLOAT4X4 &       viewInv ) {
                        float dir[3];
-                       dir[0] = p.mPos[0] - viewInv._14;
-                       dir[1] = p.mPos[1] - viewInv._24;
-                       dir[2] = p.mPos[2] - viewInv._34;
+                       dir[0] = p.mPos[0] - viewInv._41;
+                       dir[1] = p.mPos[1] - viewInv._42;
+                       dir[2] = p.mPos[2] - viewInv._43;
                        return dir[0] * dir[0] + dir[1] * dir[1] +
                               dir[2] * dir[2];
                    };

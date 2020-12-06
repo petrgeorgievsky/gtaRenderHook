@@ -8,9 +8,8 @@
 
 void CPathFind::CalcNodeCoors( short x, short y, short z, int id, Vector *out )
 {
-    InMemoryFunc<void( __thiscall * )( CPathFind *, short, short, short, int,
-                                       Vector * ),
-                 0x429560>{}()( this, x, y, z, id, out );
+    InMemoryThisCall<void>( GetAddressByGame( 0x429560, 0x429560, 0 ), this, x,
+                            y, z, id, out );
 }
 
 enum
@@ -476,10 +475,12 @@ void __thiscall CPathFind::PreparePathDataForType_Jmp(
     _obj->PreparePathDataForType( type, tempnodes, objectpathinfo, maxdist,
                                   detachednodes, unused );
 }
+
 void CPathFind::Patch()
 {
     // "Fix" car paths, ugly bug appears for no reason that trashes all
     // memory for some reason
-    RedirectCall( 0x4298F7, reinterpret_cast<void *>(
-                                CPathFind::PreparePathDataForType_Jmp ) );
+    RedirectCall(
+        GetAddressByGame( 0x4298F7, 0x4298F7, 0 ),
+        reinterpret_cast<void *>( CPathFind::PreparePathDataForType_Jmp ) );
 }
