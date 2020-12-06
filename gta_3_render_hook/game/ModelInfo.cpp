@@ -3,10 +3,11 @@
 //
 
 #include "ModelInfo.h"
+#include "../call_redirection_util.h"
 #include "../config/GameRendererConfigBlock.h"
 
-BaseModelInfo **ModelInfo::mModelInfoPtrs =
-    reinterpret_cast<BaseModelInfo **>( 0x83D408 );
+BaseModelInfo **ModelInfo::mModelInfoPtrs = reinterpret_cast<BaseModelInfo **>(
+    GetAddressByGame( 0x83D408, 0x83D408, 0x84D548 ) );
 ;
 
 RpAtomic *SimpleModelInfo::GetAtomicFromDistance( float d )

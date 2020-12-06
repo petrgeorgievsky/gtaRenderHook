@@ -20,19 +20,19 @@ enum Visbility
     VIS_STREAMME
 };
 
-int32_t &Renderer::mNoOfVisibleEntities =
-    *reinterpret_cast<int32_t *>( GetAddressByGame( 0x940730, 0x9408E8, 0 ) );
-Entity **Renderer::mVisibleEntityPtrs =
-    reinterpret_cast<Entity **>( GetAddressByGame( 0x6E9920, 0x6E9920, 0 ) );
+int32_t &Renderer::mNoOfVisibleEntities = *reinterpret_cast<int32_t *>(
+    GetAddressByGame( 0x940730, 0x9408E8, 0x950A28 ) );
+Entity **Renderer::mVisibleEntityPtrs = reinterpret_cast<Entity **>(
+    GetAddressByGame( 0x6E9920, 0x6E9920, 0x6F9A60 ) );
 std::array<Entity *, 8000> Renderer::mVisibleEntities{};
-RwV3d &                    Renderer::mCameraPosition =
-    *reinterpret_cast<RwV3d *>( GetAddressByGame( 0x8E2C3C, 0x8E2CF0, 0 ) );
+RwV3d &Renderer::mCameraPosition = *reinterpret_cast<RwV3d *>(
+    GetAddressByGame( 0x8E2C3C, 0x8E2CF0, 0x8F2E30 ) );
 uint32_t Renderer::mLightCount = 0;
 
 void RpAtomicSetGeometry( RpAtomic *atomic, RpGeometry *geometry, int flags )
 {
-    InMemoryFuncCall<void>( GetAddressByGame( 0x59EFA0, 0x59F260, 0 ), atomic,
-                            geometry, flags );
+    InMemoryFuncCall<void>( GetAddressByGame( 0x59EFA0, 0x59F260, 0x59F1B0 ),
+                            atomic, geometry, flags );
 }
 
 void Renderer::ScanWorld()
@@ -336,7 +336,7 @@ static_assert( sizeof( CPointLight ) == 0x2C );
 
 void RenderWater()
 {
-    InMemoryFuncCall<void>( GetAddressByGame( 0x5554E0, 0x555610, 0 ) );
+    InMemoryFuncCall<void>( GetAddressByGame( 0x5554E0, 0x555610, 0x5555C0 ) );
 }
 
 void Renderer::Render()
@@ -344,19 +344,21 @@ void Renderer::Render()
     // Setup timecycle(move out of here)
     auto &frame_info = rh::rw::engine::GetCurrentSceneGraph()->mFrameInfo;
     int & m_nCurrentSkyBottomBlue =
-        *(int *)GetAddressByGame( 0x8F2BD0, 0x8F6414, 0 );
+        *(int *)GetAddressByGame( 0x8F2BD0, 0x8F6414, 0x906554 );
     int &m_nCurrentSkyBottomGreen =
-        *(int *)GetAddressByGame( 0x8F2BD0, 0x8F2C84, 0 );
+        *(int *)GetAddressByGame( 0x8F2BD0, 0x8F2C84, 0x902DC4 );
     int &m_nCurrentSkyBottomRed =
-        *(int *)GetAddressByGame( 0x9414D0, 0x941688, 0 );
+        *(int *)GetAddressByGame( 0x9414D0, 0x941688, 0x9517C8 );
     int &m_nCurrentSkyTopBlue =
-        *(int *)GetAddressByGame( 0x8F29B8, 0x8F2A6C, 0 );
+        *(int *)GetAddressByGame( 0x8F29B8, 0x8F2A6C, 0x902BAC );
     int &m_nCurrentSkyTopGreen =
-        *(int *)GetAddressByGame( 0x943074, 0x94322C, 0 );
+        *(int *)GetAddressByGame( 0x943074, 0x94322C, 0x95336C );
     int &m_nCurrentSkyTopRed =
-        *(int *)GetAddressByGame( 0x9403C0, 0x940578, 0 );
-    int & current_tc_value = *(int *)GetAddressByGame( 0x94057C, 0x940734, 0 );
-    auto *vec_to_sun_arr   = (RwV3d *)GetAddressByGame( 0x665548, 0x665548, 0 );
+        *(int *)GetAddressByGame( 0x9403C0, 0x940578, 0x9506B8 );
+    int &current_tc_value =
+        *(int *)GetAddressByGame( 0x94057C, 0x940734, 0x950874 );
+    auto *vec_to_sun_arr =
+        (RwV3d *)GetAddressByGame( 0x665548, 0x665548, 0x675688 );
 
     frame_info.mSkyTopColor[0]    = float( m_nCurrentSkyTopRed ) / 255.0f;
     frame_info.mSkyTopColor[1]    = float( m_nCurrentSkyTopGreen ) / 255.0f;
@@ -372,8 +374,8 @@ void Renderer::Render()
     frame_info.mSunDir[2] = vec_to_sun_arr[current_tc_value].z;
     frame_info.mSunDir[3] = 1.0f;
 
-    auto * point_lights    = (CPointLight *)0x7096D0;
-    short &point_light_cnt = *(short *)GetAddressByGame( 0, 0x95CDF6, 0 );
+    // auto * point_lights    = (CPointLight *)0x7096D0;
+    // short &point_light_cnt = *(short *)GetAddressByGame( 0, 0x95CDF6, 0 );
 
     for ( auto i = frame_info.mLightCount; i < 1024; i++ )
     {

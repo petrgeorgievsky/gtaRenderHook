@@ -30,7 +30,7 @@ struct RpSkinGlobals
 };
 
 auto &gSkinGlobals =
-    *(RpSkinGlobals *)GetAddressByGame( 0x663C8C, 0x663C8C, 0 );
+    *(RpSkinGlobals *)GetAddressByGame( 0x663C8C, 0x663C8C, 0x673D90 );
 
 struct RxPipelineNodeParam
 {
@@ -205,9 +205,9 @@ void BaseModelPipelines::Patch()
         auto old_skin = (RpSkinOld *)skin;
         return old_skin->indicies_;
     };
-    SetPointer( GetAddressByGame( 0x61B6A4, 0x61AD6C, 0 ),
+    SetPointer( GetAddressByGame( 0x61B6A4, 0x61AD6C, 0x628280 ),
                 reinterpret_cast<void *>( D3D8AtomicAllInOneNode ) );
     SetPointer(
-        GetAddressByGame( 0x61BBAC, 0x61B274, 0 ),
+        GetAddressByGame( 0x61BBAC, 0x61B274, 0x626F74 ),
         reinterpret_cast<void *>( SkinD3D8AtomicAllInOneNode ) ); // skin
 }
