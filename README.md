@@ -1,10 +1,10 @@
 # GTA rendering hook
-GTA SA rendering hook
+GTA rendering hook
 
-Implements DirectX11 and Vulkan rendering API to GTA San Andreas(as well as GTA VC and GTA 3).
+Implements DirectX11 and Vulkan rendering API to GTA 3, GTA VC and GTA SA.
 
 Currently there are 2 versions, one of which is broken(can't really build it anymore):
-* Old one which implemented only DirectX11 and had a few features
+* Old one which implemented only DirectX11 and had a few features(only GTA SA)
 * New one which at the moment runs only on RTX hardware and uses vk_nv_ray_tracing extension(to be replaced with KHR
  one once it is implemented in release drivers)
 
@@ -51,7 +51,7 @@ Long version:
    * When building 32bit binaries use only BUILD_32BIT_LIBS
    * When building 64bit binaries use BUILD_32BIT_LIBS and ARCH_64BIT
    * Loading mod requires [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) installed.
-   * For GTA 3 it'll work only on v1.1 at the moment.
+   * For GTA 3 it'll work only on v1.1 and v1.0 at the moment.
 3. Build x86 and x64 libraries/executables in release or debug configuration using configured CMake.
 4. Run, test and report bugs and incompatibilities!
 
