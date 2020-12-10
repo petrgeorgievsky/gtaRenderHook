@@ -2,6 +2,7 @@
 #include "game/PointLights.h"
 #include "game/Renderer.h"
 #include "game/Shadows.h"
+#include "game/TxdStore.h"
 #include "game_patches/base_model_pipeline.h"
 #include "game_patches/car_path_bug_fix.h"
 #include "gta3_geometry_proxy.h"
@@ -154,31 +155,6 @@ char **_psGetVideoModeList()
 
     return videomode_list.data();
 }
-
-class TxdStore
-{
-  public:
-    static int32_t FindTxdSlot( const char *name )
-    {
-        return InMemoryFuncCall<int32_t>(
-            GetAddressByGame( 0x5275D0, 0x527810, 0x5277A0 ), name );
-    }
-    static void PushCurrentTxd()
-    {
-        return InMemoryFuncCall<void>(
-            GetAddressByGame( 0x527900, 0x527B40, 0x527AD0 ) );
-    }
-    static void PopCurrentTxd()
-    {
-        return InMemoryFuncCall<void>(
-            GetAddressByGame( 0x527910, 0x527B50, 0x527AE0 ) );
-    }
-    static void SetCurrentTxd( int32_t id )
-    {
-        return InMemoryFuncCall<void>(
-            GetAddressByGame( 0x5278C0, 0x527B00, 0x527A90 ), id );
-    }
-};
 
 RpMaterial *RpMaterialStreamReadImpl( void *stream )
 {

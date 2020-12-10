@@ -5,6 +5,7 @@
 #include "Renderer.h"
 #include "../call_redirection_util.h"
 #include "../config/GameRendererConfigBlock.h"
+#include "Clock.h"
 #include "ModelInfo.h"
 #include "Streaming.h"
 #include <algorithm>
@@ -121,84 +122,79 @@ int32_t Renderer::SetupEntityVisibility( Entity *ent )
     auto *base_mi = ModelInfo::GetModelInfo( ent->mModelIndex );
     if ( base_mi->mType != MITYPE_SIMPLE && base_mi->mType != MITYPE_TIME )
         return ent->bIsVisible ? VIS_VISIBLE : VIS_INVISIBLE;
-    auto *mi = static_cast<SimpleModelInfo *>( base_mi );
-    // CTimeModelInfo *ti;
-    // int32_t other;
-    float dist;
+    auto *         mi = static_cast<SimpleModelInfo *>( base_mi );
+    TimeModelInfo *ti;
+    int32_t        other;
+    float          dist;
 
     // bool request = true;
-    /*
-    if ( mi->m_type == MITYPE_TIME )
+
+    if ( mi->mType == MITYPE_TIME )
     {
-        ti    = mi;
-        other = ti->GetOtherTimeModel();
-        if ( CClock::GetIsTimeInRange( ti->GetTimeOn(), ti->GetTimeOff() ) )
+        ti    = static_cast<TimeModelInfo *>( mi );
+        other = ti->mOtherTimeModelID;
+        if ( Clock::GetIsTimeInRange( ti->mTimeOn, ti->mTimeOff ) )
         {
             // don't fade in, or between time objects
-            ti->m_alpha = 255;
+            ti->mAlpha = 255;
         }
         else
         {
             // Hide if possible
             return VIS_INVISIBLE;
-            // can't cull, so we'll try to draw this one, but don't request
-            // it since what we really want is the other one.
-            request = false;
         }
     }
-    else
-    {
-        if ( mi->m_type != MITYPE_SIMPLE )
-        {
-            if ( FindPlayerVehicle() == ent &&
-                 TheCamera.Cams[TheCamera.ActiveCam].Mode ==
-                     CCam::MODE_1STPERSON )
-            {
-                // Player's vehicle in first person mode
-                if ( TheCamera.Cams[TheCamera.ActiveCam].DirectionWasLooking ==
-                         LOOKING_FORWARD ||
-                     ent->GetModelIndex() == MI_RHINO ||
-                     ent->GetModelIndex() == MI_COACH ||
-                     TheCamera.m_bInATunnelAndABigVehicle )
-                {
-                    ent->bNoBrightHeadLights = true;
-                }
-                else
-                {
-                    m_pFirstPersonVehicle    = (CVehicle *)ent;
-                    ent->bNoBrightHeadLights = false;
-                }
-                return VIS_OFFSCREEN;
-            }
-            else
-            {
-                // All sorts of Clumps
-                if ( ent->m_rwObject == nil || !ent->bIsVisible )
-                    return VIS_INVISIBLE;
-                if ( !ent->GetIsOnScreen() )
-                    return VIS_OFFSCREEN;
-                if ( ent->bDrawLast )
-                {
-                    dist = ( ent->GetPosition() - ms_vecCameraPosition )
-                               .Magnitude();
-                    CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
-                    ent->bDistanceFade = false;
-                    return VIS_INVISIBLE;
-                }
-                else
-                    return VIS_VISIBLE;
-            }
-            return VIS_INVISIBLE;
-        }
-        if ( ent->m_type == ENTITY_TYPE_OBJECT &&
-             ( (CObject *)ent )->ObjectCreatedBy == TEMP_OBJECT )
-        {
-            if ( ent->mRwObject == nullptr || !ent->bIsVisible )
-                return VIS_INVISIBLE;
-            return ent->GetIsOnScreen() ? VIS_VISIBLE : VIS_OFFSCREEN;
-        }
-    }
-*/
+    /*   else
+       {
+           if ( mi->m_type != MITYPE_SIMPLE )
+           {
+               if ( FindPlayerVehicle() == ent &&
+                    TheCamera.Cams[TheCamera.ActiveCam].Mode ==
+                        CCam::MODE_1STPERSON )
+               {
+                   // Player's vehicle in first person mode
+                   if ( TheCamera.Cams[TheCamera.ActiveCam].DirectionWasLooking
+       == LOOKING_FORWARD || ent->GetModelIndex() == MI_RHINO ||
+                        ent->GetModelIndex() == MI_COACH ||
+                        TheCamera.m_bInATunnelAndABigVehicle )
+                   {
+                       ent->bNoBrightHeadLights = true;
+                   }
+                   else
+                   {
+                       m_pFirstPersonVehicle    = (CVehicle *)ent;
+                       ent->bNoBrightHeadLights = false;
+                   }
+                   return VIS_OFFSCREEN;
+               }
+               else
+               {
+                   // All sorts of Clumps
+                   if ( ent->m_rwObject == nil || !ent->bIsVisible )
+                       return VIS_INVISIBLE;
+                   if ( !ent->GetIsOnScreen() )
+                       return VIS_OFFSCREEN;
+                   if ( ent->bDrawLast )
+                   {
+                       dist = ( ent->GetPosition() - ms_vecCameraPosition )
+                                  .Magnitude();
+                       CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist
+       ); ent->bDistanceFade = false; return VIS_INVISIBLE;
+                   }
+                   else
+                       return VIS_VISIBLE;
+               }
+               return VIS_INVISIBLE;
+           }
+           if ( ent->m_type == ENTITY_TYPE_OBJECT &&
+                ( (CObject *)ent )->ObjectCreatedBy == TEMP_OBJECT )
+           {
+               if ( ent->mRwObject == nullptr || !ent->bIsVisible )
+                   return VIS_INVISIBLE;
+               return ent->GetIsOnScreen() ? VIS_VISIBLE : VIS_OFFSCREEN;
+           }
+       }
+   */
     // Simple ModelInfo
 
     dist = length( ent->mMatrix.m_matrix.pos - mCameraPosition );
@@ -355,6 +351,14 @@ void Renderer::Render()
         *(int *)GetAddressByGame( 0x943074, 0x94322C, 0x95336C );
     int &m_nCurrentSkyTopRed =
         *(int *)GetAddressByGame( 0x9403C0, 0x940578, 0x9506B8 );
+
+    float &m_fCurrentAmbientRed =
+        *(float *)GetAddressByGame( 0x8F29B4, 0x8F2A68, 0x902BA8 );
+    float &m_fCurrentAmbientGreen =
+        *(float *)GetAddressByGame( 0x94144C, 0x941604, 0x951744 );
+    float &m_fCurrentAmbientBlue =
+        *(float *)GetAddressByGame( 0x942FC0, 0x943178, 0x9532B8 );
+
     int &current_tc_value =
         *(int *)GetAddressByGame( 0x94057C, 0x940734, 0x950874 );
     auto *vec_to_sun_arr =
@@ -368,6 +372,11 @@ void Renderer::Render()
     frame_info.mSkyBottomColor[1] = float( m_nCurrentSkyBottomGreen ) / 255.0f;
     frame_info.mSkyBottomColor[2] = float( m_nCurrentSkyBottomBlue ) / 255.0f;
     frame_info.mSkyBottomColor[3] = 1.0f;
+    frame_info.mAmbientColor[0]   = m_fCurrentAmbientRed;
+    frame_info.mAmbientColor[1]   = m_fCurrentAmbientGreen;
+    frame_info.mAmbientColor[2]   = m_fCurrentAmbientBlue;
+    frame_info.mAmbientColor[3]   = 1.0f;
+    //
 
     frame_info.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
     frame_info.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;

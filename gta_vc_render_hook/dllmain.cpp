@@ -270,6 +270,11 @@ int32_t water_render()
     frame_info.mSkyBottomColor[1] = float( m_nCurrentSkyBottomGreen ) / 255.0f;
     frame_info.mSkyBottomColor[2] = float( m_nCurrentSkyBottomBlue ) / 255.0f;
     frame_info.mSkyBottomColor[3] = 1.0f;
+    // TODO: Use original ambient color
+    frame_info.mAmbientColor[0] = float( m_nCurrentSkyTopRed ) / 255.0f;
+    frame_info.mAmbientColor[1] = float( m_nCurrentSkyTopGreen ) / 255.0f;
+    frame_info.mAmbientColor[2] = float( m_nCurrentSkyTopBlue ) / 255.0f;
+    frame_info.mAmbientColor[3] = 1.0f;
 
     frame_info.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
     frame_info.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;

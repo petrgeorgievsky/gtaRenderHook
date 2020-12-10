@@ -23,6 +23,7 @@ struct SkyCfg
     float sunColor[4];
     float horizonColor[4];
     float skyColor[4];
+    float ambientColor[4];
 };
 SkyCfg gSkyCfg{};
 
@@ -203,6 +204,10 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
     gSkyCfg.skyColor[1]     = frame.mSkyTopColor[1];
     gSkyCfg.skyColor[2]     = frame.mSkyTopColor[2];
     gSkyCfg.skyColor[3]     = frame.mSkyTopColor[3];
+    gSkyCfg.ambientColor[0] = frame.mAmbientColor[0];
+    gSkyCfg.ambientColor[1] = frame.mAmbientColor[1];
+    gSkyCfg.ambientColor[2] = frame.mAmbientColor[2];
+    gSkyCfg.ambientColor[3] = frame.mAmbientColor[3];
     gSkyCfg.horizonColor[0] = frame.mSkyBottomColor[0];
     gSkyCfg.horizonColor[1] = frame.mSkyBottomColor[1];
     gSkyCfg.horizonColor[2] = frame.mSkyBottomColor[2];

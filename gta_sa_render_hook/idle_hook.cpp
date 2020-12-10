@@ -110,6 +110,10 @@ void IdleHook::Idle( void *data )
         frame_info.mSkyBottomColor[2] =
             float( cur_cs.m_nSkyBottomBlue ) / 255.0f;
         frame_info.mSkyBottomColor[3] = 1.0f;
+        frame_info.mAmbientColor[0]   = cur_cs.m_fAmbientRed;
+        frame_info.mAmbientColor[1]   = cur_cs.m_fAmbientGreen;
+        frame_info.mAmbientColor[2]   = cur_cs.m_fAmbientBlue;
+        frame_info.mAmbientColor[3]   = 1.0f;
 
         frame_info.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
         frame_info.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;

@@ -25,6 +25,8 @@ set(SOURCES
         game/PointLights.cpp
         game/Shadows.cpp
         game/Vector.cpp
+        game/TxdStore.cpp
+        game/Clock.cpp
         game_patches/car_path_bug_fix.cpp
         game_patches/base_model_pipeline.cpp
         config/GameRendererConfigBlock.cpp

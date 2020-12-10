@@ -34,7 +34,7 @@ class BaseModelInfo
     bool         mFreeCol;
 };
 
-static_assert( sizeof( BaseModelInfo ) == 0x30, "CBaseModelInfo: error" );
+static_assert( sizeof( BaseModelInfo ) == 0x30, "BaseModelInfo: error" );
 
 class SimpleModelInfo : public BaseModelInfo
 {
@@ -72,7 +72,7 @@ class SimpleModelInfo : public BaseModelInfo
     }
 };
 
-static_assert( sizeof( SimpleModelInfo ) == 0x4C, "CSimpleModelInfo: error" );
+static_assert( sizeof( SimpleModelInfo ) == 0x4C, "SimpleModelInfo: error" );
 
 class ModelInfo
 {
@@ -82,3 +82,11 @@ class ModelInfo
   private:
     static BaseModelInfo **mModelInfoPtrs;
 };
+class TimeModelInfo : public SimpleModelInfo
+{
+  public:
+    int32_t mTimeOn;
+    int32_t mTimeOff;
+    int32_t mOtherTimeModelID;
+};
+static_assert( sizeof( TimeModelInfo ) == 0x58, "TimeModelInfo: error" );

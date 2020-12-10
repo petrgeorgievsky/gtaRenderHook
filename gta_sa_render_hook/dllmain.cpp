@@ -187,10 +187,14 @@ void prepare_timecyc()
     frame_info.mSkyBottomColor[2] = float( cur_cs.m_nSkyBottomBlue ) / 255.0f;
     frame_info.mSkyBottomColor[3] = 1.0f;
 
-    frame_info.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
-    frame_info.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;
-    frame_info.mSunDir[2] = vec_to_sun_arr[current_tc_value].z;
-    frame_info.mSunDir[3] = 1.0f;
+    frame_info.mAmbientColor[0] = cur_cs.m_fAmbientRed;
+    frame_info.mAmbientColor[1] = cur_cs.m_fAmbientGreen;
+    frame_info.mAmbientColor[2] = cur_cs.m_fAmbientBlue;
+    frame_info.mAmbientColor[3] = 1.0f;
+    frame_info.mSunDir[0]       = vec_to_sun_arr[current_tc_value].x;
+    frame_info.mSunDir[1]       = vec_to_sun_arr[current_tc_value].y;
+    frame_info.mSunDir[2]       = vec_to_sun_arr[current_tc_value].z;
+    frame_info.mSunDir[3]       = 1.0f;
 
     auto *point_lights    = (CPointLight *)0xC3F0E0;
     int & point_light_cnt = *(int *)0xC3F0D0;

@@ -32,6 +32,7 @@ struct FrameInfo
     float               mSkyTopColor[4];
     float               mSkyBottomColor[4];
     float               mSunDir[4];
+    float               mAmbientColor[4];
     PointLight          mFirst4PointLights[1024];
     uint32_t            mLightCount = 0;
 };

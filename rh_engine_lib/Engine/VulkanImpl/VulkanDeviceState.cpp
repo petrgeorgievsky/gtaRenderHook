@@ -132,10 +132,12 @@ VulkanDeviceState::VulkanDeviceState()
         }
     }
 
+    static const char *app_name    = "Render Hook App";
+    static const char *engine_name = "RenderHook";
     // App info
     vk::ApplicationInfo app_info{};
-    app_info.pApplicationName = "Render Hook App";
-    app_info.pEngineName      = "Render Hook Engine";
+    app_info.pApplicationName = app_name;
+    app_info.pEngineName      = engine_name;
 
     // Instance info
     vk::InstanceCreateInfo inst_info{};
@@ -263,6 +265,8 @@ bool VulkanDeviceState::Init()
     {
         if ( queue_family.queueFlags & vk::QueueFlagBits::eGraphics )
             m_iGraphicsQueueFamilyIdx = i;
+        if ( queue_family.queueFlags & vk::QueueFlagBits::eTransfer )
+            m_iCopyQueueFamilyIdx = i;
         i++;
     }
     DebugLogger::LogFmt( "Graphics Queue id - %u", LogLevel::Info,
@@ -294,6 +298,11 @@ bool VulkanDeviceState::Init()
     queueCreateInfo.queueFamilyIndex          = m_iGraphicsQueueFamilyIdx;
     queueCreateInfo.queueCount                = 1;
     queueCreateInfo.pQueuePriorities          = queuePriority;
+
+    vk::DeviceQueueCreateInfo copyQueueCreateInfo = {};
+    queueCreateInfo.queueFamilyIndex              = m_iGraphicsQueueFamilyIdx;
+    queueCreateInfo.queueCount                    = 1;
+    queueCreateInfo.pQueuePriorities              = queuePriority;
 
     vk::DeviceCreateInfo info{};
 #ifdef ARCH_64BIT

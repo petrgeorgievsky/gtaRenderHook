@@ -164,9 +164,9 @@ RayTracingRenderer::Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
                        .maxDepth = 1.0 } } );
     dest->SetScissors( 0, { Scissor{ 0, 0, frame.mWidth, frame.mHeight } } );
 
+    mCameraDescription->Update( scene->mFrameInfo );
     if ( raytraced )
     {
-        mCameraDescription->Update( scene->mFrameInfo );
         mSceneDescription->Update();
         mPrimaryRaysPass->Execute( mTLAS, dest, *scene->mFrameInfo );
         mTiledLightCulling->Execute( dest, *scene->mFrameInfo );

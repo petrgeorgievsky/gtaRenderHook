@@ -126,6 +126,7 @@ class VulkanDeviceState : public IDeviceState
     vk::Device m_vkDevice = nullptr;
 
     vk::Queue m_vkMainQueue = nullptr;
+    vk::Queue m_vkCopyQueue = nullptr;
 
     vk::CommandPool m_vkCommandPool = nullptr;
 
@@ -135,6 +136,7 @@ class VulkanDeviceState : public IDeviceState
              m_uiCurrentAdapterMode = 0;
 
     uint32_t m_iGraphicsQueueFamilyIdx = 0;
+    uint32_t m_iCopyQueueFamilyIdx     = 0;
 
     ICommandBuffer *       mMainCmdBuffer    = nullptr;
     VulkanMemoryAllocator *mDefaultAllocator = nullptr;

@@ -67,10 +67,16 @@ VulkanSwapchain::VulkanSwapchain(
     swapchain_info.compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque;
     swapchain_info.presentMode      = present_mode;
     swapchain_info.imageSharingMode = vk::SharingMode::eExclusive;
-
+    // vk::SurfaceFullScreenExclusiveInfoEXT fs_ex{};
+    // fs_ex.fullScreenExclusive = vk::FullScreenExclusiveEXT::eDefault;
+    // swapchain_info.setPNext( &fs_ex );
     m_vkSwapChain = m_vkDevice.createSwapchainKHR( swapchain_info );
-    mWidth        = swapchain_info.imageExtent.width;
-    mHeight       = swapchain_info.imageExtent.height;
+    // try to acquire exclusive fullscreen
+    // if ( !create_params.mPresentParams.mWindowed )
+    //    m_vkDevice.acquireFullScreenExclusiveModeEXT( m_vkSwapChain );
+
+    mWidth  = swapchain_info.imageExtent.width;
+    mHeight = swapchain_info.imageExtent.height;
 
     m_vkSwapchainImages = m_vkDevice.getSwapchainImagesKHR( m_vkSwapChain );
     m_vkSwapchainImageViews.reserve( m_vkSwapchainImages.size() );
