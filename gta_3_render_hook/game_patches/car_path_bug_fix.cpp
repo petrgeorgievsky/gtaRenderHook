@@ -479,7 +479,8 @@ void __thiscall CPathFind::PreparePathDataForType_Jmp(
 void CPathFind::Patch()
 {
     // "Fix" car paths, ugly bug appears for no reason that trashes all
-    // memory for some reason
+    // memory for some reason, for now replace this function with slightly
+    // modified version from re3
     RedirectCall(
         GetAddressByGame( 0x4298F7, 0x4298F7, 0x4298F7 ),
         reinterpret_cast<void *>( CPathFind::PreparePathDataForType_Jmp ) );

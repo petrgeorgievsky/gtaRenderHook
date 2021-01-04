@@ -44,9 +44,11 @@ struct rwD3D9NativeRaster
     {
         os << "D3D9NativeRaster data block:\n\tformat: " << raster.format
            << " d3dFormat: " << raster.d3dFormat << " width: " << raster.width
-           << " height: " << raster.height << " depth: " << raster.depth
-           << " numMipLevels: " << raster.numMipLevels
-           << " type: " << raster.type << " flags: " << raster.flags;
+           << " height: " << raster.height
+           << " depth: " << (uint32_t)raster.depth
+           << " numMipLevels: " << (uint32_t)raster.numMipLevels
+           << " type: " << (uint32_t)raster.type
+           << " flags: " << (uint32_t)raster.flags;
         return os;
     }
     uint32_t  format;       /* Raster format flags */
@@ -66,9 +68,11 @@ struct rwD3D8NativeRaster
     {
         os << "D3D8NativeRaster data block:\n\tformat: " << raster.format
            << " alpha: " << raster.alpha << " width: " << raster.width
-           << " height: " << raster.height << " depth: " << raster.depth
-           << " numMipLevels: " << raster.numMipLevels
-           << " type: " << raster.type << " dxtFormat: " << raster.dxtFormat;
+           << " height: " << raster.height
+           << " depth: " << (uint32_t)raster.depth
+           << " numMipLevels: " << (uint32_t)raster.numMipLevels
+           << " type: " << (uint32_t)raster.type
+           << " dxtFormat: " << (uint32_t)raster.dxtFormat;
         return os;
     }
     int32_t  format;       /* Raster format flags */
@@ -281,8 +285,11 @@ bool RwNativeTextureReadCmd::Execute()
                         bytesPerBlock * ( ( width + 3 ) / blockSize );
                 };
 
-            const uint32_t numMipLevels = nativeRaster.d3d9_.numMipLevels;
-            const bool     convert_from_pal =
+            // Some txd records can have invalid mip level counter, default it
+            // to 1 for now
+            const uint32_t numMipLevels =
+                max( nativeRaster.d3d9_.numMipLevels, 1u );
+            const bool convert_from_pal =
                 nativeRaster.d3d9_.format & rwRASTERFORMATPAL4 ||
                 nativeRaster.d3d9_.format & rwRASTERFORMATPAL8;
             const bool has_alpha = static_cast<bool>(
@@ -294,8 +301,7 @@ bool RwNativeTextureReadCmd::Execute()
                                  .mHeight = nativeRaster.d3d9_.height,
                                  .mDepth  = 1,
                                  .mFormat = static_cast<uint32_t>( rhFormat ),
-                                 .mMipLevelCount =
-                                     nativeRaster.d3d9_.numMipLevels };
+                                 .mMipLevelCount = numMipLevels };
             // serialize
             writer.Write( &header );
 

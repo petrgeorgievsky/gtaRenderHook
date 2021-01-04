@@ -19,17 +19,26 @@ uint32_t GetAddressByGame( uint32_t v1_0, uint32_t v1_1,
                                    "or steam version of the GTA 3!" );
     std::terminate();
 }
+
 uint32_t GetGameId() noexcept
 {
-    static uint32_t game_id = Version_unknown;
-    if ( game_id != Version_unknown )
-        return game_id;
-
-    if ( *( (uint32_t *)0x5C1E70 ) == 0x53E58955 )
-        return ( game_id = Version_1_0_en );
-    if ( *( (uint32_t *)0x5C2130 ) == 0x53E58955 )
-        return ( game_id = Version_1_1_en );
-    if ( *( (uint32_t *)0x5C6FD0 ) == 0x53E58955 )
-        return ( game_id = Version_Steam_en );
-    std::terminate();
+    struct GameId
+    {
+        GameId()
+        {
+            constexpr auto game_start_bseq = 0x53E58955;
+            id                             = Version_unknown;
+            // Check game version by game's byte start sequence, borrowed from
+            // pluginSDK
+            if ( *( (uint32_t *)0x5C1E70 ) == game_start_bseq )
+                id = Version_1_0_en;
+            if ( *( (uint32_t *)0x5C2130 ) == game_start_bseq )
+                id = Version_1_1_en;
+            if ( *( (uint32_t *)0x5C6FD0 ) == game_start_bseq )
+                id = Version_Steam_en;
+        }
+        uint32_t id;
+    };
+    static GameId game_id;
+    return game_id.id;
 }

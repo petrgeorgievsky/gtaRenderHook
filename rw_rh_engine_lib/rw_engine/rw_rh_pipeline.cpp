@@ -181,7 +181,7 @@ RwResEntry *RHInstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         primType = PrimitiveType::TriangleList;
 
     const auto *mesh_start = reinterpret_cast<const RpMesh *>( meshHeader + 1 );
-    auto *      indexBuffer = new int16_t[meshHeader->totalIndicesInMesh * 3];
+    auto *      indexBuffer = new uint16_t[meshHeader->totalIndicesInMesh * 3];
     uint32_t    startIndex  = 0;
     uint32_t    indexCount;
 
@@ -336,8 +336,7 @@ RwResEntry *RHInstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
     backendMeshInitData.mIndexCount = startIndex;
     backendMeshInitData.mVertexCount =
         static_cast<size_t>( geom_io->GetVertexCount() );
-    backendMeshInitData.mIndexData =
-        reinterpret_cast<uint16_t *>( indexBuffer );
+    backendMeshInitData.mIndexData  = indexBuffer;
     backendMeshInitData.mVertexData = vertexData;
     backendMeshInitData.mSplits     = geometry_splits;
     backendMeshInitData.mMaterials  = geometry_mats;

@@ -87,23 +87,26 @@ VulkanDeviceState::VulkanDeviceState()
     // Validate layer support
     {
         auto layer_properties = vk::enumerateInstanceLayerProperties();
-        std::vector<const char *> unsupported_layers{};
+        std::set<std::string_view> required_layers{};
+        for ( auto l : m_aLayers )
+            required_layers.insert( l );
+        std::set<std::string_view> supported_layers{};
+        for ( auto &l : layer_properties )
+            supported_layers.insert( std::string_view( l.layerName ) );
+
+        std::set<std::string_view> unsupported_layers{};
+
         std::ranges::set_difference(
-            m_aLayers,
-            layer_properties |
-                std::views::transform(
-                    []( vk::LayerProperties &x ) -> const char * {
-                        return x.layerName;
-                    } ),
-            std::back_inserter( unsupported_layers ) );
+            required_layers, supported_layers,
+            std::inserter( unsupported_layers, unsupported_layers.end() ) );
         if ( !unsupported_layers.empty() )
         {
             DebugLogger::Error(
                 "VulkanDeviceState initialization failed, required "
                 "instance layers are unsupported:" );
-            for ( const auto &l : unsupported_layers )
+            for ( const auto l : unsupported_layers )
                 DebugLogger::ErrorFmt( "\tinstance layer %s is unsupported!",
-                                       LogLevel::Info, l );
+                                       l );
             return;
         }
     }
@@ -111,15 +114,18 @@ VulkanDeviceState::VulkanDeviceState()
     {
         auto extension_properties = vk::enumerateInstanceExtensionProperties();
 
-        std::vector<const char *> unsupported_extensions{};
+        std::set<std::string_view> required_extensions{};
+        for ( auto ext : m_aExtensions )
+            required_extensions.insert( ext );
+        std::set<std::string_view> supported_extensions{};
+        for ( auto &l : extension_properties )
+            supported_extensions.insert( std::string_view( l.extensionName ) );
+
+        std::vector<std::string_view> unsupported_extensions{};
         std::ranges::set_difference(
-            m_aLayers,
-            extension_properties |
-                std::views::transform(
-                    []( vk::ExtensionProperties &x ) -> const char * {
-                        return x.extensionName;
-                    } ),
-            std::back_inserter( unsupported_extensions ) );
+            required_extensions, supported_extensions,
+            std::inserter( unsupported_extensions,
+                           unsupported_extensions.end() ) );
         if ( !unsupported_extensions.empty() )
         {
             DebugLogger::Error(
