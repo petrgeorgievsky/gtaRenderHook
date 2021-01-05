@@ -20,21 +20,24 @@ struct SharedMemoryTaskQueueInfo
 
 enum SharedMemoryTaskType : int64_t
 {
-    CREATE_WINDOW          = 1,
-    GET_VIDEO_MODE         = 2,
-    GET_CURRENT_VIDEO_MODE = 3,
-    GET_VIDEO_MODE_COUNT   = 4,
-    GET_ADAPTER_COUNT      = 5,
-    TEXTURE_LOAD           = 6,
-    RENDER                 = 7,
-    MESH_LOAD              = 8,
-    DESTROY_WINDOW         = 9,
-    DESTROY_RASTER         = 10,
-    MATERIAL_LOAD          = 11,
-    MATERIAL_DELETE        = 12,
-    MESH_DELETE            = 13,
+    CREATE_WINDOW = 1,
+    DESTROY_WINDOW,
+    GET_ADAPTER_COUNT,
+    GET_ADAPTER_INFO,
+    GET_CURRENT_ADAPTER,
+    SET_CURRENT_ADAPTER,
+    GET_VIDEO_MODE_COUNT,
+    GET_VIDEO_MODE,
+    GET_CURRENT_VIDEO_MODE,
+    MESH_LOAD,
+    MESH_DELETE,
+    TEXTURE_LOAD,
+    DESTROY_RASTER,
+    MATERIAL_LOAD,
+    MATERIAL_DELETE,
     SKINNED_MESH_LOAD,
     SKINNED_MESH_UNLOAD,
+    RENDER,
 };
 
 class SharedMemoryTask

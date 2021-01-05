@@ -368,6 +368,43 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
             } ) );
 
         DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+            SharedMemoryTaskType::GET_ADAPTER_INFO,
+            std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                // execute
+                std::array<char, 80> result{};
+                MemoryReader         reader( memory );
+                MemoryWriter         writer( memory );
+                auto                 id = *reader.Read<int32_t>();
+
+                std::string str;
+                DeviceGlobals::RenderHookDevice->GetAdapterInfo(
+                    static_cast<unsigned int>( id ), str );
+
+                result[str.copy( result.data(), result.size() - 1 )] = '\0';
+                writer.Write( result.data(), result.size() );
+            } ) );
+
+        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+            SharedMemoryTaskType::GET_CURRENT_ADAPTER,
+            std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                // execute
+                MemoryWriter writer( memory );
+                unsigned int adapter = 0;
+                DeviceGlobals::RenderHookDevice->GetCurrentAdapter( adapter );
+                auto adapter_id = static_cast<uint32_t>( adapter );
+                writer.Write( &adapter_id );
+            } ) );
+
+        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+            SharedMemoryTaskType::SET_CURRENT_ADAPTER,
+            std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                // execute
+                MemoryReader reader( memory );
+                DeviceGlobals::RenderHookDevice->SetCurrentAdapter(
+                    *reader.Read<uint32_t>() );
+            } ) );
+
+        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
             SharedMemoryTaskType::CREATE_WINDOW,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
@@ -572,9 +609,19 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     {
     case rwDEVICESYSTEMGETSUBSYSTEMINFO:
     {
-        auto &subsystem   = *(RwSubSystemInfo *)pOut;
-        subsystem.name[0] = 'x';
-        subsystem.name[1] = '0';
+        auto &subsystem = *(RwSubSystemInfo *)pOut;
+        task_queue->ExecuteTask(
+            SharedMemoryTaskType::GET_ADAPTER_INFO,
+            [&nIn]( MemoryWriter &&memory_writer ) {
+                // serialize
+                memory_writer.Write( &nIn );
+            },
+            [&subsystem]( MemoryReader &&memory_reader ) {
+                // deserialize
+                const auto *     desc    = memory_reader.Read<char>( 80 );
+                std::string_view desc_sv = std::string_view( desc, 80 );
+                desc_sv.copy( subsystem.name, 80 );
+            } );
         break;
     }
     /*case rwDEVICESYSTEMFINALIZESTART:
@@ -690,7 +737,13 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETCURRENTSUBSYSTEM:
     {
-        *static_cast<int32_t *>( pOut ) = 0;
+        task_queue->ExecuteTask( SharedMemoryTaskType::GET_CURRENT_ADAPTER,
+                                 EmptySerializer,
+                                 [&pOut]( MemoryReader &&memory_reader ) {
+                                     // deserialize
+                                     *static_cast<uint32_t *>( pOut ) =
+                                         *memory_reader.Read<uint32_t>();
+                                 } );
         break;
     }
     case rwDEVICESYSTEMSTANDARDS:
@@ -734,6 +787,13 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMSETSUBSYSTEM:
     {
+        task_queue->ExecuteTask(
+            SharedMemoryTaskType::SET_CURRENT_ADAPTER,
+            [&nIn]( MemoryWriter &&memory_writer ) {
+                // serialize
+                memory_writer.Write( &nIn );
+            },
+            EmptyDeserializer );
         break;
     }
     case rwDEVICESYSTEMFINALIZESTART:
