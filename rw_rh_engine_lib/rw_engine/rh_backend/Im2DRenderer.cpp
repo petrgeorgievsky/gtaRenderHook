@@ -18,8 +18,9 @@ namespace rh::rw::engine
 {
 using namespace rh::engine;
 
-constexpr auto VERTEX_COUNT_LIMIT = 100000;
-constexpr auto INDEX_COUNT_LIMIT  = 100000;
+constexpr auto VERTEX_COUNT_LIMIT     = 100000;
+constexpr auto INDEX_COUNT_LIMIT      = 100000;
+constexpr auto TEXTURE_DESC_POOL_SIZE = 1000;
 
 Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
                             rh::engine::IRenderPass *render_pass )
@@ -38,9 +39,10 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
         .AddDescriptor( 1, 1, 0, DescriptorType::ROTexture, 1,
                         ShaderStage::Pixel );
 
-    mGlobalSetLayout      = d_gen.FinalizeDescriptorSet( 0, 1 );
-    mTextureDescSetLayout = d_gen.FinalizeDescriptorSet( 1, 64 );
-    mDescSetAllocator     = d_gen.FinalizeAllocator();
+    mGlobalSetLayout = d_gen.FinalizeDescriptorSet( 0, 1 );
+    mTextureDescSetLayout =
+        d_gen.FinalizeDescriptorSet( 1, TEXTURE_DESC_POOL_SIZE );
+    mDescSetAllocator = d_gen.FinalizeAllocator();
 
     // create pipeline layouts
     mTexLayout = device.CreatePipelineLayout(
@@ -78,7 +80,8 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
         device.CreateBuffer( { .mSize  = sizeof( int16_t ) * INDEX_COUNT_LIMIT,
                                .mUsage = BufferUsage::IndexBuffer } );
 
-    std::vector tex_layout_array = std::vector( 32, mTextureDescSetLayout );
+    std::vector tex_layout_array =
+        std::vector( TEXTURE_DESC_POOL_SIZE, mTextureDescSetLayout );
 
     mDescriptorSetPool = mDescSetAllocator->AllocateDescriptorSets(
         { .mLayouts = tex_layout_array } );

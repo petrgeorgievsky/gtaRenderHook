@@ -19,8 +19,10 @@ namespace rh::rw::engine
 {
 using namespace rh::engine;
 
-constexpr auto VERTEX_COUNT_LIMIT = 100000;
-constexpr auto INDEX_COUNT_LIMIT  = 100000;
+constexpr auto VERTEX_COUNT_LIMIT     = 100000;
+constexpr auto INDEX_COUNT_LIMIT      = 100000;
+constexpr auto DRAW_CALL_POOL_SIZE    = 1000;
+constexpr auto TEXTURE_DESC_POOL_SIZE = 1000;
 
 Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
 {
@@ -37,9 +39,10 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
         .AddDescriptor( 1, 1, 0, DescriptorType::ROTexture, 1,
                         ShaderStage::Pixel );
 
-    mObjectSetLayout      = d_gen.FinalizeDescriptorSet( 0, 100 );
-    mTextureDescSetLayout = d_gen.FinalizeDescriptorSet( 1, 64 );
-    mDescSetAllocator     = d_gen.FinalizeAllocator();
+    mObjectSetLayout = d_gen.FinalizeDescriptorSet( 0, DRAW_CALL_POOL_SIZE );
+    mTextureDescSetLayout =
+        d_gen.FinalizeDescriptorSet( 1, TEXTURE_DESC_POOL_SIZE );
+    mDescSetAllocator = d_gen.FinalizeAllocator();
 
     // create pipeline layouts
     mTexLayout = device.CreatePipelineLayout(
@@ -72,8 +75,8 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
         device.CreateBuffer( { .mSize  = sizeof( uint16_t ) * INDEX_COUNT_LIMIT,
                                .mUsage = BufferUsage::IndexBuffer } );
 
-    std::vector tex_layout_array =
-        std::vector( 64, (IDescriptorSetLayout *)mTextureDescSetLayout );
+    std::vector tex_layout_array = std::vector(
+        TEXTURE_DESC_POOL_SIZE, (IDescriptorSetLayout *)mTextureDescSetLayout );
 
     mDescriptorSetPool = mDescSetAllocator->AllocateDescriptorSets(
         { .mLayouts = tex_layout_array } );
@@ -94,14 +97,14 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
         device.UpdateDescriptorSets( info );
     }
 
-    std::vector obj_layout_array =
-        std::vector( 100, (IDescriptorSetLayout *)mObjectSetLayout );
+    std::vector obj_layout_array = std::vector(
+        DRAW_CALL_POOL_SIZE, (IDescriptorSetLayout *)mObjectSetLayout );
     rh::engine::DescriptorSetsAllocateParams alloc_params{};
     alloc_params.mLayouts = obj_layout_array;
     mMatrixDescriptorSetPool =
         mDescSetAllocator->AllocateDescriptorSets( alloc_params );
     mMatrixBuffer = device.CreateBuffer(
-        BufferCreateInfo{ sizeof( DirectX::XMFLOAT4X4 ) * 100,
+        BufferCreateInfo{ sizeof( DirectX::XMFLOAT4X4 ) * DRAW_CALL_POOL_SIZE,
                           BufferUsage::ConstantBuffer, Dynamic, nullptr } );
     uint32_t buff_offset = 0;
 
