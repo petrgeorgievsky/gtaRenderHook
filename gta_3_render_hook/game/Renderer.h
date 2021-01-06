@@ -18,6 +18,8 @@ class Renderer
     static int32_t  SetupBigBuildingVisibility( Entity *ent );
     static uint32_t mLightCount;
 
+    static void Patch();
+
   private:
     static int32_t &                  mNoOfVisibleEntities;
     static Entity **                  mVisibleEntityPtrs;

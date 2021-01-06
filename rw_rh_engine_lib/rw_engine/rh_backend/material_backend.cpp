@@ -4,6 +4,7 @@
 
 #include "material_backend.h"
 #include "raster_backend.h"
+#include <material_storage.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 namespace rh::rw::engine
 {
@@ -16,6 +17,10 @@ int32_t engine::BackendMaterialPluginAttach()
         DeviceGlobals::PluginFuncs.MaterialRegisterPlugin(
             sizeof( BackendMaterialExt ), rwID_MATERIAL_BACKEND,
             BackendMaterialCtor, BackendMaterialDtor, nullptr );
+
+    if ( DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack )
+        DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack(
+            rwID_MATERIAL_BACKEND, BackendMaterialStreamAlwaysCallback );
     return gBackendMaterialExtOffset > 0;
 }
 
@@ -90,6 +95,27 @@ uint64_t CreateMaterialData( RpMaterial *material )
             material_id = *memory_reader.Read<uint64_t>();
         } );
     return material_id;
+}
+
+int32_t BackendMaterialStreamAlwaysCallback( void *object, int32_t, int32_t )
+{
+    auto *material = static_cast<RpMaterial *>( object );
+    auto *ext      = GetBackendMaterialExt( material );
+
+    if ( !material->texture )
+        return 1;
+
+    auto &m_ext_sys = MaterialExtensionSystem::GetInstance();
+
+    auto texture_name = std::string_view( material->texture->name );
+    auto mat_desc     = m_ext_sys.GetMatDesc( texture_name );
+    if ( !mat_desc )
+        return 1;
+
+    ext->mSpecTex = m_ext_sys.ReadTexture(
+        mat_desc->mTextureDictName,
+        std::string_view( mat_desc->mSpecularTextureName.data() ) );
+    return 1;
 }
 
 } // namespace rh::rw::engine

@@ -87,6 +87,9 @@ bool RwTestSample::Initialize( void *wnd )
             RwPluginObjectCopy        copyCB ) -> int32_t {
         return sizeof( RpMaterial );
     };
+    DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack =
+        []( uint32_t                        pluginID,
+            RwPluginDataChunkAlwaysCallBack alwaysCB ) -> int32_t { return 1; };
     auto devptr = static_cast<RwDevice *>( malloc( sizeof( RwDevice ) ) );
     new ( devptr ) RwDevice{};
 

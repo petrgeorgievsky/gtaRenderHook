@@ -74,6 +74,11 @@ void RwGameHooks::Patch( const RwPointerTable &pointerTable )
             reinterpret_cast<RegisterPluginCall>(
                 pointerTable.mMaterialRegisterPluginPtr );
 
+    if ( pointerTable.mMaterialRegisterPluginPtr )
+        DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack =
+            reinterpret_cast<SetStreamAlwaysCallBack>(
+                pointerTable.mMaterialSetStreamAlwaysCallbackPtr );
+
     if ( pointerTable.mCameraRegisterPluginPtr )
         DeviceGlobals::PluginFuncs.CameraRegisterPlugin =
             reinterpret_cast<RegisterPluginCall>(

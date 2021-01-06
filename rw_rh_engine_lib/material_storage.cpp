@@ -3,9 +3,11 @@
 //
 
 #include "material_storage.h"
+#include "common_headers.h"
 #include <DebugUtils/DebugLogger.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <utility>
 
 namespace rh::rw::engine
 {
@@ -17,7 +19,7 @@ MaterialExtensionSystem &MaterialExtensionSystem::GetInstance()
 }
 
 std::optional<MaterialDescription>
-MaterialExtensionSystem::GetMatDesc( const std::string &name )
+MaterialExtensionSystem::GetMatDesc( const std::string_view &name )
 {
     auto x = mMaterials.find( name );
     return x != mMaterials.end() ? x->second
@@ -60,6 +62,18 @@ void MaterialExtensionSystem::ParseMaterialDesc(
                desc.mSpecularTextureName.begin() );
 
     desc.mTextureDictName = desc_json["tex_dict_slot_name"].get<std::string>();
+}
+
+RwTexture *MaterialExtensionSystem::ReadTexture( std::string_view dictionary,
+                                                 std::string_view name )
+{
+    return mReadTextureCallback ? mReadTextureCallback( dictionary, name )
+                                : nullptr;
+}
+void MaterialExtensionSystem::RegisterReadTextureCallback(
+    MaterialExtensionSystem::ReadTextureCallback cb )
+{
+    mReadTextureCallback = std::move( cb );
 }
 
 } // namespace rh::rw::engine

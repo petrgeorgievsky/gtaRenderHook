@@ -32,6 +32,12 @@ void *  BackendMaterialCtor( void *                   object,
 void *  BackendMaterialDtor( void *                   object,
                              [[maybe_unused]] int32_t offsetInObject,
                              [[maybe_unused]] int32_t sizeInObject );
+
+int32_t
+BackendMaterialStreamAlwaysCallback( void *                   object,
+                                     [[maybe_unused]] int32_t offsetInObject,
+                                     [[maybe_unused]] int32_t sizeInObject );
+
 /* Open/Close */
 // void BackendRasterOpen();
 // void BackendRasterClose();

@@ -20,16 +20,17 @@ struct RwPointerTable
     INT_PTR mRwDevicePtr          = 0;
     INT_PTR mRwRwDeviceGlobalsPtr = 0;
 
-    INT_PTR mRasterRegisterPluginPtr   = 0;
-    INT_PTR mMaterialRegisterPluginPtr = 0;
-    INT_PTR mCameraRegisterPluginPtr   = 0;
-    INT_PTR mAllocateResourceEntry     = 0;
-    INT_PTR mFreeResourceEntry         = 0;
-    INT_PTR mAtomicGetHAnimHierarchy   = 0;
-    INT_PTR mGeometryGetSkin           = 0;
-    INT_PTR mGetSkinToBoneMatrices     = 0;
-    INT_PTR mGetVertexBoneWeights      = 0;
-    INT_PTR mGetVertexBoneIndices      = 0;
+    INT_PTR mRasterRegisterPluginPtr            = 0;
+    INT_PTR mMaterialRegisterPluginPtr          = 0;
+    INT_PTR mMaterialSetStreamAlwaysCallbackPtr = 0;
+    INT_PTR mCameraRegisterPluginPtr            = 0;
+    INT_PTR mAllocateResourceEntry              = 0;
+    INT_PTR mFreeResourceEntry                  = 0;
+    INT_PTR mAtomicGetHAnimHierarchy            = 0;
+    INT_PTR mGeometryGetSkin                    = 0;
+    INT_PTR mGetSkinToBoneMatrices              = 0;
+    INT_PTR mGetVertexBoneWeights               = 0;
+    INT_PTR mGetVertexBoneIndices               = 0;
 
     INT_PTR m_fpSetRefreshRate = 0;
     INT_PTR m_fpSetVideoMode   = 0;

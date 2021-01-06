@@ -29,6 +29,7 @@ set(SOURCES
         game/Clock.cpp
         game_patches/car_path_bug_fix.cpp
         game_patches/base_model_pipeline.cpp
+        game_patches/material_system_patches.cpp
         config/GameRendererConfigBlock.cpp
         call_redirection_util.cpp)
 

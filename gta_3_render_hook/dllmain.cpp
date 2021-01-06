@@ -5,6 +5,7 @@
 #include "game/TxdStore.h"
 #include "game_patches/base_model_pipeline.h"
 #include "game_patches/car_path_bug_fix.h"
+#include "game_patches/material_system_patches.h"
 #include "gta3_geometry_proxy.h"
 #include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
@@ -12,7 +13,6 @@
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <filesystem>
 #include <ipc/ipc_utils.h>
-#include <material_storage.h>
 #include <render_loop.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_api_injectors.h>
@@ -21,6 +21,7 @@
 #include <rw_engine/rw_rh_skin_pipeline.h>
 #include <rw_game_hooks.h>
 
+using namespace rh;
 using namespace rh::rw::engine;
 
 RwIOPointerTable rh::rw::engine::g_pIO_API = {
@@ -45,9 +46,11 @@ bool true_ret_hook() { return true; }
 
 class Clouds
 {
-    void RenderBackground( int16_t topred, int16_t topgreen, int16_t topblue,
-                           int16_t botred, int16_t botgreen, int16_t botblue,
-                           int16_t alpha )
+  public:
+    static void RenderBackground( int16_t topred, int16_t topgreen,
+                                  int16_t topblue, int16_t botred,
+                                  int16_t botgreen, int16_t botblue,
+                                  int16_t alpha )
     {
     }
 };
@@ -156,51 +159,6 @@ char **_psGetVideoModeList()
     return videomode_list.data();
 }
 
-RpMaterial *RpMaterialStreamReadImpl( void *stream )
-{
-    uint32_t address = GetAddressByGame( 0x5ADDA0, 0x5AE060, 0x5B0AA0 );
-    return InMemoryFuncCall<RpMaterial *>( address, stream );
-}
-
-RwTexture *RwTextureRead( const char *name, const char *maskName )
-{
-    uint32_t address = GetAddressByGame( 0x5A7580, 0x5A7840, 0x5A8E00 );
-    return InMemoryFuncCall<RwTexture *>( address, name, maskName );
-}
-
-RpMaterial *RpMaterialStreamRead( void *stream )
-{
-    auto material = RpMaterialStreamReadImpl( stream );
-    if ( material == nullptr )
-        return nullptr;
-    auto mat_ext = GetBackendMaterialExt( material );
-    if ( !material->texture )
-        return material;
-
-    auto &m_ext_sys = MaterialExtensionSystem::GetInstance();
-
-    auto string_s_name = std::string( material->texture->name );
-    auto desc          = m_ext_sys.GetMatDesc( string_s_name );
-    if ( !desc )
-        return material;
-
-    if ( auto txd_slot =
-             TxdStore::FindTxdSlot( desc->mTextureDictName.c_str() );
-         txd_slot != -1 )
-    {
-        TxdStore::PushCurrentTxd();
-        TxdStore::SetCurrentTxd( txd_slot );
-
-        // Read textures
-        mat_ext->mSpecTex =
-            RwTextureRead( desc->mSpecularTextureName.data(), nullptr );
-
-        TxdStore::PopCurrentTxd();
-    }
-
-    return material;
-}
-
 BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
                      LPVOID lpReserved )
 {
@@ -209,17 +167,14 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
     case DLL_PROCESS_ATTACH:
     {
         /// Init logging
-        rh::debug::DebugLogger::Init( "gta3_logs.log",
-                                      rh::debug::LogLevel::Info );
-        rh::debug::InitExceptionHandler();
+        debug::DebugLogger::Init( "gta3_logs.log", debug::LogLevel::Info );
+        debug::InitExceptionHandler();
 
-        rh::rw::engine::IPCSettings::mMode =
-            rh::rw::engine::IPCRenderMode::CrossProcessClient;
-
-        rh::rw::engine::IPCSettings::mProcessName = "gta_3_render_driver.exe";
+        IPCSettings::mMode        = IPCRenderMode::CrossProcessClient;
+        IPCSettings::mProcessName = "gta_3_render_driver.exe";
 
         /// Init config
-        auto       cfg_mgr  = rh::engine::ConfigurationManager::Instance();
+        auto       cfg_mgr  = engine::ConfigurationManager::Instance();
         const auto cfg_path = "gta3_rh_config.cfg";
         if ( !cfg_mgr.LoadFromFile( cfg_path ) )
             cfg_mgr.SaveToFile( cfg_path );
@@ -254,8 +209,6 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
             GetAddressByGame( 0x5B1080, 0x5B1340, 0x5B4B94 );
         gta3_ptr_table.mGetSkinToBoneMatrices =
             GetAddressByGame( 0x5B10D0, 0x5B1390, 0x5B4C30 );
-        gta3_ptr_table.mGetVertexBoneWeights = 0;
-        gta3_ptr_table.mGetVertexBoneIndices = 0;
         gta3_ptr_table.mIm3DTransform =
             GetAddressByGame( 0x5B6720, 0x5B69E0, 0x5BB0D0 );
         gta3_ptr_table.mIm3DRenderIndexedPrimitive =
@@ -266,33 +219,29 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
             GetAddressByGame( 0x5B67F0, 0x5B6AB0, 0x5BB1C0 );
 
         RwGameHooks::Patch( gta3_ptr_table );
+        PatchMaterialSystem();
         BaseModelPipelines::Patch();
 
         /// TODO: Move to another cpp/hpp file
         // RedirectJump( 0x581830,
         //             reinterpret_cast<void *>( _psGetVideoModeList ) );
 
-        RedirectCall( GetAddressByGame( 0x5C8E66, 0x5C9126, 0x5CFB1D ),
-                      reinterpret_cast<void *>( RpMaterialStreamRead ) );
-
         RedirectJump( GetAddressByGame( 0x510790, 0x510980, 0x510910 ),
                       reinterpret_cast<void *>( PointLights::AddLight ) );
 
+        // GTA 3 stores some of the supported formats in binary file, and checks
+        // whether it needs to convert it using rwD3D8 function, for now replace
+        // it with our own impl
+        // TODO: Move to another cpp file
         RedirectJump(
             GetAddressByGame( 0x59A350, 0x59A610, 0x59B7E0 ),
             reinterpret_cast<void *>( rwD3D8FindCorrectRasterFormat ) );
 
-        // Hide default sky
+        // Patch default sky
         RedirectJump( GetAddressByGame( 0x4F7F00, 0x4F7FE0, 0x4F7F70 ),
-                      reinterpret_cast<void *>( true_ret_hook ) );
+                      reinterpret_cast<void *>( Clouds::RenderBackground ) );
 
-        RedirectJump( GetAddressByGame( 0x4A8970, 0x4A8A60, 0x4A89F0 ),
-                      reinterpret_cast<void *>( Renderer::ScanWorld ) );
-        RedirectJump( GetAddressByGame( 0x4A7840, 0x4A7930, 0x4A78C0 ),
-                      reinterpret_cast<void *>( Renderer::PreRender ) );
-        RedirectJump( GetAddressByGame( 0x48E030, 0x48E0F0, 0x48E080 ),
-                      reinterpret_cast<void *>( Renderer::Render ) );
-
+        Renderer::Patch();
         CPathFind::Patch();
         Shadows::Patch();
 

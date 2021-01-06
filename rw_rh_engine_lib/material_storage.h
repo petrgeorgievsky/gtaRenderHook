@@ -4,10 +4,12 @@
 #pragma once
 #include <array>
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
 
+struct RwTexture;
 namespace rh::rw::engine
 {
 
@@ -19,17 +21,27 @@ struct MaterialDescription
 
 class MaterialExtensionSystem
 {
+    using ReadTextureCallback = std::function<RwTexture *(
+        std::string_view dict, std::string_view name )>;
+
   public:
     static MaterialExtensionSystem &GetInstance();
 
-    std::optional<MaterialDescription> GetMatDesc( const std::string &name );
+    std::optional<MaterialDescription>
+    GetMatDesc( const std::string_view &name );
+
+    RwTexture *ReadTexture( std::string_view dictionary,
+                            std::string_view name );
+
+    void RegisterReadTextureCallback( ReadTextureCallback cb );
 
   private:
     MaterialExtensionSystem();
     void ParseMaterialDesc( const std::filesystem::path &mat_desc );
 
   private:
-    std::map<std::string, MaterialDescription> mMaterials;
+    std::map<std::string, MaterialDescription, std::less<>> mMaterials;
+    ReadTextureCallback mReadTextureCallback;
 };
 
 }; // namespace rh::rw::engine

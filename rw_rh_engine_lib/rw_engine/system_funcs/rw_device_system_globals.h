@@ -224,6 +224,12 @@ using RegisterPluginCall = int32_t ( * )( int32_t size, uint32_t pluginID,
                                           RwPluginObjectDestructor  destructCB,
                                           RwPluginObjectCopy        copyCB );
 
+using RwPluginDataChunkAlwaysCallBack = int32_t ( * )( void *  object,
+                                                       int32_t offsetInObject,
+                                                       int32_t sizeInObject );
+using SetStreamAlwaysCallBack         = int32_t ( * )(
+    uint32_t pluginID, RwPluginDataChunkAlwaysCallBack alwaysCB );
+
 using RwResourcesAllocateResEntry = RwResEntry *(*)( void *, RwResEntry **,
                                                      int32_t,
                                                      RwResEntryDestroyNotify );
@@ -242,9 +248,10 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn );
 
 struct PluginPtrTable
 {
-    RegisterPluginCall MaterialRegisterPlugin;
-    RegisterPluginCall RasterRegisterPlugin;
-    RegisterPluginCall CameraRegisterPlugin;
+    RegisterPluginCall      MaterialRegisterPlugin;
+    SetStreamAlwaysCallBack MaterialSetStreamAlwaysCallBack;
+    RegisterPluginCall      RasterRegisterPlugin;
+    RegisterPluginCall      CameraRegisterPlugin;
 };
 
 struct SkinPtrTable

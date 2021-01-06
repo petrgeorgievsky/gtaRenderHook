@@ -8,6 +8,7 @@
 #include "Clock.h"
 #include "ModelInfo.h"
 #include "Streaming.h"
+#include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <algorithm>
 #include <cmath>
 #include <scene_graph.h>
@@ -452,4 +453,14 @@ int32_t Renderer::SetupBigBuildingVisibility( Entity *ent )
         return VIS_VISIBLE;
     }
     return VIS_INVISIBLE;
+}
+
+void Renderer::Patch()
+{
+    RedirectJump( GetAddressByGame( 0x4A8970, 0x4A8A60, 0x4A89F0 ),
+                  reinterpret_cast<void *>( Renderer::ScanWorld ) );
+    RedirectJump( GetAddressByGame( 0x4A7840, 0x4A7930, 0x4A78C0 ),
+                  reinterpret_cast<void *>( Renderer::PreRender ) );
+    RedirectJump( GetAddressByGame( 0x48E030, 0x48E0F0, 0x48E080 ),
+                  reinterpret_cast<void *>( Renderer::Render ) );
 }
