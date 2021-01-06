@@ -309,28 +309,6 @@ void Renderer::PreRender()
         mVisibleEntities[id]->PreRender();
 }
 
-struct CVector
-{
-    float x, y, z;
-};
-class CPointLight
-{
-  public:
-    CVector       m_vecPosition;
-    CVector       m_vecDirection;
-    float         m_fRange;
-    float         m_fColorRed;
-    float         m_fColorGreen;
-    float         m_fColorBlue;
-    unsigned char m_nType;
-    unsigned char m_nFogType;
-    bool          m_bGenerateShadows;
-
-  private:
-    char _pad2B;
-};
-static_assert( sizeof( CPointLight ) == 0x2C );
-
 void RenderWater()
 {
     InMemoryFuncCall<void>( GetAddressByGame( 0x5554E0, 0x555610, 0x5555C0 ) );

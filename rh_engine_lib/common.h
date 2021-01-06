@@ -37,13 +37,12 @@
 
 #ifndef ANDROID_BUILD
 #define NOMINMAX
+#include <DirectXMath.h>
 #include <Windows.h>
 #include <comdef.h>
 #include <d3d11_3.h>
 #include <d3d12.h>
 #include <d3d9types.h>
-#define _XM_NO_INTRINSICS_
-#include <DirectXMath.h>
 #include <d3dcompiler.h>
 #endif // !ANDROID_BUILD
 
