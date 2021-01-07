@@ -105,20 +105,26 @@ SkinRendererClient::SkinRendererClient()
     MaterialCount = 0;
 }
 
-void SkinRendererClient::RecordDrawCall(
-    const SkinDrawCallInfo &info, const std::vector<MaterialData> &materials )
+std::span<MaterialData>
+SkinRendererClient::AllocateDrawCallMaterials( uint64_t count )
 {
+    if ( MaterialsData.size() < MaterialCount + count )
+        MaterialsData.resize( MaterialCount + count );
 
-    if ( MaterialsData.size() < MaterialCount + materials.size() )
-        MaterialsData.resize( MaterialCount + materials.size() );
-
-    MeshData[DrawCallCount]                    = info;
     MeshData[DrawCallCount].mMaterialListStart = MaterialCount;
-    MeshData[DrawCallCount].mMaterialListCount = materials.size();
+    MeshData[DrawCallCount].mMaterialListCount = count;
+
+    return std::span<MaterialData>( &MaterialsData[MaterialCount], count );
+}
+
+void SkinRendererClient::RecordDrawCall( const SkinDrawCallInfo &info )
+{
+    auto mat_count          = MeshData[DrawCallCount].mMaterialListCount;
+    MeshData[DrawCallCount] = info;
+    MeshData[DrawCallCount].mMaterialListStart = MaterialCount;
+    MeshData[DrawCallCount].mMaterialListCount = mat_count;
+    MaterialCount += mat_count;
     DrawCallCount++;
-    for ( auto i = 0; i < materials.size(); i++ )
-        MaterialsData[MaterialCount + i] = materials[i];
-    MaterialCount += materials.size();
 }
 
 uint64_t SkinRendererClient::Serialize( MemoryWriter &writer )

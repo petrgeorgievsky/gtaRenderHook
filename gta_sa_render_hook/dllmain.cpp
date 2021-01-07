@@ -61,22 +61,14 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
     rh::rw::engine::DrawAtomic(
         atomic, &geometry_interface_35,
         [&ltm, atomic]( rh::rw::engine::ResEnty *res_entry ) {
-            rh::rw::engine::DrawCallInfo info{};
-            info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
-            info.mMeshId         = res_entry->meshData;
-            info.mWorldTransform = DirectX::XMFLOAT4X3{
-                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
-                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
-                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
-            };
-            std::vector<rh::rw::engine::MaterialData> materials{};
-            auto        meshHeader = geometry_interface_35.GetMeshHeader();
-            const auto *mesh_start =
-                reinterpret_cast<const RpMesh *>( meshHeader + 1 );
-            for ( const RpMesh *mesh = mesh_start;
-                  mesh != mesh_start + meshHeader->numMeshes; mesh++ )
+            auto &renderer  = EngineClient::gRendererGlobals;
+            auto  mesh_list = geometry_interface_35.GetMeshList();
+            auto  materials =
+                renderer.AllocateDrawCallMaterials( mesh_list.size() );
+
+            for ( auto i = 0; i < mesh_list.size(); i++ )
             {
-                auto m = mesh->material;
+                auto m = mesh_list[i].material;
 
                 int32_t tex_id = 0xBADF00D;
                 if ( m->texture && m->texture->raster )
@@ -84,11 +76,19 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
                     auto raster = GetBackendRasterExt( m->texture->raster );
                     tex_id      = raster->mImageId;
                 }
-                materials.push_back( rh::rw::engine::MaterialData{
-                    tex_id, m->color, 0xBADF00D, m->surfaceProps.specular } );
+                materials[i] = ( MaterialData{ tex_id, m->color, 0xBADF00D,
+                                               m->surfaceProps.specular } );
             }
-            rh::rw::engine::EngineClient::gRendererGlobals.RecordDrawCall(
-                info, materials );
+            DrawCallInfo info{};
+            info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
+            info.mMeshId         = res_entry->meshData;
+            info.mWorldTransform = DirectX::XMFLOAT4X3{
+                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
+                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
+                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
+            };
+
+            renderer.RecordDrawCall( info );
         } );
 
     return 1;
@@ -110,25 +110,16 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
 
     const RwMatrix *ltm = ::RwFrameGetLTM(
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
-    rh::rw::engine::DrawAtomic(
-        atomic, &geometry_interface_35,
-        [&ltm, atomic]( rh::rw::engine::ResEnty *res_entry ) {
-            rh::rw::engine::SkinDrawCallInfo info{};
-            info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
-            info.mMeshId         = res_entry->meshData;
-            info.mWorldTransform = DirectX::XMFLOAT4X3{
-                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
-                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
-                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
-            };
-            std::vector<rh::rw::engine::MaterialData> materials{};
-            auto        meshHeader = geometry_interface_35.GetMeshHeader();
-            const auto *mesh_start =
-                reinterpret_cast<const RpMesh *>( meshHeader + 1 );
-            for ( const RpMesh *mesh = mesh_start;
-                  mesh != mesh_start + meshHeader->numMeshes; mesh++ )
+    DrawAtomic(
+        atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
+            auto &renderer  = EngineClient::gSkinRendererGlobals;
+            auto  mesh_list = geometry_interface_35.GetMeshList();
+            auto  materials =
+                renderer.AllocateDrawCallMaterials( mesh_list.size() );
+
+            for ( auto i = 0; i < mesh_list.size(); i++ )
             {
-                auto m = mesh->material;
+                auto m = mesh_list[i].material;
 
                 int32_t tex_id = 0xBADF00D;
                 if ( m->texture && m->texture->raster )
@@ -136,14 +127,20 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
                     auto raster = GetBackendRasterExt( m->texture->raster );
                     tex_id      = raster->mImageId;
                 }
-                materials.push_back( rh::rw::engine::MaterialData{
-                    tex_id, m->color, 0xBADF00D, m->surfaceProps.specular } );
+                materials[i] = ( MaterialData{ tex_id, m->color, 0xBADF00D,
+                                               m->surfaceProps.specular } );
             }
-            static rh::rw::engine::AnimHierarcyRw36 g_anim{};
-            rh::rw::engine::PrepareBoneMatrices( info.mBoneTransform, atomic,
-                                                 g_anim );
-            rh::rw::engine::EngineClient::gSkinRendererGlobals.RecordDrawCall(
-                info, materials );
+            SkinDrawCallInfo info{};
+            info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
+            info.mMeshId         = res_entry->meshData;
+            info.mWorldTransform = DirectX::XMFLOAT4X3{
+                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
+                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
+                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
+            };
+            static AnimHierarcyRw36 g_anim{};
+            PrepareBoneMatrices( info.mBoneTransform, atomic, g_anim );
+            EngineClient::gSkinRendererGlobals.RecordDrawCall( info );
         } );
     return 1;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <common_headers.h>
 #include <cstdint>
+#include <iterator>
 
 namespace rh::rw::engine
 {
@@ -192,6 +193,78 @@ constexpr void Initialize( void *list )
     static_cast<RwLinkList *>( list )->link.prev =
         static_cast<RwLLLink *>( list );
 }
+
+template <typename T> class Iterator
+{
+  private:
+    RwLinkList &mList;
+
+  public:
+    explicit Iterator( RwLinkList &list ) : mList( list ) {}
+    class iterator
+    {
+        RwLLLink *mIterPtr;
+
+      public:
+        // The std::iterator class template (used as a base class to provide
+        // typedefs) is deprecated in C++17. (The <iterator> header is NOT
+        // deprecated.) The C++ Standard has never required user-defined
+        // iterators to derive from std::iterator.
+        // To fix this warning, stop deriving from std::iterator and start
+        // providing publicly accessible typedefs named iterator_category,
+        // value_type, difference_type, pointer, and reference.
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type        = T;
+        using difference_type   = std::ptrdiff_t;
+        using pointer           = T *;
+        using reference         = T &;
+
+        explicit iterator( RwLLLink *ptr = nullptr ) : mIterPtr( ptr ) {}
+        const T *operator*() const
+        {
+            return rwLLLink::GetData<T>( mIterPtr, offsetof( T, inClumpLink ) );
+        }
+        T *operator*()
+        {
+            return rwLLLink::GetData<T>( mIterPtr, offsetof( T, inClumpLink ) );
+        }
+        iterator &operator++()
+        {
+            mIterPtr = rw::engine::rwLLLink::GetNext( mIterPtr );
+            return *this;
+        }
+        iterator operator++( int )
+        {
+            iterator retval = *this;
+            ++( *this );
+            return retval;
+        }
+        iterator &operator--()
+        {
+            mIterPtr = mIterPtr->prev;
+            return *this;
+        }
+        iterator operator--( int )
+        {
+            iterator retval = *this;
+            --( *this );
+            return retval;
+        }
+        bool operator==( const iterator &other ) const
+        {
+            return mIterPtr == other.mIterPtr;
+        }
+        bool operator!=( const iterator &other ) const
+        {
+            return !( *this == other );
+        }
+    };
+
+    iterator begin() const { return iterator( GetFirstLLLink( &mList ) ); }
+    iterator end() const { return iterator( GetTerminator( &mList ) ); }
+    iterator begin() { return iterator( GetFirstLLLink( &mList ) ); }
+    iterator end() { return iterator( GetTerminator( &mList ) ); }
+};
 } // namespace rwLinkList
 namespace rwFrame
 {

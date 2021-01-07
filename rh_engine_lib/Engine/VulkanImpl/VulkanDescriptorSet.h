@@ -1,3 +1,4 @@
+#pragma once
 #include "Engine/Common/IDescriptorSet.h"
 #include <common.h>
 

@@ -52,8 +52,9 @@ class SkinRendererClient
 
     uint64_t Serialize( MemoryWriter &writer );
     void     Flush();
-    void     RecordDrawCall( const SkinDrawCallInfo &         info,
-                             const std::vector<MaterialData> &materials = {} );
+
+    std::span<MaterialData> AllocateDrawCallMaterials( uint64_t count );
+    void                    RecordDrawCall( const SkinDrawCallInfo &info );
 
   private:
     std::vector<MaterialData>     MaterialsData;

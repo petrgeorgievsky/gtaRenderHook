@@ -97,39 +97,27 @@ class AnimHierarcyRw35 final : public IAnimHierarcy
     RwMatrix *GetSkinToBoneMatrices() override { return base->pMatrixArray; }
 };
 
-std::vector<MaterialData>
-FillMaterialBuffer( const RpGeometryInterface &geometry )
+MaterialData ConvertMaterialData( RpMaterial *material )
 {
-    auto convert_material = []( const RpMesh &mesh ) {
-        auto    m           = mesh.material;
-        int32_t tex_id      = 0xBADF00D;
-        int32_t spec_tex_id = 0xBADF00D;
-        if ( m == nullptr )
-            return MaterialData{ tex_id, RwRGBA{ 255, 0, 0, 255 }, spec_tex_id,
-                                 0 };
+    int32_t tex_id      = 0xBADF00D;
+    int32_t spec_tex_id = 0xBADF00D;
+    if ( material == nullptr )
+        return MaterialData{ tex_id, RwRGBA{ 255, 0, 0, 255 }, spec_tex_id, 0 };
 
-        auto m_b = GetBackendMaterialExt( m );
+    auto m_b = GetBackendMaterialExt( material );
 
-        if ( m->texture && m->texture->raster )
-        {
-            auto raster = GetBackendRasterExt( m->texture->raster );
-            tex_id      = raster->mImageId;
-        }
-        auto spec_tex = m_b->mSpecTex;
-        if ( spec_tex && spec_tex->raster )
-        {
-            auto raster = GetBackendRasterExt( spec_tex->raster );
-            spec_tex_id = raster->mImageId;
-        }
-        return MaterialData{ tex_id, m->color, spec_tex_id, 0 };
-    };
-    auto                      mesh_list = geometry.GetMeshList();
-    std::vector<MaterialData> materials{};
-    materials.reserve( mesh_list.size() );
-
-    for ( const auto &mesh : mesh_list )
-        materials.push_back( convert_material( mesh ) );
-    return materials;
+    if ( material->texture && material->texture->raster )
+    {
+        auto raster = GetBackendRasterExt( material->texture->raster );
+        tex_id      = raster->mImageId;
+    }
+    auto spec_tex = m_b->mSpecTex;
+    if ( spec_tex && spec_tex->raster )
+    {
+        auto raster = GetBackendRasterExt( spec_tex->raster );
+        spec_tex_id = raster->mImageId;
+    }
+    return MaterialData{ tex_id, material->color, spec_tex_id, 0 };
 }
 
 static int32_t SkinD3D8AtomicAllInOneNode( void * /*self*/,
@@ -146,21 +134,29 @@ static int32_t SkinD3D8AtomicAllInOneNode( void * /*self*/,
 
     auto ltm = RwFrameGetLTM(
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
-    DrawAtomic( atomic, &geometry_interface_35,
-                [&ltm, atomic]( ResEnty *res_entry ) {
-                    SkinDrawCallInfo info{};
-                    info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
-                    info.mMeshId         = res_entry->meshData;
-                    info.mWorldTransform = DirectX::XMFLOAT4X3{
-                        ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
-                        ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
-                        ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
-                    };
-                    static AnimHierarcyRw35 anim{};
-                    PrepareBoneMatrices( info.mBoneTransform, atomic, anim );
-                    EngineClient::gSkinRendererGlobals.RecordDrawCall(
-                        info, FillMaterialBuffer( geometry_interface_35 ) );
-                } );
+    DrawAtomic(
+        atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
+            auto &renderer = EngineClient::gSkinRendererGlobals;
+            static AnimHierarcyRw35 anim{};
+
+            auto mesh_list = geometry_interface_35.GetMeshList();
+            auto materials =
+                renderer.AllocateDrawCallMaterials( mesh_list.size() );
+            for ( auto i = 0; i < mesh_list.size(); i++ )
+                materials[i] = ConvertMaterialData( mesh_list[i].material );
+
+            SkinDrawCallInfo info{};
+            info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
+            info.mMeshId         = res_entry->meshData;
+            info.mWorldTransform = DirectX::XMFLOAT4X3{
+                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
+                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
+                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
+            };
+            PrepareBoneMatrices( info.mBoneTransform, atomic, anim );
+
+            renderer.RecordDrawCall( info );
+        } );
     return 1;
 }
 
@@ -177,19 +173,26 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
 
     auto ltm = RwFrameGetLTM(
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
-    DrawAtomic( atomic, &geometry_interface_35,
-                [&ltm, atomic]( ResEnty *res_entry ) {
-                    DrawCallInfo info{};
-                    info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
-                    info.mMeshId         = res_entry->meshData;
-                    info.mWorldTransform = DirectX::XMFLOAT4X3{
-                        ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
-                        ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
-                        ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
-                    };
-                    EngineClient::gRendererGlobals.RecordDrawCall(
-                        info, FillMaterialBuffer( geometry_interface_35 ) );
-                } );
+    DrawAtomic(
+        atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
+            auto &renderer = EngineClient::gRendererGlobals;
+
+            auto mesh_list = geometry_interface_35.GetMeshList();
+            auto materials =
+                renderer.AllocateDrawCallMaterials( mesh_list.size() );
+            for ( auto i = 0; i < mesh_list.size(); i++ )
+                materials[i] = ConvertMaterialData( mesh_list[i].material );
+
+            DrawCallInfo info{};
+            info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
+            info.mMeshId         = res_entry->meshData;
+            info.mWorldTransform = DirectX::XMFLOAT4X3{
+                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
+                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
+                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
+            };
+            renderer.RecordDrawCall( info );
+        } );
     return 1;
 }
 

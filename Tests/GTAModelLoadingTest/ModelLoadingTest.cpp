@@ -44,63 +44,51 @@ void ModelLoadingTest::CustomShutdown()
 
 void ModelLoadingTest::CustomRender()
 {
+    using namespace rw::engine;
     RwRGBA clearColor = { 128, 128, 255, 255 };
 
-    rw::engine::RwCameraClear( m_pMainCamera, &clearColor,
-                               rwCAMERACLEARIMAGE | rwCAMERACLEARZ );
+    RwCameraClear( m_pMainCamera, &clearColor,
+                   rwCAMERACLEARIMAGE | rwCAMERACLEARZ );
     for ( auto clump : m_vClumpList )
     {
-        RwLLLink *cur, *end, *next;
-        cur = rw::engine::rwLinkList::GetFirstLLLink( &clump->atomicList );
-        end = rw::engine::rwLinkList::GetTerminator( &clump->atomicList );
-
-        while ( cur != end )
+        for ( auto *atomic :
+              rwLinkList::Iterator<RpAtomic>( clump->atomicList ) )
         {
-            auto *atomic = rw::engine::rwLLLink::GetData<RpAtomic>(
-                cur, offsetof( RpAtomic, inClumpLink ) );
-            next = rw::engine::rwLLLink::GetNext( cur );
-            if ( atomic )
-            {
-                auto ltm = rw::engine::RwFrameGetLTM( static_cast<RwFrame *>(
-                    rw::engine::rwObject::GetParent( atomic ) ) );
-                rw::engine::DrawAtomic(
-                    atomic, &geometry_interface_36,
-                    [&ltm, atomic]( rw::engine::ResEnty *res_entry ) {
-                        rw::engine::DrawCallInfo info{};
-                        info.mDrawCallId = reinterpret_cast<uint64_t>( atomic );
-                        info.mMeshId     = res_entry->meshData;
-                        info.mWorldTransform = DirectX::XMFLOAT4X3{
-                            ltm->at.x, ltm->right.x, ltm->up.x, ltm->pos.x,
-                            ltm->at.y, ltm->right.y, ltm->up.y, ltm->pos.y,
-                            ltm->at.z, ltm->right.z, ltm->up.z, ltm->pos.z,
-                        };
-                        std::vector<rh::rw::engine::MaterialData> materials{};
-                        auto meshHeader = geometry_interface_36.GetMeshHeader();
-                        const auto *mesh_start =
-                            reinterpret_cast<const RpMesh *>( meshHeader + 1 );
-                        for ( const RpMesh *mesh = mesh_start;
-                              mesh != mesh_start + meshHeader->numMeshes;
-                              mesh++ )
+            if ( !atomic )
+                continue;
+            auto ltm = RwFrameGetLTM(
+                static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
+            DrawAtomic(
+                atomic, &geometry_interface_36,
+                [&ltm, atomic]( ResEnty *res_entry ) {
+                    auto &       renderer = EngineClient::gRendererGlobals;
+                    DrawCallInfo info{};
+                    info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
+                    info.mMeshId         = res_entry->meshData;
+                    info.mWorldTransform = DirectX::XMFLOAT4X3{
+                        ltm->at.x, ltm->right.x, ltm->up.x, ltm->pos.x,
+                        ltm->at.y, ltm->right.y, ltm->up.y, ltm->pos.y,
+                        ltm->at.z, ltm->right.z, ltm->up.z, ltm->pos.z,
+                    };
+                    auto mesh_list = geometry_interface_36.GetMeshList();
+                    auto materials =
+                        renderer.AllocateDrawCallMaterials( mesh_list.size() );
+                    for ( auto i = 0; i < mesh_list.size(); i++ )
+                    {
+                        auto m = mesh_list[i].material;
+
+                        int32_t tex_id = 0xBADF00D;
+                        if ( m->texture && m->texture->raster )
                         {
-                            auto m = mesh->material;
-
-                            int32_t tex_id = 0xBADF00D;
-                            if ( m->texture && m->texture->raster )
-                            {
-                                auto raster =
-                                    rh::rw::engine::GetBackendRasterExt(
-                                        m->texture->raster );
-                                tex_id = raster->mImageId;
-                            }
-                            materials.push_back( rh::rw::engine::MaterialData{
-                                tex_id, m->color, 0xBADF00D, 1.0f } );
+                            auto raster =
+                                GetBackendRasterExt( m->texture->raster );
+                            tex_id = raster->mImageId;
                         }
-                        rw::engine::EngineClient::gRendererGlobals
-                            .RecordDrawCall( info, materials );
-                    } );
-            }
-
-            cur = next;
+                        materials[i] = ( MaterialData{ tex_id, m->color,
+                                                       0xBADF00D, 1.0f } );
+                    }
+                    renderer.RecordDrawCall( info );
+                } );
         }
     }
 }

@@ -6,6 +6,7 @@
 #include <Engine/ResourcePool.h>
 #include <common.h>
 #include <scene_graph.h>
+#include <span>
 #include <vector>
 
 namespace rh
@@ -162,10 +163,10 @@ class BackendRendererClient
   public:
     BackendRendererClient();
 
-    uint64_t Serialize( MemoryWriter &memory_writer );
-    void     Flush();
-    void     RecordDrawCall( const DrawCallInfo &             info,
-                             const std::vector<MaterialData> &materials = {} );
+    uint64_t                Serialize( MemoryWriter &memory_writer );
+    void                    Flush();
+    std::span<MaterialData> AllocateDrawCallMaterials( uint64_t count );
+    void                    RecordDrawCall( const DrawCallInfo &info );
 
   private:
     std::vector<DrawCallInfo> MeshData;
