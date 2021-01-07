@@ -6,6 +6,7 @@
 #include "game_patches/base_model_pipeline.h"
 #include "game_patches/car_path_bug_fix.h"
 #include "game_patches/material_system_patches.h"
+#include "game_patches/skin_model_pipeline.h"
 #include "gta3_geometry_proxy.h"
 #include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
@@ -220,7 +221,8 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
 
         RwGameHooks::Patch( gta3_ptr_table );
         PatchMaterialSystem();
-        BaseModelPipelines::Patch();
+        BaseModelPipeline::Patch();
+        SkinModelPipeline::Patch();
 
         /// TODO: Move to another cpp/hpp file
         // RedirectJump( 0x581830,

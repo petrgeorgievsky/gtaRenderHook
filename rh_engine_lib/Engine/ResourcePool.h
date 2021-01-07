@@ -162,7 +162,7 @@ template <typename T> class ResourcePool
     T *      GetStorage() { return mResourcePoolData.data(); }
     uint64_t GetSize() { return mResourcePoolData.size(); }
 
-    void AddOnRequestCallback( std::function<void( T &, uint64_t id )> &&cb )
+    void AddOnRequestCallback( std::function<void( T &, uint64_t )> &&cb )
     {
         mOnRequestCallback = [old_cb = mOnRequestCallback,
                               new_cb = std::move( cb )]( T &val, uint64_t id ) {
@@ -172,7 +172,7 @@ template <typename T> class ResourcePool
         };
     }
 
-    void AddOnDestructCallback( std::function<void( T &, uint64_t id )> &&cb )
+    void AddOnDestructCallback( std::function<void( T &, uint64_t )> &&cb )
     {
         mDestructor = [old_cb = mDestructor,
                        new_cb = std::move( cb )]( T &val, uint64_t id ) {

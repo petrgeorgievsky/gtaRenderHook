@@ -74,19 +74,8 @@ void ModelLoadingTest::CustomRender()
                     auto materials =
                         renderer.AllocateDrawCallMaterials( mesh_list.size() );
                     for ( auto i = 0; i < mesh_list.size(); i++ )
-                    {
-                        auto m = mesh_list[i].material;
-
-                        int32_t tex_id = 0xBADF00D;
-                        if ( m->texture && m->texture->raster )
-                        {
-                            auto raster =
-                                GetBackendRasterExt( m->texture->raster );
-                            tex_id = raster->mImageId;
-                        }
-                        materials[i] = ( MaterialData{ tex_id, m->color,
-                                                       0xBADF00D, 1.0f } );
-                    }
+                        materials[i] =
+                            ConvertMaterialData( mesh_list[i].material );
                     renderer.RecordDrawCall( info );
                 } );
         }

@@ -51,23 +51,15 @@ RwVideoModeVice *MyRwEngineGetVideoModeInfo( RwVideoModeVice *modeinfo,
     return modeinfo;
 }
 
-struct RxPipelineNodeParam
-{
-    void *                 dataParam;
-    [[maybe_unused]] void *heap;
-};
-
 static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
                                        const RxPipelineNodeParam *params )
 {
     static RpGeometryRw36 geometry_interface_35{};
     RpAtomic *            atomic;
 
-    atomic                   = static_cast<RpAtomic *>( params->dataParam );
-    RpGeometry *  geom       = atomic->geometry;
-    RpMeshHeader *meshHeader = geom->mesh;
+    atomic           = static_cast<RpAtomic *>( params->dataParam );
+    RpGeometry *geom = atomic->geometry;
     geometry_interface_35.Init( geom );
-    // rt_scene->PushModel( meshHeader->serialNum, &geometry_interface_35 );
     if ( RwRHInstanceAtomic( atomic, &geometry_interface_35 ) !=
          RenderStatus::Instanced )
         return 0;
@@ -89,30 +81,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
             auto materials =
                 renderer.AllocateDrawCallMaterials( mesh_list.size() );
             for ( auto i = 0; i < mesh_list.size(); i++ )
-            {
-                auto m   = mesh_list[i].material;
-                auto m_b = GetBackendMaterialExt( m );
-
-                auto    spec_tex    = m_b->mSpecTex;
-                int32_t tex_id      = 0xBADF00D;
-                int32_t spec_tex_id = 0xBADF00D;
-                if ( m->texture && m->texture->raster )
-                {
-                    auto raster = GetBackendRasterExt( m->texture->raster );
-                    assert( raster->mImageId <=
-                            ( std::numeric_limits<int32_t>::max )() );
-                    tex_id = raster->mImageId;
-                }
-                if ( spec_tex && spec_tex->raster )
-                {
-                    auto raster = GetBackendRasterExt( spec_tex->raster );
-                    assert( raster->mImageId <=
-                            ( std::numeric_limits<int32_t>::max )() );
-                    spec_tex_id = raster->mImageId;
-                }
-                materials[i] = ( MaterialData{ tex_id, m->color, spec_tex_id,
-                                               m->surfaceProps.specular } );
-            }
+                materials[i] = ConvertMaterialData( mesh_list[i].material );
             renderer.RecordDrawCall( info );
         } );
     return 1;
@@ -151,47 +120,11 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
             auto materials =
                 renderer.AllocateDrawCallMaterials( mesh_list.size() );
             for ( auto i = 0; i < mesh_list.size(); i++ )
-            {
-                auto m = mesh_list[i].material;
-
-                int32_t tex_id      = 0xBADF00D;
-                int32_t spec_tex_id = 0xBADF00D;
-                if ( m->texture && m->texture->raster )
-                {
-                    auto raster = GetBackendRasterExt( m->texture->raster );
-                    tex_id      = raster->mImageId;
-                }
-                materials[i] =
-                    ( MaterialData{ tex_id, m->color, spec_tex_id, 0.0f } );
-            }
+                materials[i] = ConvertMaterialData( mesh_list[i].material );
             static AnimHierarcyRw36 g_anim{};
             PrepareBoneMatrices( info.mBoneTransform, atomic, g_anim );
             renderer.RecordDrawCall( info );
         } );
-    /*DirectX::XMMATRIX objTransformMatrix = {
-        ltm->right.x, ltm->right.y, ltm->right.z, 0,
-        ltm->up.x,    ltm->up.y,    ltm->up.z,    0,
-        ltm->at.x,    ltm->at.y,    ltm->at.z,    0,
-        ltm->pos.x,   ltm->pos.y,   ltm->pos.z,   1 };
-    struct PerModelCB
-    {
-        DirectX::XMMATRIX worldMatrix;
-        DirectX::XMMATRIX worldITMatrix;
-    } perModelCB;
-    perModelCB.worldMatrix = objTransformMatrix;
-    perModelCB.worldITMatrix =
-        DirectX::XMMatrixInverse( nullptr, objTransformMatrix );*/
-    // g_pRwRenderEngine->RenderStateSet( rwRENDERSTATEVERTEXALPHAENABLE, 1 );
-
-    /*context->UpdateBuffer( gBaseConstantBuffer, g_cameraContext, sizeof(
-*g_cameraContext ) ); context->UpdateBuffer( gPerModelConstantBuffer,
-&perModelCB, sizeof( perModelCB ) ); context->BindConstantBuffers(
-RHEngine::RHShaderStage::Vertex | RHEngine::RHShaderStage::Pixel |
-RHEngine::RHShaderStage::Compute,
-                  {{0, gBaseConstantBuffer}, {1,
-gPerModelConstantBuffer}} );
-
-DrawAtomic( atomic, &geometry_interface_35, context, g_gbPipeline );*/
 
     return 1;
 }

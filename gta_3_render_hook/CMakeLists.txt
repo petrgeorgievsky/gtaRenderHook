@@ -31,7 +31,8 @@ set(SOURCES
         game_patches/base_model_pipeline.cpp
         game_patches/material_system_patches.cpp
         config/GameRendererConfigBlock.cpp
-        call_redirection_util.cpp)
+        call_redirection_util.cpp
+        game_patches/skin_model_pipeline.cpp)
 
 #set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
 

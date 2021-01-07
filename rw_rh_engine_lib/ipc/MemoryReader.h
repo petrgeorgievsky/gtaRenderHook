@@ -2,8 +2,6 @@
 // Created by peter on 25.06.2020.
 //
 #pragma once
-#include <Engine/Common/ArrayProxy.h>
-#include <Windows.h>
 #include <cstdint>
 namespace rh::rw::engine
 {

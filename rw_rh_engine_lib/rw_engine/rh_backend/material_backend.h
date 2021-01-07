@@ -69,7 +69,8 @@ class MaterialGlobals
     static rh::engine::ResourcePool<MaterialData> *SceneMaterialPool;
 };
 
-uint64_t CreateMaterialData( RpMaterial *material );
+uint64_t     CreateMaterialData( RpMaterial *material );
+MaterialData ConvertMaterialData( RpMaterial *material );
 
 } // namespace rw::engine
 } // namespace rh

@@ -23,24 +23,6 @@ using namespace rh::rw::engine;
 bool true_ret_hook() { return true; }
 bool false_ret_hook() { return false; }
 
-template <typename func_type, uint32_t address> class InMemoryFunc
-{
-  public:
-    auto operator()() noexcept
-    {
-        return reinterpret_cast<func_type>( address );
-    }
-};
-
-// auto RwFrameGetLTM =
-//    InMemoryFunc<RwMatrix *(__cdecl *)(RwFrame *), 0x7F0990>{}();
-
-struct RxPipelineNodeParam
-{
-    void *                 dataParam;
-    [[maybe_unused]] void *heap;
-};
-
 static RpGeometryRw36 geometry_interface_35{};
 
 static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
@@ -67,18 +49,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
                 renderer.AllocateDrawCallMaterials( mesh_list.size() );
 
             for ( auto i = 0; i < mesh_list.size(); i++ )
-            {
-                auto m = mesh_list[i].material;
-
-                int32_t tex_id = 0xBADF00D;
-                if ( m->texture && m->texture->raster )
-                {
-                    auto raster = GetBackendRasterExt( m->texture->raster );
-                    tex_id      = raster->mImageId;
-                }
-                materials[i] = ( MaterialData{ tex_id, m->color, 0xBADF00D,
-                                               m->surfaceProps.specular } );
-            }
+                materials[i] = ConvertMaterialData( mesh_list[i].material );
             DrawCallInfo info{};
             info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
             info.mMeshId         = res_entry->meshData;
@@ -118,18 +89,8 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
                 renderer.AllocateDrawCallMaterials( mesh_list.size() );
 
             for ( auto i = 0; i < mesh_list.size(); i++ )
-            {
-                auto m = mesh_list[i].material;
+                materials[i] = ConvertMaterialData( mesh_list[i].material );
 
-                int32_t tex_id = 0xBADF00D;
-                if ( m->texture && m->texture->raster )
-                {
-                    auto raster = GetBackendRasterExt( m->texture->raster );
-                    tex_id      = raster->mImageId;
-                }
-                materials[i] = ( MaterialData{ tex_id, m->color, 0xBADF00D,
-                                               m->surfaceProps.specular } );
-            }
             SkinDrawCallInfo info{};
             info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
             info.mMeshId         = res_entry->meshData;

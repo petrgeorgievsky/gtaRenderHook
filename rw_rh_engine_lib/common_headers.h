@@ -1158,3 +1158,9 @@ struct RpHAnimHierarchy
 
     void *currentAnim; /**< Internal use RtAnimInterpolator */
 };
+
+struct RxPipelineNodeParam
+{
+    void *                 dataParam;
+    [[maybe_unused]] void *heap;
+};

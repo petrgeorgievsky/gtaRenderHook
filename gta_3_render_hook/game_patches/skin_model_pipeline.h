@@ -1,9 +1,9 @@
 //
-// Created by peter on 26.10.2020.
+// Created by peter on 07.01.2021.
 //
 #pragma once
 
-class BaseModelPipeline
+class SkinModelPipeline
 {
   public:
     static void Patch();

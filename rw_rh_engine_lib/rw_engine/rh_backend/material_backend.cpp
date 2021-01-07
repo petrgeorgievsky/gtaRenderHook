@@ -118,4 +118,28 @@ int32_t BackendMaterialStreamAlwaysCallback( void *object, int32_t, int32_t )
     return 1;
 }
 
+MaterialData ConvertMaterialData( RpMaterial *material )
+{
+    int32_t tex_id      = 0xBADF00D;
+    int32_t spec_tex_id = 0xBADF00D;
+    if ( material == nullptr )
+        return MaterialData{ tex_id, RwRGBA{ 255, 0, 0, 255 }, spec_tex_id, 0 };
+
+    auto m_b = GetBackendMaterialExt( material );
+
+    if ( material->texture && material->texture->raster )
+    {
+        auto raster = GetBackendRasterExt( material->texture->raster );
+        tex_id      = raster->mImageId;
+    }
+    auto spec_tex = m_b->mSpecTex;
+    if ( spec_tex && spec_tex->raster )
+    {
+        auto raster = GetBackendRasterExt( spec_tex->raster );
+        spec_tex_id = raster->mImageId;
+    }
+    return MaterialData{ tex_id, material->color, spec_tex_id,
+                         material->surfaceProps.specular };
+}
+
 } // namespace rh::rw::engine
