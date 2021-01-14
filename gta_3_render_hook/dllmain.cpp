@@ -48,11 +48,12 @@ bool true_ret_hook() { return true; }
 class Clouds
 {
   public:
-    static void RenderBackground( int16_t topred, int16_t topgreen,
-                                  int16_t topblue, int16_t botred,
-                                  int16_t botgreen, int16_t botblue,
-                                  int16_t alpha )
+    static int32_t RenderBackground( int16_t topred, int16_t topgreen,
+                                     int16_t topblue, int16_t botred,
+                                     int16_t botgreen, int16_t botblue,
+                                     int16_t alpha )
     {
+        return 1;
     }
 };
 

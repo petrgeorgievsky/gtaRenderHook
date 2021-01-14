@@ -109,7 +109,7 @@ RwResEntry *RHInstanceSkinAtomicGeometry( RpGeometryInterface *geom_io,
         primType = rh::engine::PrimitiveType::TriangleList;
 
     const auto *mesh_start = reinterpret_cast<const RpMesh *>( meshHeader + 1 );
-    auto *      indexBuffer = new int16_t[meshHeader->totalIndicesInMesh * 3];
+    auto *      indexBuffer = new uint16_t[meshHeader->totalIndicesInMesh * 3];
     uint32_t    startIndex  = 0;
     uint32_t    indexCount  = 0;
 
