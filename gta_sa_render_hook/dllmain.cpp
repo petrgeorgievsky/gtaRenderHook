@@ -145,9 +145,12 @@ void prepare_timecyc()
     frame_info.mSkyBottomColor[2] = float( cur_cs.m_nSkyBottomBlue ) / 255.0f;
     frame_info.mSkyBottomColor[3] = 1.0f;
 
-    frame_info.mAmbientColor[0] = cur_cs.m_fAmbientRed;
-    frame_info.mAmbientColor[1] = cur_cs.m_fAmbientGreen;
-    frame_info.mAmbientColor[2] = cur_cs.m_fAmbientBlue;
+    frame_info.mAmbientColor[0] =
+        ( frame_info.mSkyTopColor[0] + frame_info.mSkyBottomColor[0] ) / 2.0f;
+    frame_info.mAmbientColor[1] =
+        ( frame_info.mSkyTopColor[1] + frame_info.mSkyBottomColor[1] ) / 2.0f;
+    frame_info.mAmbientColor[2] =
+        ( frame_info.mSkyTopColor[2] + frame_info.mSkyBottomColor[2] ) / 2.0f;
     frame_info.mAmbientColor[3] = 1.0f;
     frame_info.mSunDir[0]       = vec_to_sun_arr[current_tc_value].x;
     frame_info.mSunDir[1]       = vec_to_sun_arr[current_tc_value].y;
@@ -196,23 +199,6 @@ void prepare_timecyc()
 }
 void *rwD3D9RasterDtor( void *object ) { return object; }
 
-int32_t RwIm3DRenderLine( int32_t vert1, int32_t vert2 ) { return 1; }
-int32_t RwIm3DRenderTriangle( int32_t vert1, int32_t vert2, int32_t vert3 )
-{
-    return 1;
-}
-int32_t RwIm3DRenderIndexedPrimitive( RwPrimitiveType primType,
-                                      uint16_t *indices, int32_t numIndices )
-{
-    return 1;
-}
-int32_t RwIm3DRenderPrimitive( RwPrimitiveType primType ) { return 1; }
-void *  RwIm3DTransform( void *pVerts, uint32_t numVerts, RwMatrix *ltm,
-                         uint32_t flags )
-{
-    return nullptr;
-}
-
 int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
                     int dz, float rad, float r, float g, float b, char fogtype,
                     char extrashadows )
@@ -233,6 +219,8 @@ int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
     frame_info.mLightCount++;
     return 1;
 }
+
+void RenderSkyPolys() {}
 
 BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
                        LPVOID /*lpReserved*/ )
@@ -278,6 +266,12 @@ BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
             gtasa_ptr_table.mGetSkinToBoneMatrices        = 0x7C7810;
             gtasa_ptr_table.mGetVertexBoneWeights         = 0x7C77F0;
             gtasa_ptr_table.mGetVertexBoneIndices         = 0x7C7800;
+
+            gtasa_ptr_table.mIm3DTransform              = 0x7EF450;
+            gtasa_ptr_table.mIm3DRenderIndexedPrimitive = 0x7EF550;
+            gtasa_ptr_table.mIm3DRenderPrimitive        = 0x7EF6B0;
+            gtasa_ptr_table.mIm3DRenderLine             = 0x7EF900;
+            gtasa_ptr_table.mIm3DEnd                    = 0x7EF520;
 
             //  pipeline ptr
             RwGameHooks::Patch( gtasa_ptr_table );
@@ -327,18 +321,16 @@ BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
             // SetPointer( 0x6DF754, reinterpret_cast<void *>( rxD3D8SubmitNode
             // ) );
 
-            RedirectJump( 0x7EF450,
-                          reinterpret_cast<void *>( RwIm3DTransform ) );
-            RedirectJump( 0x7EF550, reinterpret_cast<void *>(
-                                        RwIm3DRenderIndexedPrimitive ) );
-            RedirectJump( 0x7EF900,
-                          reinterpret_cast<void *>( RwIm3DRenderLine ) );
-
             // postprocess
             RedirectCall( 0x53E227, reinterpret_cast<void *>( true_ret_hook ) );
             // Lights
             RedirectJump( 0x7000E0, reinterpret_cast<void *>( AddPtLight ) );
-
+            // Clouds/Sky
+            RedirectJump( 0x714650,
+                          reinterpret_cast<void *>( RenderSkyPolys ) );
+            // Enable Z-Test for clouds
+            uint8_t ztest = 1;
+            Patch( 0x71397E, &ztest, sizeof( ztest ) );
             /* SetPointer( 0x8E297C,
                          reinterpret_cast<void *>( rxD3D8SubmitNode ) );*/
 

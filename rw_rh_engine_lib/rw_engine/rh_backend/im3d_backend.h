@@ -49,6 +49,7 @@ class Im3DClient
                     uint32_t flags );
     void RenderIndexedPrimitive( RwPrimitiveType primType, uint16_t *indices,
                                  int32_t numIndices );
+    void RenderPrimitive( RwPrimitiveType primType );
     uint64_t Serialize( MemoryWriter &writer );
     void     Flush();
 

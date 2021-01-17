@@ -245,7 +245,6 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
                       reinterpret_cast<void *>( Clouds::RenderBackground ) );
 
         Renderer::Patch();
-        CPathFind::Patch();
         Shadows::Patch();
 
         InitClient();

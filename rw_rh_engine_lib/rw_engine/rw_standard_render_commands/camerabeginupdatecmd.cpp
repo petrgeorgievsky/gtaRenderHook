@@ -19,6 +19,14 @@ RwCameraBeginUpdateCmd::RwCameraBeginUpdateCmd( RwCamera *camera )
 {
     rh::debug::DebugLogger::Log( "CameraBeginUpdateCmd created...",
                                  rh::debug::LogLevel::ConstrDestrInfo );
+
+    /// Some GTA versions break due to off by one errors with unlocked
+    /// framerate, setting FPU to single precision fixes that, it was done in
+    /// original RW on engine start and every time beginUpdate command was
+    /// executed
+    unsigned int current_word = 0;
+    _controlfp_s( &current_word, _PC_24, _MCW_PC );
+
     // hot steamy bug fix
     if ( GetCurrentSceneGraph()->mFrameInfo.camera_updated )
         return;

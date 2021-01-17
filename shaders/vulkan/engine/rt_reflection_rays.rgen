@@ -41,7 +41,7 @@ float MicrofacetFresnel(in vec3 LightDir, in vec3 Normal, in float fRoughness) {
     // Cosine between light and normal
     float CosPhi = max(dot(LightDir, Normal), 0);
 
-    return f0 + (1 - f0) * (1 - CosPhi);
+    return f0 + (1 - f0) * pow5(1 - CosPhi);
 }
 
 void main()

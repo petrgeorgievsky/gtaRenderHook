@@ -16,8 +16,8 @@ SceneGraph *GetCurrentSceneGraph()
 
 void SerializeSceneGraph( MemoryWriter &memory_writer )
 {
-    GetCurrentSceneGraph()->mFrameId =
-        ( GetCurrentSceneGraph()->mFrameId + 1 ) % 1000;
+    GetCurrentSceneGraph()->mFrameInfo.mFrameId =
+        ( GetCurrentSceneGraph()->mFrameInfo.mFrameId + 1 ) % 1000;
 
     memory_writer.Write( &GetCurrentSceneGraph()->mFrameInfo );
 

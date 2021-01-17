@@ -29,6 +29,7 @@ struct FrameInfo
     DirectX::XMFLOAT4X4 mProjInv;
     DirectX::XMFLOAT4X4 mProjPrev;
     DirectX::XMFLOAT4X4 mViewPrev;
+    uint32_t            mFrameId = 0;
     float               mSkyTopColor[4];
     float               mSkyBottomColor[4];
     float               mSunDir[4];
@@ -40,7 +41,6 @@ struct FrameInfo
 struct SceneGraph
 {
     FrameInfo mFrameInfo;
-    uint16_t  mFrameId;
 };
 
 SceneGraph *GetCurrentSceneGraph();

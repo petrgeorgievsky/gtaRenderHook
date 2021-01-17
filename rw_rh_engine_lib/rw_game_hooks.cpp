@@ -137,6 +137,8 @@ void RwGameHooks::Patch( const RwPointerTable &pointerTable )
     RedirectJumpIfExists(
         pointerTable.mIm3DRenderIndexedPrimitive,
         reinterpret_cast<void *>( Im3DRenderIndexedPrimitive ) );
+    RedirectJumpIfExists( pointerTable.mIm3DRenderPrimitive,
+                          reinterpret_cast<void *>( Im3DRenderPrimitive ) );
     RedirectJumpIfExists( pointerTable.mIm3DRenderLine,
                           reinterpret_cast<void *>( Im3DRenderLine ) );
     // Im3DEnd

@@ -33,6 +33,7 @@ struct PerFrameResources
 
 struct BackendCameraExt
 {
+    uint32_t ext_data;
     /* PerFrameResources         mFrameResourceCache[gFrameResourceCacheSize];
      rh::engine::IFrameBuffer *mFramebufferCache[gFramebufferCacheSize];
      rh::engine::ISwapchain *  mSwapchain;

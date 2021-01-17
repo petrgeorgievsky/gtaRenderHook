@@ -800,6 +800,8 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMFINALIZESTART:
     {
+        if ( DeviceGlobals::fpOldSystem )
+            return DeviceGlobals::fpOldSystem( nOption, pOut, pInOut, nIn );
         break;
     }
     case rwDEVICESYSTEMINITIATESTOP:

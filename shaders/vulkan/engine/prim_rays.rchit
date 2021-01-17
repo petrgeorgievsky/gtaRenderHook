@@ -78,7 +78,7 @@ void main()
     world_pos_current.xy = world_pos_current.xy/world_pos_current.w * 0.5 + 0.5;
     world_pos_prev.xy = world_pos_prev.xy/world_pos_prev.w * 0.5 + 0.5;
     pay_load.motionVectors = vec4(world_pos_current.xy - world_pos_prev.xy, 0, 0);
-    pay_load.materialParams= vec4(material.specular, 0.5f, 0.0f, 0.0f);
+    pay_load.materialParams= vec4(1.0f, material.specular, 0.0f, 0.0f);
     if (material.spec_id > 0){
         vec4 spec_color = texture(sampler2D(textures[material.spec_id], baseSampler), tc);
         pay_load.materialParams = spec_color;

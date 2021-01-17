@@ -142,6 +142,27 @@ void Im3DClient::SetDepthWriteEnable( uint8_t state )
 {
     mCurrentState.mZWriteEnable = state;
 }
+void Im3DClient::RenderPrimitive( RwPrimitiveType primType )
+{
+
+    mDrawCalls[mDrawCallCount].mIndexBufferOffset  = mIndexCount;
+    mDrawCalls[mDrawCallCount].mVertexBufferOffset = mVertexCount;
+    assert( mStashedVertices );
+
+    CopyMemory( ( mVertexBuffer.data() + mVertexCount ), mStashedVertices,
+                mStashedVerticesCount * sizeof( RwIm3DVertex ) );
+    mVertexCount += mStashedVerticesCount;
+
+    mDrawCalls[mDrawCallCount].mIndexCount  = 0;
+    mDrawCalls[mDrawCallCount].mVertexCount = mStashedVerticesCount;
+
+    mDrawCalls[mDrawCallCount].mRasterId        = mCurrentRasterId;
+    mDrawCalls[mDrawCallCount].mWorldTransform  = mStashedWorldTransform;
+    mDrawCalls[mDrawCallCount].mState           = mCurrentState;
+    mDrawCalls[mDrawCallCount].mState.mPrimType = primType;
+
+    mDrawCallCount++;
+}
 
 int32_t Im3DRenderIndexedPrimitive( RwPrimitiveType primType, uint16_t *indices,
                                     int32_t numIndices )
@@ -158,7 +179,11 @@ void *Im3DTransform( void *pVerts, uint32_t numVerts, RwMatrix *ltm,
     return pVerts;
 }
 int32_t Im3DEnd() { return 1; }
-int32_t Im3DRenderPrimitive( RwPrimitiveType primType ) { return 1; }
+int32_t Im3DRenderPrimitive( RwPrimitiveType primType )
+{
+    EngineClient::gIm3DGlobals.RenderPrimitive( primType );
+    return 1;
+}
 int32_t Im3DRenderLine( int32_t vert1, int32_t vert2 ) { return 1; }
 int32_t Im3DRenderTriangle( int32_t vert1, int32_t vert2, int32_t vert3 )
 {

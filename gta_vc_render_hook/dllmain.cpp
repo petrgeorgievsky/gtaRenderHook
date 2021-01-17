@@ -249,29 +249,6 @@ int32_t water_render()
     return 1;
 }
 
-static int32_t rxD3D8SubmitNode( void *, const void * ) { return 1; }
-int32_t        RwIm3DRenderLine( int32_t vert1, int32_t vert2 ) { return 1; }
-int32_t RwIm3DRenderTriangle( int32_t vert1, int32_t vert2, int32_t vert3 )
-{
-    return 1;
-}
-int32_t RwIm3DRenderIndexedPrimitive( RwPrimitiveType primType,
-                                      uint16_t *indices, int32_t numIndices )
-{
-    rh::rw::engine::EngineClient::gIm3DGlobals.RenderIndexedPrimitive(
-        primType, indices, numIndices );
-    return 1;
-}
-int32_t RwIm3DRenderPrimitive( RwPrimitiveType primType ) { return 1; }
-void *  RwIm3DTransform( void *pVerts, uint32_t numVerts, RwMatrix *ltm,
-                         uint32_t flags )
-{
-    rh::rw::engine::EngineClient::gIm3DGlobals.Transform(
-        static_cast<RwIm3DVertex *>( pVerts ), numVerts, ltm, flags );
-    return pVerts;
-}
-void RwIm3DEnd() {}
-
 RpMaterial *RpMaterialStreamReadImpl( void *stream )
 {
     return ( reinterpret_cast<RpMaterial *(__cdecl *)( void * )>( 0x655920 ) )(
@@ -385,6 +362,9 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         // Hide default sky
         RedirectJump( 0x53F650, reinterpret_cast<void *>( true_hook ) );
         RedirectJump( 0x53F380, reinterpret_cast<void *>( true_hook ) );
+        // Enable Z-Test for clouds
+        uint8_t ztest = 1;
+        Patch( 0x53FCD3, &ztest, sizeof( ztest ) );
 
         /// PBR tests
         RedirectCall( 0x66DD06,
