@@ -30,10 +30,10 @@ RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
 
 struct RwVideoModeVice
 {
-    int32_t         width;
-    int32_t         height;
-    int32_t         depth;
-    RwVideoModeFlag flags;
+    int32_t  width;
+    int32_t  height;
+    int32_t  depth;
+    uint32_t flags;
 };
 
 RwVideoModeVice *MyRwEngineGetVideoModeInfo( RwVideoModeVice *modeinfo,
