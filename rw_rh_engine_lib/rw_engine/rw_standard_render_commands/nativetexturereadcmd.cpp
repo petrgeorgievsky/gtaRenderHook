@@ -336,6 +336,16 @@ bool RwNativeTextureReadCmd::Execute()
                                                 has_alpha );
                 else
                 {
+                    // Fix rgb8 format "alpha" channel
+                    if ( ( nativeRaster.d3d9_.format & rwRASTERFORMAT888 ) ==
+                         rwRASTERFORMAT888 )
+                    {
+                        std::span<RwRGBA> rgba_pixels(
+                            reinterpret_cast<RwRGBA *>( pixels ), size / 4 );
+                        for ( auto &pix : rgba_pixels )
+                            pix.alpha = 0xff;
+                    }
+
                     mipLevelHeader.mSize = size;
                     mipLevelHeader.mStride =
                         bytesPerBlock * ( ( width + 3 ) / blockSize );

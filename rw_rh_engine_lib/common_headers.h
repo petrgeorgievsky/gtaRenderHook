@@ -295,6 +295,17 @@ enum RwRasterFormat : uint32_t
     rwRASTERFORMATMASK = 0xff00             /**<The whole format */
 };
 
+enum RwRasterLockMode : uint32_t
+{
+    rwRASTERLOCKWRITE   = 0x01, /**<Lock for writing */
+    rwRASTERLOCKREAD    = 0x02, /**<Lock for reading */
+    rwRASTERLOCKNOFETCH = 0x04,
+    rwRASTERLOCKRAW     = 0x08, /**<When used in combination with
+                                    rwRASTERLOCKWRITE or rwRASTERLOCKREAD
+                                    allows access to the raw platform specific
+                                    pixel format */
+};
+
 enum RwPluginVendor : uint32_t
 {
     rwVENDORID_CORE           = 0x000000L,

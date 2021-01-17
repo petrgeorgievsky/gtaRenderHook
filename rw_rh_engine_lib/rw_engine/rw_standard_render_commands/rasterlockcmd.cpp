@@ -1,47 +1,79 @@
 #include "rasterlockcmd.h"
 #include <common_headers.h>
-using namespace rh::rw::engine;
+#include <rw_engine/rh_backend/raster_backend.h>
+#include <rw_engine/system_funcs/raster_lock_cmd.h>
 
+namespace rh::rw::engine
+{
 RwRasterLockCmd::RwRasterLockCmd( RwRaster *raster, int32_t accessMode )
-    : m_pRaster( raster ), m_nAccessMode( accessMode )
+    : mRaster( raster ), mAccessMode( accessMode )
 {
 }
 
 bool RwRasterLockCmd::Execute( void *&res_data_ptr )
 {
-    if ( m_pRaster == nullptr )
+    if ( mRaster == nullptr )
         return false;
     /* Prepare lock info */
-    auto mipLevel = static_cast<uint8_t>( ( m_nAccessMode & 0xFF00 ) >> 8 );
+    auto mip_level = static_cast<uint8_t>( ( mAccessMode & 0xFF00 ) >> 8 );
 
     /* Pixels */
-    m_pRaster->cpPixels = nullptr; //(RwUInt8 *)rasExt->lockedRect.pBits;
+    mRaster->cpPixels = nullptr; //(RwUInt8 *)rasExt->lockedRect.pBits;
 
     /* Cache original width, height & stride */
-    m_pRaster->originalWidth  = m_pRaster->width;
-    m_pRaster->originalHeight = m_pRaster->height;
+    mRaster->originalWidth  = mRaster->width;
+    mRaster->originalHeight = mRaster->height;
 
     /* Mip level width, height & stride */
-    m_pRaster->width  = m_pRaster->width >> mipLevel;
-    m_pRaster->height = m_pRaster->height >> mipLevel;
-
-    m_pRaster->cpPixels = static_cast<uint8_t *>( malloc(
-        static_cast<size_t>( m_pRaster->width * m_pRaster->height * 4 ) ) );
+    mRaster->width  = mRaster->width >> mip_level;
+    mRaster->height = mRaster->height >> mip_level;
 
     /* Clamp width and height to 1 */
-    if ( m_pRaster->width == 0 )
-    {
-        m_pRaster->width = 1;
-    }
+    if ( mRaster->width == 0 )
+        mRaster->width = 1;
+    if ( mRaster->height == 0 )
+        mRaster->height = 1;
 
-    if ( m_pRaster->height == 0 )
-    {
-        m_pRaster->height = 1;
-    }
+    auto backend_raster = GetBackendRasterExt( mRaster );
 
-    /* Set the stride */
-    m_pRaster->stride = 4 * m_pRaster->width; // rasExt->lockedRect.Pitch;
-    res_data_ptr      = m_pRaster->cpPixels;
+    if ( ( ( mAccessMode & rwRASTERLOCKREAD ) != 0 ) )
+    {
+        ImageLockCmdImpl lock_cmd{};
+        auto             lock_result = lock_cmd.Invoke(
+            { .mImageId  = backend_raster->mImageId,
+              .mWidth    = static_cast<uint32_t>( mRaster->width ),
+              .mHeight   = static_cast<uint32_t>( mRaster->height ),
+              .mLockMode = ImageLockParams::LockRead,
+              .mMipLevel = mip_level } );
+
+        mRaster->cpPixels = static_cast<uint8_t *>( malloc( static_cast<size_t>(
+            lock_result.mLockDataHeight * lock_result.mLockDataStride ) ) );
+
+        if ( lock_result.mData )
+            std::memcpy( mRaster->cpPixels, lock_result.mData,
+                         lock_result.mLockDataHeight *
+                             lock_result.mLockDataStride );
+        else
+            debug::DebugLogger::Error(
+                "Failed to lock texture, lock operation returned no data!" );
+
+        /* Set the stride */
+        mRaster->stride = lock_result.mLockDataStride;
+    }
+    else
+    {
+        constexpr auto pixel_size = 4;
+        /* Set the stride */
+        mRaster->stride = pixel_size * mRaster->width;
+
+        mRaster->cpPixels = static_cast<uint8_t *>( malloc(
+            static_cast<size_t>( mRaster->height * mRaster->stride ) ) );
+    }
+    if ( ( ( mAccessMode & rwRASTERLOCKWRITE ) != 0 ) )
+        mRaster->privateFlags = 0x4;
+    res_data_ptr = mRaster->cpPixels;
 
     return true;
 }
+
+} // namespace rh::rw::engine

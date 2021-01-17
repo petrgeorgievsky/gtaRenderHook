@@ -38,6 +38,7 @@ enum SharedMemoryTaskType : int64_t
     SKINNED_MESH_LOAD,
     SKINNED_MESH_UNLOAD,
     RENDER,
+    RASTER_LOCK
 };
 
 class SharedMemoryTask

@@ -113,6 +113,20 @@ struct BufferToImageCopySubInfo
     ImageRegion  mTo;
 };
 
+struct ImageToBufferCopySubInfo
+{
+    ImageRegion  mFrom;
+    BufferRegion mTo;
+};
+
+struct ImageToBufferCopyInfo
+{
+    IBuffer *                            mBuffer;
+    IImageBuffer *                       mImage;
+    ImageLayout                          mImageLayout;
+    ArrayProxy<ImageToBufferCopySubInfo> mRegions;
+};
+
 struct BufferToImageCopyInfo
 {
     IBuffer *                            mBuffer;
@@ -191,7 +205,9 @@ class ICommandBuffer
                               uint32_t first_instance )                 = 0;
 
     virtual void
-    CopyBufferToImage( const BufferToImageCopyInfo &copy_info )            = 0;
+    CopyBufferToImage( const BufferToImageCopyInfo &copy_info ) = 0;
+    virtual void
+    CopyImageToBuffer( const ImageToBufferCopyInfo &copy_info )            = 0;
     virtual void CopyImageToImage( const ImageToImageCopyInfo &copy_info ) = 0;
 
     virtual void PipelineBarrier( const PipelineBarrierInfo &info ) = 0;

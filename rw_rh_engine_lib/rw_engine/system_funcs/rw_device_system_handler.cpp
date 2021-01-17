@@ -9,6 +9,7 @@
 #include "../rw_standard_render_commands/nativetexturereadcmd.h"
 #include "../rw_standard_render_commands/rastercreatecmd.h"
 #include "../rw_standard_render_commands/rastershowrastercmd.h"
+#include "raster_lock_cmd.h"
 #include "rw_device_system_globals.h"
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/ISwapchain.h>
@@ -311,6 +312,7 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
     if ( IPCSettings::mMode != IPCRenderMode::CrossProcessClient )
     {
+        ImageLockCmdImpl::RegisterCallHandler();
         DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
             SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {

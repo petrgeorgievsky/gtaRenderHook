@@ -13,7 +13,8 @@ vk::BufferUsageFlags ConvertUsage( uint32_t flags )
     if ( flags & BufferUsage::ConstantBuffer )
         res_flags |= vk::BufferUsageFlagBits::eUniformBuffer;
     if ( flags & BufferUsage::StagingBuffer )
-        res_flags |= vk::BufferUsageFlagBits::eTransferSrc;
+        res_flags |= vk::BufferUsageFlagBits::eTransferSrc |
+                     vk::BufferUsageFlagBits::eTransferDst;
     if ( flags & BufferUsage::RayTracingScratch )
         res_flags |= vk::BufferUsageFlagBits::eRayTracingNV;
 

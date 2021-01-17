@@ -89,6 +89,7 @@ class VulkanCommandBuffer : public ICommandBuffer
     void DispatchRays( const VulkanRayDispatch &dispatch );
     void DispatchCompute( const VulkanComputeDispatch &dispatch );
     void CopyImageToImage( const ImageToImageCopyInfo &copy_info ) override;
+    void CopyImageToBuffer( const ImageToBufferCopyInfo &copy_info ) override;
 
   private:
     vk::CommandBuffer m_vkCmdBuffer;

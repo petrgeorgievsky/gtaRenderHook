@@ -42,6 +42,7 @@ class D3D11CommandBuffer : public ICommandBuffer
                       uint32_t first_index, uint32_t first_vertex,
                       uint32_t first_instance ) override;
     void CopyImageToImage( const ImageToImageCopyInfo &copy_info ) override;
+    void CopyImageToBuffer( const ImageToBufferCopyInfo &copy_info ) override;
 
   private:
     ID3D11DeviceContext *mContext = nullptr;

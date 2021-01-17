@@ -108,7 +108,7 @@ struct RwRwDeviceGlobals
     RwMemoryFunctions *memFuncs;
 };
 
-enum RwVideoModeFlag
+enum RwVideoModeFlag : uint32_t
 {
     rwVIDEOMODEEXCLUSIVE   = 0x0001, /**<Exclusive (i.e. full-screen) */
     rwVIDEOMODEINTERLACE   = 0x0002, /**<Interlaced                   */
@@ -191,14 +191,14 @@ enum RwDeviceStandardFn
 
 struct RwVideoMode
 {
-    int32_t         width;   /**< Width  */
-    int32_t         height;  /**< Height */
-    int32_t         depth;   /**< Depth  */
-    RwVideoModeFlag flags;   /**< Flags  */
-    int32_t         refRate; /**< Approximate refresh rate */
-    int32_t         format;  /**< Raster format
-                              * \see RwRasterFormat
-                              */
+    int32_t  width;   /**< Width  */
+    int32_t  height;  /**< Height */
+    int32_t  depth;   /**< Depth  */
+    uint32_t flags;   /**< Flags  */
+    int32_t  refRate; /**< Approximate refresh rate */
+    int32_t  format;  /**< Raster format
+                       * \see RwRasterFormat
+                       */
 };
 
 using RwStandardFunc = int32_t ( * )( void *pOut, void *pInOut, int32_t nI );

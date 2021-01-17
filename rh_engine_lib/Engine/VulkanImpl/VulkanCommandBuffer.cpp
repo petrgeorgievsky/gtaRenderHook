@@ -358,3 +358,36 @@ void VulkanCommandBuffer::CopyImageToImage(
     m_vkCmdBuffer.copyImage( src_img, src_layout, dest_img, dest_layout,
                              image_copies );
 }
+void VulkanCommandBuffer::CopyImageToBuffer(
+    const ImageToBufferCopyInfo &copy_info )
+{
+
+    vk::Image       img    = *static_cast<VulkanImage *>( copy_info.mImage );
+    vk::Buffer      buffer = *static_cast<VulkanBuffer *>( copy_info.mBuffer );
+    vk::ImageLayout layout = Convert( copy_info.mImageLayout );
+
+    // SmallVectorArena<vk::BufferImageCopy, 8> arena;
+    std::vector<vk::BufferImageCopy> image_copies{};
+
+    std::ranges::for_each(
+        copy_info.mRegions,
+        [&image_copies]( const ImageToBufferCopySubInfo &info ) {
+            vk::BufferImageCopy vk_info{};
+            vk_info.imageExtent = vk::Extent3D{
+                info.mFrom.mExtentW, info.mFrom.mExtentH, info.mFrom.mExtentD };
+            vk_info.imageOffset = vk::Offset3D{
+                info.mFrom.mOffsetX, info.mFrom.mOffsetY, info.mFrom.mOffsetZ };
+            vk_info.imageSubresource = vk::ImageSubresourceLayers{
+                vk::ImageAspectFlagBits::eColor,
+                info.mFrom.mSubresource.mipLevel,
+                info.mFrom.mSubresource.baseArrayLayer,
+                info.mFrom.mSubresource.layerCount };
+            vk_info.bufferRowLength   = info.mTo.mRowLength;
+            vk_info.bufferImageHeight = info.mTo.mRowCount;
+            vk_info.bufferOffset      = info.mTo.mOffset;
+
+            image_copies.push_back( vk_info );
+        } );
+
+    m_vkCmdBuffer.copyImageToBuffer( img, layout, buffer, image_copies );
+}

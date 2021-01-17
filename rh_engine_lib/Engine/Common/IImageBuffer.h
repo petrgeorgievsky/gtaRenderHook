@@ -49,12 +49,13 @@ struct ImageBufferCreateParams
 {
     ImageDimensions   mDimension;
     ImageBufferFormat mFormat;
-    uint32_t mUsage = ImageBufferUsage::TransferDst | ImageBufferUsage::Sampled;
-    uint32_t mHeight;
-    uint32_t mWidth;
-    uint32_t mDepth                         = 1;
-    uint32_t mMipLevels                     = 1;
-    uint32_t mArrayLayers                   = 1;
+    uint32_t          mUsage = ImageBufferUsage::TransferDst |
+                      ImageBufferUsage::TransferSrc | ImageBufferUsage::Sampled;
+    uint32_t                        mHeight;
+    uint32_t                        mWidth;
+    uint32_t                        mDepth       = 1;
+    uint32_t                        mMipLevels   = 1;
+    uint32_t                        mArrayLayers = 1;
     ImageTiling                     mTiling = ImageTiling::PlatformSpecific;
     ImageSampleCount                mSampleCount = ImageSampleCount::Sample1PPX;
     ArrayProxy<ImageBufferInitData> mPreinitData;
