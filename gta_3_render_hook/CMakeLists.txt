@@ -27,12 +27,13 @@ set(SOURCES
         game/Vector.cpp
         game/TxdStore.cpp
         game/Clock.cpp
-        game_patches/car_path_bug_fix.cpp
+        game/Clouds.cpp
         game_patches/base_model_pipeline.cpp
         game_patches/material_system_patches.cpp
+        game_patches/skin_model_pipeline.cpp
+        game_patches/rwd3d8_patches.cpp
         config/GameRendererConfigBlock.cpp
-        call_redirection_util.cpp
-        game_patches/skin_model_pipeline.cpp)
+        call_redirection_util.cpp)
 
 #set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
 

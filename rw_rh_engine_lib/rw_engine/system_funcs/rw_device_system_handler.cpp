@@ -288,8 +288,7 @@ PluginPtrTable                       DeviceGlobals::PluginFuncs{};
 ResourcePtrTable                     DeviceGlobals::ResourceFuncs{};
 SkinPtrTable                         DeviceGlobals::SkinFuncs{};
 
-std::shared_ptr<std::thread> DeviceGlobals::RenderThread         = nullptr;
-std::atomic<bool>            DeviceGlobals::RenderThreadShallDie = false;
+std::atomic<bool> DeviceGlobals::RenderThreadShallDie = false;
 
 SharedMemoryTaskQueue *      DeviceGlobals::SharedMemoryTaskQueue = nullptr;
 std::unique_ptr<std::thread> DeviceGlobals::SharedMemoryTaskQueueThread =

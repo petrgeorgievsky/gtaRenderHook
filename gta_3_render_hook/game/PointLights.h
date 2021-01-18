@@ -10,4 +10,6 @@ class PointLights
     static int32_t AddLight( char a1, float x, float y, float z, float dx,
                              int dy, int dz, float rad, float r, float g,
                              float b, char fogtype, char extrashadows );
+
+    static void Patch();
 };

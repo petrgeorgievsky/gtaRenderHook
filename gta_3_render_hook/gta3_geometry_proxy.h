@@ -59,5 +59,3 @@ class RpGeometryRw35 : public rh::rw::engine::RpGeometryInterface
     int32_t     GetTriangleCount() override;
     RpTriangle *GetTrianglePtr() override;
 };
-
-static RpGeometryRw35 g_rw35GeometryProxy;

@@ -1,25 +1,18 @@
 #include "call_redirection_util.h"
+#include "game/Clouds.h"
 #include "game/PointLights.h"
 #include "game/Renderer.h"
 #include "game/Shadows.h"
-#include "game/TxdStore.h"
 #include "game_patches/base_model_pipeline.h"
-#include "game_patches/car_path_bug_fix.h"
 #include "game_patches/material_system_patches.h"
+#include "game_patches/rwd3d8_patches.h"
 #include "game_patches/skin_model_pipeline.h"
-#include "gta3_geometry_proxy.h"
 #include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
 #include <DebugUtils/Win32UncaughtExceptionHandler.h>
-#include <MemoryInjectionUtils/InjectorHelpers.h>
-#include <filesystem>
 #include <ipc/ipc_utils.h>
 #include <render_loop.h>
-#include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_api_injectors.h>
-#include <rw_engine/rw_frame/rw_frame.h>
-#include <rw_engine/rw_macro_constexpr.h>
-#include <rw_engine/rw_rh_skin_pipeline.h>
 #include <rw_game_hooks.h>
 
 using namespace rh;
@@ -43,126 +36,7 @@ RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
     reinterpret_cast<RwTextureSetName_FN>(
         GetAddressByGame( 0x5A7420, 0x5A76E0, 0x5A8BE0 ) ) };
 
-bool true_ret_hook() { return true; }
-
-class Clouds
-{
-  public:
-    static int32_t RenderBackground( int16_t topred, int16_t topgreen,
-                                     int16_t topblue, int16_t botred,
-                                     int16_t botgreen, int16_t botblue,
-                                     int16_t alpha )
-    {
-        return 1;
-    }
-};
-
-int32_t rwD3D8FindCorrectRasterFormat( RwRasterType type, uint32_t flags )
-{
-    uint32_t format = flags & rwRASTERFORMATMASK;
-    switch ( type )
-    {
-    case rwRASTERTYPENORMAL:
-    case rwRASTERTYPETEXTURE:
-        if ( ( format & rwRASTERFORMATPIXELFORMATMASK ) ==
-             rwRASTERFORMATDEFAULT )
-        {
-            /* Check if we are requesting a default pixel format palette texture
-             */
-            if ( format & rwRASTERFORMATPAL8 )
-            {
-                format |= rwRASTERFORMAT8888;
-            }
-            if ( ( format & rwRASTERFORMATPAL8 ) == 0 )
-            {
-                format |= rwRASTERFORMAT8888;
-            }
-            else
-            {
-                format = rwRASTERFORMAT8888;
-            }
-        }
-        else
-        {
-            /* No support for 4 bits palettes */
-            if ( format & rwRASTERFORMATPAL4 )
-            {
-                /* Change it to a 8 bits palette */
-                format &= static_cast<uint32_t>( ~rwRASTERFORMATPAL4 );
-
-                format |= rwRASTERFORMATPAL8;
-            }
-            if ( format & rwRASTERFORMATPAL8 )
-            {
-                /* Change it to a 8 bits palette */
-                format &= static_cast<uint32_t>( ~rwRASTERFORMATPAL8 );
-
-                // format = rwRASTERFORMATPAL8;
-            }
-        }
-        break;
-    case rwRASTERTYPECAMERATEXTURE:
-        if ( ( format & rwRASTERFORMATPIXELFORMATMASK ) ==
-             rwRASTERFORMATDEFAULT )
-        {
-            format |= rwRASTERFORMAT888;
-        }
-        break;
-
-    case rwRASTERTYPECAMERA:
-        /* Always force default */
-        if ( ( format & rwRASTERFORMATPIXELFORMATMASK ) ==
-             rwRASTERFORMATDEFAULT )
-        {
-            format = rwRASTERFORMAT8888;
-        }
-        break;
-
-    case rwRASTERTYPEZBUFFER:
-        /* Always force default */
-        if ( ( format & rwRASTERFORMATPIXELFORMATMASK ) ==
-             rwRASTERFORMATDEFAULT )
-        {
-            format = rwRASTERFORMAT32;
-        }
-        break;
-    default: break;
-    }
-    return static_cast<int32_t>( format );
-}
-
-char **_psGetVideoModeList()
-{
-    int32_t                    numModes;
-    int32_t                    i;
-    static std::vector<char *> videomode_list;
-    if ( !videomode_list.empty() )
-    {
-        return videomode_list.data();
-    }
-    if ( !SystemHandler( rwDEVICESYSTEMGETNUMMODES, &numModes, nullptr, 0 ) )
-        return videomode_list.data();
-
-    videomode_list.resize( numModes, nullptr );
-
-    for ( i = 0; i < numModes; i++ )
-    {
-        RwVideoMode vm{};
-        if ( !SystemHandler( rwDEVICESYSTEMGETMODEINFO, &vm, nullptr, i ) )
-        {
-            videomode_list[i] = nullptr;
-            continue;
-        }
-        videomode_list[i] = new char[4096];
-        sprintf( videomode_list[i], "%d X %d X %d HZ", vm.width, vm.height,
-                 vm.refRate );
-    }
-
-    return videomode_list.data();
-}
-
-BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
-                     LPVOID lpReserved )
+BOOL WINAPI DllMain( HINSTANCE, DWORD ul_reason_for_call, LPVOID )
 {
     switch ( ul_reason_for_call )
     {
@@ -181,6 +55,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         if ( !cfg_mgr.LoadFromFile( cfg_path ) )
             cfg_mgr.SaveToFile( cfg_path );
 
+        /// Populate RW pointer table with rw-specific addresses
         RwPointerTable gta3_ptr_table{};
 
         gta3_ptr_table.mRwDevicePtr =
@@ -219,31 +94,13 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
             GetAddressByGame( 0x5B6980, 0x5B6C40, 0x5BB3D0 );
         gta3_ptr_table.mIm3DEnd =
             GetAddressByGame( 0x5B67F0, 0x5B6AB0, 0x5BB1C0 );
-
         RwGameHooks::Patch( gta3_ptr_table );
+        RwD3D8Patches::Patch();
         PatchMaterialSystem();
         BaseModelPipeline::Patch();
         SkinModelPipeline::Patch();
-
-        /// TODO: Move to another cpp/hpp file
-        // RedirectJump( 0x581830,
-        //             reinterpret_cast<void *>( _psGetVideoModeList ) );
-
-        RedirectJump( GetAddressByGame( 0x510790, 0x510980, 0x510910 ),
-                      reinterpret_cast<void *>( PointLights::AddLight ) );
-
-        // GTA 3 stores some of the supported formats in binary file, and checks
-        // whether it needs to convert it using rwD3D8 function, for now replace
-        // it with our own impl
-        // TODO: Move to another cpp file
-        RedirectJump(
-            GetAddressByGame( 0x59A350, 0x59A610, 0x59B7E0 ),
-            reinterpret_cast<void *>( rwD3D8FindCorrectRasterFormat ) );
-
-        // Patch default sky
-        RedirectJump( GetAddressByGame( 0x4F7F00, 0x4F7FE0, 0x4F7F70 ),
-                      reinterpret_cast<void *>( Clouds::RenderBackground ) );
-
+        PointLights::Patch();
+        Clouds::Patch();
         Renderer::Patch();
         Shadows::Patch();
 

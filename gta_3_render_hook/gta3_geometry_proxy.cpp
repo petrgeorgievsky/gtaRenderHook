@@ -1,6 +1,6 @@
 #include "gta3_geometry_proxy.h"
 
-RpGeometryRw35::~RpGeometryRw35() {}
+RpGeometryRw35::~RpGeometryRw35() = default;
 
 void *RpGeometryRw35::GetResEntry()
 {

@@ -302,7 +302,6 @@ class DeviceGlobals
     static std::unique_ptr<rh::engine::IWindow>      MainWindow;
     static SharedMemoryTaskQueue *                   SharedMemoryTaskQueue;
     static std::unique_ptr<std::thread> SharedMemoryTaskQueueThread;
-    static std::shared_ptr<std::thread> RenderThread;
     static std::atomic<bool>            RenderThreadShallDie;
 };
 } // namespace rh::rw::engine
