@@ -8,7 +8,7 @@
 #include "VulkanRenderPass.h"
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
-#include <imgui_impl_win32.h>
+//#include <imgui_impl_win32.h>
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg,
                                                WPARAM wParam, LPARAM lParam );
@@ -16,7 +16,7 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg,
 namespace rh::engine
 {
 static HHOOK g_hImGuiHook = nullptr;
-
+/*
 LRESULT CALLBACK ImGuiMsgProc( int code, WPARAM wParam, LPARAM lParam )
 {
     rh::debug::DebugLogger::Error( "ASS" );
@@ -30,7 +30,7 @@ LRESULT CALLBACK ImGuiMsgProc( int code, WPARAM wParam, LPARAM lParam )
         }
     }
     return CallNextHookEx( g_hImGuiHook, code, wParam, lParam );
-}
+}*/
 // Returns the last Win32 error, in string format. Returns an empty string if
 // there is no error.
 std::string GetLastErrorAsString()
@@ -92,7 +92,7 @@ VulkanImGUI::VulkanImGUI( const VulkanImGUIStartParams &params )
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
-    ImGui_ImplWin32_Init( params.mWindow );
+    // ImGui_ImplWin32_Init( params.mWindow );
     mInstance       = params.Instance;
     mPhysicalDevice = params.PhysicalDevice;
     mDevice         = params.Device;
@@ -162,13 +162,13 @@ void VulkanImGUI::DrawGui( ICommandBuffer *cmd_buff )
 void VulkanImGUI::BeginFrame()
 {
     ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplWin32_NewFrame();
+    // ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 }
 VulkanImGUI::~VulkanImGUI()
 {
     ImGui_ImplVulkan_DestroyFontUploadObjects();
     ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplWin32_Shutdown();
+    // ImGui_ImplWin32_Shutdown();
 }
 } // namespace rh::engine
