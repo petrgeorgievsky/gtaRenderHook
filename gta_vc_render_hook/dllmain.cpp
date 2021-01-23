@@ -324,7 +324,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
     case DLL_PROCESS_ATTACH:
     {
         rh::debug::DebugLogger::Init( "gtavc_logs.log",
-                                      rh::debug::LogLevel::Info );
+                                      rh::debug::LogLevel::Error );
         rh::rw::engine::IPCSettings::mMode =
             rh::rw::engine::IPCRenderMode::CrossProcessClient;
         rh::rw::engine::IPCSettings::mProcessName = "gta_vc_render_driver.exe";

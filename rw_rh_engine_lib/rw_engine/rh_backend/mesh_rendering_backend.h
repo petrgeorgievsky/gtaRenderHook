@@ -110,12 +110,6 @@ uint64_t CreateBackendMesh( const BackendMeshInitData &initData );
 void     CreateBackendMeshImpl( void *memory );
 void     DestroyBackendMesh( uint64_t id );
 
-class BackendMeshManager
-{
-  public:
-    static rh::engine::ResourcePool<BackendMeshData> *SceneMeshData;
-};
-
 /// TODO: Reiterate on this
 class RenderingPipeline
 {

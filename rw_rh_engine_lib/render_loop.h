@@ -1,4 +1,4 @@
-
+#pragma once
 #include "common_headers.h"
 #include <cstdint>
 #include <rendering_loop/frame_renderer.h>

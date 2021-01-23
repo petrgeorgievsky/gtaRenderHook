@@ -8,6 +8,9 @@
 
 #include <Psapi.h>
 #include <eh.h>
+
+LPTOP_LEVEL_EXCEPTION_FILTER gOldExceptionHandler = nullptr;
+
 /**
  * Tries to write uncaught exceptions to log files
  */
@@ -29,7 +32,7 @@ LONG WINAPI Win32UncaughtExceptionFilter( _EXCEPTION_POINTERS *ExceptionInfo )
         {
             MODULEINFO mi{};
             GetModuleInformation( GetCurrentProcess(), hm, &mi, sizeof( mi ) );
-            std::array<char, MAX_PATH> fn;
+            static std::array<char, MAX_PATH> fn{};
             GetModuleFileNameExA( GetCurrentProcess(), hm, fn.data(),
                                   fn.size() );
             rh::debug::DebugLogger::ErrorFmt( "ModulePath:%s;ModuleBase:0x%X",
@@ -37,10 +40,13 @@ LONG WINAPI Win32UncaughtExceptionFilter( _EXCEPTION_POINTERS *ExceptionInfo )
         }
     }
 
+    if ( gOldExceptionHandler )
+        return gOldExceptionHandler( ExceptionInfo );
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
 void rh::debug::InitExceptionHandler()
 {
-    SetUnhandledExceptionFilter( Win32UncaughtExceptionFilter );
+    gOldExceptionHandler =
+        SetUnhandledExceptionFilter( Win32UncaughtExceptionFilter );
 }

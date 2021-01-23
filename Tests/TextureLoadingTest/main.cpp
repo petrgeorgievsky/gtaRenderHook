@@ -19,11 +19,10 @@ int APIENTRY wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     rh::engine::String logFilePath = ToRHString( "RHDebug.log" );
 
-    rh::debug::DebugLogger::Init( logFilePath, rh::debug::LogLevel::Info );
+    rh::debug::DebugLogger::Init( logFilePath, rh::debug::LogLevel::Error );
 
     rh::tests::WindowsSampleWrapper sample(
-        initParams, std::unique_ptr<SimpleSample>(
-                        new SimpleSample( renderingAPI, hInstance ) ) );
+        initParams, std::make_unique<SimpleSample>( renderingAPI, hInstance ) );
 
     // Initialize test sample.
     if ( !sample.Init() )

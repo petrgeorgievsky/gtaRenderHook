@@ -11,13 +11,10 @@
 namespace rh::rw::engine
 {
 
-rh::engine::ResourcePool<SkinMeshData> *SkinMeshManager::SceneSkinData =
-    nullptr;
-
-uint64_t rh::rw::engine::CreateSkinMesh( const SkinnedMeshInitData &initData )
+uint64_t CreateSkinMesh( const SkinnedMeshInitData &initData )
 {
     uint64_t result = 0xBADF00D;
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::SKINNED_MESH_LOAD,
         [&initData]( MemoryWriter &&writer ) {
             writer.Write( &initData.mVertexCount );
@@ -34,8 +31,10 @@ uint64_t rh::rw::engine::CreateSkinMesh( const SkinnedMeshInitData &initData )
     return result;
 }
 
-void rh::rw::engine::CreateSkinMeshImpl( void *memory )
+void CreateSkinMeshImpl( void *memory )
 {
+    auto &       resources      = gRenderDriver->GetResources();
+    auto &       skin_mesh_pool = resources.GetSkinMeshPool();
     MemoryReader reader( memory );
 
     SkinMeshData        backendMeshData{};
@@ -58,7 +57,7 @@ void rh::rw::engine::CreateSkinMeshImpl( void *memory )
                      rh::engine::BufferUsage::StorageBuffer;
     ib_info.mInitDataPtr         = initData.mIndexData;
     backendMeshData.mIndexBuffer = new RefCountedBuffer(
-        DeviceGlobals::RenderHookDevice->CreateBuffer( ib_info ) );
+        gRenderDriver->GetDeviceState().CreateBuffer( ib_info ) );
 
     rh::engine::BufferCreateInfo vb_info{};
     vb_info.mSize =
@@ -67,20 +66,19 @@ void rh::rw::engine::CreateSkinMeshImpl( void *memory )
                      rh::engine::BufferUsage::StorageBuffer;
     vb_info.mInitDataPtr          = initData.mVertexData;
     backendMeshData.mVertexBuffer = new RefCountedBuffer(
-        DeviceGlobals::RenderHookDevice->CreateBuffer( vb_info ) );
+        gRenderDriver->GetDeviceState().CreateBuffer( vb_info ) );
 
     backendMeshData.mVertexCount = initData.mVertexCount;
     backendMeshData.mIndexCount  = initData.mIndexCount;
 
-    auto id =
-        SkinMeshManager::SceneSkinData->RequestResource( backendMeshData );
+    auto id = skin_mesh_pool.RequestResource( backendMeshData );
 
     *static_cast<uint64_t *>( memory ) = id;
 }
 
-void rh::rw::engine::DestroySkinMesh( uint64_t id )
+void DestroySkinMesh( uint64_t id )
 {
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::SKINNED_MESH_UNLOAD,
         [&id]( MemoryWriter &&writer ) {
             // serialize
@@ -91,10 +89,11 @@ void rh::rw::engine::DestroySkinMesh( uint64_t id )
         } );
 }
 
-void rh::rw::engine::DestroySkinMeshImpl( void *memory )
+void DestroySkinMeshImpl( void *memory )
 {
-    SkinMeshManager::SceneSkinData->FreeResource(
-        *static_cast<uint64_t *>( memory ) );
+    auto &resources      = gRenderDriver->GetResources();
+    auto &skin_mesh_pool = resources.GetSkinMeshPool();
+    skin_mesh_pool.FreeResource( *static_cast<uint64_t *>( memory ) );
 }
 
 SkinRendererClient::SkinRendererClient()

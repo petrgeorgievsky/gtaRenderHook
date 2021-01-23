@@ -9,9 +9,8 @@ namespace rh::rw::engine
 class DescSetUpdateBatch
 {
   private:
-    rh::engine::IDescriptorSet *mActiveSet = nullptr;
-    rh::engine::IDeviceState &  mDeviceState =
-        *rh::rw::engine::DeviceGlobals::RenderHookDevice;
+    rh::engine::IDescriptorSet *mActiveSet   = nullptr;
+    rh::engine::IDeviceState &  mDeviceState = gRenderDriver->GetDeviceState();
 
   public:
     [[nodiscard]] DescSetUpdateBatch &Begin( rh::engine::IDescriptorSet *set )

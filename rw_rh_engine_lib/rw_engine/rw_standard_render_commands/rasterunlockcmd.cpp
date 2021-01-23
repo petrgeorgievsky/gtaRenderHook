@@ -20,7 +20,7 @@ bool RwRasterUnlockCmd::Execute()
         auto *internalRaster = GetBackendRasterExt( m_pRaster );
 
         int64_t img_id = -1;
-        DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+        gRenderClient->GetTaskQueue().ExecuteTask(
             SharedMemoryTaskType::TEXTURE_LOAD,
             [this]( MemoryWriter &&writer ) {
                 const uint32_t numMipLevels = 1;

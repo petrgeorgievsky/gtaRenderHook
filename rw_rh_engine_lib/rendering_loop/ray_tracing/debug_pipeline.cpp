@@ -31,7 +31,7 @@ DebugPipeline::DebugPipeline( const DebugPipelineInitParams &params )
         static_cast<IDescriptorSetLayout *>( mDescSetLayout ) };
     mDescSet = mDescAllocator->AllocateDescriptorSets( { layouts } )[0];
 
-    auto &device = (VulkanDeviceState &)*DeviceGlobals::RenderHookDevice;
+    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
 
     mPipelineLayout = device.CreatePipelineLayout( { .mSetLayouts = layouts } );
 

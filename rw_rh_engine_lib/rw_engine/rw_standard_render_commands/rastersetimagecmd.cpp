@@ -129,7 +129,7 @@ bool rh::rw::engine::RwRasterSetImageCmd::Execute()
           static_cast<uint32_t>( 16 * ( ( m_pImage->width + 3 ) / 4 ) ) },
         { reinterpret_cast<uint8_t *>( pixel_data.data() ) } };
     int64_t img_id = -1;
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::TEXTURE_LOAD,
         [&header, &mip_header]( MemoryWriter &&writer ) {
             // serialize

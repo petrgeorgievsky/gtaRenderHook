@@ -17,6 +17,8 @@ namespace rh::rw::engine
 
 using namespace rh::engine;
 
+constexpr auto SceneDescCallbacksId = 0x52;
+
 RTSceneDescription::RTSceneDescription()
 {
 
@@ -32,7 +34,7 @@ RTSceneDescription::RTSceneDescription()
     constexpr auto material_buff_bind_id       = 4;
     constexpr auto materials_bind_id           = 5;
     constexpr auto materials_idx_remap_bind_id = 6;
-    auto &         device = *DeviceGlobals::RenderHookDevice;
+    auto &         device = gRenderDriver->GetDeviceState();
 
     mSceneDesc.resize( draw_count_limit );
     mSceneMaterials.resize( material_count_limit );
@@ -109,59 +111,40 @@ RTSceneDescription::RTSceneDescription()
                                    .mBufferUpdateInfo = mdesc_buff_ui } );
 
     /// Setup callbacks
+    auto &resources   = gRenderDriver->GetResources();
+    auto &raster_pool = resources.GetRasterPool();
+    auto &mesh_pool   = resources.GetMeshPool();
 
-    MaterialGlobals::SceneMaterialPool->AddOnRequestCallback(
-        [this]( MaterialData &data, uint64_t id ) {
-            auto raster_pool = RasterGlobals::SceneRasterPool;
-            if ( data.mTexture == 0xBADF00D )
-            {
-                data.mTexture     = -1;
-                data.mSpecTexture = -1;
-            }
-            else
-            {
-                auto img_view =
-                    raster_pool->GetResource( data.mTexture ).mImageView;
-                data.mTexture =
-                    mTexturePool->StoreTexture( img_view, data.mTexture );
-                if ( data.mSpecTexture == 0xBADF00D )
-                    data.mSpecTexture = -1;
-                else
-                {
-                    auto spec_view =
-                        raster_pool->GetResource( data.mSpecTexture )
-                            .mImageView;
-                    data.mSpecTexture = mTexturePool->StoreTexture(
-                        spec_view, data.mSpecTexture );
-                }
-            }
-        } );
-
-    MaterialGlobals::SceneMaterialPool->AddOnDestructCallback(
-        [this]( MaterialData &data, uint64_t id ) {
-            if ( data.mTexture > 0 )
-                mTexturePool->RemoveTexture( data.mTexture );
-            if ( data.mSpecTexture > 0 )
-                mTexturePool->RemoveTexture( data.mSpecTexture );
-        } );
-
-    BackendMeshManager::SceneMeshData->AddOnRequestCallback(
+    mesh_pool.AddOnRequestCallback(
         [this]( BackendMeshData &data, uint64_t id ) {
             // Update global vb/ib descriptor set
-            mModelBuffersPool->StoreModel( data, id );
-        } );
 
-    BackendMeshManager::SceneMeshData->AddOnDestructCallback(
+            mModelBuffersPool->StoreModel( data, id );
+        },
+        SceneDescCallbacksId );
+
+    mesh_pool.AddOnDestructCallback(
         [this]( BackendMeshData &data, uint64_t id ) {
             mModelBuffersPool->RemoveModel( id );
-        } );
-    RasterGlobals::SceneRasterPool->AddOnDestructCallback(
+        },
+        SceneDescCallbacksId );
+    raster_pool.AddOnDestructCallback(
         [this]( RasterData &data, uint64_t id ) {
             mTexturePool->RemoveTexture( id );
-        } );
+        },
+        SceneDescCallbacksId );
 }
 
-RTSceneDescription::~RTSceneDescription() = default;
+RTSceneDescription::~RTSceneDescription()
+{
+
+    auto &resources   = gRenderDriver->GetResources();
+    auto &raster_pool = resources.GetRasterPool();
+    auto &mesh_pool   = resources.GetMeshPool();
+    mesh_pool.RemoveOnDestructCallback( SceneDescCallbacksId );
+    mesh_pool.RemoveOnRequestCallback( SceneDescCallbacksId );
+    raster_pool.RemoveOnDestructCallback( SceneDescCallbacksId );
+}
 
 rh::engine::IDescriptorSetLayout *RTSceneDescription::DescLayout()
 {
@@ -184,21 +167,23 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
                                          const MaterialData *materials,
                                          uint64_t            material_count )
 {
-    SceneObjDesc &obj_desc = mSceneDesc[mDrawCalls];
-    const auto &  mesh =
-        BackendMeshManager::SceneMeshData->GetResource( dc.mMeshId );
+    SceneObjDesc &obj_desc    = mSceneDesc[mDrawCalls];
+    auto &        resources   = gRenderDriver->GetResources();
+    auto &        raster_pool = resources.GetRasterPool();
+    auto &        mesh_pool   = resources.GetMeshPool();
+
+    const auto &mesh = mesh_pool.GetResource( dc.mMeshId );
     for ( auto i = 0; i < material_count; i++ )
     {
         mSceneMaterials[i + mMaterials] = materials[i];
-        auto get_pool_id                = [this]( auto orig_tex_id ) {
+        auto get_pool_id = [this, &raster_pool]( auto orig_tex_id ) {
             if ( orig_tex_id == 0xBADF00D )
                 return -1;
             auto tex_pool_id = mTexturePool->GetTexId( orig_tex_id );
             if ( tex_pool_id < 0 )
             {
-                auto raster_pool = RasterGlobals::SceneRasterPool;
                 auto img_view =
-                    raster_pool->GetResource( orig_tex_id ).mImageView;
+                    raster_pool.GetResource( orig_tex_id ).mImageView;
                 tex_pool_id =
                     mTexturePool->StoreTexture( img_view, orig_tex_id );
             }

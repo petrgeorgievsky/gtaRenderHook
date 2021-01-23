@@ -17,7 +17,7 @@ std::shared_ptr<IFrameRenderer> EngineState::gFrameRenderer = nullptr;
 
 void ExecuteRender()
 {
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::RENDER,
         []( MemoryWriter &&memory_writer ) {
             SerializeSceneGraph( memory_writer );
@@ -32,8 +32,8 @@ void ExecuteRender()
 
 void Render( SceneInfo *scene )
 {
-    auto &window    = *DeviceGlobals::MainWindow;
-    auto &device    = *DeviceGlobals::RenderHookDevice;
+    auto &window    = gRenderDriver->GetMainWindow();
+    auto &device    = gRenderDriver->GetDeviceState();
     auto &cam_state = *EngineState::gCameraState;
     auto &renderer  = *EngineState::gFrameRenderer;
 
@@ -70,16 +70,13 @@ void Render( SceneInfo *scene )
 
     cam_state.NextFrame();
 
-    SkinMeshManager::SceneSkinData->CollectGarbage( 1000 );
-    BackendMeshManager::SceneMeshData->CollectGarbage( 120 );
-    MaterialGlobals::SceneMaterialPool->CollectGarbage( 10000 );
-    RasterGlobals::SceneRasterPool->CollectGarbage( 100 );
+    gRenderDriver->GetResources().GC();
 }
 
 void InitRenderEvents()
 {
     // EngineState::gRendererServerGlobals = new BackendRenderer();
-    DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+    gRenderDriver->GetTaskQueue().RegisterTask(
         SharedMemoryTaskType::RENDER,
         std::make_unique<SharedMemoryTask>( []( void *memory ) {
             // execute

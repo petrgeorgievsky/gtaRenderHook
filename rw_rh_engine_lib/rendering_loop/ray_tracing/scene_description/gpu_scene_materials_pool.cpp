@@ -19,7 +19,7 @@ GPUSceneMaterialsPool::GPUSceneMaterialsPool(
 void GPUSceneMaterialsPool::StoreMaterialData( MaterialUpdateData &model,
                                                uint64_t            instance_id )
 {
-    auto device = DeviceGlobals::RenderHookDevice.get();
+    // auto& device = gRenderDriver->GetDeviceState();
     // index remap
     /*{
         std::array ib_list{ BufferUpdateInfo{

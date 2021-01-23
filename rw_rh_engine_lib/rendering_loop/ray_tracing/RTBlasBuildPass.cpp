@@ -16,6 +16,8 @@
 namespace rh::rw::engine
 {
 
+constexpr uint64_t MeshPoolCallbackId = 0x4;
+
 void RTBlasBuildPass::RequestBlasBuild( uint64_t mesh_id )
 {
     mBLASQueue.push( mesh_id );
@@ -24,7 +26,7 @@ void RTBlasBuildPass::RequestBlasBuild( uint64_t mesh_id )
 RTBlasBuildPass::RTBlasBuildPass()
 {
     // todo: read from config
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     mBlasCmdBuffer = dynamic_cast<rh::engine::VulkanCommandBuffer *>(
         device.CreateCommandBuffer() );
@@ -37,12 +39,14 @@ RTBlasBuildPass::RTBlasBuildPass()
         mBlasBuilt, std::string( "blas_build_finish_sp" ) );
 #endif
 
-    mBLASPool.resize( BackendMeshManager::SceneMeshData->GetSize() );
+    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
 
-    BackendMeshManager::SceneMeshData->AddOnRequestCallback(
+    mBLASPool.resize( mesh_pool.GetSize() );
+
+    mesh_pool.AddOnRequestCallback(
         [this]( BackendMeshData &data, uint64_t id ) {
             auto &device = dynamic_cast<rh::engine::VulkanDeviceState &>(
-                *DeviceGlobals::RenderHookDevice );
+                gRenderDriver->GetDeviceState() );
             mBLASPool[id].mHasEntry = true;
             rh::engine::AccelerationStructureCreateInfo ac_ci{};
             ac_ci.mVertexBuffer       = data.mVertexBuffer->Get();
@@ -55,8 +59,9 @@ RTBlasBuildPass::RTBlasBuildPass()
             mBLASPool[id].mData.mBLAS = device.CreateBLAS( ac_ci );
             // Add BLAS to build list
             RequestBlasBuild( id );
-        } );
-    BackendMeshManager::SceneMeshData->AddOnDestructCallback(
+        },
+        MeshPoolCallbackId );
+    mesh_pool.AddOnDestructCallback(
         [this]( BackendMeshData &data, uint64_t id ) {
             delete static_cast<
                 rh::engine::VulkanBottomLevelAccelerationStructure *>(
@@ -64,7 +69,8 @@ RTBlasBuildPass::RTBlasBuildPass()
             mBLASPool[id].mData.mBLAS      = nullptr;
             mBLASPool[id].mData.mBlasBuilt = false;
             mBLASPool[id].mHasEntry        = false;
-        } );
+        },
+        MeshPoolCallbackId );
 }
 
 void RTBlasBuildPass::Execute()
@@ -73,6 +79,7 @@ void RTBlasBuildPass::Execute()
     mCompleted = false;
     if ( mBLASQueue.empty() )
         return;
+    auto &device = gRenderDriver->GetDeviceState();
     std::vector<VulkanBottomLevelAccelerationStructure *> blas_list{};
     blas_list.reserve( 50 );
 
@@ -95,9 +102,9 @@ void RTBlasBuildPass::Execute()
     if ( !mScratchBuffer || mScratchBufferSize < scratch_buff_size )
     {
         delete mScratchBuffer;
-        mScratchBuffer = DeviceGlobals::RenderHookDevice->CreateBuffer(
-            { scratch_buff_size, BufferUsage::RayTracingScratch,
-              BufferFlags::Dynamic } );
+        mScratchBuffer     = device.CreateBuffer( { scratch_buff_size,
+                                                BufferUsage::RayTracingScratch,
+                                                BufferFlags::Dynamic } );
         mScratchBufferSize = scratch_buff_size;
     }
 
@@ -129,6 +136,9 @@ RTBlasBuildPass::GetSubmitInfo( rh::engine::ISyncPrimitive *dependency )
 }
 RTBlasBuildPass::~RTBlasBuildPass()
 {
+    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
+    mesh_pool.RemoveOnRequestCallback( MeshPoolCallbackId );
+    mesh_pool.RemoveOnDestructCallback( MeshPoolCallbackId );
     delete mScratchBuffer;
     delete mBlasCmdBuffer;
     delete mBlasBuilt;

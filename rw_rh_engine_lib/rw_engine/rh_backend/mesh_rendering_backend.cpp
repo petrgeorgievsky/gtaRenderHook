@@ -11,14 +11,11 @@
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 using namespace rh::rw::engine;
 
-rh::engine::ResourcePool<BackendMeshData> *BackendMeshManager::SceneMeshData =
-    nullptr;
-
 uint64_t
 rh::rw::engine::CreateBackendMesh( const BackendMeshInitData &initData )
 {
     uint64_t result = 0xBADF00D;
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::MESH_LOAD,
         [&initData]( MemoryWriter &&memory_writer ) {
             // serialize
@@ -83,7 +80,7 @@ void rh::rw::engine::CreateBackendMeshImpl( void *memory )
                      rh::engine::BufferUsage::StorageBuffer;
     ib_info.mInitDataPtr         = initData.mIndexData;
     backendMeshData.mIndexBuffer = new RefCountedBuffer(
-        DeviceGlobals::RenderHookDevice->CreateBuffer( ib_info ) );
+        gRenderDriver->GetDeviceState().CreateBuffer( ib_info ) );
 
     rh::engine::BufferCreateInfo vb_info{};
     vb_info.mSize =
@@ -92,22 +89,23 @@ void rh::rw::engine::CreateBackendMeshImpl( void *memory )
                      rh::engine::BufferUsage::StorageBuffer;
     vb_info.mInitDataPtr          = initData.mVertexData;
     backendMeshData.mVertexBuffer = new RefCountedBuffer(
-        DeviceGlobals::RenderHookDevice->CreateBuffer( vb_info ) );
+        gRenderDriver->GetDeviceState().CreateBuffer( vb_info ) );
 
     backendMeshData.mVertexCount = initData.mVertexCount;
     backendMeshData.mIndexCount  = initData.mIndexCount;
     backendMeshData.mSplits      = initData.mSplits;
     backendMeshData.mMaterials   = initData.mMaterials;
 
-    auto id = BackendMeshManager::SceneMeshData->RequestResource(
-        std::move( backendMeshData ) );
+    auto &resources = gRenderDriver->GetResources();
+    auto &mesh_pool = resources.GetMeshPool();
+    auto  id        = mesh_pool.RequestResource( std::move( backendMeshData ) );
 
     *static_cast<uint64_t *>( memory ) = id;
 }
 
 void rh::rw::engine::DestroyBackendMesh( uint64_t id )
 {
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::MESH_DELETE,
         [&id]( MemoryWriter &&memory_writer ) {
             // serialize

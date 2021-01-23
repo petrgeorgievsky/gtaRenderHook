@@ -12,9 +12,10 @@ namespace rh::rw::engine
 
 ImageLockResult ImageLockCmdImpl::Invoke( const ImageLockParams &params )
 {
+    auto &          task_queue = gRenderClient->GetTaskQueue();
     ImageLockResult result{};
 
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    task_queue.ExecuteTask(
         SharedMemoryTaskType::RASTER_LOCK,
         [params]( MemoryWriter &&writer ) { writer.Write( &params ); },
         [&result, &params]( MemoryReader &&memory_reader ) {
@@ -32,8 +33,9 @@ void RasterLockCallback( void *memory )
     // execute
     using namespace rh::engine;
 
-    auto &device      = *DeviceGlobals::RenderHookDevice;
-    auto &raster_pool = *RasterGlobals::SceneRasterPool;
+    auto &device      = gRenderDriver->GetDeviceState();
+    auto &resources   = gRenderDriver->GetResources();
+    auto &raster_pool = resources.GetRasterPool();
 
     MemoryReader reader( memory );
     MemoryWriter writer( memory );
@@ -105,7 +107,7 @@ void RasterLockCallback( void *memory )
 
 void ImageLockCmdImpl::RegisterCallHandler()
 {
-    auto &task_queue = *DeviceGlobals::SharedMemoryTaskQueue;
+    auto &task_queue = gRenderDriver->GetTaskQueue();
     task_queue.RegisterTask(
         SharedMemoryTaskType::RASTER_LOCK,
         std::make_unique<SharedMemoryTask>( RasterLockCallback ) );

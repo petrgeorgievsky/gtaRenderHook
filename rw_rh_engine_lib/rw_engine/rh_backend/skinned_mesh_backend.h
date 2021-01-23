@@ -39,12 +39,6 @@ void     CreateSkinMeshImpl( void *memory );
 void     DestroySkinMesh( uint64_t id );
 void     DestroySkinMeshImpl( void *memory );
 
-class SkinMeshManager
-{
-  public:
-    static rh::engine::ResourcePool<SkinMeshData> *SceneSkinData;
-};
-
 class SkinRendererClient
 {
   public:

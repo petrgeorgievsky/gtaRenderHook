@@ -24,23 +24,20 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
           1,                        //  mCount;
           ShaderStage::Vertex, 0 }  //  mShaderStages;
     } };
+    auto &                           device = gRenderDriver->GetDeviceState();
     mCameraSetLayout =
-        DeviceGlobals::RenderHookDevice->CreateDescriptorSetLayout(
-            { camera_desc_set_bindings } );
+        device.CreateDescriptorSetLayout( { camera_desc_set_bindings } );
 
     std::array desc_set_bindings = { DescriptorBinding{
         0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 0, 1 } };
-    mModelSetLayout =
-        DeviceGlobals::RenderHookDevice->CreateDescriptorSetLayout(
-            { desc_set_bindings } );
+    mModelSetLayout = device.CreateDescriptorSetLayout( { desc_set_bindings } );
 
     // create pipeline layouts
     std::array layout_array = { mCameraSetLayout, mModelSetLayout };
 
     PipelineLayoutCreateParams pipe_layout_ci{};
     pipe_layout_ci.mSetLayouts = layout_array;
-    mPipeLayout =
-        DeviceGlobals::RenderHookDevice->CreatePipelineLayout( pipe_layout_ci );
+    mPipeLayout                = device.CreatePipelineLayout( pipe_layout_ci );
 
     // create pipelines
     mBaseVertex.desc = { .mShaderPath  = "shaders/d3d11/engine/Basic3D.hlsl",
@@ -51,10 +48,8 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
                         .mEntryPoint  = "TexPS",
                         .mShaderStage = ShaderStage::Pixel };
 
-    mBaseVertex.shader =
-        DeviceGlobals::RenderHookDevice->CreateShader( mBaseVertex.desc );
-    mBasePixel.shader =
-        DeviceGlobals::RenderHookDevice->CreateShader( mBasePixel.desc );
+    mBaseVertex.shader = device.CreateShader( mBaseVertex.desc );
+    mBasePixel.shader  = device.CreateShader( mBasePixel.desc );
     // create buffers
 
     /// descriptorset pools
@@ -66,9 +61,7 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
 
     dsc_all_cp.mMaxSets         = 64;
     dsc_all_cp.mDescriptorPools = dsc_pool_sizes;
-    mDescSetAllocator =
-        DeviceGlobals::RenderHookDevice->CreateDescriptorSetAllocator(
-            dsc_all_cp );
+    mDescSetAllocator = device.CreateDescriptorSetAllocator( dsc_all_cp );
 
     std::vector tex_layout_array = std::vector( 32, mModelSetLayout );
 
@@ -78,7 +71,7 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
 
     // SamplerDesc sampler_desc{};
     // static auto mTextureSampler =
-    //    DeviceGlobals::RenderHookDevice->CreateSampler( sampler_desc );
+    //    device.CreateSampler( sampler_desc );
 
     /* for ( auto &i : mDescriptorSetPool )
      {
@@ -89,7 +82,7 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
          info.mBinding         = 0;
          info.mSet             = i;
          info.mImageUpdateInfo = sampler_upd_info;
-         DeviceGlobals::RenderHookDevice->UpdateDescriptorSets( info );
+         device.UpdateDescriptorSets( info );
      }*/
 
     std::array<rh::engine::IDescriptorSetLayout *, 1> layout_array_ = {
@@ -109,8 +102,7 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
     rs_buff_create_info.mUsage       = BufferUsage::ConstantBuffer;
     rs_buff_create_info.mFlags       = BufferFlags::Dynamic;
     rs_buff_create_info.mInitDataPtr = &buff;
-    static auto mCameraBuffer =
-        DeviceGlobals::RenderHookDevice->CreateBuffer( rs_buff_create_info );
+    static auto mCameraBuffer = device.CreateBuffer( rs_buff_create_info );
 
     DescriptorSetUpdateInfo desc_set_upd_info{};
     desc_set_upd_info.mSet            = mCameraDescSet;
@@ -119,15 +111,14 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
         BufferUpdateInfo{ 0, sizeof( MtxBuffer ), mCameraBuffer } };
     desc_set_upd_info.mBufferUpdateInfo = update_info;
 
-    DeviceGlobals::RenderHookDevice->UpdateDescriptorSets( desc_set_upd_info );
+    device.UpdateDescriptorSets( desc_set_upd_info );
 
     DescriptorSetUpdateInfo mesh_desc_set_upd_info{};
     mesh_desc_set_upd_info.mSet              = mModelDescSet[0];
     mesh_desc_set_upd_info.mDescriptorType   = DescriptorType::ROBuffer;
     mesh_desc_set_upd_info.mBufferUpdateInfo = update_info;
 
-    DeviceGlobals::RenderHookDevice->UpdateDescriptorSets(
-        mesh_desc_set_upd_info );
+    device.UpdateDescriptorSets( mesh_desc_set_upd_info );
 
     /// pip create
 
@@ -161,9 +152,8 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
         .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
         .mTopology             = Topology::TriangleList };
 
-    mPipelineImpl = DeviceGlobals::RenderHookDevice->CreateRasterPipeline(
-        pipe_create_params );
-    mInitialized = true;
+    mPipelineImpl = device.CreateRasterPipeline( pipe_create_params );
+    mInitialized  = true;
 }
 
 void ForwardPBRPipeline::Draw( rh::engine::ICommandBuffer *           cmd_buff,

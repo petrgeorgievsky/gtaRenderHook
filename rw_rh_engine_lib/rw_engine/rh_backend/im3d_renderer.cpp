@@ -28,7 +28,7 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
 {
     mRenderPass                = render_pass;
     mCamDesc                   = cdsec;
-    auto &              device = *DeviceGlobals::RenderHookDevice;
+    auto &              device = gRenderDriver->GetDeviceState();
     DescriptorGenerator d_gen{};
 
     d_gen
@@ -156,7 +156,7 @@ rh::engine::IPipeline *Im3DRenderer::GetCachedPipeline( uint64_t hash )
     if ( mIm3DPipelines.contains( hash ) )
         return mIm3DPipelines.at( hash );
 
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     PackedIm3DState s{};
     s.i_val = hash;
@@ -314,10 +314,11 @@ uint64_t Im3DRenderer::Render( void *                      memory,
 }
 rh::engine::IDescriptorSet *Im3DRenderer::GetRasterDescSet( uint64_t id )
 {
-    auto set = mDescriptorSetPool[mDescriptorSetPoolId];
-    auto img_view =
-        RasterGlobals::SceneRasterPool->GetResource( id ).mImageView;
-    DeviceGlobals::RenderHookDevice->UpdateDescriptorSets(
+    auto &resources   = gRenderDriver->GetResources();
+    auto &raster_pool = resources.GetRasterPool();
+    auto  set         = mDescriptorSetPool[mDescriptorSetPoolId];
+    auto  img_view    = raster_pool.GetResource( id ).mImageView;
+    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
         { .mSet             = set,
           .mBinding         = 1,
           .mDescriptorType  = DescriptorType::ROTexture,

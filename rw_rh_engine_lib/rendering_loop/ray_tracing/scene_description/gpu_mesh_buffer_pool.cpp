@@ -46,7 +46,7 @@ void GPUModelBuffersPool::StoreModel( const BackendMeshData &model,
         vbUpdateInfo.mDescriptorType   = DescriptorType::RWBuffer;
         vbUpdateInfo.mArrayStartIdx    = id;
         vbUpdateInfo.mBufferUpdateInfo = vb_list;
-        DeviceGlobals::RenderHookDevice->UpdateDescriptorSets( vbUpdateInfo );
+        gRenderDriver->GetDeviceState().UpdateDescriptorSets( vbUpdateInfo );
     }
     {
         std::array<BufferUpdateInfo, 1> ib_list{
@@ -57,7 +57,7 @@ void GPUModelBuffersPool::StoreModel( const BackendMeshData &model,
         ibUpdateInfo.mDescriptorType   = DescriptorType::RWBuffer;
         ibUpdateInfo.mArrayStartIdx    = id;
         ibUpdateInfo.mBufferUpdateInfo = ib_list;
-        DeviceGlobals::RenderHookDevice->UpdateDescriptorSets( ibUpdateInfo );
+        gRenderDriver->GetDeviceState().UpdateDescriptorSets( ibUpdateInfo );
     }
     mBuffersRemap[model_id] = id;
     mSlotAvailability[id]   = 0;

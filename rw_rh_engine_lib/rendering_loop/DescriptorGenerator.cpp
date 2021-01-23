@@ -12,7 +12,7 @@ using namespace rh::engine;
 IDescriptorSetLayout *
 DescriptorGenerator::FinalizeDescriptorSet( uint32_t set, uint32_t max_count )
 {
-    auto &device                   = *DeviceGlobals::RenderHookDevice;
+    auto &device                   = gRenderDriver->GetDeviceState();
     mDescriptorSets[set].max_count = max_count;
     return device.CreateDescriptorSetLayout(
         { mDescriptorSets[set].bindings } );
@@ -20,7 +20,7 @@ DescriptorGenerator::FinalizeDescriptorSet( uint32_t set, uint32_t max_count )
 
 rh::engine::IDescriptorSetAllocator *DescriptorGenerator::FinalizeAllocator()
 {
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     uint32_t                        max_sets = 0;
     std::vector<DescriptorPoolSize> pool_sizes;

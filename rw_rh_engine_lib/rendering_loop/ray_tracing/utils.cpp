@@ -26,7 +26,7 @@ IImageBuffer *Create2DRenderTargetBuffer( uint32_t w, uint32_t h,
                                           ImageBufferFormat f, uint32_t usage )
 {
     using namespace rh::engine;
-    return DeviceGlobals::RenderHookDevice->CreateImageBuffer(
+    return gRenderDriver->GetDeviceState().CreateImageBuffer(
         { .mDimension = ImageDimensions::d2D,
           .mFormat    = f,
           .mUsage     = usage,
@@ -38,7 +38,7 @@ RasterData ReadBMP( const std::string &path )
 {
     RasterData result_data{};
 
-    rh::tests::LoadBMPImage( path, *DeviceGlobals::RenderHookDevice,
+    rh::tests::LoadBMPImage( path, gRenderDriver->GetDeviceState(),
                              &result_data.mImageBuffer );
 
     rh::engine::ImageViewCreateInfo shader_view_ci{};
@@ -47,7 +47,7 @@ RasterData ReadBMP( const std::string &path )
     shader_view_ci.mUsage  = rh::engine::ImageViewUsage::ShaderResource;
 
     result_data.mImageView =
-        DeviceGlobals::RenderHookDevice->CreateImageView( shader_view_ci );
+        gRenderDriver->GetDeviceState().CreateImageView( shader_view_ci );
 
     return result_data;
 }

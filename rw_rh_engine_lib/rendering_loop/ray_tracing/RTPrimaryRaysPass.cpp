@@ -31,7 +31,7 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
     : mScene( config.mScene ), mCamera( config.mCamera ),
       mWidth( config.mWidth ), mHeight( config.mHeight )
 {
-    auto &              device = *DeviceGlobals::RenderHookDevice;
+    auto &              device = gRenderDriver->GetDeviceState();
     DescriptorGenerator descriptorGenerator{};
 
     descriptorGenerator
@@ -219,7 +219,7 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
     mSkyCfg->Update( &gSkyCfg, sizeof( SkyCfg ) );
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
-    DeviceGlobals::RenderHookDevice->UpdateDescriptorSets(
+    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
         { .mSet            = mRayTraceSet,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,

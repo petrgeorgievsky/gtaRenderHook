@@ -12,7 +12,7 @@ namespace rh::rw::engine
 using namespace rh::engine;
 RTTlasBuildPass::RTTlasBuildPass()
 {
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     mTlasScratchBuffer =
         device.CreateBuffer( { .mSize  = 1024 * 1024 * 8,
@@ -40,7 +40,7 @@ VulkanTopLevelAccelerationStructure *RTTlasBuildPass::Execute(
     std::vector<VkAccelerationStructureInstanceNV> &&instance_buffer )
 {
     auto &device =
-        dynamic_cast<VulkanDeviceState &>( *DeviceGlobals::RenderHookDevice );
+        dynamic_cast<VulkanDeviceState &>( gRenderDriver->GetDeviceState() );
 
     auto tlas = device.CreateTLAS( { .mMaxInstanceCount = static_cast<uint32_t>(
                                          instance_buffer.size() ) } );

@@ -36,7 +36,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     : mScene( params.mScene ), mCamera( params.mCamera ),
       mWidth( params.mWidth ), mHeight( params.mHeight )
 {
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     DescriptorGenerator descriptorGenerator{};
     descriptorGenerator
@@ -221,7 +221,7 @@ void RTAOPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer )
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
     std::array<AccelStructUpdateInfo, 1> accel_ui = { { tlas } };
-    DeviceGlobals::RenderHookDevice->UpdateDescriptorSets(
+    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
         { .mSet            = mRayTraceSet,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,

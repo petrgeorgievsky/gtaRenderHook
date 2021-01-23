@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <ipc/shared_memory_queue_client.h>
 #include <memory>
+#include <render_client/render_client.h>
+#include <render_driver/render_driver.h>
 #include <thread>
 
 using RwSystemFunc = int32_t ( * )( int32_t nOption, void *pOut, void *pInOut,
@@ -297,11 +299,9 @@ class DeviceGlobals
     static PluginPtrTable     PluginFuncs;
     static ResourcePtrTable   ResourceFuncs;
     static SkinPtrTable       SkinFuncs;
-
-    static std::unique_ptr<rh::engine::IDeviceState> RenderHookDevice;
-    static std::unique_ptr<rh::engine::IWindow>      MainWindow;
-    static SharedMemoryTaskQueue *                   SharedMemoryTaskQueue;
-    static std::unique_ptr<std::thread> SharedMemoryTaskQueueThread;
-    static std::atomic<bool>            RenderThreadShallDie;
 };
+
+extern std::unique_ptr<RenderClient> gRenderClient;
+extern std::unique_ptr<RenderDriver> gRenderDriver;
+
 } // namespace rh::rw::engine

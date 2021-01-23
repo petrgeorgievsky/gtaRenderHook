@@ -82,7 +82,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     SystemHandler( rwDEVICESYSTEMREGISTER, DeviceGlobals::DevicePtr,
                    &gInstance.rwMemoryFunctions, 0 );
 
-    DeviceGlobals::SharedMemoryTaskQueue->WaitForExit();
+    gRenderDriver->GetTaskQueue().WaitForExit();
 
     ShutdownRenderer();
     return 1;

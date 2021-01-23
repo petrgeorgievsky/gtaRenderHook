@@ -19,6 +19,7 @@ template <typename T> class ResourcePool
         Immortal,
         Used
     };
+    using Callback = std::function<void( T &, uint64_t )>;
 
     /*struct ResourceInfo
     {
@@ -26,9 +27,9 @@ template <typename T> class ResourcePool
     };*/
 
   public:
-    ResourcePool( uint64_t size, std::function<void( T &, uint64_t )> destruct )
+    ResourcePool( uint64_t size, Callback destruct )
     {
-        mDestructor = destruct;
+        mDestructCallbacks.emplace_back( 0, destruct );
         mResourcePool.resize( size );
         mResourcePoolData.resize( size );
     }
@@ -62,8 +63,11 @@ template <typename T> class ResourcePool
             mResourcePoolData[res.first] = std::move( resource );
             mResourcePool[res.first] =
                 very_important ? ResourceFlags::Immortal : ResourceFlags::Used;
-            if ( mOnRequestCallback )
-                mOnRequestCallback( mResourcePoolData[res.first], res.first );
+            if ( !mRequestCallbacks.empty() )
+            {
+                for ( auto [id, cb] : mRequestCallbacks )
+                    cb( mResourcePoolData[res.first], res.first );
+            }
             mFreeResourceIdx = res.first + 1;
             // good path
             return res.first;
@@ -73,10 +77,12 @@ template <typename T> class ResourcePool
             mResourcePool.push_back( very_important ? ResourceFlags::Immortal
                                                     : ResourceFlags::Used );
             mResourcePoolData.push_back( std::move( resource ) );
-            if ( mOnRequestCallback )
-                mOnRequestCallback(
-                    mResourcePoolData[mResourcePoolData.size() - 1],
-                    mResourcePoolData.size() - 1 );
+            if ( !mRequestCallbacks.empty() )
+            {
+                auto idx = mResourcePoolData.size() - 1;
+                for ( auto [id, cb] : mRequestCallbacks )
+                    cb( mResourcePoolData[idx], idx );
+            }
             return mFreeResourceIdx++;
         }
     }
@@ -122,8 +128,13 @@ template <typename T> class ResourcePool
         for ( auto i : used_resources )
         {
             auto &resource = mResourcePoolData[i];
-            if ( mDestructor )
-                mDestructor( resource, i );
+            if ( !mDestructCallbacks.empty() )
+            {
+                for ( auto current = mDestructCallbacks.rbegin(),
+                           end     = mDestructCallbacks.rend();
+                      current != end; current++ )
+                    ( *current ).second( resource, i );
+            }
         }
         mGarbageCount    = 0;
         mFreeResourceIdx = 0;
@@ -145,8 +156,14 @@ template <typename T> class ResourcePool
             auto &resource = mResourcePoolData[idx];
             if ( free_idx == -1 )
                 free_idx = idx;
-            if ( mDestructor )
-                mDestructor( resource, idx );
+
+            if ( !mDestructCallbacks.empty() )
+            {
+                for ( auto current = mDestructCallbacks.rbegin(),
+                           end     = mDestructCallbacks.rend();
+                      current != end; current++ )
+                    ( *current ).second( resource, idx );
+            }
             resource = {};
             flags    = ResourceFlags::Unused;
             mGarbageCount--;
@@ -162,33 +179,35 @@ template <typename T> class ResourcePool
     T *      GetStorage() { return mResourcePoolData.data(); }
     uint64_t GetSize() { return mResourcePoolData.size(); }
 
-    void AddOnRequestCallback( std::function<void( T &, uint64_t )> &&cb )
+    void AddOnRequestCallback( Callback &&cb, uint64_t id )
     {
-        mOnRequestCallback = [old_cb = mOnRequestCallback,
-                              new_cb = std::move( cb )]( T &val, uint64_t id ) {
-            if ( old_cb )
-                old_cb( val, id );
-            new_cb( val, id );
-        };
+        mRequestCallbacks.emplace_back( id, cb );
     }
 
-    void AddOnDestructCallback( std::function<void( T &, uint64_t )> &&cb )
+    void AddOnDestructCallback( Callback &&cb, uint64_t id )
     {
-        mDestructor = [old_cb = mDestructor,
-                       new_cb = std::move( cb )]( T &val, uint64_t id ) {
-            new_cb( val, id );
-            if ( old_cb )
-                old_cb( val, id );
-        };
+        mDestructCallbacks.emplace_back( id, cb );
+    }
+
+    void RemoveOnRequestCallback( uint64_t id )
+    {
+        std::erase_if( mRequestCallbacks,
+                       [id]( auto x ) { return x.first == id; } );
+    }
+
+    void RemoveOnDestructCallback( uint64_t id )
+    {
+        std::erase_if( mDestructCallbacks,
+                       [id]( auto x ) { return x.first == id; } );
     }
 
   private:
-    uint64_t                                mGarbageCount    = 0;
-    uint64_t                                mFreeResourceIdx = 0;
-    std::vector<ResourceFlags>              mResourcePool{};
-    std::vector<T>                          mResourcePoolData{};
-    std::function<void( T &, uint64_t id )> mDestructor{};
-    std::function<void( T &, uint64_t id )> mOnRequestCallback{};
+    uint64_t                                   mGarbageCount    = 0;
+    uint64_t                                   mFreeResourceIdx = 0;
+    std::vector<ResourceFlags>                 mResourcePool{};
+    std::vector<T>                             mResourcePoolData{};
+    std::vector<std::pair<uint64_t, Callback>> mDestructCallbacks{};
+    std::vector<std::pair<uint64_t, Callback>> mRequestCallbacks{};
 };
 
 } // namespace rh::engine

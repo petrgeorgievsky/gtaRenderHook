@@ -15,7 +15,7 @@ using namespace rh::engine;
 CameraDescription::CameraDescription()
 {
 
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     DescriptorGenerator descriptorGenerator{};
     descriptorGenerator.AddDescriptor(

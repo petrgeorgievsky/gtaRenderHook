@@ -21,11 +21,6 @@ namespace rw::engine
 
 struct BackendRasterExt
 {
-    /* rh::engine::IWindow *       mWindow;
-     rh::engine::ISyncPrimitive *mRenderExecute;
-     uint32_t                    mCurrentBackBufferId;
-     rh::engine::IImageBuffer *  mImageBuffer;
-     rh::engine::IImageView *    mImageView;*/
     uint64_t mImageId;
 };
 
@@ -56,19 +51,6 @@ struct MipLevelHeader
 {
     uint32_t mSize;
     uint32_t mStride;
-};
-
-struct RasterData
-{
-    rh::engine::IImageBuffer *mImageBuffer;
-    rh::engine::IImageView *  mImageView;
-};
-
-class RasterGlobals
-{
-  public:
-    static void                                  Init();
-    static rh::engine::ResourcePool<RasterData> *SceneRasterPool;
 };
 
 } // namespace rw::engine

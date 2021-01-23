@@ -63,12 +63,6 @@ struct MaterialData
     // float   diffuse;  /**< reflection coefficient */
 };
 
-class MaterialGlobals
-{
-  public:
-    static rh::engine::ResourcePool<MaterialData> *SceneMaterialPool;
-};
-
 uint64_t     CreateMaterialData( RpMaterial *material );
 MaterialData ConvertMaterialData( RpMaterial *material );
 

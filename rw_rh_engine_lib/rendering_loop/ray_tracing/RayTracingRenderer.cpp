@@ -59,7 +59,7 @@ RayTracingRenderer::RayTracingRenderer()
                                                 .mHeight = rtx_resolution_h } );
 
     mTiledLightCulling = new TiledLightCulling( TiledLightCullingParams{
-        .mDevice       = *DeviceGlobals::RenderHookDevice,
+        .mDevice       = gRenderDriver->GetDeviceState(),
         .mCameraDesc   = mCameraDescription,
         .mWidth        = rtx_resolution_w,
         .mHeight       = rtx_resolution_h,
@@ -128,7 +128,7 @@ RayTracingRenderer::Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
 {
     using namespace rh::engine;
 
-    auto &device       = *DeviceGlobals::RenderHookDevice;
+    auto &device       = gRenderDriver->GetDeviceState();
     auto  forward_pass = GetForwardPass();
     auto  framebuffer  = GetFrameBuffer( frame, forward_pass );
     auto  im2d         = GetIm2DRenderer( forward_pass );
@@ -136,8 +136,10 @@ RayTracingRenderer::Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
     auto  imgui        = GetImGui( forward_pass );
 
     auto record_start = std::chrono::high_resolution_clock::now();
+
+    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
     for ( const auto &item : mSkinDrawCallList )
-        BackendMeshManager::SceneMeshData->FreeResource( item.mMeshId );
+        mesh_pool.FreeResource( item.mMeshId );
     mSkinDrawCallList.clear();
     mRenderDispatchList.clear();
 
@@ -327,6 +329,8 @@ void RayTracingRenderer::ProcessDynamicGeometry( SceneInfo *scene )
     if ( animated_meshes.empty() )
         return;
 
+    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
+
     // Generate dynamic geometry transforms
     for ( auto &dc : animated_meshes )
     {
@@ -339,8 +343,7 @@ void RayTracingRenderer::ProcessDynamicGeometry( SceneInfo *scene )
 
         DrawCallInfo sdc{};
         sdc.mDrawCallId = dc.mInstanceId;
-        sdc.mMeshId     = BackendMeshManager::SceneMeshData->RequestResource(
-            std::move( backendMeshData ) );
+        sdc.mMeshId = mesh_pool.RequestResource( std::move( backendMeshData ) );
         sdc.mWorldTransform    = dc.mTransform;
         sdc.mMaterialListStart = dc.mMaterialListStart;
         sdc.mMaterialListCount = dc.mMaterialListCount;
@@ -367,6 +370,7 @@ void RayTracingRenderer::DrawGUI()
             std::chrono::high_resolution_clock::now() - last_frame_time )
             .count() /
         1000.0f;
+    return;
     ImGui::Begin( "Info" );
 
     ImGui::BeginGroup();
@@ -391,7 +395,7 @@ void RayTracingRenderer::DrawGUI()
 rh::engine::IRenderPass *RayTracingRenderer::GetForwardPass()
 {
     using namespace rh::engine;
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
     if ( mForwardPass != nullptr )
         return mForwardPass;
     mForwardPass = device.CreateRenderPass( RenderPassCreateParams{
@@ -420,12 +424,12 @@ RayTracingRenderer::GetImGui( rh::engine::IRenderPass *pass )
 {
 
     using namespace rh::engine;
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
+    auto &window = gRenderDriver->GetMainWindow();
     if ( mImGUI )
         return mImGUI;
 
-    mImGUI = dynamic_cast<VulkanDeviceState &>( device ).CreateImGUI(
-        DeviceGlobals::MainWindow.get() );
+    mImGUI = dynamic_cast<VulkanDeviceState &>( device ).CreateImGUI( &window );
 
     mImGUI->Init( { pass } );
 
@@ -465,7 +469,7 @@ RayTracingRenderer::GetFrameBuffer( const rh::engine::SwapchainFrame &frame,
 {
     auto &framebuffer = mFramebufferCache[frame.mImageId];
     using namespace rh::engine;
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     if ( framebuffer != nullptr )
         return framebuffer;

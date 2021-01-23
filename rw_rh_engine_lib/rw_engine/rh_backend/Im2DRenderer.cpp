@@ -22,12 +22,14 @@ constexpr auto VERTEX_COUNT_LIMIT     = 100000;
 constexpr auto INDEX_COUNT_LIMIT      = 100000;
 constexpr auto TEXTURE_DESC_POOL_SIZE = 1000;
 
+constexpr auto Im2DCallbackId = 421;
+
 Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
                             rh::engine::IRenderPass *render_pass )
     : mCamDesc( cdsec )
 {
     mRenderPass  = render_pass;
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
     // screen stuff
     DescriptorGenerator d_gen{};
 
@@ -209,14 +211,18 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
           .mBlendState           = default_blend_state,
           .mDepthStencilState    = depth_state } );
 
-    RasterGlobals::SceneRasterPool->AddOnDestructCallback(
-        [this]( RasterData &data, uint64_t id ) {
-            mTextureCache.erase( id );
-        } );
+    auto &resources   = gRenderDriver->GetResources();
+    auto &raster_pool = resources.GetRasterPool();
+    raster_pool.AddOnDestructCallback(
+        [this]( RasterData &data, uint64_t id ) { mTextureCache.erase( id ); },
+        Im2DCallbackId );
 }
 
 Im2DRenderer::~Im2DRenderer()
 {
+    auto &resources   = gRenderDriver->GetResources();
+    auto &raster_pool = resources.GetRasterPool();
+    raster_pool.RemoveOnDestructCallback( Im2DCallbackId );
     delete mPipelineTex;
     delete mPipelineNoTex;
     for ( auto &ptr : mDescriptorSetPool )
@@ -366,7 +372,7 @@ void Im2DRenderer::DrawQuad( rh::engine::IImageView *    texture,
         info.mDescriptorType  = DescriptorType::ROTexture;
         info.mSet             = texDescriptorSet;
         info.mImageUpdateInfo = img_upd_info;
-        DeviceGlobals::RenderHookDevice->UpdateDescriptorSets( info );
+        gRenderDriver->GetDeviceState().UpdateDescriptorSets( info );
         mDescriptorSetPoolId =
             ( mDescriptorSetPoolId + 1 ) % mDescriptorSetPool.size();
     }
@@ -394,10 +400,12 @@ rh::engine::IDescriptorSet *Im2DRenderer::GetRasterDescSet( uint64_t id )
     //    return cache_entry->second;
     // else
     {
+        auto &resources   = gRenderDriver->GetResources();
+        auto &raster_pool = resources.GetRasterPool();
+
         auto set = mTextureCache[id] = mDescriptorSetPool[mDescriptorSetPoolId];
-        auto img_view =
-            RasterGlobals::SceneRasterPool->GetResource( id ).mImageView;
-        DeviceGlobals::RenderHookDevice->UpdateDescriptorSets(
+        auto img_view                = raster_pool.GetResource( id ).mImageView;
+        gRenderDriver->GetDeviceState().UpdateDescriptorSets(
             { .mSet             = set,
               .mBinding         = 1,
               .mDescriptorType  = DescriptorType::ROTexture,
@@ -456,7 +464,7 @@ rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
     if ( mIm2DPipelines.contains( hash ) )
         return mIm2DPipelines.at( hash );
 
-    auto &device = *DeviceGlobals::RenderHookDevice;
+    auto &device = gRenderDriver->GetDeviceState();
 
     PackedIm2DState s{};
     s.i_val = hash;
@@ -547,7 +555,7 @@ void Im2DRenderer::DrawDepthMask( rh::engine::IImageView *    texture,
         info.mDescriptorType  = DescriptorType::ROTexture;
         info.mSet             = texDescriptorSet;
         info.mImageUpdateInfo = img_upd_info;
-        DeviceGlobals::RenderHookDevice->UpdateDescriptorSets( info );
+        gRenderDriver->GetDeviceState().UpdateDescriptorSets( info );
         mDescriptorSetPoolId =
             ( mDescriptorSetPoolId + 1 ) % mDescriptorSetPool.size();
     }

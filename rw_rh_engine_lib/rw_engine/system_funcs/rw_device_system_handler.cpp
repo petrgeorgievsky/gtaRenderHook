@@ -280,19 +280,14 @@ std::map<RwDeviceStandardFn, RwStandardFunc> gRenderStandardFuncMap{
 RwDevice *         DeviceGlobals::DevicePtr        = nullptr;
 RwSystemFunc       DeviceGlobals::fpOldSystem      = nullptr;
 RwRwDeviceGlobals *DeviceGlobals::DeviceGlobalsPtr = nullptr;
-std::unique_ptr<rh::engine::IDeviceState> DeviceGlobals::RenderHookDevice =
-    nullptr;
-std::unique_ptr<rh::engine::IWindow> DeviceGlobals::MainWindow = nullptr;
-RwStandardFunc *                     DeviceGlobals::Standards  = nullptr;
-PluginPtrTable                       DeviceGlobals::PluginFuncs{};
-ResourcePtrTable                     DeviceGlobals::ResourceFuncs{};
-SkinPtrTable                         DeviceGlobals::SkinFuncs{};
 
-std::atomic<bool> DeviceGlobals::RenderThreadShallDie = false;
+RwStandardFunc * DeviceGlobals::Standards = nullptr;
+PluginPtrTable   DeviceGlobals::PluginFuncs{};
+ResourcePtrTable DeviceGlobals::ResourceFuncs{};
+SkinPtrTable     DeviceGlobals::SkinFuncs{};
 
-SharedMemoryTaskQueue *      DeviceGlobals::SharedMemoryTaskQueue = nullptr;
-std::unique_ptr<std::thread> DeviceGlobals::SharedMemoryTaskQueueThread =
-    nullptr;
+std::unique_ptr<RenderClient> gRenderClient = nullptr;
+std::unique_ptr<RenderDriver> gRenderDriver = nullptr;
 
 bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 {
@@ -304,30 +299,54 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
     {
         BackendRasterPluginAttach();
         BackendMaterialPluginAttach();
-        BackendCameraPluginAttach();
+        // BackendCameraPluginAttach();
     }
     if ( is_registered )
         return true;
 
     if ( IPCSettings::mMode != IPCRenderMode::CrossProcessClient )
     {
+
+        gRenderDriver->GetTaskQueue().RegisterTask(
+            SharedMemoryTaskType::CREATE_WINDOW,
+            std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                // execute
+                HWND wnd;
+                CopyMemory( &wnd, memory, sizeof( HWND ) );
+                gRenderDriver->OpenMainWindow( wnd );
+                EngineState::gCameraState = std::make_unique<CameraState>(
+                    gRenderDriver->GetDeviceState() );
+                EngineState::gFrameRenderer =
+                    std::make_shared<RayTracingRenderer>();
+            } ) );
+
+        gRenderDriver->GetTaskQueue().RegisterTask(
+            SharedMemoryTaskType::DESTROY_WINDOW,
+            std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                // execute
+                gRenderDriver->GetDeviceState().WaitForGPU();
+                EngineState::gFrameRenderer.reset();
+                EngineState::gCameraState.reset();
+                gRenderDriver->CloseMainWindow();
+            } ) );
+
         ImageLockCmdImpl::RegisterCallHandler();
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
-                DeviceGlobals::RenderHookDevice->SetCurrentDisplayMode(
+                gRenderDriver->GetDeviceState().SetCurrentDisplayMode(
                     *static_cast<int32_t *>( memory ) );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::MESH_LOAD,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 CreateBackendMeshImpl( memory );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_VIDEO_MODE,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
@@ -335,40 +354,39 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
                 CopyMemory( &mode_id, memory, sizeof( int32_t ) );
 
                 rh::engine::DisplayModeInfo display_mode{};
-                DeviceGlobals::RenderHookDevice->GetDisplayModeInfo(
+                gRenderDriver->GetDeviceState().GetDisplayModeInfo(
                     mode_id, display_mode );
                 CopyMemory( memory, &display_mode, sizeof( display_mode ) );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_CURRENT_VIDEO_MODE,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 uint32_t &id = *static_cast<uint32_t *>( memory );
 
-                DeviceGlobals::RenderHookDevice->GetCurrentDisplayMode( id );
+                gRenderDriver->GetDeviceState().GetCurrentDisplayMode( id );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 uint32_t count = 0;
-                DeviceGlobals::RenderHookDevice->GetDisplayModeCount( 0,
-                                                                      count );
+                gRenderDriver->GetDeviceState().GetDisplayModeCount( 0, count );
                 CopyMemory( memory, &count, sizeof( count ) );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_ADAPTER_COUNT,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 uint32_t count = 0;
-                DeviceGlobals::RenderHookDevice->GetAdaptersCount( count );
+                gRenderDriver->GetDeviceState().GetAdaptersCount( count );
                 CopyMemory( memory, &count, sizeof( count ) );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_ADAPTER_INFO,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
@@ -378,138 +396,65 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
                 auto                 id = *reader.Read<int32_t>();
 
                 std::string str;
-                DeviceGlobals::RenderHookDevice->GetAdapterInfo(
+                gRenderDriver->GetDeviceState().GetAdapterInfo(
                     static_cast<unsigned int>( id ), str );
 
                 result[str.copy( result.data(), result.size() - 1 )] = '\0';
                 writer.Write( result.data(), result.size() );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_CURRENT_ADAPTER,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 MemoryWriter writer( memory );
                 unsigned int adapter = 0;
-                DeviceGlobals::RenderHookDevice->GetCurrentAdapter( adapter );
+                gRenderDriver->GetDeviceState().GetCurrentAdapter( adapter );
                 auto adapter_id = static_cast<uint32_t>( adapter );
                 writer.Write( &adapter_id );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::SET_CURRENT_ADAPTER,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 MemoryReader reader( memory );
-                DeviceGlobals::RenderHookDevice->SetCurrentAdapter(
+                gRenderDriver->GetDeviceState().SetCurrentAdapter(
                     *reader.Read<uint32_t>() );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
-            SharedMemoryTaskType::CREATE_WINDOW,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                HWND wnd;
-                CopyMemory( &wnd, memory, sizeof( HWND ) );
-                unsigned int display_mode;
-                auto &       device = *DeviceGlobals::RenderHookDevice;
-                device.GetCurrentDisplayMode( display_mode );
-                device.Init();
-
-                DeviceGlobals::MainWindow =
-                    std::unique_ptr<rh::engine::IWindow>(
-                        device.CreateDeviceWindow( wnd,
-                                                   { display_mode, true } ) );
-
-                RasterGlobals::Init();
-                if ( MaterialGlobals::SceneMaterialPool == nullptr )
-                    MaterialGlobals::SceneMaterialPool =
-                        new rh::engine::ResourcePool<MaterialData>(
-                            10000, []( MaterialData &obj, uint64_t id ) {} );
-                if ( BackendMeshManager::SceneMeshData == nullptr )
-                    BackendMeshManager::SceneMeshData =
-                        new rh::engine::ResourcePool<BackendMeshData>(
-                            10001, []( BackendMeshData &obj, uint64_t id ) {
-                                if ( obj.mIndexBuffer &&
-                                     RefCountedBuffer::Release(
-                                         obj.mIndexBuffer ) )
-                                    delete obj.mIndexBuffer;
-                                if ( obj.mIndexBuffer &&
-                                     RefCountedBuffer::Release(
-                                         obj.mVertexBuffer ) )
-                                    delete obj.mVertexBuffer;
-                            } );
-
-                if ( SkinMeshManager::SceneSkinData == nullptr )
-                    SkinMeshManager::SceneSkinData =
-                        new rh::engine::ResourcePool<SkinMeshData>(
-                            1000, []( SkinMeshData &obj, uint64_t id ) {
-                                if ( obj.mIndexBuffer &&
-                                     RefCountedBuffer::Release(
-                                         obj.mIndexBuffer ) )
-                                    delete obj.mIndexBuffer;
-                                if ( obj.mVertexBuffer &&
-                                     RefCountedBuffer::Release(
-                                         obj.mVertexBuffer ) )
-                                    delete obj.mVertexBuffer;
-                            } );
-                EngineState::gCameraState =
-                    std::make_unique<CameraState>( device );
-                EngineState::gFrameRenderer =
-                    std::make_shared<RayTracingRenderer>();
-            } ) );
-
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
-            SharedMemoryTaskType::DESTROY_WINDOW,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                DeviceGlobals::RenderHookDevice->WaitForGPU();
-                // todo: replace with unique_ptrs?
-                delete SkinMeshManager::SceneSkinData;
-                SkinMeshManager::SceneSkinData = nullptr;
-                delete BackendMeshManager::SceneMeshData;
-                BackendMeshManager::SceneMeshData = nullptr;
-                delete MaterialGlobals::SceneMaterialPool;
-                MaterialGlobals::SceneMaterialPool = nullptr;
-                delete RasterGlobals::SceneRasterPool;
-                RasterGlobals::SceneRasterPool = nullptr;
-
-                EngineState::gFrameRenderer.reset();
-                EngineState::gCameraState.reset();
-                DeviceGlobals::MainWindow.reset();
-                DeviceGlobals::RenderHookDevice->Shutdown();
-            } ) );
-
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::DESTROY_RASTER,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                auto &resources   = gRenderDriver->GetResources();
+                auto &raster_pool = resources.GetRasterPool();
                 // execute
-                RasterGlobals::SceneRasterPool->FreeResource(
-                    *static_cast<uint64_t *>( memory ) );
+                raster_pool.FreeResource( *static_cast<uint64_t *>( memory ) );
             } ) );
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::MESH_DELETE,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                auto &resources = gRenderDriver->GetResources();
+                auto &mesh_pool = resources.GetMeshPool();
                 // execute
-                BackendMeshManager::SceneMeshData->FreeResource(
-                    *static_cast<uint64_t *>( memory ) );
+                mesh_pool.FreeResource( *static_cast<uint64_t *>( memory ) );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::SKINNED_MESH_LOAD,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 rw::engine::CreateSkinMeshImpl( memory );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::SKINNED_MESH_UNLOAD,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 rw::engine::DestroySkinMeshImpl( memory );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::TEXTURE_LOAD,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
@@ -553,7 +498,7 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
                 RasterData result_data{};
                 result_data.mImageBuffer =
-                    DeviceGlobals::RenderHookDevice->CreateImageBuffer(
+                    gRenderDriver->GetDeviceState().CreateImageBuffer(
                         image_buffer_ci );
 
                 rh::engine::ImageViewCreateInfo shader_view_ci{};
@@ -564,16 +509,16 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
                 shader_view_ci.mLevelCount = non_zero_mip_lvls;
 
                 result_data.mImageView =
-                    DeviceGlobals::RenderHookDevice->CreateImageView(
+                    gRenderDriver->GetDeviceState().CreateImageView(
                         shader_view_ci );
+                auto &resources   = gRenderDriver->GetResources();
+                auto &raster_pool = resources.GetRasterPool();
                 // TODO: Hide impl details
-                int64_t result =
-                    RasterGlobals::SceneRasterPool->RequestResource(
-                        result_data );
+                int64_t result = raster_pool.RequestResource( result_data );
                 CopyMemory( memory, &result, sizeof( int64_t ) );
             } ) );
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
+        /*gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::MATERIAL_LOAD,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
@@ -584,16 +529,16 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
                         { static_cast<int32_t>( init_data->mTexture ),
                           init_data->mColor,
                           static_cast<int32_t>( init_data->mSpecTexture ),
-                          init_data->specular /*, init_data->diffuse*/ } );
-            } ) );
+                          init_data->specular , init_data->diffuse } );
+            } ) );*/
 
-        DeviceGlobals::SharedMemoryTaskQueue->RegisterTask(
-            SharedMemoryTaskType::MATERIAL_DELETE,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                MaterialGlobals::SceneMaterialPool->FreeResource(
-                    *static_cast<uint64_t *>( memory ) );
-            } ) );
+        /* gRenderDriver->GetTaskQueue().RegisterTask(
+             SharedMemoryTaskType::MATERIAL_DELETE,
+             std::make_unique<SharedMemoryTask>( []( void *memory ) {
+                 // execute
+                 MaterialGlobals::SceneMaterialPool->FreeResource(
+                     *static_cast<uint64_t *>( memory ) );
+             } ) );*/
 
         InitRenderEvents();
     }
@@ -604,14 +549,15 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
 int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
 {
-    auto task_queue = DeviceGlobals::SharedMemoryTaskQueue;
-    auto sys_fn     = static_cast<RwCoreDeviceSystemFn>( nOption );
+    assert( gRenderClient );
+    auto &task_queue = gRenderClient->GetTaskQueue();
+    auto  sys_fn     = static_cast<RwCoreDeviceSystemFn>( nOption );
     switch ( sys_fn )
     {
     case rwDEVICESYSTEMGETSUBSYSTEMINFO:
     {
         auto &subsystem = *(RwSubSystemInfo *)pOut;
-        task_queue->ExecuteTask(
+        task_queue.ExecuteTask(
             SharedMemoryTaskType::GET_ADAPTER_INFO,
             [&nIn]( MemoryWriter &&memory_writer ) {
                 // serialize
@@ -640,7 +586,7 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETMODEINFO:
     {
-        task_queue->ExecuteTask(
+        task_queue.ExecuteTask(
             SharedMemoryTaskType::GET_VIDEO_MODE,
             [&nIn]( MemoryWriter &&memory_writer ) {
                 // serialize
@@ -662,31 +608,31 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETMODE:
     {
-        task_queue->ExecuteTask( SharedMemoryTaskType::GET_CURRENT_VIDEO_MODE,
-                                 EmptySerializer,
-                                 [&pOut]( MemoryReader &&memory_reader ) {
-                                     // deserialize
-                                     *static_cast<uint32_t *>( pOut ) =
-                                         *memory_reader.Read<uint32_t>();
-                                 } );
+        task_queue.ExecuteTask( SharedMemoryTaskType::GET_CURRENT_VIDEO_MODE,
+                                EmptySerializer,
+                                [&pOut]( MemoryReader &&memory_reader ) {
+                                    // deserialize
+                                    *static_cast<uint32_t *>( pOut ) =
+                                        *memory_reader.Read<uint32_t>();
+                                } );
         break;
     }
     case rwDEVICESYSTEMGETNUMMODES:
     {
-        task_queue->ExecuteTask( SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
-                                 EmptySerializer,
-                                 [&pOut]( MemoryReader &&memory_reader ) {
-                                     // deserialize
-                                     *static_cast<uint32_t *>( pOut ) =
-                                         *memory_reader.Read<uint32_t>();
-                                 } );
+        task_queue.ExecuteTask( SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
+                                EmptySerializer,
+                                [&pOut]( MemoryReader &&memory_reader ) {
+                                    // deserialize
+                                    *static_cast<uint32_t *>( pOut ) =
+                                        *memory_reader.Read<uint32_t>();
+                                } );
         break;
     }
     case rwDEVICESYSTEMUSEMODE:
     {
         using namespace rh::engine;
         DisplayModeInfo display_mode{};
-        task_queue->ExecuteTask(
+        task_queue.ExecuteTask(
             SharedMemoryTaskType::GET_VIDEO_MODE,
             [&nIn]( MemoryWriter &&memory_writer ) {
                 // serialize
@@ -727,24 +673,24 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETNUMSUBSYSTEMS:
     {
-        task_queue->ExecuteTask( SharedMemoryTaskType::GET_ADAPTER_COUNT,
-                                 EmptySerializer,
-                                 [&pOut]( MemoryReader &&memory_reader ) {
-                                     // deserialize
-                                     *static_cast<uint32_t *>( pOut ) =
-                                         *memory_reader.Read<uint32_t>();
-                                 } );
+        task_queue.ExecuteTask( SharedMemoryTaskType::GET_ADAPTER_COUNT,
+                                EmptySerializer,
+                                [&pOut]( MemoryReader &&memory_reader ) {
+                                    // deserialize
+                                    *static_cast<uint32_t *>( pOut ) =
+                                        *memory_reader.Read<uint32_t>();
+                                } );
         break;
     }
     case rwDEVICESYSTEMGETCURRENTSUBSYSTEM:
     {
-        task_queue->ExecuteTask( SharedMemoryTaskType::GET_CURRENT_ADAPTER,
-                                 EmptySerializer,
-                                 [&pOut]( MemoryReader &&memory_reader ) {
-                                     // deserialize
-                                     *static_cast<uint32_t *>( pOut ) =
-                                         *memory_reader.Read<uint32_t>();
-                                 } );
+        task_queue.ExecuteTask( SharedMemoryTaskType::GET_CURRENT_ADAPTER,
+                                EmptySerializer,
+                                [&pOut]( MemoryReader &&memory_reader ) {
+                                    // deserialize
+                                    *static_cast<uint32_t *>( pOut ) =
+                                        *memory_reader.Read<uint32_t>();
+                                } );
         break;
     }
     case rwDEVICESYSTEMSTANDARDS:
@@ -763,16 +709,16 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     case rwDEVICESYSTEMSTART:
     {
         // WINDOW INIT TASK
-        task_queue->ExecuteTask( SharedMemoryTaskType::CREATE_WINDOW,
-                                 []( MemoryWriter &&memory_writer ) {
-                                     // serialize
-                                     memory_writer.Write( &gMainWindow );
-                                 } );
+        task_queue.ExecuteTask( SharedMemoryTaskType::CREATE_WINDOW,
+                                []( MemoryWriter &&memory_writer ) {
+                                    // serialize
+                                    memory_writer.Write( &gMainWindow );
+                                } );
         break;
     }
     case rwDEVICESYSTEMSTOP:
     {
-        task_queue->ExecuteTask( SharedMemoryTaskType::DESTROY_WINDOW );
+        task_queue.ExecuteTask( SharedMemoryTaskType::DESTROY_WINDOW );
         break;
     }
     case rwDEVICESYSTEMOPEN:
@@ -788,7 +734,7 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMSETSUBSYSTEM:
     {
-        task_queue->ExecuteTask(
+        task_queue.ExecuteTask(
             SharedMemoryTaskType::SET_CURRENT_ADAPTER,
             [&nIn]( MemoryWriter &&memory_writer ) {
                 // serialize

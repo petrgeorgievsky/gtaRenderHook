@@ -99,6 +99,7 @@ bool RwTestSample::Initialize( void *wnd )
 
     RwMemoryFunctions memoryFuncs{};
     DeviceGlobals::DeviceGlobalsPtr = new RwRwDeviceGlobals();
+    InitClient();
     InitRenderer();
     SystemHandler( rwDEVICESYSTEMREGISTER, DeviceGlobals::DevicePtr,
                    &memoryFuncs, 0 );
@@ -225,6 +226,7 @@ void RwTestSample::CustomShutdown()
     SystemHandler( rwDEVICESYSTEMCLOSE, nullptr, nullptr, 0 );
 
     ShutdownRenderer();
+    ShutdownClient();
 }
 
 void RwTestSample::Render()

@@ -39,7 +39,7 @@ enum accum_slot_ids
 
 VarAwareTempAccumFilterPipe::VarAwareTempAccumFilterPipe()
 {
-    auto &device = (VulkanDeviceState &)*DeviceGlobals::RenderHookDevice;
+    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
 
     /// Shaders
     mReProjectShader = device.CreateShader(

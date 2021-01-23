@@ -181,7 +181,7 @@ BilateralFilterPipeline::BilateralFilterPipeline()
         descriptorGenerator.FinalizeDescriptorSet( 1, 8 );
     mDescAllocator = descriptorGenerator.FinalizeAllocator();
 
-    auto &device = (VulkanDeviceState &)*DeviceGlobals::RenderHookDevice;
+    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
 
     mPipelineLayout = device.CreatePipelineLayout(
         { .mSetLayouts = {

@@ -10,30 +10,12 @@
 namespace rh::rw::engine
 {
 
-rh::engine::ResourcePool<RasterData> *RasterGlobals::SceneRasterPool = nullptr;
-
-void RasterGlobals::Init()
-{
-    if ( SceneRasterPool != nullptr )
-        return;
-
-    SceneRasterPool = new rh::engine::ResourcePool<RasterData>(
-        11000, []( RasterData &obj, uint64_t ) {
-            delete obj.mImageView;
-            delete obj.mImageBuffer;
-        } );
-}
-
 int32_t gBackendRasterExtOffset = 0;
 
 void *BackendRasterCtor( void *object, [[maybe_unused]] int32_t offsetInObject,
                          [[maybe_unused]] int32_t sizeInObject )
 {
-    auto *rasExt = GetBackendRasterExt( static_cast<RwRaster *>( object ) );
-
-    /* These are used to detect when we are using a camera for the first time */
-    // rasExt->mWindow              = nullptr;
-    // rasExt->mCurrentBackBufferId = 0;
+    auto *rasExt     = GetBackendRasterExt( static_cast<RwRaster *>( object ) );
     rasExt->mImageId = 0xBADF00D;
     return ( object );
 }
@@ -46,7 +28,7 @@ void *BackendRasterDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
     if ( rasExt->mImageId == 0xBADF00D )
         return ( object );
 
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::DESTROY_RASTER,
         [&img_id]( MemoryWriter &&memory_writer ) {
             // serialize

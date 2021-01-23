@@ -20,7 +20,7 @@ SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
     : mMaxAnims( max_anims )
 {
     using namespace rh::engine;
-    auto &device   = (VulkanDeviceState &)*DeviceGlobals::RenderHookDevice;
+    auto &device   = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
     mAnimateFinish = device.CreateSyncPrimitive( SyncPrimitiveType::GPU );
 
 #ifdef _DEBUG
@@ -134,7 +134,9 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
     //
 
     auto &dev_state =
-        dynamic_cast<VulkanDeviceState &>( *DeviceGlobals::RenderHookDevice );
+        dynamic_cast<VulkanDeviceState &>( gRenderDriver->GetDeviceState() );
+    auto &resources      = gRenderDriver->GetResources();
+    auto &skin_mesh_pool = resources.GetSkinMeshPool();
 
     std::vector<AnimatedMeshDrawCall> result_drawcalls{};
     result_drawcalls.reserve( draw_calls.Size() );
@@ -147,8 +149,7 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
     uint64_t idx = 0;
     for ( auto &skin_dc : draw_calls )
     {
-        const auto &mesh_info =
-            SkinMeshManager::SceneSkinData->GetResource( skin_dc.mMeshId );
+        const auto &mesh_info = skin_mesh_pool.GetResource( skin_dc.mMeshId );
 
         AnimatedMeshDrawCall anim_dc{};
         anim_dc.mInstanceId        = skin_dc.mSkinId;
@@ -163,8 +164,8 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
             mesh_info.mVertexCount * sizeof( VertexDescPosColorUVNormals );
         vb_info.mUsage = rh::engine::BufferUsage::VertexBuffer |
                          rh::engine::BufferUsage::StorageBuffer;
-        anim_dc.mData.mVertexBuffer = new RefCountedBuffer(
-            DeviceGlobals::RenderHookDevice->CreateBuffer( vb_info ) );
+        anim_dc.mData.mVertexBuffer =
+            new RefCountedBuffer( dev_state.CreateBuffer( vb_info ) );
 
         // update buffers
 

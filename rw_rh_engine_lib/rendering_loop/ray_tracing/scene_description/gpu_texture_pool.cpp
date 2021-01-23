@@ -37,7 +37,7 @@ uint64_t GPUTexturePool::StoreTexture( rh::engine::IImageView *image,
     imgUpdateInfo.mDescriptorType  = DescriptorType::ROTexture;
     imgUpdateInfo.mArrayStartIdx   = id;
     imgUpdateInfo.mImageUpdateInfo = img_upd_list;
-    DeviceGlobals::RenderHookDevice->UpdateDescriptorSets( imgUpdateInfo );
+    gRenderDriver->GetDeviceState().UpdateDescriptorSets( imgUpdateInfo );
 
     mBuffersRemap[tex_id] = id;
     mSlotAvailability[id] = 0;

@@ -27,7 +27,7 @@ RTReflectionRaysPass::RTReflectionRaysPass(
       mHeight( params.mHeight ), mWidth( params.mWidth )
 {
 
-    auto &              device = *DeviceGlobals::RenderHookDevice;
+    auto &              device = gRenderDriver->GetDeviceState();
     DescriptorGenerator descriptorGenerator{};
 
     descriptorGenerator
@@ -252,7 +252,7 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
     //
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
-    DeviceGlobals::RenderHookDevice->UpdateDescriptorSets(
+    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
         { .mSet            = mRayTraceSet,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,

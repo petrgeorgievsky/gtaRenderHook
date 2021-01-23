@@ -8,8 +8,6 @@
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 namespace rh::rw::engine
 {
-rh::engine::ResourcePool<MaterialData> *MaterialGlobals::SceneMaterialPool =
-    nullptr;
 int32_t gBackendMaterialExtOffset = 0;
 int32_t engine::BackendMaterialPluginAttach()
 {
@@ -39,15 +37,15 @@ void *BackendMaterialDtor( void *object, int32_t offsetInObject,
     auto ext = GetBackendMaterialExt( static_cast<RpMaterial *>( object ) );
     if ( ext->mMaterialId == 0xBADF00D )
         return object;
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
-        SharedMemoryTaskType::MATERIAL_DELETE,
-        [&ext]( MemoryWriter &&memory_writer ) {
-            // serialize
-            memory_writer.Write( &ext->mMaterialId );
-        },
-        []( MemoryReader &&memory_reader ) {
-            // deserialize
-        } );
+    /* gRenderClient->GetTaskQueue().ExecuteTask(
+         SharedMemoryTaskType::MATERIAL_DELETE,
+         [&ext]( MemoryWriter &&memory_writer ) {
+             // serialize
+             memory_writer.Write( &ext->mMaterialId );
+         },
+         []( MemoryReader &&memory_reader ) {
+             // deserialize
+         } );*/
     ext->mMaterialId = 0xBADF00D;
     ext->mSpecTex    = nullptr;
     return object;
@@ -84,7 +82,7 @@ uint64_t CreateMaterialData( RpMaterial *material )
     initData.ambient     = material->surfaceProps.ambient;
     initData.mColor      = material->color;
     uint64_t material_id = 0xBADF00D;
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    /*gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::MATERIAL_LOAD,
         [&initData]( MemoryWriter &&memory_writer ) {
             // serialize
@@ -93,7 +91,7 @@ uint64_t CreateMaterialData( RpMaterial *material )
         [&material_id]( MemoryReader &&memory_reader ) {
             // deserialize
             material_id = *memory_reader.Read<uint64_t>();
-        } );
+        } );*/
     return material_id;
 }
 

@@ -17,18 +17,20 @@
 
 using namespace rh;
 using namespace rh::rw::engine;
+namespace rh::rw::engine
+{
 
-RwIOPointerTable rh::rw::engine::g_pIO_API = {
+RwIOPointerTable g_pIO_API = {
     reinterpret_cast<RwStreamFindChunk_FN>(
         GetAddressByGame( 0x5AA540, 0x5AA800, 0x5ACC00 ) ),
     reinterpret_cast<RwStreamRead_FN>(
         GetAddressByGame( 0x5A3AD0, 0x5A3D90, 0x5A4900 ) ) };
-RwRasterPointerTable rh::rw::engine::g_pRaster_API = {
+RwRasterPointerTable g_pRaster_API = {
     reinterpret_cast<RwRasterCreate_FN>(
         GetAddressByGame( 0x5AD930, 0x5ADBF0, 0x5B0580 ) ),
     reinterpret_cast<RwRasterDestroy_FN>(
         GetAddressByGame( 0x5AD780, 0x5ADA40, 0x5B0360 ) ) };
-RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
+RwTexturePointerTable g_pTexture_API = {
     reinterpret_cast<RwTextureCreate_FN>(
         GetAddressByGame( 0x5A72D0, 0x5A7590, 0x5A8AC0 ) ),
     reinterpret_cast<RwTextureSetName_FN>(
@@ -36,6 +38,7 @@ RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
     reinterpret_cast<RwTextureSetName_FN>(
         GetAddressByGame( 0x5A7420, 0x5A76E0, 0x5A8BE0 ) ) };
 
+} // namespace rh::rw::engine
 BOOL WINAPI DllMain( HINSTANCE, DWORD ul_reason_for_call, LPVOID )
 {
     switch ( ul_reason_for_call )
@@ -43,7 +46,7 @@ BOOL WINAPI DllMain( HINSTANCE, DWORD ul_reason_for_call, LPVOID )
     case DLL_PROCESS_ATTACH:
     {
         /// Init logging
-        debug::DebugLogger::Init( "gta3_logs.log", debug::LogLevel::Info );
+        debug::DebugLogger::Init( "gta3_logs.log", debug::LogLevel::Error );
         debug::InitExceptionHandler();
 
         IPCSettings::mMode        = IPCRenderMode::CrossProcessClient;

@@ -16,21 +16,7 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg,
 namespace rh::engine
 {
 static HHOOK g_hImGuiHook = nullptr;
-/*
-LRESULT CALLBACK ImGuiMsgProc( int code, WPARAM wParam, LPARAM lParam )
-{
-    rh::debug::DebugLogger::Error( "ASS" );
-    if ( code >= 0 )
-    {
-        auto msg = reinterpret_cast<LPMSG>( lParam );
-        if ( ImGui_ImplWin32_WndProcHandler( msg->hwnd, msg->message,
-                                             msg->wParam, msg->lParam ) )
-        {
-            return FALSE;
-        }
-    }
-    return CallNextHookEx( g_hImGuiHook, code, wParam, lParam );
-}*/
+
 // Returns the last Win32 error, in string format. Returns an empty string if
 // there is no error.
 std::string GetLastErrorAsString()
@@ -153,17 +139,17 @@ bool VulkanImGUI::UploadFonts( ICommandBuffer *cmd_buff )
 }
 void VulkanImGUI::DrawGui( ICommandBuffer *cmd_buff )
 {
-    ImGui::Render();
+    // ImGui::Render();
 
     auto command_buffer = reinterpret_cast<VulkanCommandBuffer *>( cmd_buff );
-    ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(),
-                                     command_buffer->GetBuffer() );
+    // ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(),
+    //                                  command_buffer->GetBuffer() );
 }
 void VulkanImGUI::BeginFrame()
 {
     ImGui_ImplVulkan_NewFrame();
     // ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
+    // ImGui::NewFrame();
 }
 VulkanImGUI::~VulkanImGUI()
 {

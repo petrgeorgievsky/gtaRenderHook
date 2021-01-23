@@ -20,14 +20,17 @@ RwCameraBeginUpdateCmd::RwCameraBeginUpdateCmd( RwCamera *camera )
     rh::debug::DebugLogger::Log( "CameraBeginUpdateCmd created...",
                                  rh::debug::LogLevel::ConstrDestrInfo );
 
+#ifndef ARCH_64BIT
     /// Some GTA versions break due to off by one errors with unlocked
     /// framerate, setting FPU to single precision fixes that, it was done in
     /// original RW on engine start and every time beginUpdate command was
     /// executed
     unsigned int current_word = 0;
     _controlfp_s( &current_word, _PC_24, _MCW_PC );
+#endif
 
-    // hot steamy bug fix
+    // "Fixes" some bugs related to camera update being called 2+ times between
+    // frames, TODO: Implement a way to handle multiple cameras?
     if ( GetCurrentSceneGraph()->mFrameInfo.camera_updated )
         return;
     SetupCameraContext();

@@ -259,7 +259,7 @@ bool RwNativeTextureReadCmd::Execute()
 
     int64_t img_id = -1;
 
-    DeviceGlobals::SharedMemoryTaskQueue->ExecuteTask(
+    gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::TEXTURE_LOAD,
         [&nativeRaster, &bytesPerBlock, &blockSize, &palette, &rhFormat,
          &nativeTexture, this]( MemoryWriter &&writer ) {

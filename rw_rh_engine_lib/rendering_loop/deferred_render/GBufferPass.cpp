@@ -41,32 +41,30 @@ void GBufferPass::InitializeRenderPass()
     render_pass_desc.mSubpasses.push_back( main_subpass );
 
     mRenderPass =
-        DeviceGlobals::RenderHookDevice->CreateRenderPass( render_pass_desc );
+        gRenderDriver->GetDeviceState().CreateRenderPass( render_pass_desc );
 }
 
 void GBufferPass::InitializePipeline()
 {
     using namespace rh::engine;
+    auto &device_state = gRenderDriver->GetDeviceState();
     // layouts
     std::array<DescriptorBinding, 1> camera_desc_set_bindings = {
         { { 0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 0, 0 } } };
     mCameraSetLayout =
-        DeviceGlobals::RenderHookDevice->CreateDescriptorSetLayout(
-            { camera_desc_set_bindings } );
+        device_state.CreateDescriptorSetLayout( { camera_desc_set_bindings } );
 
     std::array desc_set_bindings = { DescriptorBinding{
         0, DescriptorType::ROBuffer, 1, ShaderStage::Vertex, 0, 1 } };
     mModelSetLayout =
-        DeviceGlobals::RenderHookDevice->CreateDescriptorSetLayout(
-            { desc_set_bindings } );
+        device_state.CreateDescriptorSetLayout( { desc_set_bindings } );
 
     // create pipeline layouts
     std::array layout_array = { mCameraSetLayout, mModelSetLayout };
 
     PipelineLayoutCreateParams pipe_layout_ci{};
     pipe_layout_ci.mSetLayouts = layout_array;
-    mPipeLayout =
-        DeviceGlobals::RenderHookDevice->CreatePipelineLayout( pipe_layout_ci );
+    mPipeLayout = device_state.CreatePipelineLayout( pipe_layout_ci );
 
     mVsDesc = { .mShaderPath  = "shaders/d3d11/engine/gbuffer.hlsl",
                 .mEntryPoint  = "BaseVS",
@@ -111,8 +109,7 @@ void GBufferPass::InitializePipeline()
         .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
         .mTopology             = Topology::TriangleList };
 
-    mPipeline = DeviceGlobals::RenderHookDevice->CreateRasterPipeline(
-        pipe_create_params );
+    mPipeline = device_state.CreateRasterPipeline( pipe_create_params );
 }
 
 void GBufferPass::InitializeFrameBuffer()
@@ -121,7 +118,7 @@ void GBufferPass::InitializeFrameBuffer()
 
     auto  gbuffer_resolution_w = 1920;
     auto  gbuffer_resolution_h = 1080;
-    auto &device               = *DeviceGlobals::RenderHookDevice;
+    auto &device               = gRenderDriver->GetDeviceState();
 
     {
         ImageBufferCreateParams render_buffer_ci{};
