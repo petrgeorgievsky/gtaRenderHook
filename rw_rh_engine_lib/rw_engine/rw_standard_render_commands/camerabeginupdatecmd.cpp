@@ -152,7 +152,7 @@ bool RwCameraBeginUpdateCmd::Execute()
      info.m_pFrameBuffer = framebuffer;
      info.m_aClearValues = clear_values;
      command_buffer->BeginRenderPass( info );*/
-    DeviceGlobals::DeviceGlobalsPtr->curCamera = m_pCamera;
+    gRwDeviceGlobals.DeviceGlobalsPtr->curCamera = m_pCamera;
     return true;
 }
 

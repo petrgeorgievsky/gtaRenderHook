@@ -28,6 +28,8 @@
 #include <rw_engine/rw_standard_render_commands/rasterlockcmd.h>
 #include <rw_engine/rw_standard_render_commands/rastersetimagecmd.h>
 #include <rw_engine/rw_standard_render_commands/rasterunlockcmd.h>
+#include <rw_engine/system_funcs/start_cmd.h>
+#include <rw_engine/system_funcs/stop_cmd.h>
 #include <string>
 
 namespace rh::rw::engine
@@ -277,23 +279,18 @@ std::map<RwDeviceStandardFn, RwStandardFunc> gRenderStandardFuncMap{
       []( void *pOut, void *pInOut, int32_t nI ) -> int32_t { return 1; } },
 };
 
-RwDevice *         DeviceGlobals::DevicePtr        = nullptr;
-RwSystemFunc       DeviceGlobals::fpOldSystem      = nullptr;
-RwRwDeviceGlobals *DeviceGlobals::DeviceGlobalsPtr = nullptr;
-
-RwStandardFunc * DeviceGlobals::Standards = nullptr;
-PluginPtrTable   DeviceGlobals::PluginFuncs{};
-ResourcePtrTable DeviceGlobals::ResourceFuncs{};
-SkinPtrTable     DeviceGlobals::SkinFuncs{};
-
 std::unique_ptr<RenderClient> gRenderClient = nullptr;
 std::unique_ptr<RenderDriver> gRenderDriver = nullptr;
+DeviceGlobals                 gRwDeviceGlobals{};
 
 bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 {
-    static bool is_registered                 = false;
-    device                                    = *DeviceGlobals::DevicePtr;
-    DeviceGlobals::DeviceGlobalsPtr->memFuncs = memory_funcs;
+    static bool is_registered = false;
+    assert( gRwDeviceGlobals.DevicePtr );
+    assert( gRwDeviceGlobals.DeviceGlobalsPtr );
+
+    device                                      = *gRwDeviceGlobals.DevicePtr;
+    gRwDeviceGlobals.DeviceGlobalsPtr->memFuncs = memory_funcs;
 
     if ( IPCSettings::mMode != IPCRenderMode::CrossProcessRenderer )
     {
@@ -306,31 +303,15 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
     if ( IPCSettings::mMode != IPCRenderMode::CrossProcessClient )
     {
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::CREATE_WINDOW,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                HWND wnd;
-                CopyMemory( &wnd, memory, sizeof( HWND ) );
-                gRenderDriver->OpenMainWindow( wnd );
-                EngineState::gCameraState = std::make_unique<CameraState>(
-                    gRenderDriver->GetDeviceState() );
-                EngineState::gFrameRenderer =
-                    std::make_shared<RayTracingRenderer>();
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::DESTROY_WINDOW,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                gRenderDriver->GetDeviceState().WaitForGPU();
-                EngineState::gFrameRenderer.reset();
-                EngineState::gCameraState.reset();
-                gRenderDriver->CloseMainWindow();
-            } ) );
-
+        assert( gRenderDriver );
+        auto &driver_task_queue = gRenderDriver->GetTaskQueue();
+        /// Register driver tasks
+        //
+        /// TODO: Move to RenderDriver
+        StartSystemCmdImpl::RegisterCallHandler( driver_task_queue );
+        StopSystemCmdImpl::RegisterCallHandler( driver_task_queue );
         ImageLockCmdImpl::RegisterCallHandler();
+
         gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
@@ -549,14 +530,57 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
 int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
 {
-    assert( gRenderClient );
-    auto &task_queue = gRenderClient->GetTaskQueue();
-    auto  sys_fn     = static_cast<RwCoreDeviceSystemFn>( nOption );
+    auto sys_fn = static_cast<RwCoreDeviceSystemFn>( nOption );
     switch ( sys_fn )
     {
+    case rwDEVICESYSTEMREGISTER:
+    {
+        auto deviceOut       = reinterpret_cast<RwDevice *>( pOut );
+        auto memoryFunctions = reinterpret_cast<RwMemoryFunctions *>( pInOut );
+        if ( !SystemRegister( *deviceOut, memoryFunctions ) )
+            return 0;
+        break;
+    }
+    case rwDEVICESYSTEMOPEN:
+    {
+        gMainWindow = static_cast<HWND>(
+            static_cast<RwEngineOpenParams *>( pInOut )->displayID );
+        break;
+    }
+    case rwDEVICESYSTEMCLOSE:
+    {
+        gMainWindow = nullptr;
+        break;
+    }
+    case rwDEVICESYSTEMSTANDARDS:
+    {
+        debug::DebugLogger::Log( "Register system standard functions..." );
+        auto standardFunctions = reinterpret_cast<RwStandardFunc *>( pOut );
+        for ( auto i = 0; i < 27; i++ )
+        {
+            gStandards[i] = standardFunctions[i] =
+                gRenderStandardFuncMap[static_cast<RwDeviceStandardFn>( i )];
+        }
+        gRwDeviceGlobals.Standards = gStandards.data();
+        break;
+    }
+    case rwDEVICESYSTEMSTART:
+    {
+        assert( gRenderClient );
+        StartSystemCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        return cmd.Invoke( gMainWindow );
+    }
+    case rwDEVICESYSTEMSTOP:
+    {
+        assert( gRenderClient );
+        StopSystemCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        return cmd.Invoke();
+    }
     case rwDEVICESYSTEMGETSUBSYSTEMINFO:
     {
-        auto &subsystem = *(RwSubSystemInfo *)pOut;
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
+        auto &subsystem  = *(RwSubSystemInfo *)pOut;
         task_queue.ExecuteTask(
             SharedMemoryTaskType::GET_ADAPTER_INFO,
             [&nIn]( MemoryWriter &&memory_writer ) {
@@ -571,21 +595,10 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
             } );
         break;
     }
-    /*case rwDEVICESYSTEMFINALIZESTART:
-        if ( DeviceGlobals::fpOldSystem )
-            return DeviceGlobals::fpOldSystem( nOption, pOut, pInOut, nIn );
-        else
-            return 1;*/
-    case rwDEVICESYSTEMREGISTER:
-    {
-        auto deviceOut       = reinterpret_cast<RwDevice *>( pOut );
-        auto memoryFunctions = reinterpret_cast<RwMemoryFunctions *>( pInOut );
-        if ( !SystemRegister( *deviceOut, memoryFunctions ) )
-            return 0;
-        break;
-    }
     case rwDEVICESYSTEMGETMODEINFO:
     {
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
         task_queue.ExecuteTask(
             SharedMemoryTaskType::GET_VIDEO_MODE,
             [&nIn]( MemoryWriter &&memory_writer ) {
@@ -608,6 +621,8 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETMODE:
     {
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
         task_queue.ExecuteTask( SharedMemoryTaskType::GET_CURRENT_VIDEO_MODE,
                                 EmptySerializer,
                                 [&pOut]( MemoryReader &&memory_reader ) {
@@ -619,6 +634,8 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETNUMMODES:
     {
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
         task_queue.ExecuteTask( SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
                                 EmptySerializer,
                                 [&pOut]( MemoryReader &&memory_reader ) {
@@ -630,6 +647,8 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMUSEMODE:
     {
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
         using namespace rh::engine;
         DisplayModeInfo display_mode{};
         task_queue.ExecuteTask(
@@ -673,6 +692,8 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETNUMSUBSYSTEMS:
     {
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
         task_queue.ExecuteTask( SharedMemoryTaskType::GET_ADAPTER_COUNT,
                                 EmptySerializer,
                                 [&pOut]( MemoryReader &&memory_reader ) {
@@ -684,6 +705,8 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMGETCURRENTSUBSYSTEM:
     {
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
         task_queue.ExecuteTask( SharedMemoryTaskType::GET_CURRENT_ADAPTER,
                                 EmptySerializer,
                                 [&pOut]( MemoryReader &&memory_reader ) {
@@ -693,47 +716,10 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
                                 } );
         break;
     }
-    case rwDEVICESYSTEMSTANDARDS:
-    {
-        debug::DebugLogger::Log(
-            std::string( "RWGAMEHOOKS_LOG: Standards FUNC: " ) );
-        auto standardFunctions = reinterpret_cast<RwStandardFunc *>( pOut );
-        for ( auto i = 0; i < 27; i++ )
-        {
-            gStandards[i] = standardFunctions[i] =
-                gRenderStandardFuncMap[static_cast<RwDeviceStandardFn>( i )];
-        }
-        DeviceGlobals::Standards = gStandards.data();
-        break;
-    }
-    case rwDEVICESYSTEMSTART:
-    {
-        // WINDOW INIT TASK
-        task_queue.ExecuteTask( SharedMemoryTaskType::CREATE_WINDOW,
-                                []( MemoryWriter &&memory_writer ) {
-                                    // serialize
-                                    memory_writer.Write( &gMainWindow );
-                                } );
-        break;
-    }
-    case rwDEVICESYSTEMSTOP:
-    {
-        task_queue.ExecuteTask( SharedMemoryTaskType::DESTROY_WINDOW );
-        break;
-    }
-    case rwDEVICESYSTEMOPEN:
-    {
-        gMainWindow = static_cast<HWND>(
-            static_cast<RwEngineOpenParams *>( pInOut )->displayID );
-        break;
-    }
-    case rwDEVICESYSTEMCLOSE:
-    {
-        gMainWindow = nullptr;
-        break;
-    }
     case rwDEVICESYSTEMSETSUBSYSTEM:
     {
+        assert( gRenderClient );
+        auto &task_queue = gRenderClient->GetTaskQueue();
         task_queue.ExecuteTask(
             SharedMemoryTaskType::SET_CURRENT_ADAPTER,
             [&nIn]( MemoryWriter &&memory_writer ) {
@@ -745,15 +731,17 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     }
     case rwDEVICESYSTEMFINALIZESTART:
     {
-        if ( DeviceGlobals::fpOldSystem )
-            return DeviceGlobals::fpOldSystem( nOption, pOut, pInOut, nIn );
+        if ( gRwDeviceGlobals.fpOldSystem )
+            return gRwDeviceGlobals.fpOldSystem( nOption, pOut, pInOut, nIn );
         break;
     }
     case rwDEVICESYSTEMINITIATESTOP:
     {
         break;
     }
-    default: throw std::logic_error( "bad" );
+    default:
+        throw std::logic_error(
+            "Unsupported system command called via rwSystemHandler!" );
     }
     return 1;
 }

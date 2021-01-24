@@ -88,7 +88,7 @@ void SimpleSample::CustomRender()
 
     if ( m_vTextureList.size() > m_nTexId )
     {
-        auto  device = rh::rw::engine::DeviceGlobals::DevicePtr;
+        auto  device = rh::rw::engine::gRwDeviceGlobals.DevicePtr;
         auto *tex    = m_vTextureList[m_nTexId];
         auto *raster = tex->raster;
         GenerateQuad( raster->width, raster->height );

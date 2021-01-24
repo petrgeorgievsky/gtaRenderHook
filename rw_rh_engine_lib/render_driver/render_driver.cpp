@@ -28,7 +28,6 @@ RenderDriver::RenderDriver()
         while ( IsRunning )
             TaskQueue->TaskLoop();
     } );
-    // DeviceState =
 }
 
 bool RenderDriver::OpenMainWindow( HWND window )
@@ -36,11 +35,17 @@ bool RenderDriver::OpenMainWindow( HWND window )
     unsigned int display_mode;
 
     if ( !DeviceState->GetCurrentDisplayMode( display_mode ) )
+    {
+        debug::DebugLogger::Error( "Failed to retrieve current display mode" );
         return false;
+    }
 
     // initialize device state
     if ( !DeviceState->Init() )
+    {
+        debug::DebugLogger::Error( "Failed to initialize device state" );
         return false;
+    }
     MainWindow = std::unique_ptr<rh::engine::IWindow>(
         DeviceState->CreateDeviceWindow( window, { display_mode, true } ) );
 
@@ -107,7 +112,6 @@ void EngineResourceHolder::GC()
 {
     SkinMeshPool.CollectGarbage( 1000 );
     MeshPool.CollectGarbage( 120 );
-    // MaterialGlobals::SceneMaterialPool->CollectGarbage( 10000 );
     RasterPool.CollectGarbage( 100 );
 }
 } // namespace rh::rw::engine

@@ -66,30 +66,30 @@ bool RwTestSample::Initialize( void *wnd )
 {
     unsigned int gpuCount;
 
-    DeviceGlobals::PluginFuncs.CameraRegisterPlugin =
-        []( int32_t size, uint32_t pluginID,
-            RwPluginObjectConstructor constructCB,
-            RwPluginObjectDestructor  destructCB,
-            RwPluginObjectCopy        copyCB ) -> int32_t {
-        return sizeof( RwCamera );
-    };
-    DeviceGlobals::PluginFuncs.RasterRegisterPlugin =
-        []( int32_t size, uint32_t pluginID,
-            RwPluginObjectConstructor constructCB,
-            RwPluginObjectDestructor  destructCB,
-            RwPluginObjectCopy        copyCB ) -> int32_t {
-        return sizeof( RwRaster );
-    };
-    DeviceGlobals::PluginFuncs.MaterialRegisterPlugin =
-        []( int32_t size, uint32_t pluginID,
-            RwPluginObjectConstructor constructCB,
-            RwPluginObjectDestructor  destructCB,
-            RwPluginObjectCopy        copyCB ) -> int32_t {
-        return sizeof( RpMaterial );
-    };
-    DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack =
-        []( uint32_t                        pluginID,
-            RwPluginDataChunkAlwaysCallBack alwaysCB ) -> int32_t { return 1; };
+    gRwDeviceGlobals.PluginFuncs = {
+
+        .MaterialRegisterPlugin = []( int32_t size, uint32_t pluginID,
+                                      RwPluginObjectConstructor constructCB,
+                                      RwPluginObjectDestructor  destructCB,
+                                      RwPluginObjectCopy copyCB ) -> int32_t {
+            return sizeof( RpMaterial );
+        },
+        .MaterialSetStreamAlwaysCallBack =
+            []( uint32_t pluginID, RwPluginDataChunkAlwaysCallBack alwaysCB )
+            -> int32_t { return 1; },
+        .RasterRegisterPlugin = []( int32_t size, uint32_t pluginID,
+                                    RwPluginObjectConstructor constructCB,
+                                    RwPluginObjectDestructor  destructCB,
+                                    RwPluginObjectCopy copyCB ) -> int32_t {
+            return sizeof( RwRaster );
+        },
+        .CameraRegisterPlugin = []( int32_t size, uint32_t pluginID,
+                                    RwPluginObjectConstructor constructCB,
+                                    RwPluginObjectDestructor  destructCB,
+                                    RwPluginObjectCopy copyCB ) -> int32_t {
+            return sizeof( RwCamera );
+        } };
+
     auto devptr = static_cast<RwDevice *>( malloc( sizeof( RwDevice ) ) );
     new ( devptr ) RwDevice{};
 
@@ -98,10 +98,10 @@ bool RwTestSample::Initialize( void *wnd )
     RwGameHooks::Patch( ptr_table );
 
     RwMemoryFunctions memoryFuncs{};
-    DeviceGlobals::DeviceGlobalsPtr = new RwRwDeviceGlobals();
+    gRwDeviceGlobals.DeviceGlobalsPtr = new RwRwDeviceGlobals();
     InitClient();
     InitRenderer();
-    SystemHandler( rwDEVICESYSTEMREGISTER, DeviceGlobals::DevicePtr,
+    SystemHandler( rwDEVICESYSTEMREGISTER, gRwDeviceGlobals.DevicePtr,
                    &memoryFuncs, 0 );
     // Preparation of rendering engine, initializes info about hardware that'll
     // use this window

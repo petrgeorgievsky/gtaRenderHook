@@ -119,12 +119,12 @@ static int32_t SkinD3D8AtomicAllInOneNode( void * /*self*/,
 
 void SkinModelPipeline::Patch()
 {
-    DeviceGlobals::SkinFuncs.GetVertexBoneWeights =
+    gRwDeviceGlobals.SkinFuncs.GetVertexBoneWeights =
         []( RpSkin *skin ) -> const RwMatrixWeights * {
         auto old_skin = reinterpret_cast<RpSkinOld *>( skin );
         return old_skin->boneWeights_;
     };
-    DeviceGlobals::SkinFuncs.GetVertexBoneIndices =
+    gRwDeviceGlobals.SkinFuncs.GetVertexBoneIndices =
         []( RpSkin *skin ) -> const uint32_t * {
         auto old_skin = reinterpret_cast<RpSkinOld *>( skin );
         return old_skin->indicies_;

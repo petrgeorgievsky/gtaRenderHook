@@ -74,6 +74,7 @@ class RenderDriver
         assert( DeviceState );
         return *DeviceState;
     }
+
     rh::engine::IWindow &GetMainWindow()
     {
         assert( MainWindow );

@@ -31,84 +31,85 @@ void RwGameHooks::Patch( const RwPointerTable &pointerTable )
 {
     if ( pointerTable.mRwDevicePtr )
     {
-        DeviceGlobals::DevicePtr =
+        gRwDeviceGlobals.DevicePtr =
             reinterpret_cast<RwDevice *>( pointerTable.mRwDevicePtr );
-        DeviceGlobals::fpOldSystem         = DeviceGlobals::DevicePtr->fpSystem;
-        DeviceGlobals::DevicePtr->fpSystem = SystemHandler;
-        DeviceGlobals::DevicePtr->fpIm2DRenderPrimitive =
+        gRwDeviceGlobals.fpOldSystem = gRwDeviceGlobals.DevicePtr->fpSystem;
+        gRwDeviceGlobals.DevicePtr->fpSystem = SystemHandler;
+        gRwDeviceGlobals.DevicePtr->fpIm2DRenderPrimitive =
             Im2DRenderPrimitiveFunction;
-        DeviceGlobals::DevicePtr->fpIm2DRenderIndexedPrimitive =
+        gRwDeviceGlobals.DevicePtr->fpIm2DRenderIndexedPrimitive =
             Im2DRenderIndexedPrimitiveFunction;
-        DeviceGlobals::DevicePtr->fpRenderStateSet = SetRenderState;
-        DeviceGlobals::DevicePtr->fpRenderStateGet = GetRenderState;
+        gRwDeviceGlobals.DevicePtr->fpRenderStateSet = SetRenderState;
+        gRwDeviceGlobals.DevicePtr->fpRenderStateGet = GetRenderState;
 
         /* Render functions */
-        DeviceGlobals::DevicePtr->fpIm2DRenderLine =
+        gRwDeviceGlobals.DevicePtr->fpIm2DRenderLine =
             []( RwIm2DVertex *vertices, int32_t numVertices, int32_t vert1,
                 int32_t vert2 ) { return 1; };
-        DeviceGlobals::DevicePtr->fpIm2DRenderTriangle =
+        gRwDeviceGlobals.DevicePtr->fpIm2DRenderTriangle =
             []( RwIm2DVertex *vertices, int32_t numVertices, int32_t vert1,
                 int32_t vert2, int32_t vert3 ) { return 1; };
 
-        DeviceGlobals::DevicePtr->fpIm3DRenderLine             = nullptr;
-        DeviceGlobals::DevicePtr->fpIm3DRenderTriangle         = nullptr;
-        DeviceGlobals::DevicePtr->fpIm3DRenderPrimitive        = nullptr;
-        DeviceGlobals::DevicePtr->fpIm3DRenderIndexedPrimitive = nullptr;
+        gRwDeviceGlobals.DevicePtr->fpIm3DRenderLine             = nullptr;
+        gRwDeviceGlobals.DevicePtr->fpIm3DRenderTriangle         = nullptr;
+        gRwDeviceGlobals.DevicePtr->fpIm3DRenderPrimitive        = nullptr;
+        gRwDeviceGlobals.DevicePtr->fpIm3DRenderIndexedPrimitive = nullptr;
     }
     if ( pointerTable.mAllocateResourceEntry )
-        DeviceGlobals::ResourceFuncs.AllocateResourceEntry =
+        gRwDeviceGlobals.ResourceFuncs.AllocateResourceEntry =
             reinterpret_cast<RwResourcesAllocateResEntry>(
                 pointerTable.mAllocateResourceEntry );
     if ( pointerTable.mFreeResourceEntry )
-        DeviceGlobals::ResourceFuncs.FreeResourceEntry =
+        gRwDeviceGlobals.ResourceFuncs.FreeResourceEntry =
             reinterpret_cast<RwResourcesFreeResEntry>(
                 pointerTable.mFreeResourceEntry );
 
     if ( pointerTable.mRasterRegisterPluginPtr )
-        DeviceGlobals::PluginFuncs.RasterRegisterPlugin =
+        gRwDeviceGlobals.PluginFuncs.RasterRegisterPlugin =
             reinterpret_cast<RegisterPluginCall>(
                 pointerTable.mRasterRegisterPluginPtr );
 
     if ( pointerTable.mMaterialRegisterPluginPtr )
-        DeviceGlobals::PluginFuncs.MaterialRegisterPlugin =
+        gRwDeviceGlobals.PluginFuncs.MaterialRegisterPlugin =
             reinterpret_cast<RegisterPluginCall>(
                 pointerTable.mMaterialRegisterPluginPtr );
 
     if ( pointerTable.mMaterialRegisterPluginPtr )
-        DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack =
+        gRwDeviceGlobals.PluginFuncs.MaterialSetStreamAlwaysCallBack =
             reinterpret_cast<SetStreamAlwaysCallBack>(
                 pointerTable.mMaterialSetStreamAlwaysCallbackPtr );
 
     if ( pointerTable.mCameraRegisterPluginPtr )
-        DeviceGlobals::PluginFuncs.CameraRegisterPlugin =
+        gRwDeviceGlobals.PluginFuncs.CameraRegisterPlugin =
             reinterpret_cast<RegisterPluginCall>(
                 pointerTable.mCameraRegisterPluginPtr );
 
     if ( pointerTable.mAtomicGetHAnimHierarchy )
-        DeviceGlobals::SkinFuncs.AtomicGetHAnimHierarchy =
+        gRwDeviceGlobals.SkinFuncs.AtomicGetHAnimHierarchy =
             reinterpret_cast<RpSkinAtomicGetHAnimHierarchyFP>(
                 pointerTable.mAtomicGetHAnimHierarchy );
     if ( pointerTable.mGeometryGetSkin )
-        DeviceGlobals::SkinFuncs.GeometryGetSkin =
+        gRwDeviceGlobals.SkinFuncs.GeometryGetSkin =
             reinterpret_cast<RpSkinGeometryGetSkinFP>(
                 pointerTable.mGeometryGetSkin );
     if ( pointerTable.mGetSkinToBoneMatrices )
-        DeviceGlobals::SkinFuncs.GetSkinToBoneMatrices =
+        gRwDeviceGlobals.SkinFuncs.GetSkinToBoneMatrices =
             reinterpret_cast<RpSkinGetSkinToBoneMatricesFP>(
                 pointerTable.mGetSkinToBoneMatrices );
     if ( pointerTable.mGetVertexBoneIndices )
-        DeviceGlobals::SkinFuncs.GetVertexBoneIndices =
+        gRwDeviceGlobals.SkinFuncs.GetVertexBoneIndices =
             reinterpret_cast<RpSkinGetVertexBoneIndicesFP>(
                 pointerTable.mGetVertexBoneIndices );
     if ( pointerTable.mGetVertexBoneWeights )
-        DeviceGlobals::SkinFuncs.GetVertexBoneWeights =
+        gRwDeviceGlobals.SkinFuncs.GetVertexBoneWeights =
             reinterpret_cast<RpSkinGetVertexBoneWeightsFP>(
                 pointerTable.mGetVertexBoneWeights );
 
     if ( pointerTable.mRwRwDeviceGlobalsPtr )
     {
-        DeviceGlobals::DeviceGlobalsPtr = reinterpret_cast<RwRwDeviceGlobals *>(
-            pointerTable.mRwRwDeviceGlobalsPtr );
+        gRwDeviceGlobals.DeviceGlobalsPtr =
+            reinterpret_cast<RwRwDeviceGlobals *>(
+                pointerTable.mRwRwDeviceGlobalsPtr );
     }
 
     if ( pointerTable.mIm3DOpen )

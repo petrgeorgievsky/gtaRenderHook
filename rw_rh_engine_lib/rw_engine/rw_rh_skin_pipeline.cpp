@@ -84,7 +84,7 @@ RwResEntry *RHInstanceSkinAtomicGeometry( RpGeometryInterface *geom_io,
     ResEnty *resEntry;
 
     resEntry = reinterpret_cast<ResEnty *>(
-        DeviceGlobals::ResourceFuncs.AllocateResourceEntry(
+        gRwDeviceGlobals.ResourceFuncs.AllocateResourceEntry(
             owner, &resEntryPointer, sizeof( ResEnty ) - sizeof( RwResEntry ),
             []( RwResEntry *resEntry ) noexcept {
                 auto *entry = reinterpret_cast<ResEnty *>( resEntry );
@@ -173,7 +173,7 @@ RwResEntry *RHInstanceSkinAtomicGeometry( RpGeometryInterface *geom_io,
         geometry_splits.push_back( meshData );
     }
 
-    auto skin = DeviceGlobals::SkinFuncs.GeometryGetSkin(
+    auto skin = gRwDeviceGlobals.SkinFuncs.GeometryGetSkin(
         static_cast<const RpGeometry *>( geom_io->GetThis() ) );
 
     // Vertex data
@@ -186,9 +186,9 @@ RwResEntry *RHInstanceSkinAtomicGeometry( RpGeometryInterface *geom_io,
     RwRGBA *               vertexColorPtr = geom_io->GetVertexColorPtr();
     RwV3d *                normalsPtr     = morph_target->normals;
     const RwMatrixWeights *weightsPtr =
-        DeviceGlobals::SkinFuncs.GetVertexBoneWeights( skin );
+        gRwDeviceGlobals.SkinFuncs.GetVertexBoneWeights( skin );
     const uint32_t *boneIdsPtr =
-        DeviceGlobals::SkinFuncs.GetVertexBoneIndices( skin );
+        gRwDeviceGlobals.SkinFuncs.GetVertexBoneIndices( skin );
 
     uint32_t v_id = 0;
     for ( ; vertexPos != morph_target->verts + geom_io->GetVertexCount();
@@ -308,14 +308,15 @@ DirectX::XMFLOAT4X3 RwMatrixToDxMatrix( const RwMatrix *mtx )
 void PrepareBoneMatrices( DirectX::XMFLOAT4X3 *matrix_cache, RpAtomic *atomic,
                           IAnimHierarcy &anim_hier )
 {
-    auto _anim_hier =
-        DeviceGlobals::SkinFuncs.AtomicGetHAnimHierarchy( atomic );
-    auto skin = DeviceGlobals::SkinFuncs.GeometryGetSkin( atomic->geometry );
+    auto &skin_fptr_tbl = gRwDeviceGlobals.SkinFuncs;
+
+    auto _anim_hier = skin_fptr_tbl.AtomicGetHAnimHierarchy( atomic );
+    auto skin       = skin_fptr_tbl.GeometryGetSkin( atomic->geometry );
+
     if ( !_anim_hier || !skin )
         return;
     anim_hier.Init( _anim_hier );
-    auto *skinToBoneMatrices =
-        DeviceGlobals::SkinFuncs.GetSkinToBoneMatrices( skin );
+    auto *skinToBoneMatrices = skin_fptr_tbl.GetSkinToBoneMatrices( skin );
 
     auto frame = static_cast<RwFrame *>( rwObject::GetParent( atomic ) );
     auto atomic_transform = rw::engine::RwFrameGetLTM( frame );
@@ -458,7 +459,7 @@ RenderStatus RwRHInstanceSkinAtomic( RpAtomic *           atomic,
         }
 
         auto anim_hier =
-            DeviceGlobals::SkinFuncs.AtomicGetHAnimHierarchy( atomic );
+            gRwDeviceGlobals.SkinFuncs.AtomicGetHAnimHierarchy( atomic );
         auto frame = static_cast<RwFrame *>( rwObject::GetParent( atomic ) );
 
         resEntry = RHInstanceSkinAtomicGeometry( geom_io, owner,

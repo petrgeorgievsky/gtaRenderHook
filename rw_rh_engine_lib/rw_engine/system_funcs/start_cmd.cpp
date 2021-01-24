@@ -9,32 +9,47 @@
 namespace rh::rw::engine
 {
 
+StartSystemCmdImpl::StartSystemCmdImpl( SharedMemoryTaskQueue &task_queue )
+    : TaskQueue( task_queue )
+{
+}
+
 bool StartSystemCmdImpl::Invoke( HWND window )
 {
-    mTaskQueue.ExecuteTask( SharedMemoryTaskType::CREATE_WINDOW,
-                            [window]( MemoryWriter &&memory_writer ) {
-                                // serialize
-                                memory_writer.Write( &window );
-                            } );
+    TaskQueue.ExecuteTask( SharedMemoryTaskType::CREATE_WINDOW,
+                           [window]( MemoryWriter &&memory_writer ) {
+                               // serialize
+                               memory_writer.Write( &window );
+                           } );
     return true;
 }
 
-void StartSystemCmdImpl::RegisterCallHandler()
+void CreateWindowTaskImpl( void *memory )
 {
-    gRenderDriver->GetTaskQueue().RegisterTask(
-        SharedMemoryTaskType::CREATE_WINDOW,
-        std::make_unique<SharedMemoryTask>( []( void *memory ) {
-            MemoryReader reader( memory );
-            MemoryWriter writer( memory );
+    MemoryReader reader( memory );
+    MemoryWriter writer( memory );
 
-            // execute
-            HWND wnd = *reader.Read<HWND>();
-            gRenderDriver->OpenMainWindow( wnd );
+    // execute
+    HWND wnd = *reader.Read<HWND>();
+    if ( !gRenderDriver->OpenMainWindow( wnd ) )
+    {
+        debug::DebugLogger::ErrorFmt( "Failed to open window:%X", wnd );
+        return;
+    }
 
-            EngineState::gCameraState = std::make_unique<CameraState>(
-                gRenderDriver->GetDeviceState() );
-            EngineState::gFrameRenderer =
-                std::make_shared<RayTracingRenderer>();
-        } ) );
+    // Init renderer state
+    // TODO: Refactor
+    EngineState::gCameraState =
+        std::make_unique<CameraState>( gRenderDriver->GetDeviceState() );
+    EngineState::gFrameRenderer = std::make_shared<RayTracingRenderer>();
 }
+
+void StartSystemCmdImpl::RegisterCallHandler(
+    SharedMemoryTaskQueue &task_queue )
+{
+    task_queue.RegisterTask(
+        SharedMemoryTaskType::CREATE_WINDOW,
+        std::make_unique<SharedMemoryTask>( CreateWindowTaskImpl ) );
+}
+
 } // namespace rh::rw::engine

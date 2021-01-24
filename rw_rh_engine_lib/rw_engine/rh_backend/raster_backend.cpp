@@ -44,7 +44,7 @@ void *BackendRasterDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
 
 int32_t BackendRasterPluginAttach()
 {
-    gBackendRasterExtOffset = DeviceGlobals::PluginFuncs.RasterRegisterPlugin(
+    gBackendRasterExtOffset = gRwDeviceGlobals.PluginFuncs.RasterRegisterPlugin(
         sizeof( BackendRasterExt ), rwID_RASTER_BACKEND, BackendRasterCtor,
         BackendRasterDtor, nullptr );
     return gBackendRasterExtOffset > 0;

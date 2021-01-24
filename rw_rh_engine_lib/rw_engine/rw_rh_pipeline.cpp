@@ -157,7 +157,7 @@ RwResEntry *RHInstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
     ResEnty *resEntry;
 
     resEntry = reinterpret_cast<ResEnty *>(
-        DeviceGlobals::ResourceFuncs.AllocateResourceEntry(
+        gRwDeviceGlobals.ResourceFuncs.AllocateResourceEntry(
             owner, &resEntryPointer, sizeof( ResEnty ) - sizeof( RwResEntry ),
             []( RwResEntry *resEntry ) noexcept {
                 auto *entry = reinterpret_cast<ResEnty *>( resEntry );

@@ -49,7 +49,7 @@ void RwCameraDestroy( RwCamera *camera )
 RwCamera *RwCameraClear( RwCamera *camera, RwRGBA *color, int32_t clearMode )
 {
     RwStandardFunc CameraClearFunc =
-        DeviceGlobals::Standards[rwSTANDARDCAMERACLEAR];
+        gRwDeviceGlobals.Standards[rwSTANDARDCAMERACLEAR];
 
     if ( CameraClearFunc( camera, color, clearMode ) )
     {

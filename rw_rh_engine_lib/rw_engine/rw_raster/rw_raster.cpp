@@ -1,7 +1,7 @@
 #include "rw_raster.h"
 #include "../global_definitions.h"
-#include "../system_funcs/rw_device_system_globals.h"
 #include "../rh_backend/raster_backend.h"
+#include "../system_funcs/rw_device_system_globals.h"
 
 #include <common_headers.h>
 namespace rh::rw::engine
@@ -12,7 +12,7 @@ RwRaster *RwRasterCreate( int32_t width, int32_t height, int32_t depth,
 {
     auto *raster = static_cast<RwRaster *>(
         malloc( sizeof( RwRaster ) + sizeof( BackendRasterExt ) ) );
-    new (raster) RwRaster{};
+    new ( raster ) RwRaster{};
 
     if ( raster == nullptr )
         return nullptr;
@@ -28,7 +28,7 @@ RwRaster *RwRasterCreate( int32_t width, int32_t height, int32_t depth,
     raster->cpPixels     = nullptr;
     raster->palette      = nullptr;
     const RwStandardFunc RasterCreateFunc =
-        DeviceGlobals::Standards[rwSTANDARDRASTERCREATE];
+        gRwDeviceGlobals.Standards[rwSTANDARDRASTERCREATE];
 
     if ( !RasterCreateFunc( nullptr, raster, flags ) )
     {
@@ -46,7 +46,7 @@ int32_t RwRasterDestroy( RwRaster *raster )
         return false;
 
     const RwStandardFunc RasterDestroyFunc =
-        DeviceGlobals::Standards[rwSTANDARDRASTERDESTROY];
+        gRwDeviceGlobals.Standards[rwSTANDARDRASTERDESTROY];
     RasterDestroyFunc( nullptr, raster, 0 );
 
     free( raster );

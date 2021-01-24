@@ -41,6 +41,6 @@ bool RwCameraEndUpdateCmd::Execute()
         cameraBackendExt->mCurrentFrameId =
             ( cameraBackendExt->mCurrentFrameId + 1 ) %
        gFrameResourceCacheSize;*/
-    DeviceGlobals::DeviceGlobalsPtr->curCamera = nullptr;
+    gRwDeviceGlobals.DeviceGlobalsPtr->curCamera = nullptr;
     return true;
 }

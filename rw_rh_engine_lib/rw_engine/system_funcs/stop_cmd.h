@@ -1,5 +1,5 @@
 //
-// Created by peter on 19.01.2021.
+// Created by peter on 24.01.2021.
 //
 #pragma once
 #include "common_headers.h"
@@ -9,11 +9,11 @@
 namespace rh::rw::engine
 {
 class SharedMemoryTaskQueue;
-class StartSystemCmdImpl
+class StopSystemCmdImpl
 {
   public:
-    StartSystemCmdImpl( SharedMemoryTaskQueue &task_queue );
-    bool        Invoke( HWND window );
+    StopSystemCmdImpl( SharedMemoryTaskQueue &task_queue );
+    bool        Invoke();
     static void RegisterCallHandler( SharedMemoryTaskQueue &task_queue );
 
   private:

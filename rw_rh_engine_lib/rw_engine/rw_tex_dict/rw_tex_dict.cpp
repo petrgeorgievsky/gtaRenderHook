@@ -111,7 +111,7 @@ RwTexDictionary *rh::rw::engine::RwTexDictionaryStreamRead( void *stream )
         if ( !RwStreamFindChunk( stream, rwID_TEXTURENATIVE, &size, &version ) )
             return nullptr;
 
-        if ( !DeviceGlobals::Standards[rwSTANDARDNATIVETEXTUREREAD](
+        if ( !gRwDeviceGlobals.Standards[rwSTANDARDNATIVETEXTUREREAD](
                  static_cast<void *>( stream ), &texture,
                  static_cast<int32_t>( size ) ) )
 

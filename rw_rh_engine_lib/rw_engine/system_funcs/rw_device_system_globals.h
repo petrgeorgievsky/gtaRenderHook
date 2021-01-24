@@ -292,14 +292,16 @@ struct ResourcePtrTable
 class DeviceGlobals
 {
   public:
-    static RwDevice *         DevicePtr;
-    static RwSystemFunc       fpOldSystem;
-    static RwRwDeviceGlobals *DeviceGlobalsPtr;
-    static RwStandardFunc *   Standards;
-    static PluginPtrTable     PluginFuncs;
-    static ResourcePtrTable   ResourceFuncs;
-    static SkinPtrTable       SkinFuncs;
+    RwDevice *         DevicePtr        = nullptr;
+    RwSystemFunc       fpOldSystem      = nullptr;
+    RwRwDeviceGlobals *DeviceGlobalsPtr = nullptr;
+    RwStandardFunc *   Standards        = nullptr;
+    PluginPtrTable     PluginFuncs{};
+    ResourcePtrTable   ResourceFuncs{};
+    SkinPtrTable       SkinFuncs{};
 };
+
+extern DeviceGlobals gRwDeviceGlobals;
 
 extern std::unique_ptr<RenderClient> gRenderClient;
 extern std::unique_ptr<RenderDriver> gRenderDriver;

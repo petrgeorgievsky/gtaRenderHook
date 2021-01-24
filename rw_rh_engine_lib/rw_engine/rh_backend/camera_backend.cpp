@@ -62,7 +62,7 @@ void *BackendCameraDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
 
 int32_t BackendCameraPluginAttach()
 {
-    gBackendCameraExtOffset = DeviceGlobals::PluginFuncs.CameraRegisterPlugin(
+    gBackendCameraExtOffset = gRwDeviceGlobals.PluginFuncs.CameraRegisterPlugin(
         sizeof( BackendCameraExt ), rwID_CAMERA_BACKEND, BackendCameraCtor,
         BackendCameraDtor, nullptr );
     return gBackendCameraExtOffset > 0;

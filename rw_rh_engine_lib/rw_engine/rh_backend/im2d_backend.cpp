@@ -42,7 +42,7 @@ int32_t rh::rw::engine::Im2DRenderPrimitiveFunction( RwPrimitiveType primType,
                                                      RwIm2DVertex *  vertices,
                                                      int32_t numVertices )
 {
-    if ( DeviceGlobals::DeviceGlobalsPtr->curCamera == nullptr )
+    if ( gRwDeviceGlobals.DeviceGlobalsPtr->curCamera == nullptr )
         return 1;
     auto to_vertices = vertices;
     auto vert_count  = numVertices;
@@ -66,7 +66,7 @@ int32_t rh::rw::engine::Im2DRenderIndexedPrimitiveFunction(
     RwPrimitiveType primType, RwIm2DVertex *vertices, int32_t numVertices,
     int16_t *indices, int32_t numIndices )
 {
-    if ( DeviceGlobals::DeviceGlobalsPtr->curCamera == nullptr )
+    if ( gRwDeviceGlobals.DeviceGlobalsPtr->curCamera == nullptr )
         return 1;
     auto to_vertices = vertices;
     auto vert_count  = numVertices;

@@ -65,11 +65,11 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RwGameHooks::Patch(
         { .mRwDevicePtr = reinterpret_cast<INT_PTR>( &gInstance.rwDevice ) } );
 
-    DeviceGlobals::DeviceGlobalsPtr = &gInstance.rwDeviceGlobals;
+    gRwDeviceGlobals.DeviceGlobalsPtr = &gInstance.rwDeviceGlobals;
 
     InitRenderer();
 
-    SystemHandler( rwDEVICESYSTEMREGISTER, DeviceGlobals::DevicePtr,
+    SystemHandler( rwDEVICESYSTEMREGISTER, gRwDeviceGlobals.DevicePtr,
                    &gInstance.rwMemoryFunctions, 0 );
 
     gRenderDriver->GetTaskQueue().WaitForExit();

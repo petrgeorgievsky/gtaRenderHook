@@ -84,11 +84,11 @@ set(SOURCES
         rw_engine/rh_backend/im3d_backend.cpp
         rw_engine/rh_backend/im3d_renderer.cpp
         rw_engine/system_funcs/raster_lock_cmd.cpp
-        material_storage.cpp
         rw_engine/system_funcs/start_cmd.cpp
+        rw_engine/system_funcs/stop_cmd.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
-        )
+        material_storage.cpp)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 #set_property(TARGET rw_rh_engine_lib PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

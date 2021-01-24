@@ -12,12 +12,12 @@ int32_t gBackendMaterialExtOffset = 0;
 int32_t engine::BackendMaterialPluginAttach()
 {
     gBackendMaterialExtOffset =
-        DeviceGlobals::PluginFuncs.MaterialRegisterPlugin(
+        gRwDeviceGlobals.PluginFuncs.MaterialRegisterPlugin(
             sizeof( BackendMaterialExt ), rwID_MATERIAL_BACKEND,
             BackendMaterialCtor, BackendMaterialDtor, nullptr );
 
-    if ( DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack )
-        DeviceGlobals::PluginFuncs.MaterialSetStreamAlwaysCallBack(
+    if ( gRwDeviceGlobals.PluginFuncs.MaterialSetStreamAlwaysCallBack )
+        gRwDeviceGlobals.PluginFuncs.MaterialSetStreamAlwaysCallBack(
             rwID_MATERIAL_BACKEND, BackendMaterialStreamAlwaysCallback );
     return gBackendMaterialExtOffset > 0;
 }
