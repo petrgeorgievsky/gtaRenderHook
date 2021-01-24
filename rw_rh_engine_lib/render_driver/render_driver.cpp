@@ -24,7 +24,7 @@ RenderDriver::RenderDriver()
             .mOwner =
                 IPCSettings::mMode == IPCRenderMode::MultiThreadedRenderer } );
 
-    TaskQueueThread = std::make_unique<std::jthread>( [this]() {
+    TaskQueueThread = std::make_unique<std::thread>( [this]() {
         while ( IsRunning )
             TaskQueue->TaskLoop();
     } );
@@ -66,7 +66,12 @@ EngineResourceHolder &RenderDriver::GetResources()
     return *Resources;
 }
 
-RenderDriver::~RenderDriver() { IsRunning = false; }
+RenderDriver::~RenderDriver()
+{
+    IsRunning = false;
+    if ( TaskQueueThread && TaskQueueThread->joinable() )
+        TaskQueueThread->join();
+}
 
 void RasterData::Release()
 {

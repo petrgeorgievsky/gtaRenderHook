@@ -83,7 +83,7 @@ class RenderDriver
   private:
     std::atomic<bool>                         IsRunning{ true };
     std::unique_ptr<SharedMemoryTaskQueue>    TaskQueue;
-    std::unique_ptr<std::jthread>             TaskQueueThread;
+    std::unique_ptr<std::thread>              TaskQueueThread;
     std::unique_ptr<rh::engine::IDeviceState> DeviceState;
     std::unique_ptr<rh::engine::IWindow>      MainWindow;
     std::unique_ptr<EngineResourceHolder>     Resources;
