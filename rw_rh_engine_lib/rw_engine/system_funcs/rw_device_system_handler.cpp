@@ -9,8 +9,12 @@
 #include "../rw_standard_render_commands/nativetexturereadcmd.h"
 #include "../rw_standard_render_commands/rastercreatecmd.h"
 #include "../rw_standard_render_commands/rastershowrastercmd.h"
+#include "get_adapter_cmd.h"
+#include "get_adapter_count_cmd.h"
+#include "get_adapter_info_cmd.h"
 #include "raster_lock_cmd.h"
 #include "rw_device_system_globals.h"
+#include "set_adapter_cmd.h"
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/ISwapchain.h>
 #include <Engine/Common/IWindow.h>
@@ -306,10 +310,14 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
         assert( gRenderDriver );
         auto &driver_task_queue = gRenderDriver->GetTaskQueue();
         /// Register driver tasks
-        //
         /// TODO: Move to RenderDriver
         StartSystemCmdImpl::RegisterCallHandler( driver_task_queue );
         StopSystemCmdImpl::RegisterCallHandler( driver_task_queue );
+        GetAdapterCountCmdImpl::RegisterCallHandler( driver_task_queue );
+        GetAdapterIdCmdImpl::RegisterCallHandler( driver_task_queue );
+        SetAdapterIdCmdImpl::RegisterCallHandler( driver_task_queue );
+        GetAdapterInfoCmdImpl::RegisterCallHandler( driver_task_queue );
+
         ImageLockCmdImpl::RegisterCallHandler();
 
         gRenderDriver->GetTaskQueue().RegisterTask(
@@ -356,52 +364,6 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
                 uint32_t count = 0;
                 gRenderDriver->GetDeviceState().GetDisplayModeCount( 0, count );
                 CopyMemory( memory, &count, sizeof( count ) );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::GET_ADAPTER_COUNT,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                uint32_t count = 0;
-                gRenderDriver->GetDeviceState().GetAdaptersCount( count );
-                CopyMemory( memory, &count, sizeof( count ) );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::GET_ADAPTER_INFO,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                std::array<char, 80> result{};
-                MemoryReader         reader( memory );
-                MemoryWriter         writer( memory );
-                auto                 id = *reader.Read<int32_t>();
-
-                std::string str;
-                gRenderDriver->GetDeviceState().GetAdapterInfo(
-                    static_cast<unsigned int>( id ), str );
-
-                result[str.copy( result.data(), result.size() - 1 )] = '\0';
-                writer.Write( result.data(), result.size() );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::GET_CURRENT_ADAPTER,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                MemoryWriter writer( memory );
-                unsigned int adapter = 0;
-                gRenderDriver->GetDeviceState().GetCurrentAdapter( adapter );
-                auto adapter_id = static_cast<uint32_t>( adapter );
-                writer.Write( &adapter_id );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::SET_CURRENT_ADAPTER,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                MemoryReader reader( memory );
-                gRenderDriver->GetDeviceState().SetCurrentAdapter(
-                    *reader.Read<uint32_t>() );
             } ) );
 
         gRenderDriver->GetTaskQueue().RegisterTask(
@@ -499,28 +461,6 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
                 CopyMemory( memory, &result, sizeof( int64_t ) );
             } ) );
 
-        /*gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::MATERIAL_LOAD,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                auto *init_data = static_cast<MaterialInitData *>( memory );
-
-                *static_cast<uint64_t *>( memory ) =
-                    MaterialGlobals::SceneMaterialPool->RequestResource(
-                        { static_cast<int32_t>( init_data->mTexture ),
-                          init_data->mColor,
-                          static_cast<int32_t>( init_data->mSpecTexture ),
-                          init_data->specular , init_data->diffuse } );
-            } ) );*/
-
-        /* gRenderDriver->GetTaskQueue().RegisterTask(
-             SharedMemoryTaskType::MATERIAL_DELETE,
-             std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                 // execute
-                 MaterialGlobals::SceneMaterialPool->FreeResource(
-                     *static_cast<uint64_t *>( memory ) );
-             } ) );*/
-
         InitRenderEvents();
     }
 
@@ -576,23 +516,34 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
         StopSystemCmdImpl cmd( gRenderClient->GetTaskQueue() );
         return cmd.Invoke();
     }
+    case rwDEVICESYSTEMGETNUMSUBSYSTEMS:
+    {
+        assert( gRenderClient );
+        GetAdapterCountCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        *static_cast<uint32_t *>( pOut ) = cmd.Invoke();
+        break;
+    }
+    case rwDEVICESYSTEMGETCURRENTSUBSYSTEM:
+    {
+        assert( gRenderClient );
+        GetAdapterIdCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        *static_cast<uint32_t *>( pOut ) = cmd.Invoke();
+        break;
+    }
+    case rwDEVICESYSTEMSETSUBSYSTEM:
+    {
+        assert( gRenderClient );
+        SetAdapterIdCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        return cmd.Invoke( nIn );
+    }
     case rwDEVICESYSTEMGETSUBSYSTEMINFO:
     {
         assert( gRenderClient );
-        auto &task_queue = gRenderClient->GetTaskQueue();
-        auto &subsystem  = *(RwSubSystemInfo *)pOut;
-        task_queue.ExecuteTask(
-            SharedMemoryTaskType::GET_ADAPTER_INFO,
-            [&nIn]( MemoryWriter &&memory_writer ) {
-                // serialize
-                memory_writer.Write( &nIn );
-            },
-            [&subsystem]( MemoryReader &&memory_reader ) {
-                // deserialize
-                const auto *     desc    = memory_reader.Read<char>( 80 );
-                std::string_view desc_sv = std::string_view( desc, 80 );
-                desc_sv.copy( subsystem.name, 80 );
-            } );
+        auto &                subsystem      = *(RwSubSystemInfo *)pOut;
+        std::span<char, 80>   subsystem_name = subsystem.name;
+        GetAdapterInfoCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        if ( !cmd.Invoke( nIn, subsystem_name ) )
+            return false;
         break;
     }
     case rwDEVICESYSTEMGETMODEINFO:
@@ -688,45 +639,6 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
         SetWindowPos( gMainWindow, HWND_TOP, rect.left, rect.top,
                       rect.right - rect.left, rect.bottom - rect.top,
                       SWP_NOZORDER );
-        break;
-    }
-    case rwDEVICESYSTEMGETNUMSUBSYSTEMS:
-    {
-        assert( gRenderClient );
-        auto &task_queue = gRenderClient->GetTaskQueue();
-        task_queue.ExecuteTask( SharedMemoryTaskType::GET_ADAPTER_COUNT,
-                                EmptySerializer,
-                                [&pOut]( MemoryReader &&memory_reader ) {
-                                    // deserialize
-                                    *static_cast<uint32_t *>( pOut ) =
-                                        *memory_reader.Read<uint32_t>();
-                                } );
-        break;
-    }
-    case rwDEVICESYSTEMGETCURRENTSUBSYSTEM:
-    {
-        assert( gRenderClient );
-        auto &task_queue = gRenderClient->GetTaskQueue();
-        task_queue.ExecuteTask( SharedMemoryTaskType::GET_CURRENT_ADAPTER,
-                                EmptySerializer,
-                                [&pOut]( MemoryReader &&memory_reader ) {
-                                    // deserialize
-                                    *static_cast<uint32_t *>( pOut ) =
-                                        *memory_reader.Read<uint32_t>();
-                                } );
-        break;
-    }
-    case rwDEVICESYSTEMSETSUBSYSTEM:
-    {
-        assert( gRenderClient );
-        auto &task_queue = gRenderClient->GetTaskQueue();
-        task_queue.ExecuteTask(
-            SharedMemoryTaskType::SET_CURRENT_ADAPTER,
-            [&nIn]( MemoryWriter &&memory_writer ) {
-                // serialize
-                memory_writer.Write( &nIn );
-            },
-            EmptyDeserializer );
         break;
     }
     case rwDEVICESYSTEMFINALIZESTART:

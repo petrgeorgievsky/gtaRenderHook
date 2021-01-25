@@ -86,6 +86,10 @@ set(SOURCES
         rw_engine/system_funcs/raster_lock_cmd.cpp
         rw_engine/system_funcs/start_cmd.cpp
         rw_engine/system_funcs/stop_cmd.cpp
+        rw_engine/system_funcs/get_adapter_count_cmd.cpp
+        rw_engine/system_funcs/get_adapter_info_cmd.cpp
+        rw_engine/system_funcs/set_adapter_cmd.cpp
+        rw_engine/system_funcs/get_adapter_cmd.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
         material_storage.cpp)
