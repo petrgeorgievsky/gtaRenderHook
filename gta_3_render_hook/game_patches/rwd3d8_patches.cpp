@@ -143,4 +143,7 @@ void RwD3D8Patches::Patch()
     // it with our own impl
     RedirectJump( GetAddressByGame( 0x59A350, 0x59A610, 0x59B7E0 ),
                   reinterpret_cast<void *>( rwD3D8FindCorrectRasterFormat ) );
+
+    RedirectJump( GetAddressByGame( 0x5A0F00, 0x5A11C0, 0x5A1840 ),
+                  reinterpret_cast<void *>( RwEngineGetVideoModeInfoFix ) );
 }

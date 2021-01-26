@@ -90,6 +90,10 @@ set(SOURCES
         rw_engine/system_funcs/get_adapter_info_cmd.cpp
         rw_engine/system_funcs/set_adapter_cmd.cpp
         rw_engine/system_funcs/get_adapter_cmd.cpp
+        rw_engine/system_funcs/get_video_mode_count.cpp
+        rw_engine/system_funcs/get_video_mode_cmd.cpp
+        rw_engine/system_funcs/set_video_mode_cmd.cpp
+        rw_engine/system_funcs/get_video_mode_info_cmd.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
         material_storage.cpp)

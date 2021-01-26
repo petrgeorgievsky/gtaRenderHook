@@ -46,7 +46,7 @@ void GetAdapterInfoTaskImpl( void *memory )
     if ( !driver.GetDeviceState().GetAdapterInfo(
              static_cast<unsigned int>( id ), str ) )
     {
-        debug::DebugLogger::ErrorFmt( "Failed to retrieve adapter #%n info",
+        debug::DebugLogger::ErrorFmt( "Failed to retrieve adapter #%i info",
                                       id );
     }
     result[str.copy( result.data(), result.size() - 1 )] = '\0';

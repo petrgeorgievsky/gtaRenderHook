@@ -12,9 +12,13 @@
 #include "get_adapter_cmd.h"
 #include "get_adapter_count_cmd.h"
 #include "get_adapter_info_cmd.h"
+#include "get_video_mode_cmd.h"
+#include "get_video_mode_count.h"
+#include "get_video_mode_info_cmd.h"
 #include "raster_lock_cmd.h"
 #include "rw_device_system_globals.h"
 #include "set_adapter_cmd.h"
+#include "set_video_mode_cmd.h"
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/ISwapchain.h>
 #include <Engine/Common/IWindow.h>
@@ -317,53 +321,18 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
         GetAdapterIdCmdImpl::RegisterCallHandler( driver_task_queue );
         SetAdapterIdCmdImpl::RegisterCallHandler( driver_task_queue );
         GetAdapterInfoCmdImpl::RegisterCallHandler( driver_task_queue );
+        GetVideoModeCountCmdImpl::RegisterCallHandler( driver_task_queue );
+        GetVideoModeIdCmdImpl::RegisterCallHandler( driver_task_queue );
+        SetVideoModeIdCmdImpl::RegisterCallHandler( driver_task_queue );
+        GetVideoModeInfoCmdImpl::RegisterCallHandler( driver_task_queue );
 
         ImageLockCmdImpl::RegisterCallHandler();
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                gRenderDriver->GetDeviceState().SetCurrentDisplayMode(
-                    *static_cast<int32_t *>( memory ) );
-            } ) );
 
         gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::MESH_LOAD,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 CreateBackendMeshImpl( memory );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::GET_VIDEO_MODE,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                int32_t mode_id;
-                CopyMemory( &mode_id, memory, sizeof( int32_t ) );
-
-                rh::engine::DisplayModeInfo display_mode{};
-                gRenderDriver->GetDeviceState().GetDisplayModeInfo(
-                    mode_id, display_mode );
-                CopyMemory( memory, &display_mode, sizeof( display_mode ) );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::GET_CURRENT_VIDEO_MODE,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                uint32_t &id = *static_cast<uint32_t *>( memory );
-
-                gRenderDriver->GetDeviceState().GetCurrentDisplayMode( id );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                uint32_t count = 0;
-                gRenderDriver->GetDeviceState().GetDisplayModeCount( 0, count );
-                CopyMemory( memory, &count, sizeof( count ) );
             } ) );
 
         gRenderDriver->GetTaskQueue().RegisterTask(
@@ -546,54 +515,18 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
             return false;
         break;
     }
-    case rwDEVICESYSTEMGETMODEINFO:
+    case rwDEVICESYSTEMGETNUMMODES:
     {
         assert( gRenderClient );
-        auto &task_queue = gRenderClient->GetTaskQueue();
-        task_queue.ExecuteTask(
-            SharedMemoryTaskType::GET_VIDEO_MODE,
-            [&nIn]( MemoryWriter &&memory_writer ) {
-                // serialize
-                memory_writer.Write( &nIn );
-            },
-            [&pOut]( MemoryReader &&memory_reader ) {
-                // deserialize
-                const auto &display_mode =
-                    *memory_reader.Read<rh::engine::DisplayModeInfo>();
-                auto *videoMode    = static_cast<RwVideoMode *>( pOut );
-                videoMode->width   = display_mode.width;
-                videoMode->height  = display_mode.height;
-                videoMode->depth   = 32;
-                videoMode->flags   = RwVideoModeFlag::rwVIDEOMODEEXCLUSIVE;
-                videoMode->refRate = display_mode.refreshRate;
-                videoMode->format  = 512;
-            } );
+        GetVideoModeCountCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        *static_cast<uint32_t *>( pOut ) = cmd.Invoke();
         break;
     }
     case rwDEVICESYSTEMGETMODE:
     {
         assert( gRenderClient );
-        auto &task_queue = gRenderClient->GetTaskQueue();
-        task_queue.ExecuteTask( SharedMemoryTaskType::GET_CURRENT_VIDEO_MODE,
-                                EmptySerializer,
-                                [&pOut]( MemoryReader &&memory_reader ) {
-                                    // deserialize
-                                    *static_cast<uint32_t *>( pOut ) =
-                                        *memory_reader.Read<uint32_t>();
-                                } );
-        break;
-    }
-    case rwDEVICESYSTEMGETNUMMODES:
-    {
-        assert( gRenderClient );
-        auto &task_queue = gRenderClient->GetTaskQueue();
-        task_queue.ExecuteTask( SharedMemoryTaskType::GET_VIDEO_MODE_COUNT,
-                                EmptySerializer,
-                                [&pOut]( MemoryReader &&memory_reader ) {
-                                    // deserialize
-                                    *static_cast<uint32_t *>( pOut ) =
-                                        *memory_reader.Read<uint32_t>();
-                                } );
+        GetVideoModeIdCmdImpl cmd( gRenderClient->GetTaskQueue() );
+        *static_cast<uint32_t *>( pOut ) = cmd.Invoke();
         break;
     }
     case rwDEVICESYSTEMUSEMODE:
@@ -601,20 +534,13 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
         assert( gRenderClient );
         auto &task_queue = gRenderClient->GetTaskQueue();
         using namespace rh::engine;
-        DisplayModeInfo display_mode{};
-        task_queue.ExecuteTask(
-            SharedMemoryTaskType::GET_VIDEO_MODE,
-            [&nIn]( MemoryWriter &&memory_writer ) {
-                // serialize
-                memory_writer.Write( &nIn );
-            },
-            [&display_mode]( MemoryReader &&memory_reader ) {
-                // deserialize
-                display_mode = *memory_reader.Read<decltype( display_mode )>();
-            } );
 
-        if ( IPCSettings::mMode == IPCRenderMode::CrossProcessRenderer )
-            break;
+        GetVideoModeInfoCmdImpl get_mode_info_cmd( task_queue );
+        SetVideoModeIdCmdImpl   set_mode_cmd( task_queue );
+
+        DisplayModeInfo display_mode{};
+        get_mode_info_cmd.Invoke( nIn, display_mode );
+        set_mode_cmd.Invoke( nIn );
 
         auto w = EngineConfigBlock::It.IsWindowed
                      ? display_mode.width
@@ -639,6 +565,24 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
         SetWindowPos( gMainWindow, HWND_TOP, rect.left, rect.top,
                       rect.right - rect.left, rect.bottom - rect.top,
                       SWP_NOZORDER );
+
+        break;
+    }
+    case rwDEVICESYSTEMGETMODEINFO:
+    {
+        assert( gRenderClient );
+        auto &video_mode = *static_cast<RwVideoMode *>( pOut );
+        rh::engine::DisplayModeInfo display_mode{};
+        GetVideoModeInfoCmdImpl     cmd( gRenderClient->GetTaskQueue() );
+        if ( cmd.Invoke( nIn, display_mode ) )
+        {
+            video_mode.width   = display_mode.width;
+            video_mode.height  = display_mode.height;
+            video_mode.depth   = 32;
+            video_mode.flags   = RwVideoModeFlag::rwVIDEOMODEEXCLUSIVE;
+            video_mode.refRate = display_mode.refreshRate;
+            video_mode.format  = 512;
+        }
         break;
     }
     case rwDEVICESYSTEMFINALIZESTART:

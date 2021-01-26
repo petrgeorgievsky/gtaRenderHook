@@ -1,21 +1,23 @@
 //
-// Created by peter on 25.01.2021.
+// Created by peter on 26.01.2021.
 //
 
-#include "set_adapter_cmd.h"
+#include "set_video_mode_cmd.h"
 #include "rw_device_system_globals.h"
 #include <Engine/Common/IDeviceState.h>
 #include <ipc/shared_memory_queue_client.h>
 
 namespace rh::rw::engine
 {
-SetAdapterIdCmdImpl::SetAdapterIdCmdImpl( SharedMemoryTaskQueue &task_queue )
+SetVideoModeIdCmdImpl::SetVideoModeIdCmdImpl(
+    SharedMemoryTaskQueue &task_queue )
     : TaskQueue( task_queue )
 {
 }
-bool SetAdapterIdCmdImpl::Invoke( uint32_t id )
+
+bool SetVideoModeIdCmdImpl::Invoke( uint32_t id )
 {
-    TaskQueue.ExecuteTask( SharedMemoryTaskType::SET_CURRENT_ADAPTER,
+    TaskQueue.ExecuteTask( SharedMemoryTaskType::SET_CURRENT_VIDEO_MODE,
                            [&id]( MemoryWriter &&memory_writer ) {
                                // serialize
                                memory_writer.Write( &id );
@@ -23,7 +25,7 @@ bool SetAdapterIdCmdImpl::Invoke( uint32_t id )
     return true;
 }
 
-void SetAdapterIdTaskImpl( void *memory )
+void SetVideoModeIdTaskImpl( void *memory )
 {
     assert( gRenderDriver );
     auto &driver = *gRenderDriver;
@@ -31,18 +33,18 @@ void SetAdapterIdTaskImpl( void *memory )
     // execute
     MemoryReader reader( memory );
     auto         id = *reader.Read<uint32_t>();
-    if ( !driver.GetDeviceState().SetCurrentAdapter( id ) )
+    if ( !driver.GetDeviceState().SetCurrentDisplayMode( id ) )
     {
-        debug::DebugLogger::ErrorFmt( "Failed to select adapter #%i", id );
+        debug::DebugLogger::ErrorFmt( "Failed to select video mode #%i", id );
     }
 }
 
-void SetAdapterIdCmdImpl::RegisterCallHandler(
+void SetVideoModeIdCmdImpl::RegisterCallHandler(
     SharedMemoryTaskQueue &task_queue )
 {
     task_queue.RegisterTask(
-        SharedMemoryTaskType::SET_CURRENT_ADAPTER,
-        std::make_unique<SharedMemoryTask>( SetAdapterIdTaskImpl ) );
+        SharedMemoryTaskType::SET_CURRENT_VIDEO_MODE,
+        std::make_unique<SharedMemoryTask>( SetVideoModeIdTaskImpl ) );
 }
 
 } // namespace rh::rw::engine

@@ -275,8 +275,25 @@ uint64_t Im2DRenderer::Render( void *                      memory,
     if ( vertex_count <= 0 )
         return stream.Pos();
 
-    mVertexBuffer->Update( stream.Read<RwIm2DVertex>( vertex_count ),
-                           vertex_count * sizeof( RwIm2DVertex ),
+    auto vertices = stream.Read<RwIm2DVertex>( vertex_count );
+
+    auto current_display_mode = []() {
+        auto &   device = gRenderDriver->GetDeviceState();
+        uint32_t display_mode;
+        device.GetCurrentDisplayMode( display_mode );
+        DisplayModeInfo info{};
+        device.GetDisplayModeInfo( display_mode, info );
+        return info;
+    }();
+
+    // Transform to screen-space
+    for ( auto &vtx : std::span( vertices, vertex_count ) )
+    {
+        vtx.x = vtx.x * ( 2.0f / float( current_display_mode.width ) ) - 1.0f;
+        vtx.y = vtx.y * ( 2.0f / float( current_display_mode.height ) ) - 1.0f;
+    }
+
+    mVertexBuffer->Update( vertices, vertex_count * sizeof( RwIm2DVertex ),
                            mVertexBufferOffset );
 
     // Bind buffers
@@ -341,15 +358,15 @@ uint64_t Im2DRenderer::Render( void *                      memory,
 void Im2DRenderer::DrawQuad( rh::engine::IImageView *    texture,
                              rh::engine::ICommandBuffer *cmd_buffer )
 {
-    auto w = 640.0f;
-    auto h = 480.0f;
+    auto w = 1.0f;
+    auto h = 1.0f;
 
     std::array<RwIm2DVertex, 6> quad{
-        RwIm2DVertex{ 0, 0, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
-        RwIm2DVertex{ w, h, 0, 0, 0xFFFFFFFF, 1.0f, 1.0f },
-        RwIm2DVertex{ 0, h, 0, 0, 0xFFFFFFFF, 0.0f, 1.0f },
-        RwIm2DVertex{ 0, 0, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
-        RwIm2DVertex{ w, 0, 0, 0, 0xFFFFFFFF, 1.0f, 0.0f },
+        RwIm2DVertex{ -1, -1, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
+        RwIm2DVertex{ w, h, -1, 0, 0xFFFFFFFF, 1.0f, 1.0f },
+        RwIm2DVertex{ -1, h, 0, 0, 0xFFFFFFFF, 0.0f, 1.0f },
+        RwIm2DVertex{ -1, -1, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
+        RwIm2DVertex{ w, -1, 0, 0, 0xFFFFFFFF, 1.0f, 0.0f },
         RwIm2DVertex{ w, h, 0, 0, 0xFFFFFFFF, 1.0f, 1.0f } };
 
     mVertexBuffer->Update( quad.data(), 6 * sizeof( RwIm2DVertex ),
@@ -420,15 +437,15 @@ rh::engine::IDescriptorSet *Im2DRenderer::GetRasterDescSet( uint64_t id )
 void Im2DRenderer::DrawQuad( uint64_t                    texture_id,
                              rh::engine::ICommandBuffer *cmd_buffer )
 {
-    auto w = 640.0f;
-    auto h = 480.0f;
+    auto w = 1.0f;
+    auto h = 1.0f;
 
     std::array<RwIm2DVertex, 6> quad{
-        RwIm2DVertex{ 0, 0, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
+        RwIm2DVertex{ -1, -1, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
         RwIm2DVertex{ w, h, 0, 0, 0xFFFFFFFF, 1.0f, 1.0f },
-        RwIm2DVertex{ 0, h, 0, 0, 0xFFFFFFFF, 0.0f, 1.0f },
-        RwIm2DVertex{ 0, 0, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
-        RwIm2DVertex{ w, 0, 0, 0, 0xFFFFFFFF, 1.0f, 0.0f },
+        RwIm2DVertex{ -1, h, 0, 0, 0xFFFFFFFF, 0.0f, 1.0f },
+        RwIm2DVertex{ -1, -1, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
+        RwIm2DVertex{ w, -1, 0, 0, 0xFFFFFFFF, 1.0f, 0.0f },
         RwIm2DVertex{ w, h, 0, 0, 0xFFFFFFFF, 1.0f, 1.0f } };
 
     mVertexBuffer->Update( quad.data(), quad.size() * sizeof( RwIm2DVertex ),
@@ -524,15 +541,15 @@ rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
 void Im2DRenderer::DrawDepthMask( rh::engine::IImageView *    texture,
                                   rh::engine::ICommandBuffer *cmd_buffer )
 {
-    auto w = 640.0f;
-    auto h = 480.0f;
+    auto w = 1.0f;
+    auto h = 1.0f;
 
     std::array<RwIm2DVertex, 6> quad{
-        RwIm2DVertex{ 0, 0, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
+        RwIm2DVertex{ -1, -1, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
         RwIm2DVertex{ w, h, 0, 0, 0xFFFFFFFF, 1.0f, 1.0f },
-        RwIm2DVertex{ 0, h, 0, 0, 0xFFFFFFFF, 0.0f, 1.0f },
-        RwIm2DVertex{ 0, 0, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
-        RwIm2DVertex{ w, 0, 0, 0, 0xFFFFFFFF, 1.0f, 0.0f },
+        RwIm2DVertex{ -1, h, 0, 0, 0xFFFFFFFF, 0.0f, 1.0f },
+        RwIm2DVertex{ -1, -1, 0, 0, 0xFFFFFFFF, 0.0f, 0.0f },
+        RwIm2DVertex{ w, -1, 0, 0, 0xFFFFFFFF, 1.0f, 0.0f },
         RwIm2DVertex{ w, h, 0, 0, 0xFFFFFFFF, 1.0f, 1.0f } };
 
     mVertexBuffer->Update( quad.data(), 6 * sizeof( RwIm2DVertex ),

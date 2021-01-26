@@ -57,9 +57,7 @@ PS_IM2D_IN BaseVS( VS_IM2D_IN i )
 
     o.vTexCoord = i.vTexCoord;
     o.cColor    = i.cColor.bgra;
-    o.vPosition = float4( ( i.vPosition.x ) * 2.0f / fScreenWidth - 1.0f,
-                          ( i.vPosition.y ) * 2.0f / fScreenHeight - 1.0f,
-                          i.vPosition.z, 1.0f ); // transform to screen space
+    o.vPosition = float4( i.vPosition.x, i.vPosition.y, i.vPosition.z, 1.0f );
     return o;
 }
 
