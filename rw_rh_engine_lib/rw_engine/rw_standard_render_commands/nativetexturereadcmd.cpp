@@ -262,7 +262,7 @@ bool RwNativeTextureReadCmd::Execute()
     gRenderClient->GetTaskQueue().ExecuteTask(
         SharedMemoryTaskType::TEXTURE_LOAD,
         [&nativeRaster, &bytesPerBlock, &blockSize, &palette, &rhFormat,
-         &nativeTexture, this]( MemoryWriter &&writer ) {
+         &nativeTexture, &compressed, this]( MemoryWriter &&writer ) {
             auto convert_paletted_mip_level =
                 [&palette, &bytesPerBlock, &blockSize](
                     MipLevelHeader &mipLevelHeader, uint32_t width,
@@ -337,8 +337,9 @@ bool RwNativeTextureReadCmd::Execute()
                 else
                 {
                     // Fix rgb8 format "alpha" channel
-                    if ( ( nativeRaster.d3d9_.format & rwRASTERFORMAT888 ) ==
-                         rwRASTERFORMAT888 )
+                    if ( !compressed &&
+                         ( nativeRaster.d3d9_.format & rwRASTERFORMAT888 ) ==
+                             rwRASTERFORMAT888 )
                     {
                         std::span<RwRGBA> rgba_pixels(
                             reinterpret_cast<RwRGBA *>( pixels ), size / 4 );
