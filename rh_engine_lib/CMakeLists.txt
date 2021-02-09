@@ -14,7 +14,6 @@ set(VULKAN_SOURCES
 
         Engine/VulkanImpl/VulkanDeviceState.cpp
         Engine/VulkanImpl/VulkanRenderPass.cpp
-        Engine/VulkanImpl/VulkanDeviceOutputView.cpp
         Engine/VulkanImpl/VulkanImageView.cpp
         Engine/VulkanImpl/VulkanCommandBuffer.cpp
         Engine/VulkanImpl/VulkanFrameBuffer.cpp
@@ -119,6 +118,8 @@ endif ()
 if (USE_VULKAN_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)
 endif ()
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 #target_compile_options(${PROJECT_NAME} PRIVATE -fno-omit-frame-pointer -fsanitize=address)

@@ -13,9 +13,8 @@ using namespace rh::engine;
 VulkanCommandBuffer::VulkanCommandBuffer( vk::Device        device,
                                           vk::CommandPool   pool,
                                           vk::CommandBuffer cmd_buffer )
-    : m_vkCmdBuffer( cmd_buffer ),
-      m_executionSyncPrim( new VulkanCPUSyncPrimitive( device ) ),
-      mDevice( device ), mPool( pool )
+    : m_vkCmdBuffer( cmd_buffer ), mPool( pool ), mDevice( device ),
+      m_executionSyncPrim( new VulkanCPUSyncPrimitive( device ) )
 {
 }
 

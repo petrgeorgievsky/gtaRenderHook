@@ -228,7 +228,7 @@ void D3D11CommandBuffer::CopyImageToImage(
         copy_info.mRegions[0].mDest.mOffsetZ, src_img->GetImpl(), 0, nullptr );
 }
 void D3D11CommandBuffer::CopyImageToBuffer(
-    const ImageToBufferCopyInfo &copy_info )
+    const ImageToBufferCopyInfo & /*copy_info*/ )
 {
     // TODO: Implement
 }

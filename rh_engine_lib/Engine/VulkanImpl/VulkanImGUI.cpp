@@ -15,7 +15,7 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg,
 
 namespace rh::engine
 {
-static HHOOK g_hImGuiHook = nullptr;
+// static HHOOK g_hImGuiHook = nullptr;
 
 // Returns the last Win32 error, in string format. Returns an empty string if
 // there is no error.
@@ -137,11 +137,12 @@ bool VulkanImGUI::UploadFonts( ICommandBuffer *cmd_buff )
         ImGui_ImplVulkan_CreateFontsTexture( command_buffer->GetBuffer() );
     return mFontsUploaded;
 }
-void VulkanImGUI::DrawGui( ICommandBuffer *cmd_buff )
+void VulkanImGUI::DrawGui( ICommandBuffer * /*cmd_buff */ )
 {
     // ImGui::Render();
 
-    auto command_buffer = reinterpret_cast<VulkanCommandBuffer *>( cmd_buff );
+    // auto command_buffer = reinterpret_cast<VulkanCommandBuffer *>( cmd_buff
+    // );
     // ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(),
     //                                  command_buffer->GetBuffer() );
 }

@@ -5,10 +5,10 @@ using namespace rh::engine;
 
 VulkanWin32Window::VulkanWin32Window(
     const VulkanWin32WindowCreateParams &params )
-    : mWndHandle( params.mWndHandle ), mGPU( params.mGPU ),
-      mInstance( params.mInstance ),
-      mPresentQueueIdx( params.mPresentQueueIdx ),
-      mPresentQueue( params.mPresentQueue ), mDevice( params.mDevice )
+    : mWndHandle( params.mWndHandle ), mInstance( params.mInstance ),
+      mGPU( params.mGPU ), mDevice( params.mDevice ),
+      mPresentQueue( params.mPresentQueue ),
+      mPresentQueueIdx( params.mPresentQueueIdx )
 {
     vk::Win32SurfaceCreateInfoKHR window_info{};
     window_info.hinstance = GetModuleHandle( nullptr );

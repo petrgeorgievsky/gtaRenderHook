@@ -12,9 +12,11 @@ VulkanGPUInfo::VulkanGPUInfo( vk::PhysicalDevice gpu )
     // fill rt properties
 
     VkPhysicalDeviceRayTracingPropertiesNV rt_props{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV, nullptr };
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
+        .pNext = nullptr };
     VkPhysicalDeviceProperties2 props{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &rt_props };
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+        .pNext = &rt_props };
     vkGetPhysicalDeviceProperties2( gpu, &props );
     mRTInfo.mShaderGroupHandleSize  = rt_props.shaderGroupHandleSize;
     mRTInfo.mShaderGroupHandleAlign = rt_props.shaderGroupBaseAlignment;

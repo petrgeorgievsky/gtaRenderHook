@@ -102,7 +102,7 @@ class D3D11DeviceState : public IDeviceState
     /// Debug interface. Used to validate API usage
     ID3D11Debug *m_pDebug = nullptr;
 
-    HWND m_hWnd = nullptr;
+    // HWND m_hWnd = nullptr;
 
     ICommandBuffer *mMainCmdBuffer = nullptr;
 

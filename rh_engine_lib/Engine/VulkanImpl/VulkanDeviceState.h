@@ -115,7 +115,7 @@ class VulkanDeviceState : public IDeviceState
     std::vector<VulkanGPUInfo> m_aAdaptersInfo;
 
     // Vulkan debug callback
-    VkDebugUtilsMessengerEXT m_debugCallback{};
+    [[maybe_unused]] VkDebugUtilsMessengerEXT m_debugCallback{};
 
     // Instance extension list
     std::vector<const char *> m_aExtensions;
@@ -125,8 +125,8 @@ class VulkanDeviceState : public IDeviceState
 
     vk::Device m_vkDevice = nullptr;
 
-    vk::Queue m_vkMainQueue = nullptr;
-    vk::Queue m_vkCopyQueue = nullptr;
+    vk::Queue                  m_vkMainQueue = nullptr;
+    [[maybe_unused]] vk::Queue m_vkCopyQueue = nullptr;
 
     vk::CommandPool m_vkCommandPool = nullptr;
 
@@ -135,8 +135,8 @@ class VulkanDeviceState : public IDeviceState
     uint32_t m_uiCurrentAdapter = 0, m_uiCurrentOutput = 0,
              m_uiCurrentAdapterMode = 0;
 
-    uint32_t m_iGraphicsQueueFamilyIdx = 0;
-    uint32_t m_iCopyQueueFamilyIdx     = 0;
+    uint32_t                  m_iGraphicsQueueFamilyIdx = 0;
+    [[maybe_unused]] uint32_t m_iCopyQueueFamilyIdx     = 0;
 
     ICommandBuffer *       mMainCmdBuffer    = nullptr;
     VulkanMemoryAllocator *mDefaultAllocator = nullptr;

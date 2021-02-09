@@ -5,7 +5,7 @@ on: [ push ]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: RelWithDebInfo
-  VULKAN_SDK: C:\\VulkanSDK\\1.2.154.1
+  VULKAN_SDK: C:\\VulkanSDK\\1.2.162.1
 
 jobs:
   build:
@@ -32,13 +32,13 @@ jobs:
         id: cache-vulkan-sdk
         uses: actions/cache@v1
         with:
-          path: "C:\\VulkanSDK\\1.2.154.1"
-          key: vulkan-sdk-1.2.154.1
+          path: "C:\\VulkanSDK\\1.2.162.1"
+          key: vulkan-sdk-1.2.162.1
 
       - name: Setup Vulkan
         if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
         run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.154.1/windows/VulkanSDK-1.2.154.1-Installer.exe" -OutFile VulkanSDK.exe
+          Invoke-WebRequest -Uri "https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/1.2.162.1/windows/VulkanSDK-1.2.162.1-Installer.exe" -OutFile VulkanSDK.exe
           $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
           $installer.WaitForExit();
 

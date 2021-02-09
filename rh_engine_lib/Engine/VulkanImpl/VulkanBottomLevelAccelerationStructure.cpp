@@ -5,6 +5,7 @@
 #include "VulkanBottomLevelAccelerationStructure.h"
 #include "VulkanBuffer.h"
 #include "vk_mem_alloc.h"
+#include <DebugUtils/DebugLogger.h>
 
 using namespace rh::engine;
 
@@ -79,7 +80,13 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
     bind_info.memory                = allocationDetail.deviceMemory;
     bind_info.memoryOffset          = allocationDetail.offset;
 
-    mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info );
+    auto result = mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info );
+
+    if ( result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::Error( "Failed to bind BLAS memory!" );
+        std::terminate();
+    }
 
     // compute scratch size
     vk::AccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo{
@@ -105,7 +112,13 @@ std::uint64_t VulkanBottomLevelAccelerationStructure::GetAddress()
 {
     if ( mGPUHandle != 0 )
         return mGPUHandle;
-    mDevice.getAccelerationStructureHandleNV( mAccel, sizeof( uint64_t ),
-                                              &mGPUHandle );
+    auto result = mDevice.getAccelerationStructureHandleNV(
+        mAccel, sizeof( uint64_t ), &mGPUHandle );
+    if ( result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::Error( "Failed to get BLAS address!" );
+        std::terminate();
+        return 0;
+    }
     return mGPUHandle;
 }

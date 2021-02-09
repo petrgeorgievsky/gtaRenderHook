@@ -76,8 +76,8 @@ bool D3D11DeviceState::Init()
          m_uiCurrentDisplayMode >= m_vDisplayModes.size() )
         return false;
 
-    auto currentAdapterMode = m_vDisplayModes[m_uiCurrentDisplayMode];
-    auto currentAdapter     = m_vAdapters[m_uiCurrentAdapter];
+    // auto currentAdapterMode = m_vDisplayModes[m_uiCurrentDisplayMode];
+    auto currentAdapter = m_vAdapters[m_uiCurrentAdapter];
 
     // initialize device creation flags
     // TODO: add ability to set some custom flags

@@ -38,7 +38,7 @@ class D3D11DeviceOutputView : public IDeviceOutputView
 
     /// Back-buffer swap-chain. Stores 2 or more image buffers,
     /// one being processed in this frame, and other from previous frames.
-    HWND m_hWnd = nullptr;
+    [[maybe_unused]] HWND m_hWnd = nullptr;
 
     /// Back-buffer image view, for use as a RenderTarget
     D3D11BackBuffer *m_pBackBufferView = nullptr;

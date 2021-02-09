@@ -9,7 +9,6 @@
 #include "VulkanDescriptorSet.h"
 #include "VulkanDescriptorSetAllocator.h"
 #include "VulkanDescriptorSetLayout.h"
-#include "VulkanDeviceOutputView.h"
 #include "VulkanDeviceState.h"
 #include "VulkanFrameBuffer.h"
 #include "VulkanImage.h"
@@ -275,8 +274,9 @@ bool VulkanDeviceState::Init()
             m_iCopyQueueFamilyIdx = i;
         i++;
     }
-    DebugLogger::LogFmt( "Graphics Queue id - %u", LogLevel::Info,
-                         m_iGraphicsQueueFamilyIdx );
+    DebugLogger::LogFmt( "Graphics Queue id - %u; Copy Queue id - %u",
+                         LogLevel::Info, m_iGraphicsQueueFamilyIdx,
+                         m_iCopyQueueFamilyIdx );
 
     float                     queuePriority[] = { 1.0f };
     std::vector<const char *> device_extensions;
@@ -305,10 +305,11 @@ bool VulkanDeviceState::Init()
     queueCreateInfo.queueCount                = 1;
     queueCreateInfo.pQueuePriorities          = queuePriority;
 
+    /* TODO: Implement copy queue for copy operations
     vk::DeviceQueueCreateInfo copyQueueCreateInfo = {};
-    queueCreateInfo.queueFamilyIndex              = m_iGraphicsQueueFamilyIdx;
-    queueCreateInfo.queueCount                    = 1;
-    queueCreateInfo.pQueuePriorities              = queuePriority;
+    copyQueueCreateInfo.queueFamilyIndex          = m_iCopyQueueFamilyIdx;
+    copyQueueCreateInfo.queueCount                = 1;
+    copyQueueCreateInfo.pQueuePriorities          = queuePriority;*/
 
     vk::DeviceCreateInfo info{};
 #ifdef ARCH_64BIT
@@ -492,6 +493,7 @@ ISyncPrimitive *VulkanDeviceState::CreateSyncPrimitive( SyncPrimitiveType type )
         return new VulkanGPUSyncPrimitive( m_vkDevice );
     case SyncPrimitiveType::CPU:
         return new VulkanCPUSyncPrimitive( m_vkDevice );
+    default: break;
     }
     return nullptr;
 }
@@ -840,12 +842,12 @@ void VulkanDeviceState::DispatchToGPU(
     std::vector<std::vector<vk::PipelineStageFlags>> q_sm_stage_flags_vec{};
     std::vector<vk::SubmitInfo>                      queue_submit_info_vec{};
 
-    std::array<vk::PipelineStageFlags, 1> stage_flags{
-        vk::PipelineStageFlagBits::eBottomOfPipe };
+    // std::array<vk::PipelineStageFlags, 1> stage_flags{
+    //    vk::PipelineStageFlagBits::eBottomOfPipe };
 
     std::ranges::transform(
         buffers, std::back_inserter( queue_submit_info_vec ),
-        [&stage_flags, &q_sm_waitable_vec, &q_sm_stage_flags_vec](
+        [&q_sm_waitable_vec, &q_sm_stage_flags_vec](
             const CommandBufferSubmitInfo &submitInfo ) -> vk::SubmitInfo {
             q_sm_waitable_vec.emplace_back();
             q_sm_stage_flags_vec.emplace_back();

@@ -4,6 +4,7 @@
 
 #include "VulkanTopLevelAccelerationStructure.h"
 #include "vk_mem_alloc.h"
+#include <DebugUtils/DebugLogger.h>
 namespace rh::engine
 {
 
@@ -49,7 +50,13 @@ VulkanTopLevelAccelerationStructure::VulkanTopLevelAccelerationStructure(
     bind_info.memoryOffset          = allocationDetail.offset;
     // bind_info.memory                = mAccelMemory;
 
-    mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info );
+    auto result = mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info );
+
+    if ( result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::Error( "Failed to bind TLAS memory!" );
+        std::terminate();
+    }
 
     // compute scratch size
     vk::AccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo{

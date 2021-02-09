@@ -1,5 +1,6 @@
 #include "D3D11DescriptorSet.h"
 #include "D3D11DescriptorSetLayout.h"
+#include <DebugUtils/DebugLogger.h>
 #include <d3d11.h>
 #include <functional>
 
@@ -25,9 +26,15 @@ D3D11DescriptorSet::D3D11DescriptorSet(
                 D3DDescriptorType::ConstantBuffer;
             break;
         case rh::engine::DescriptorType::ROTexture:
+        case rh::engine::DescriptorType::RWTexture:
+        case rh::engine::DescriptorType::RWBuffer:
             current_cb_binding.mResourceType =
                 D3DDescriptorType::ShaderResource;
             break;
+        default:
+            rh::debug::DebugLogger::Error(
+                "Unsupported descriptor type bound to dx11 descriptor set" );
+            std::terminate();
         }
 
         current_cb_binding.mDescriptorType = binding.mDescriptorType;
