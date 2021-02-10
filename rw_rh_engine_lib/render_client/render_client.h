@@ -7,20 +7,6 @@
 #include <ipc/shared_memory_queue_client.h>
 namespace rh::rw::engine
 {
-/*
-class RwDeviceState
-{
-  public:
-    RwDeviceState( RwDevice &device );
-
-  private:
-    RwDevice &       Device;
-    RwSystemFunc     OldSystemFunc;
-    RwStandardFunc * DeviceStandardFuncs;
-    PluginPtrTable   PluginFuncs;
-    ResourcePtrTable ResourceFuncs;
-    SkinPtrTable     SkinFuncs;
-};*/
 
 class RenderClient
 {

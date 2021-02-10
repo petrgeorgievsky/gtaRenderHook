@@ -9,6 +9,7 @@
 #include <rw_engine/rw_image/rw_image_funcs.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_raster/rw_raster_macros_wrappers.h>
+#include <rw_engine/system_funcs/load_texture_cmd.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 using namespace rh::rw::engine;
@@ -39,7 +40,6 @@ bool rh::rw::engine::RwRasterSetImageCmd::Execute()
         static_cast<size_t>( m_pImage->height * m_pImage->width ) *
         sizeof( uint32_t );
 
-    auto *pixels = static_cast<uint8_t *>( malloc( pixels_size ) );
     std::vector<uint32_t> pixel_data( m_pImage->height * m_pImage->width, 0 );
 
     if ( m_pImage->depth == 4 || m_pImage->depth == 8 )
@@ -124,24 +124,19 @@ bool rh::rw::engine::RwRasterSetImageCmd::Execute()
     header.mMipLevelCount = 1;
     header.mFormat =
         static_cast<uint32_t>( rh::engine::ImageBufferFormat::BGRA8 );
-    std::pair<MipLevelHeader, uint8_t *> mip_header{
-        { static_cast<uint32_t>( pixels_size ),
-          static_cast<uint32_t>( 16 * ( ( m_pImage->width + 3 ) / 4 ) ) },
-        { reinterpret_cast<uint8_t *>( pixel_data.data() ) } };
-    int64_t img_id = -1;
-    gRenderClient->GetTaskQueue().ExecuteTask(
-        SharedMemoryTaskType::TEXTURE_LOAD,
-        [&header, &mip_header]( MemoryWriter &&writer ) {
-            // serialize
-            writer.Write( &header );
-            writer.Write( &mip_header.first );
-            writer.Write( mip_header.second, mip_header.first.mSize );
-        },
-        [&img_id]( MemoryReader &&memory_reader ) {
-            // deserialize
-            img_id = *memory_reader.Read<int64_t>();
+
+    LoadTextureCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
+
+    internalRaster->mImageId = load_texture_cmd.Invoke(
+        header, [&]( MemoryWriter &writer, MipLevelHeader &mip_header ) {
+            mip_header.mSize = static_cast<uint32_t>( pixels_size );
+            mip_header.mStride =
+                static_cast<uint32_t>( 16 * ( ( m_pImage->width + 3 ) / 4 ) );
+
+            writer.Skip( sizeof( MipLevelHeader ) );
+            writer.Write( reinterpret_cast<uint8_t *>( pixel_data.data() ),
+                          mip_header.mSize );
+            return true;
         } );
-    internalRaster->mImageId = img_id >= 0 ? img_id : 0xBADF00D;
-    free( pixels );
     return true;
 }

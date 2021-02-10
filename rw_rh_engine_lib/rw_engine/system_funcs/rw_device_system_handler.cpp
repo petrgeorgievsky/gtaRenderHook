@@ -15,6 +15,8 @@
 #include "get_video_mode_cmd.h"
 #include "get_video_mode_count.h"
 #include "get_video_mode_info_cmd.h"
+#include "load_texture_cmd.h"
+#include "raster_destroy_cmd.h"
 #include "raster_lock_cmd.h"
 #include "rw_device_system_globals.h"
 #include "set_adapter_cmd.h"
@@ -326,6 +328,9 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
         SetVideoModeIdCmdImpl::RegisterCallHandler( driver_task_queue );
         GetVideoModeInfoCmdImpl::RegisterCallHandler( driver_task_queue );
 
+        RasterDestroyCmdImpl::RegisterCallHandler( driver_task_queue );
+        LoadTextureCmdImpl::RegisterCallHandler( driver_task_queue );
+
         ImageLockCmdImpl::RegisterCallHandler();
 
         gRenderDriver->GetTaskQueue().RegisterTask(
@@ -335,14 +340,6 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
                 CreateBackendMeshImpl( memory );
             } ) );
 
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::DESTROY_RASTER,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                auto &resources   = gRenderDriver->GetResources();
-                auto &raster_pool = resources.GetRasterPool();
-                // execute
-                raster_pool.FreeResource( *static_cast<uint64_t *>( memory ) );
-            } ) );
         gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::MESH_DELETE,
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
@@ -364,70 +361,6 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
             std::make_unique<SharedMemoryTask>( []( void *memory ) {
                 // execute
                 rw::engine::DestroySkinMeshImpl( memory );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::TEXTURE_LOAD,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                RasterHeader header{};
-                CopyMemory( &header, memory, sizeof( RasterHeader ) );
-                std::vector<rh::engine::ImageBufferInitData> buffer_init_data;
-                buffer_init_data.reserve( header.mMipLevelCount );
-                uint32_t memory_offset     = sizeof( RasterHeader );
-                uint32_t non_zero_mip_lvls = 0;
-                for ( uint32_t i = 0; i < header.mMipLevelCount; i++ )
-                {
-                    rh::engine::ImageBufferInitData mip_data{};
-                    MipLevelHeader                  mipLevelHeader{};
-                    CopyMemory( &mipLevelHeader,
-                                static_cast<char *>( memory ) + memory_offset,
-                                sizeof( MipLevelHeader ) );
-                    memory_offset += sizeof( MipLevelHeader );
-
-                    mip_data.mSize   = mipLevelHeader.mSize;
-                    mip_data.mStride = mipLevelHeader.mStride;
-                    mip_data.mData =
-                        static_cast<char *>( memory ) + memory_offset;
-
-                    memory_offset += mipLevelHeader.mSize;
-                    buffer_init_data.push_back( mip_data );
-                    if ( mip_data.mSize != 0 )
-                        non_zero_mip_lvls++;
-                }
-
-                auto format = static_cast<rh::engine::ImageBufferFormat>(
-                    header.mFormat );
-                rh::engine::ImageBufferCreateParams image_buffer_ci{};
-
-                image_buffer_ci.mDimension   = rh::engine::ImageDimensions::d2D;
-                image_buffer_ci.mWidth       = header.mWidth;
-                image_buffer_ci.mHeight      = header.mHeight;
-                image_buffer_ci.mDepth       = header.mDepth;
-                image_buffer_ci.mMipLevels   = non_zero_mip_lvls;
-                image_buffer_ci.mFormat      = format;
-                image_buffer_ci.mPreinitData = buffer_init_data;
-
-                RasterData result_data{};
-                result_data.mImageBuffer =
-                    gRenderDriver->GetDeviceState().CreateImageBuffer(
-                        image_buffer_ci );
-
-                rh::engine::ImageViewCreateInfo shader_view_ci{};
-                shader_view_ci.mBuffer = result_data.mImageBuffer;
-                shader_view_ci.mFormat = format;
-                shader_view_ci.mUsage =
-                    rh::engine::ImageViewUsage::ShaderResource;
-                shader_view_ci.mLevelCount = non_zero_mip_lvls;
-
-                result_data.mImageView =
-                    gRenderDriver->GetDeviceState().CreateImageView(
-                        shader_view_ci );
-                auto &resources   = gRenderDriver->GetResources();
-                auto &raster_pool = resources.GetRasterPool();
-                // TODO: Hide impl details
-                int64_t result = raster_pool.RequestResource( result_data );
-                CopyMemory( memory, &result, sizeof( int64_t ) );
             } ) );
 
         InitRenderEvents();

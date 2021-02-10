@@ -94,6 +94,8 @@ set(SOURCES
         rw_engine/system_funcs/get_video_mode_cmd.cpp
         rw_engine/system_funcs/set_video_mode_cmd.cpp
         rw_engine/system_funcs/get_video_mode_info_cmd.cpp
+        rw_engine/system_funcs/raster_destroy_cmd.cpp
+        rw_engine/system_funcs/load_texture_cmd.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
         material_storage.cpp)

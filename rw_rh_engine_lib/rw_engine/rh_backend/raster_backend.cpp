@@ -6,6 +6,7 @@
 #include "material_backend.h"
 
 #include <cassert>
+#include <rw_engine/system_funcs/raster_destroy_cmd.h>
 
 namespace rh::rw::engine
 {
@@ -28,13 +29,10 @@ void *BackendRasterDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
     if ( rasExt->mImageId == 0xBADF00D )
         return ( object );
 
-    gRenderClient->GetTaskQueue().ExecuteTask(
-        SharedMemoryTaskType::DESTROY_RASTER,
-        [&img_id]( MemoryWriter &&memory_writer ) {
-            // serialize
-            memory_writer.Write( &img_id );
-        },
-        []( MemoryReader && ) {} );
+    assert( gRenderClient );
+    auto &               client = *gRenderClient;
+    RasterDestroyCmdImpl cmd( client.GetTaskQueue() );
+    cmd.Invoke( img_id );
 
     rasExt->mImageId = 0xBADF00D;
 

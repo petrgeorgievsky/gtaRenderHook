@@ -16,6 +16,7 @@
 #include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
+#include <rw_engine/system_funcs/load_texture_cmd.h>
 #include <span>
 #include <sstream>
 
@@ -257,110 +258,93 @@ bool RwNativeTextureReadCmd::Execute()
                  << reinterpret_cast<INT_PTR>( internalRaster ) << '\n';
     rh::debug::DebugLogger::Log( debug_output.str() );
 
-    int64_t img_id = -1;
+    auto convert_paletted_mip_level =
+        [&]( MipLevelHeader &mip_header, uint32_t width, uint32_t height,
+             uint32_t size, uint8_t *raw_pixels, uint32_t *result_data,
+             bool has_alpha ) {
+            // Convert paletted raster if needed
+            auto result_size = height * width * sizeof( uint32_t );
 
-    gRenderClient->GetTaskQueue().ExecuteTask(
-        SharedMemoryTaskType::TEXTURE_LOAD,
-        [&nativeRaster, &bytesPerBlock, &blockSize, &palette, &rhFormat,
-         &nativeTexture, &compressed, this]( MemoryWriter &&writer ) {
-            auto convert_paletted_mip_level =
-                [&palette, &bytesPerBlock, &blockSize](
-                    MipLevelHeader &mipLevelHeader, uint32_t width,
-                    uint32_t height, uint32_t size, uint8_t *raw_pixels,
-                    uint32_t *result_data, bool has_alpha ) {
-                    // Convert paletted raster if needed
-                    auto result_size = height * width * sizeof( uint32_t );
+            if ( !has_alpha )
+                for ( size_t j = 0; j < size; j++ )
+                    result_data[j] = rwRGBA::Long_RGB( palette[raw_pixels[j]] );
+            else
+                for ( size_t j = 0; j < size; j++ )
+                    result_data[j] = rwRGBA::Long( palette[raw_pixels[j]] );
 
-                    if ( !has_alpha )
-                        for ( size_t j = 0; j < size; j++ )
-                            result_data[j] =
-                                rwRGBA::Long_RGB( palette[raw_pixels[j]] );
-                    else
-                        for ( size_t j = 0; j < size; j++ )
-                            result_data[j] =
-                                rwRGBA::Long( palette[raw_pixels[j]] );
+            mip_header.mSize   = result_size;
+            mip_header.mStride = bytesPerBlock * ( ( width + 3 ) / blockSize );
+        };
 
-                    mipLevelHeader.mSize = result_size;
-                    mipLevelHeader.mStride =
-                        bytesPerBlock * ( ( width + 3 ) / blockSize );
-                };
+    // Some txd records can have invalid mip level counter, default it
+    // to 1 for now
+    const uint32_t numMipLevels = max( nativeRaster.d3d9_.numMipLevels, 1u );
+    const bool     convert_from_pal =
+        nativeRaster.d3d9_.format & rwRASTERFORMATPAL4 ||
+        nativeRaster.d3d9_.format & rwRASTERFORMATPAL8;
+    const bool has_alpha =
+        static_cast<bool>( ( nativeTexture.id == rwID_PCD3D8 )
+                               ? nativeRaster.d3d8_.alpha
+                               : nativeRaster.d3d9_.flags & ( 1u << 0u ) );
 
-            // Some txd records can have invalid mip level counter, default it
-            // to 1 for now
-            const uint32_t numMipLevels =
-                max( nativeRaster.d3d9_.numMipLevels, 1u );
-            const bool convert_from_pal =
-                nativeRaster.d3d9_.format & rwRASTERFORMATPAL4 ||
-                nativeRaster.d3d9_.format & rwRASTERFORMATPAL8;
-            const bool has_alpha = static_cast<bool>(
-                ( nativeTexture.id == rwID_PCD3D8 )
-                    ? nativeRaster.d3d8_.alpha
-                    : nativeRaster.d3d9_.flags & ( 1u << 0u ) );
+    RasterHeader header{ .mWidth         = nativeRaster.d3d9_.width,
+                         .mHeight        = nativeRaster.d3d9_.height,
+                         .mDepth         = 1,
+                         .mFormat        = static_cast<uint32_t>( rhFormat ),
+                         .mMipLevelCount = numMipLevels };
 
-            RasterHeader header{ .mWidth  = nativeRaster.d3d9_.width,
-                                 .mHeight = nativeRaster.d3d9_.height,
-                                 .mDepth  = 1,
-                                 .mFormat = static_cast<uint32_t>( rhFormat ),
-                                 .mMipLevelCount = numMipLevels };
-            // serialize
-            writer.Write( &header );
+    LoadTextureCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
 
-            for ( uint32_t i = 0; i < numMipLevels; i++ )
+    uint32_t mip_width  = nativeRaster.d3d9_.width;
+    uint32_t mip_height = nativeRaster.d3d9_.height;
+
+    internalRaster->mImageId = load_texture_cmd.Invoke(
+        header, [&]( MemoryWriter &writer, MipLevelHeader &mip_header ) {
+            writer.Skip( sizeof( MipLevelHeader ) );
+
+            auto *image_memory = writer.CurrentPtr<uint32_t>();
+            if ( convert_from_pal )
+                writer.Skip( mip_height * mip_width * sizeof( uint32_t ) );
+            auto *pixels = writer.CurrentPtr<uint8_t>();
+            if ( convert_from_pal )
+                writer.SeekFromCurrent(
+                    -static_cast<int64_t>( mip_height * mip_width ) *
+                    sizeof( uint32_t ) );
+
+            uint32_t size;
+            g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
+                              sizeof( size ) );
+            g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( pixels ),
+                              size );
+
+            if ( convert_from_pal )
+                convert_paletted_mip_level( mip_header, mip_width, mip_height,
+                                            size, pixels, image_memory,
+                                            has_alpha );
+            else
             {
-                auto &mipLevelHeader = writer.Current<MipLevelHeader>();
-                writer.Skip( sizeof( MipLevelHeader ) );
-
-                uint32_t height =
-                    ( std::max )( nativeRaster.d3d9_.height >> i, 1 );
-                uint32_t width =
-                    ( std::max )( nativeRaster.d3d9_.width >> i, 1 );
-
-                auto *image_memory = writer.CurrentPtr<uint32_t>();
-                if ( convert_from_pal )
-                    writer.Skip( height * width * sizeof( uint32_t ) );
-                auto *pixels = writer.CurrentPtr<uint8_t>();
-                if ( convert_from_pal )
-                    writer.SeekFromCurrent(
-                        -static_cast<int64_t>( height * width ) *
-                        sizeof( uint32_t ) );
-
-                uint32_t size;
-                g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
-                                  sizeof( size ) );
-                g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( pixels ),
-                                  size );
-
-                if ( convert_from_pal )
-                    convert_paletted_mip_level( mipLevelHeader, width, height,
-                                                size, pixels, image_memory,
-                                                has_alpha );
-                else
+                // Fix rgb8 format "alpha" channel
+                if ( !compressed && ( nativeRaster.d3d9_.format &
+                                      rwRASTERFORMAT888 ) == rwRASTERFORMAT888 )
                 {
-                    // Fix rgb8 format "alpha" channel
-                    if ( !compressed &&
-                         ( nativeRaster.d3d9_.format & rwRASTERFORMAT888 ) ==
-                             rwRASTERFORMAT888 )
-                    {
-                        std::span<RwRGBA> rgba_pixels(
-                            reinterpret_cast<RwRGBA *>( pixels ), size / 4 );
-                        for ( auto &pix : rgba_pixels )
-                            pix.alpha = 0xff;
-                    }
-
-                    mipLevelHeader.mSize = size;
-                    mipLevelHeader.mStride =
-                        bytesPerBlock * ( ( width + 3 ) / blockSize );
+                    std::span<RwRGBA> rgba_pixels(
+                        reinterpret_cast<RwRGBA *>( pixels ), size / 4 );
+                    for ( auto &pix : rgba_pixels )
+                        pix.alpha = 0xff;
                 }
-                writer.Skip( mipLevelHeader.mSize );
+
+                mip_header.mSize = size;
+                mip_header.mStride =
+                    bytesPerBlock * ( ( mip_width + 3 ) / blockSize );
             }
-        },
-        [&img_id]( MemoryReader &&memory_reader ) {
-            // deserialize
-            img_id = *memory_reader.Read<int64_t>();
+            writer.Skip( mip_header.mSize );
+
+            mip_width  = ( std::max )( mip_width >> 1u, 1u );
+            mip_height = ( std::max )( mip_height >> 1u, 1u );
+            return true;
         } );
 
-    internalRaster->mImageId = img_id >= 0 ? img_id : gEmptyTextureId;
-    RwTexture *texture       = g_pTexture_API.fpCreateTexture( raster );
+    RwTexture *texture = g_pTexture_API.fpCreateTexture( raster );
     if ( texture == nullptr )
         return false;
     rwTexture::SetFilterMode(
