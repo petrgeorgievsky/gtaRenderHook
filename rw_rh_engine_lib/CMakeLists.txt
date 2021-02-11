@@ -98,6 +98,8 @@ set(SOURCES
         rw_engine/system_funcs/raster_load_cmd.cpp
         rw_engine/system_funcs/mesh_load_cmd.cpp
         rw_engine/system_funcs/mesh_unload_cmd.cpp
+        rw_engine/system_funcs/skinned_mesh_load_cmd.cpp
+        rw_engine/system_funcs/skinned_mesh_unload_cmd.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
         material_storage.cpp)

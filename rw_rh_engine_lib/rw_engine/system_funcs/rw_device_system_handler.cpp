@@ -23,6 +23,8 @@
 #include "rw_device_system_globals.h"
 #include "set_adapter_cmd.h"
 #include "set_video_mode_cmd.h"
+#include "skinned_mesh_load_cmd.h"
+#include "skinned_mesh_unload_cmd.h"
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/ISwapchain.h>
 #include <Engine/Common/IWindow.h>
@@ -336,20 +338,8 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
         LoadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
         UnloadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::SKINNED_MESH_LOAD,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                rw::engine::CreateSkinMeshImpl( memory );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::SKINNED_MESH_UNLOAD,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                rw::engine::DestroySkinMeshImpl( memory );
-            } ) );
+        SkinnedMeshLoadCmdImpl::RegisterCallHandler( driver_task_queue );
+        SkinnedMeshUnloadCmdImpl::RegisterCallHandler( driver_task_queue );
 
         InitRenderEvents();
     }

@@ -35,7 +35,6 @@ struct SkinDrawCallInfo
 };
 
 uint64_t CreateSkinMesh( const SkinnedMeshInitData &initData );
-void     CreateSkinMeshImpl( void *memory );
 void     DestroySkinMesh( uint64_t id );
 void     DestroySkinMeshImpl( void *memory );
 

@@ -8,92 +8,23 @@
 #include <ipc/MemoryReader.h>
 #include <ipc/MemoryWriter.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
+#include <rw_engine/system_funcs/skinned_mesh_load_cmd.h>
+#include <rw_engine/system_funcs/skinned_mesh_unload_cmd.h>
 namespace rh::rw::engine
 {
 
 uint64_t CreateSkinMesh( const SkinnedMeshInitData &initData )
 {
-    uint64_t result = 0xBADF00D;
-    gRenderClient->GetTaskQueue().ExecuteTask(
-        SharedMemoryTaskType::SKINNED_MESH_LOAD,
-        [&initData]( MemoryWriter &&writer ) {
-            writer.Write( &initData.mVertexCount );
-            writer.Write( &initData.mIndexCount );
-            writer.Write( initData.mVertexData, initData.mVertexCount );
-            writer.Write( initData.mIndexData, initData.mIndexCount );
-            uint32_t split_count = initData.mSplits.size();
-            writer.Write( &split_count );
-            writer.Write( initData.mSplits.data(), split_count );
-        },
-        [&result]( MemoryReader &&memory_reader ) {
-            result = *memory_reader.Read<uint64_t>();
-        } );
-    return result;
-}
+    SkinnedMeshLoadCmdImpl cmd( gRenderClient->GetTaskQueue() );
 
-void CreateSkinMeshImpl( void *memory )
-{
-    auto &       resources      = gRenderDriver->GetResources();
-    auto &       skin_mesh_pool = resources.GetSkinMeshPool();
-    MemoryReader reader( memory );
-
-    SkinMeshData        backendMeshData{};
-    SkinnedMeshInitData initData{};
-    initData.mVertexCount = *reader.Read<uint64_t>();
-    initData.mIndexCount  = *reader.Read<uint64_t>();
-    initData.mVertexData =
-        reader.Read<VertexDescPosColorUVNormals>( initData.mVertexCount );
-    initData.mIndexData = reader.Read<uint16_t>( initData.mIndexCount );
-
-    auto split_count = *reader.Read<uint32_t>();
-    initData.mSplits.resize( split_count );
-    CopyMemory( initData.mSplits.data(),
-                reader.Read<GeometrySplit>( split_count ),
-                sizeof( GeometrySplit ) * split_count );
-
-    rh::engine::BufferCreateInfo ib_info{};
-    ib_info.mSize  = initData.mIndexCount * sizeof( int16_t );
-    ib_info.mUsage = rh::engine::BufferUsage::IndexBuffer |
-                     rh::engine::BufferUsage::StorageBuffer;
-    ib_info.mInitDataPtr         = initData.mIndexData;
-    backendMeshData.mIndexBuffer = new RefCountedBuffer(
-        gRenderDriver->GetDeviceState().CreateBuffer( ib_info ) );
-
-    rh::engine::BufferCreateInfo vb_info{};
-    vb_info.mSize =
-        initData.mVertexCount * sizeof( VertexDescPosColorUVNormals );
-    vb_info.mUsage = rh::engine::BufferUsage::VertexBuffer |
-                     rh::engine::BufferUsage::StorageBuffer;
-    vb_info.mInitDataPtr          = initData.mVertexData;
-    backendMeshData.mVertexBuffer = new RefCountedBuffer(
-        gRenderDriver->GetDeviceState().CreateBuffer( vb_info ) );
-
-    backendMeshData.mVertexCount = initData.mVertexCount;
-    backendMeshData.mIndexCount  = initData.mIndexCount;
-
-    auto id = skin_mesh_pool.RequestResource( backendMeshData );
-
-    *static_cast<uint64_t *>( memory ) = id;
+    return cmd.Invoke( initData );
 }
 
 void DestroySkinMesh( uint64_t id )
 {
-    gRenderClient->GetTaskQueue().ExecuteTask(
-        SharedMemoryTaskType::SKINNED_MESH_UNLOAD,
-        [&id]( MemoryWriter &&writer ) {
-            // serialize
-            writer.Write( &id );
-        },
-        []( MemoryReader &&memory_reader ) {
-            // deserialize
-        } );
-}
+    SkinnedMeshUnloadCmdImpl cmd( gRenderClient->GetTaskQueue() );
 
-void DestroySkinMeshImpl( void *memory )
-{
-    auto &resources      = gRenderDriver->GetResources();
-    auto &skin_mesh_pool = resources.GetSkinMeshPool();
-    skin_mesh_pool.FreeResource( *static_cast<uint64_t *>( memory ) );
+    cmd.Invoke( id );
 }
 
 SkinRendererClient::SkinRendererClient()
