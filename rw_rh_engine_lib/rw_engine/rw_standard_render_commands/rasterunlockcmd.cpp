@@ -4,7 +4,7 @@
 #include <common_headers.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_api_injectors.h>
-#include <rw_engine/system_funcs/load_texture_cmd.h>
+#include <rw_engine/system_funcs/raster_load_cmd.h>
 #include <rw_game_hooks.h>
 
 using namespace rh::rw::engine;
@@ -20,15 +20,15 @@ bool RwRasterUnlockCmd::Execute()
     {
         auto *internalRaster = GetBackendRasterExt( m_pRaster );
 
-        LoadTextureCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
-        RasterHeader       header{
+        RasterLoadCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
+        RasterHeader      header{
             .mWidth  = static_cast<uint32_t>( m_pRaster->width ),
             .mHeight = static_cast<uint32_t>( m_pRaster->height ),
             .mDepth  = 1,
             .mFormat =
                 static_cast<uint32_t>( rh::engine::ImageBufferFormat::BGRA8 ),
             .mMipLevelCount = 1 };
-        
+
         internalRaster->mImageId = load_texture_cmd.Invoke(
             header, [this]( MemoryWriter &writer, MipLevelHeader &mip_header ) {
                 mip_header.mSize   = m_pRaster->width * m_pRaster->height * 4;

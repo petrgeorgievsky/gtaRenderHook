@@ -9,7 +9,7 @@
 #include <rw_engine/rw_image/rw_image_funcs.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_raster/rw_raster_macros_wrappers.h>
-#include <rw_engine/system_funcs/load_texture_cmd.h>
+#include <rw_engine/system_funcs/raster_load_cmd.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 using namespace rh::rw::engine;
@@ -125,7 +125,7 @@ bool rh::rw::engine::RwRasterSetImageCmd::Execute()
     header.mFormat =
         static_cast<uint32_t>( rh::engine::ImageBufferFormat::BGRA8 );
 
-    LoadTextureCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
+    RasterLoadCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
 
     internalRaster->mImageId = load_texture_cmd.Invoke(
         header, [&]( MemoryWriter &writer, MipLevelHeader &mip_header ) {

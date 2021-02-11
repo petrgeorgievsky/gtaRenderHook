@@ -2,7 +2,7 @@
 // Created by peter on 10.02.2021.
 //
 
-#include "raster_destroy_cmd.h"
+#include "raster_unload_cmd.h"
 #include "rw_device_system_globals.h"
 #include <Engine/Common/IDeviceState.h>
 #include <ipc/shared_memory_queue_client.h>
@@ -17,7 +17,7 @@ RasterDestroyCmdImpl::RasterDestroyCmdImpl( SharedMemoryTaskQueue &task_queue )
 
 bool RasterDestroyCmdImpl::Invoke( uint64_t raster_id )
 {
-    TaskQueue.ExecuteTask( SharedMemoryTaskType::DESTROY_RASTER,
+    TaskQueue.ExecuteTask( SharedMemoryTaskType::RASTER_UNLOAD,
                            [&raster_id]( MemoryWriter &&memory_writer ) {
                                // serialize
                                memory_writer.Write( &raster_id );
@@ -29,7 +29,7 @@ void RasterDestroyCmdImpl::RegisterCallHandler(
     SharedMemoryTaskQueue &task_queue )
 {
     task_queue.RegisterTask(
-        SharedMemoryTaskType::DESTROY_RASTER,
+        SharedMemoryTaskType::RASTER_UNLOAD,
         std::make_unique<SharedMemoryTask>( []( void *memory ) {
             auto &resources   = gRenderDriver->GetResources();
             auto &raster_pool = resources.GetRasterPool();

@@ -16,7 +16,7 @@
 #include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
-#include <rw_engine/system_funcs/load_texture_cmd.h>
+#include <rw_engine/system_funcs/raster_load_cmd.h>
 #include <span>
 #include <sstream>
 
@@ -293,7 +293,7 @@ bool RwNativeTextureReadCmd::Execute()
                          .mFormat        = static_cast<uint32_t>( rhFormat ),
                          .mMipLevelCount = numMipLevels };
 
-    LoadTextureCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
+    RasterLoadCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
 
     uint32_t mip_width  = nativeRaster.d3d9_.width;
     uint32_t mip_height = nativeRaster.d3d9_.height;

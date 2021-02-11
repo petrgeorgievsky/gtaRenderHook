@@ -14,13 +14,13 @@ class SharedMemoryTaskQueue;
 struct RasterHeader;
 class MemoryWriter;
 struct MipLevelHeader;
-class LoadTextureCmdImpl
+class RasterLoadCmdImpl
 {
     using WriteMipLevelFunc =
         std::function<bool( MemoryWriter &, MipLevelHeader & )>;
 
   public:
-    LoadTextureCmdImpl( SharedMemoryTaskQueue &task_queue );
+    RasterLoadCmdImpl( SharedMemoryTaskQueue &task_queue );
     int64_t     Invoke( const RasterHeader &header,
                         WriteMipLevelFunc   write_mip_level );
     static void RegisterCallHandler( SharedMemoryTaskQueue &task_queue );

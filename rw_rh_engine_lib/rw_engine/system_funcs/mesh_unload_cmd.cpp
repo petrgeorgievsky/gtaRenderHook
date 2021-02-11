@@ -16,7 +16,7 @@ UnloadMeshCmdImpl::UnloadMeshCmdImpl( SharedMemoryTaskQueue &task_queue )
 
 bool UnloadMeshCmdImpl::Invoke( uint64_t id )
 {
-    TaskQueue.ExecuteTask( SharedMemoryTaskType::MESH_DELETE,
+    TaskQueue.ExecuteTask( SharedMemoryTaskType::MESH_UNLOAD,
                            [&id]( MemoryWriter &&memory_writer ) {
                                // serialize
                                memory_writer.Write( &id );
@@ -39,7 +39,7 @@ void UnloadMeshTaskImpl( void *memory )
 void UnloadMeshCmdImpl::RegisterCallHandler( SharedMemoryTaskQueue &task_queue )
 {
     task_queue.RegisterTask(
-        SharedMemoryTaskType::MESH_DELETE,
+        SharedMemoryTaskType::MESH_UNLOAD,
         std::make_unique<SharedMemoryTask>( UnloadMeshTaskImpl ) );
 }
 } // namespace rh::rw::engine

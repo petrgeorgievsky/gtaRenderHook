@@ -15,11 +15,11 @@
 #include "get_video_mode_cmd.h"
 #include "get_video_mode_count.h"
 #include "get_video_mode_info_cmd.h"
-#include "load_texture_cmd.h"
 #include "mesh_load_cmd.h"
 #include "mesh_unload_cmd.h"
-#include "raster_destroy_cmd.h"
+#include "raster_load_cmd.h"
 #include "raster_lock_cmd.h"
+#include "raster_unload_cmd.h"
 #include "rw_device_system_globals.h"
 #include "set_adapter_cmd.h"
 #include "set_video_mode_cmd.h"
@@ -331,7 +331,7 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
         GetVideoModeInfoCmdImpl::RegisterCallHandler( driver_task_queue );
 
         RasterDestroyCmdImpl::RegisterCallHandler( driver_task_queue );
-        LoadTextureCmdImpl::RegisterCallHandler( driver_task_queue );
+        RasterLoadCmdImpl::RegisterCallHandler( driver_task_queue );
         RasterLockCmdImpl::RegisterCallHandler( driver_task_queue );
 
         LoadMeshCmdImpl::RegisterCallHandler( driver_task_queue );

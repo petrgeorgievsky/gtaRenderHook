@@ -2,7 +2,7 @@
 // Created by peter on 10.02.2021.
 //
 
-#include "load_texture_cmd.h"
+#include "raster_load_cmd.h"
 #include "rw_device_system_globals.h"
 #include <Engine/Common/IDeviceState.h>
 #include <ipc/shared_memory_queue_client.h>
@@ -10,17 +10,17 @@
 
 namespace rh::rw::engine
 {
-LoadTextureCmdImpl::LoadTextureCmdImpl( SharedMemoryTaskQueue &task_queue )
+RasterLoadCmdImpl::RasterLoadCmdImpl( SharedMemoryTaskQueue &task_queue )
     : TaskQueue( task_queue )
 {
 }
 
-int64_t LoadTextureCmdImpl::Invoke( const RasterHeader &header,
-                                    WriteMipLevelFunc   write_mip_level )
+int64_t RasterLoadCmdImpl::Invoke( const RasterHeader &header,
+                                   WriteMipLevelFunc   write_mip_level )
 {
     int64_t result_raster = 0xBADF00D;
     TaskQueue.ExecuteTask(
-        SharedMemoryTaskType::TEXTURE_LOAD,
+        SharedMemoryTaskType::RASTER_LOAD,
         [&header, &write_mip_level]( MemoryWriter &&writer ) {
             // serialize
             writer.Write( &header );
@@ -92,11 +92,10 @@ void LoadTextureTaskImpl( void *memory )
     writer.Write( &raster_id );
 }
 
-void LoadTextureCmdImpl::RegisterCallHandler(
-    SharedMemoryTaskQueue &task_queue )
+void RasterLoadCmdImpl::RegisterCallHandler( SharedMemoryTaskQueue &task_queue )
 {
     task_queue.RegisterTask(
-        SharedMemoryTaskType::TEXTURE_LOAD,
+        SharedMemoryTaskType::RASTER_LOAD,
         std::make_unique<SharedMemoryTask>( LoadTextureTaskImpl ) );
 }
 } // namespace rh::rw::engine
