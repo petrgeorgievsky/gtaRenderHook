@@ -10,17 +10,17 @@
 namespace rh::rw::engine
 {
 
-ImageLockResult ImageLockCmdImpl::Invoke( const ImageLockParams &params )
+RasterLockResult RasterLockCmdImpl::Invoke( const RasterLockParams &params )
 {
-    auto &          task_queue = gRenderClient->GetTaskQueue();
-    ImageLockResult result{};
+    auto &           task_queue = gRenderClient->GetTaskQueue();
+    RasterLockResult result{};
 
     task_queue.ExecuteTask(
         SharedMemoryTaskType::RASTER_LOCK,
         [params]( MemoryWriter &&writer ) { writer.Write( &params ); },
         [&result, &params]( MemoryReader &&memory_reader ) {
             // deserialize
-            result = { *memory_reader.Read<ImageLockResultData>() };
+            result = { *memory_reader.Read<RasterLockResultData>() };
             if ( params.mImageId != 0xBADF00D )
                 result.mData = memory_reader.Read<uint8_t>(
                     result.mLockDataHeight * result.mLockDataStride );
@@ -40,15 +40,15 @@ void RasterLockCallback( void *memory )
     MemoryReader reader( memory );
     MemoryWriter writer( memory );
 
-    ImageLockParams params = *reader.Read<ImageLockParams>();
+    RasterLockParams params = *reader.Read<RasterLockParams>();
 
-    ImageLockResultData result{};
+    RasterLockResultData result{};
     result.mLockDataStride = 4 * params.mWidth;
     result.mLockDataHeight = params.mHeight;
     writer.Write( &result );
     auto &r = raster_pool.GetResource( params.mImageId );
 
-    if ( ( params.mLockMode & ImageLockParams::LockRead ) != 0 )
+    if ( ( params.mLockMode & RasterLockParams::LockRead ) != 0 )
     {
         ScopedPointer staging_buffer = device.CreateBuffer(
             { .mSize  = result.mLockDataStride * result.mLockDataHeight,
@@ -105,9 +105,8 @@ void RasterLockCallback( void *memory )
     }
 }
 
-void ImageLockCmdImpl::RegisterCallHandler()
+void RasterLockCmdImpl::RegisterCallHandler( SharedMemoryTaskQueue &task_queue )
 {
-    auto &task_queue = gRenderDriver->GetTaskQueue();
     task_queue.RegisterTask(
         SharedMemoryTaskType::RASTER_LOCK,
         std::make_unique<SharedMemoryTask>( RasterLockCallback ) );

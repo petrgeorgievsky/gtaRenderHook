@@ -38,12 +38,12 @@ bool RwRasterLockCmd::Execute( void *&res_data_ptr )
 
     if ( ( ( mAccessMode & rwRASTERLOCKREAD ) != 0 ) )
     {
-        ImageLockCmdImpl lock_cmd{};
-        auto             lock_result = lock_cmd.Invoke(
-            { .mImageId  = backend_raster->mImageId,
-              .mWidth    = static_cast<uint32_t>( mRaster->width ),
-              .mHeight   = static_cast<uint32_t>( mRaster->height ),
-              .mLockMode = ImageLockParams::LockRead,
+        RasterLockCmdImpl lock_cmd{};
+        auto              lock_result = lock_cmd.Invoke(
+            { .mImageId = backend_raster->mImageId,
+              .mWidth   = static_cast<uint32_t>( mRaster->width ),
+              .mHeight  = static_cast<uint32_t>( mRaster->height ),
+              .mLockMode = RasterLockParams::LockRead,
               .mMipLevel = mip_level } );
 
         mRaster->cpPixels = static_cast<uint8_t *>( malloc( static_cast<size_t>(

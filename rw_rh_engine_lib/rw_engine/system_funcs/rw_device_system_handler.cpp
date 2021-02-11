@@ -332,11 +332,10 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
         RasterDestroyCmdImpl::RegisterCallHandler( driver_task_queue );
         LoadTextureCmdImpl::RegisterCallHandler( driver_task_queue );
+        RasterLockCmdImpl::RegisterCallHandler( driver_task_queue );
 
         LoadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
         UnloadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
-
-        ImageLockCmdImpl::RegisterCallHandler();
 
         gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::SKINNED_MESH_LOAD,

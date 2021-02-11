@@ -8,7 +8,7 @@
 namespace rh::rw::engine
 {
 
-struct ImageLockParams
+struct RasterLockParams
 {
     static constexpr uint8_t LockRead  = 1;
     static constexpr uint8_t LockWrite = 2;
@@ -22,19 +22,20 @@ struct ImageLockParams
     uint16_t mPadding;
 };
 
-struct ImageLockResultData
+struct RasterLockResultData
 {
     uint32_t mLockDataHeight;
     uint32_t mLockDataStride;
 };
-struct ImageLockResult : ImageLockResultData
+struct RasterLockResult : RasterLockResultData
 {
     void *mData = nullptr;
 };
-class ImageLockCmdImpl
+class SharedMemoryTaskQueue;
+class RasterLockCmdImpl
 {
   public:
-    ImageLockResult Invoke( const ImageLockParams &params );
-    static void     RegisterCallHandler();
+    RasterLockResult Invoke( const RasterLockParams &params );
+    static void      RegisterCallHandler( SharedMemoryTaskQueue &task_queue );
 };
 } // namespace rh::rw::engine
