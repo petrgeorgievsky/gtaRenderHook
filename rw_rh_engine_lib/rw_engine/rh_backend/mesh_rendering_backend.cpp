@@ -8,112 +8,21 @@
 #include <Engine/Common/IShader.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <rw_engine/system_funcs/mesh_load_cmd.h>
+#include <rw_engine/system_funcs/mesh_unload_cmd.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 using namespace rh::rw::engine;
 
 uint64_t
 rh::rw::engine::CreateBackendMesh( const BackendMeshInitData &initData )
 {
-    uint64_t result = 0xBADF00D;
-    gRenderClient->GetTaskQueue().ExecuteTask(
-        SharedMemoryTaskType::MESH_LOAD,
-        [&initData]( MemoryWriter &&memory_writer ) {
-            // serialize
-            memory_writer.Write( &initData.mVertexCount );
-            memory_writer.Write( &initData.mIndexCount );
-
-            memory_writer.Write( initData.mVertexData, initData.mVertexCount );
-            memory_writer.Write( initData.mIndexData, initData.mIndexCount );
-
-            uint32_t split_count = initData.mSplits.size();
-            memory_writer.Write( &split_count );
-            memory_writer.Write( initData.mSplits.data(), split_count );
-
-            uint32_t mat_count = initData.mMaterials.size();
-            memory_writer.Write( &mat_count );
-            memory_writer.Write( initData.mMaterials.data(), mat_count );
-        },
-        [&result]( MemoryReader &&memory_reader ) {
-            // deserialize
-            result = *memory_reader.Read<uint64_t>();
-        } );
-    return result;
-}
-
-void rh::rw::engine::CreateBackendMeshImpl( void *memory )
-{
-    uint32_t memory_offset = sizeof( uint64_t );
-
-    BackendMeshData     backendMeshData{};
-    BackendMeshInitData initData{};
-    initData.mVertexCount = *static_cast<uint64_t *>( memory );
-    initData.mIndexCount  = *static_cast<uint64_t *>(
-        static_cast<void *>( static_cast<char *>( memory ) + memory_offset ) );
-    memory_offset += sizeof( uint64_t );
-    initData.mVertexData = static_cast<VertexDescPosColorUVNormals *>(
-        static_cast<void *>( static_cast<char *>( memory ) + memory_offset ) );
-    memory_offset +=
-        sizeof( decltype( initData.mVertexData[0] ) ) * initData.mVertexCount;
-    initData.mIndexData = static_cast<uint16_t *>(
-        static_cast<void *>( static_cast<char *>( memory ) + memory_offset ) );
-    memory_offset +=
-        sizeof( decltype( initData.mIndexData[0] ) ) * initData.mIndexCount;
-    auto split_count = *static_cast<uint32_t *>(
-        static_cast<void *>( static_cast<char *>( memory ) + memory_offset ) );
-    memory_offset += sizeof( uint32_t );
-    initData.mSplits.resize( split_count );
-    CopyMemory( initData.mSplits.data(),
-                static_cast<char *>( memory ) + memory_offset,
-                sizeof( decltype( initData.mSplits[0] ) ) * split_count );
-    memory_offset += sizeof( decltype( initData.mSplits[0] ) ) * split_count;
-    auto material_count = *static_cast<uint32_t *>(
-        static_cast<void *>( static_cast<char *>( memory ) + memory_offset ) );
-    memory_offset += sizeof( uint32_t );
-    initData.mMaterials.resize( material_count );
-    CopyMemory( initData.mMaterials.data(),
-                static_cast<char *>( memory ) + memory_offset,
-                sizeof( decltype( initData.mMaterials[0] ) ) * material_count );
-
-    rh::engine::BufferCreateInfo ib_info{};
-    ib_info.mSize  = initData.mIndexCount * sizeof( int16_t );
-    ib_info.mUsage = rh::engine::BufferUsage::IndexBuffer |
-                     rh::engine::BufferUsage::StorageBuffer;
-    ib_info.mInitDataPtr         = initData.mIndexData;
-    backendMeshData.mIndexBuffer = new RefCountedBuffer(
-        gRenderDriver->GetDeviceState().CreateBuffer( ib_info ) );
-
-    rh::engine::BufferCreateInfo vb_info{};
-    vb_info.mSize =
-        initData.mVertexCount * sizeof( VertexDescPosColorUVNormals );
-    vb_info.mUsage = rh::engine::BufferUsage::VertexBuffer |
-                     rh::engine::BufferUsage::StorageBuffer;
-    vb_info.mInitDataPtr          = initData.mVertexData;
-    backendMeshData.mVertexBuffer = new RefCountedBuffer(
-        gRenderDriver->GetDeviceState().CreateBuffer( vb_info ) );
-
-    backendMeshData.mVertexCount = initData.mVertexCount;
-    backendMeshData.mIndexCount  = initData.mIndexCount;
-    backendMeshData.mSplits      = initData.mSplits;
-    backendMeshData.mMaterials   = initData.mMaterials;
-
-    auto &resources = gRenderDriver->GetResources();
-    auto &mesh_pool = resources.GetMeshPool();
-    auto  id        = mesh_pool.RequestResource( std::move( backendMeshData ) );
-
-    *static_cast<uint64_t *>( memory ) = id;
+    return LoadMeshCmdImpl( gRenderClient->GetTaskQueue() ).Invoke( initData );
 }
 
 void rh::rw::engine::DestroyBackendMesh( uint64_t id )
 {
-    gRenderClient->GetTaskQueue().ExecuteTask(
-        SharedMemoryTaskType::MESH_DELETE,
-        [&id]( MemoryWriter &&memory_writer ) {
-            // serialize
-            memory_writer.Write( &id );
-        },
-        []( MemoryReader &&memory_reader ) {
-            // deserialize
-        } );
+    UnloadMeshCmdImpl cmd( gRenderClient->GetTaskQueue() );
+    cmd.Invoke( id );
 }
 
 BackendRendererClient::BackendRendererClient()

@@ -16,6 +16,8 @@
 #include "get_video_mode_count.h"
 #include "get_video_mode_info_cmd.h"
 #include "load_texture_cmd.h"
+#include "mesh_load_cmd.h"
+#include "mesh_unload_cmd.h"
 #include "raster_destroy_cmd.h"
 #include "raster_lock_cmd.h"
 #include "rw_device_system_globals.h"
@@ -331,23 +333,10 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
         RasterDestroyCmdImpl::RegisterCallHandler( driver_task_queue );
         LoadTextureCmdImpl::RegisterCallHandler( driver_task_queue );
 
+        LoadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
+        UnloadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
+
         ImageLockCmdImpl::RegisterCallHandler();
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::MESH_LOAD,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                // execute
-                CreateBackendMeshImpl( memory );
-            } ) );
-
-        gRenderDriver->GetTaskQueue().RegisterTask(
-            SharedMemoryTaskType::MESH_DELETE,
-            std::make_unique<SharedMemoryTask>( []( void *memory ) {
-                auto &resources = gRenderDriver->GetResources();
-                auto &mesh_pool = resources.GetMeshPool();
-                // execute
-                mesh_pool.FreeResource( *static_cast<uint64_t *>( memory ) );
-            } ) );
 
         gRenderDriver->GetTaskQueue().RegisterTask(
             SharedMemoryTaskType::SKINNED_MESH_LOAD,
