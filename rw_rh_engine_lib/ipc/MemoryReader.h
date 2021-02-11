@@ -13,21 +13,21 @@ class MemoryReader
 
   public:
     MemoryReader( void *_memory ) : memory( _memory ) {}
-    void                     Skip( uint64_t p ) { offset += p; }
-    template <typename T> T *Read()
+    void                                   Skip( uint64_t p ) { offset += p; }
+    template <typename T> [[nodiscard]] T *Read()
     {
         T *start = static_cast<T *>(
             static_cast<void *>( static_cast<char *>( memory ) + offset ) );
         offset += sizeof( T );
         return start;
     }
-    template <typename T> T *Read( uint64_t count )
+    template <typename T> [[nodiscard]] T *Read( uint64_t count )
     {
         T *start = static_cast<T *>(
             static_cast<void *>( static_cast<char *>( memory ) + offset ) );
         offset += sizeof( T ) * count;
         return start;
     }
-    uint64_t Pos() { return offset; }
+    [[nodiscard]] uint64_t Pos() { return offset; }
 };
 } // namespace rh::rw::engine
