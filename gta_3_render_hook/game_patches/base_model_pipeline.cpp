@@ -11,6 +11,7 @@
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
+#include <rw_game_hooks.h>
 
 using namespace rh::rw::engine;
 static RpGeometryRw35 geometry_interface_35{};

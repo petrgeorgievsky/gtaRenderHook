@@ -5,6 +5,7 @@
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_rh_pipeline.h>
+#include <rw_game_hooks.h>
 
 static rh::rw::engine::RpGeometryRw36 geometry_interface_35{};
 

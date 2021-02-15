@@ -8,6 +8,7 @@
 #include <Engine/Common/types/blend_op.h>
 #include <render_client/render_client.h>
 #include <render_loop.h>
+#include <rw_game_hooks.h>
 namespace rh::rw::engine
 {
 

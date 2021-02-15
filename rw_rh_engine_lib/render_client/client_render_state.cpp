@@ -3,7 +3,6 @@
 //
 
 #include "client_render_state.h"
-#include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
 namespace rh::rw::engine
 {
