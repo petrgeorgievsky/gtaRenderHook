@@ -24,7 +24,8 @@ struct BackendRasterExt
     uint64_t mImageId;
 };
 
-extern int32_t gBackendRasterExtOffset;
+constexpr uint64_t gNullRasterId = 0xBADF00D;
+extern int32_t     gBackendRasterExtOffset;
 
 /* Plugin Attach */
 int32_t BackendRasterPluginAttach();

@@ -29,5 +29,9 @@ class MemoryReader
         return start;
     }
     [[nodiscard]] uint64_t Pos() { return offset; }
+    [[nodiscard]] void *   CurrentAddress()
+    {
+        return static_cast<void *>( static_cast<char *>( memory ) + offset );
+    }
 };
 } // namespace rh::rw::engine

@@ -178,7 +178,7 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
     {
         mSceneMaterials[i + mMaterials] = materials[i];
         auto get_pool_id = [this, &raster_pool]( auto orig_tex_id ) {
-            if ( orig_tex_id == 0xBADF00D )
+            if ( orig_tex_id == gNullRasterId )
                 return -1;
             auto tex_pool_id = mTexturePool->GetTexId( orig_tex_id );
             if ( tex_pool_id < 0 )

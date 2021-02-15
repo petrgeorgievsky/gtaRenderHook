@@ -18,7 +18,7 @@ void *BackendRasterCtor( void *object, [[maybe_unused]] int32_t offsetInObject,
                          [[maybe_unused]] int32_t sizeInObject )
 {
     auto *rasExt     = GetBackendRasterExt( static_cast<RwRaster *>( object ) );
-    rasExt->mImageId = 0xBADF00D;
+    rasExt->mImageId = gNullRasterId;
     return ( object );
 }
 
@@ -27,7 +27,7 @@ void *BackendRasterDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
 {
     auto *rasExt = GetBackendRasterExt( static_cast<RwRaster *>( object ) );
     auto  img_id = rasExt->mImageId;
-    if ( rasExt->mImageId == 0xBADF00D )
+    if ( rasExt->mImageId == gNullRasterId )
         return ( object );
 
     assert( gRenderClient );
@@ -35,7 +35,7 @@ void *BackendRasterDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
     RasterDestroyCmdImpl cmd( client.GetTaskQueue() );
     cmd.Invoke( img_id );
 
-    rasExt->mImageId = 0xBADF00D;
+    rasExt->mImageId = gNullRasterId;
 
     /* Phew! */
     return ( object );

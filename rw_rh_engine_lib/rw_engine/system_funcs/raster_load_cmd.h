@@ -21,7 +21,7 @@ class RasterLoadCmdImpl
 
   public:
     RasterLoadCmdImpl( SharedMemoryTaskQueue &task_queue );
-    int64_t     Invoke( const RasterHeader &header,
+    uint64_t    Invoke( const RasterHeader &header,
                         WriteMipLevelFunc   write_mip_level );
     static void RegisterCallHandler( SharedMemoryTaskQueue &task_queue );
 

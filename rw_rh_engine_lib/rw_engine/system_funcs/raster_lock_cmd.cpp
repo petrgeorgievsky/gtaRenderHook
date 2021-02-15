@@ -23,7 +23,7 @@ RasterLockResult RasterLockCmdImpl::Invoke( const RasterLockParams &params )
         [&result, &params]( MemoryReader &&memory_reader ) {
             // deserialize
             result = { *memory_reader.Read<RasterLockResultData>() };
-            if ( params.mImageId != 0xBADF00D )
+            if ( params.mImageId != gNullRasterId )
                 result.mData = memory_reader.Read<uint8_t>(
                     result.mLockDataHeight * result.mLockDataStride );
         } );

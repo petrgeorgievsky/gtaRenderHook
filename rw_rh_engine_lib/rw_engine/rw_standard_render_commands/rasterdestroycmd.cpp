@@ -17,7 +17,7 @@ bool RwRasterDestroyCmd::Execute()
         return true;
     /* Retrieve a pointer to internal raster */
     auto *rasExt = GetBackendRasterExt( m_pRaster );
-    if ( rasExt->mImageId == 0xBADF00D )
+    if ( rasExt->mImageId == gNullRasterId )
         return true;
 
     return true; // rh::engine::g_pRHRenderer->FreeImageBuffer( internalRaster,

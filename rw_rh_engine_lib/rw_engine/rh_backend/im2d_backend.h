@@ -27,8 +27,6 @@ class ISampler;
 namespace rw::engine
 {
 
-constexpr uint64_t gEmptyTextureId = 0xBADF00D;
-
 struct Im2DState
 {
     uint8_t mColorBlendSrc;

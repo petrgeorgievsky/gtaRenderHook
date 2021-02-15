@@ -16,10 +16,10 @@ RasterLoadCmdImpl::RasterLoadCmdImpl( SharedMemoryTaskQueue &task_queue )
 {
 }
 
-int64_t RasterLoadCmdImpl::Invoke( const RasterHeader &header,
-                                   WriteMipLevelFunc   write_mip_level )
+uint64_t RasterLoadCmdImpl::Invoke( const RasterHeader &header,
+                                    WriteMipLevelFunc   write_mip_level )
 {
-    int64_t result_raster = 0xBADF00D;
+    uint64_t result_raster = gNullRasterId;
     TaskQueue.ExecuteTask(
         SharedMemoryTaskType::RASTER_LOAD,
         [&header, &write_mip_level]( MemoryWriter &&writer ) {
@@ -30,7 +30,7 @@ int64_t RasterLoadCmdImpl::Invoke( const RasterHeader &header,
         },
         [&result_raster]( MemoryReader &&memory_reader ) {
             // deserialize
-            result_raster = *memory_reader.Read<int64_t>();
+            result_raster = *memory_reader.Read<uint64_t>();
         } );
     return result_raster;
 }

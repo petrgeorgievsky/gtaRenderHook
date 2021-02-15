@@ -118,8 +118,8 @@ int32_t BackendMaterialStreamAlwaysCallback( void *object, int32_t, int32_t )
 
 MaterialData ConvertMaterialData( RpMaterial *material )
 {
-    int32_t tex_id      = 0xBADF00D;
-    int32_t spec_tex_id = 0xBADF00D;
+    int32_t tex_id      = gNullRasterId;
+    int32_t spec_tex_id = gNullRasterId;
     if ( material == nullptr )
         return MaterialData{ tex_id, RwRGBA{ 255, 0, 0, 255 }, spec_tex_id, 0 };
 
