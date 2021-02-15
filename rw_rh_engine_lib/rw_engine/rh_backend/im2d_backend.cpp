@@ -45,8 +45,9 @@ int32_t rh::rw::engine::Im2DRenderPrimitiveFunction( RwPrimitiveType primType,
 {
     if ( gRwDeviceGlobals.DeviceGlobalsPtr->curCamera == nullptr )
         return 1;
-    auto to_vertices = vertices;
-    auto vert_count  = numVertices;
+    auto  to_vertices = vertices;
+    auto  vert_count  = numVertices;
+    auto &im2d        = gRenderClient->RenderState.Im2D;
     if ( primType == RwPrimitiveType::rwPRIMTYPETRIFAN )
     {
         std::vector<RwIm2DVertex> vertices_2;
@@ -56,10 +57,10 @@ int32_t rh::rw::engine::Im2DRenderPrimitiveFunction( RwPrimitiveType primType,
         to_vertices =
             TriFanToTriList( vertices, vertices_2.data(), vert_count );
 
-        EngineClient::gIm2DGlobals.RecordDrawCall( to_vertices, vert_count );
+        im2d.RecordDrawCall( to_vertices, vert_count );
     }
     else
-        EngineClient::gIm2DGlobals.RecordDrawCall( to_vertices, vert_count );
+        im2d.RecordDrawCall( to_vertices, vert_count );
     return 1;
 }
 
@@ -69,8 +70,9 @@ int32_t rh::rw::engine::Im2DRenderIndexedPrimitiveFunction(
 {
     if ( gRwDeviceGlobals.DeviceGlobalsPtr->curCamera == nullptr )
         return 1;
-    auto to_vertices = vertices;
-    auto vert_count  = numVertices;
+    auto  to_vertices = vertices;
+    auto  vert_count  = numVertices;
+    auto &im2d        = gRenderClient->RenderState.Im2D;
     if ( primType == RwPrimitiveType::rwPRIMTYPETRIFAN )
     {
         std::vector<RwIm2DVertex> vertices_2;
@@ -78,33 +80,11 @@ int32_t rh::rw::engine::Im2DRenderIndexedPrimitiveFunction(
 
         to_vertices =
             TriFanToTriList( vertices, vertices_2.data(), vert_count );
-        EngineClient::gIm2DGlobals.RecordDrawCall( to_vertices, vert_count,
-                                                   indices, numIndices );
+        im2d.RecordDrawCall( to_vertices, vert_count, indices, numIndices );
     }
     else
-        EngineClient::gIm2DGlobals.RecordDrawCall( to_vertices, vert_count,
-                                                   indices, numIndices );
+        im2d.RecordDrawCall( to_vertices, vert_count, indices, numIndices );
     return 1;
-}
-
-void rh::rw::engine::Im2DSetRaster( RwRaster *raster )
-{
-    gCurrentTextureId = reinterpret_cast<int32_t>( raster );
-    if ( gCurrentTextureId == 0 )
-    {
-        EngineClient::gIm2DGlobals.SetRaster( gEmptyTextureId );
-        // TODO: Remove this from here
-        EngineClient::gIm3DGlobals.SetRaster( gEmptyTextureId );
-        return;
-    }
-    auto *backend_ext = GetBackendRasterExt( raster );
-    // TODO: Remove this from here
-    EngineClient::gIm3DGlobals.SetRaster( backend_ext->mImageId );
-
-    EngineClient::gIm2DGlobals.SetRaster( backend_ext->mImageId );
-    // weird hack to fix GTA 3 blend in menus
-    // TODO: check for image alpha before doing this
-    EngineClient::gIm2DGlobals.SetBlendEnable( true );
 }
 
 void Im2DClientGlobals::RecordDrawCall( RwIm2DVertex *vertices,
@@ -115,10 +95,13 @@ void Im2DClientGlobals::RecordDrawCall( RwIm2DVertex *vertices,
                 numVertices * sizeof( RwIm2DVertex ) );
     mVertexCount += numVertices;
     mDrawCalls[mDrawCallCount].mVertexCount       = numVertices;
-    mDrawCalls[mDrawCallCount].mRasterId          = mCurrentRasterId;
+    mDrawCalls[mDrawCallCount].mRasterId          = ImState.Raster;
     mDrawCalls[mDrawCallCount].mIndexCount        = 0;
     mDrawCalls[mDrawCallCount].mIndexBufferOffset = 0;
-    mDrawCalls[mDrawCallCount].mBlendState        = mCurrentState;
+    mDrawCalls[mDrawCallCount].mBlendState        = {
+        ImState.ColorBlendSrc, ImState.ColorBlendDst, ImState.ColorBlendOp,
+        ImState.BlendEnable,   ImState.ZTestEnable,   ImState.ZWriteEnable,
+        ImState.StencilEnable };
     mDrawCallCount++;
 }
 
@@ -175,25 +158,16 @@ void Im2DClientGlobals::Flush()
     mIndexCount    = 0;
 }
 
-Im2DClientGlobals::Im2DClientGlobals() noexcept
+Im2DClientGlobals::Im2DClientGlobals( ImmediateState &im_state ) noexcept
+    : ImState( im_state )
 {
     mVertexBuffer.resize( VERTEX_COUNT_LIMIT );
     mIndexBuffer.resize( INDEX_COUNT_LIMIT );
     mDrawCalls.resize( 4000 );
-    mDrawCallCount   = 0;
-    mVertexCount     = 0;
-    mIndexCount      = 0;
-    mCurrentRasterId = gEmptyTextureId;
-    mCurrentState    = { (uint8_t)rh::engine::BlendOp::SrcAlpha,
-                      (uint8_t)rh::engine::BlendOp::InvSrcAlpha,
-                      0,
-                      0,
-                      0,
-                      0,
-                      0 };
+    mDrawCallCount = 0;
+    mVertexCount   = 0;
+    mIndexCount    = 0;
 }
-
-void Im2DClientGlobals::SetRaster( uint64_t id ) { mCurrentRasterId = id; }
 
 void Im2DClientGlobals::RecordDrawCall( RwIm2DVertex *vertices,
                                         int32_t numVertices, int16_t *indices,
@@ -208,32 +182,11 @@ void Im2DClientGlobals::RecordDrawCall( RwIm2DVertex *vertices,
                 numVertices * sizeof( RwIm2DVertex ) );
     mVertexCount += numVertices;
     mDrawCalls[mDrawCallCount].mVertexCount = numVertices;
-    mDrawCalls[mDrawCallCount].mRasterId    = mCurrentRasterId;
+    mDrawCalls[mDrawCallCount].mRasterId    = ImState.Raster;
     mDrawCalls[mDrawCallCount].mIndexCount  = numIndices;
-    mDrawCalls[mDrawCallCount].mBlendState  = mCurrentState;
+    mDrawCalls[mDrawCallCount].mBlendState  = {
+        ImState.ColorBlendSrc, ImState.ColorBlendDst, ImState.ColorBlendOp,
+        ImState.BlendEnable,   ImState.ZTestEnable,   ImState.ZWriteEnable,
+        ImState.StencilEnable };
     mDrawCallCount++;
-}
-void Im2DClientGlobals::SetBlendEnable( uint8_t state )
-{
-    mCurrentState.mBlendEnable = state;
-}
-void Im2DClientGlobals::SetBlendSrc( uint8_t state )
-{
-    mCurrentState.mColorBlendSrc = state;
-}
-void Im2DClientGlobals::SetBlendDest( uint8_t state )
-{
-    mCurrentState.mColorBlendDst = state;
-}
-void Im2DClientGlobals::SetBlendOp( uint8_t state )
-{
-    mCurrentState.mColorBlendOp = state;
-}
-void Im2DClientGlobals::SetDepthEnable( uint8_t state )
-{
-    mCurrentState.mZTestEnable = state;
-}
-void Im2DClientGlobals::SetDepthWriteEnable( uint8_t state )
-{
-    mCurrentState.mZWriteEnable = state;
 }

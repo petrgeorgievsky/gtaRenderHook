@@ -69,7 +69,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
     DrawAtomic(
         atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
-            auto &       renderer = EngineClient::gRendererGlobals;
+            auto &       renderer = gRenderClient->RenderState.MeshDrawCalls;
             DrawCallInfo info{};
             info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
             info.mMeshId         = res_entry->meshData;
@@ -108,7 +108,7 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
     rh::rw::engine::DrawAtomic(
         atomic, &geometry_interface_35,
         [&ltm, atomic]( rh::rw::engine::ResEnty *res_entry ) {
-            auto &           renderer = EngineClient::gSkinRendererGlobals;
+            auto &renderer = gRenderClient->RenderState.SkinMeshDrawCalls;
             SkinDrawCallInfo info{};
             info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
             info.mMeshId         = res_entry->meshData;

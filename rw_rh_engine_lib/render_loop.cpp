@@ -8,10 +8,6 @@
 
 namespace rh::rw::engine
 {
-Im2DClientGlobals               EngineClient::gIm2DGlobals{};
-BackendRendererClient           EngineClient::gRendererGlobals{};
-Im3DClient                      EngineClient::gIm3DGlobals{};
-SkinRendererClient              EngineClient::gSkinRendererGlobals{};
 std::unique_ptr<CameraState>    EngineState::gCameraState   = nullptr;
 std::shared_ptr<IFrameRenderer> EngineState::gFrameRenderer = nullptr;
 

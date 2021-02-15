@@ -42,10 +42,11 @@ int32_t Im3DRenderLine( int32_t vert1, int32_t vert2 );
 int32_t Im3DRenderTriangle( int32_t vert1, int32_t vert2, int32_t vert3 );
 int32_t Im3DEnd();
 
+struct ImmediateState;
 class Im3DClient
 {
   public:
-    Im3DClient() noexcept;
+    Im3DClient( ImmediateState &im_state ) noexcept;
     void Transform( RwIm3DVertex *vertices, uint32_t count, RwMatrix *ltm,
                     uint32_t flags );
     void RenderIndexedPrimitive( RwPrimitiveType primType, uint16_t *indices,
@@ -54,28 +55,18 @@ class Im3DClient
     uint64_t Serialize( MemoryWriter &writer );
     void     Flush();
 
-    void SetRaster( uint64_t id );
-    /// Blend state
-    void SetBlendEnable( uint8_t state );
-    void SetBlendSrc( uint8_t state );
-    void SetBlendDest( uint8_t state );
-    void SetBlendOp( uint8_t state );
-    void SetDepthEnable( uint8_t state );
-    void SetDepthWriteEnable( uint8_t state );
-
   private:
-    RwIm3DVertex *      mStashedVertices;
-    uint32_t            mStashedVerticesCount;
-    DirectX::XMFLOAT4X3 mStashedWorldTransform;
+    ImmediateState &    ImState;
+    RwIm3DVertex *      mStashedVertices      = nullptr;
+    uint32_t            mStashedVerticesCount = 0;
+    DirectX::XMFLOAT4X3 mStashedWorldTransform{};
 
-    std::vector<uint16_t>     mIndexBuffer;
-    std::vector<RwIm3DVertex> mVertexBuffer;
-    std::vector<Im3DDrawCall> mDrawCalls;
+    std::vector<uint16_t>     mIndexBuffer{};
+    std::vector<RwIm3DVertex> mVertexBuffer{};
+    std::vector<Im3DDrawCall> mDrawCalls{};
 
-    uint32_t  mIndexCount;
-    uint32_t  mVertexCount;
-    uint32_t  mDrawCallCount;
-    uint64_t  mCurrentRasterId;
-    Im3DState mCurrentState;
+    uint32_t mIndexCount    = 0;
+    uint32_t mVertexCount   = 0;
+    uint32_t mDrawCallCount = 0;
 };
 } // namespace rh::rw::engine

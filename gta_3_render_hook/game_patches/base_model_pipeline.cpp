@@ -30,7 +30,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
     DrawAtomic(
         atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
-            auto &renderer = EngineClient::gRendererGlobals;
+            auto &renderer = gRenderClient->RenderState.MeshDrawCalls;
 
             auto mesh_list = geometry_interface_35.GetMeshList();
             auto materials =

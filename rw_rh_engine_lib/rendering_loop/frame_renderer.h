@@ -19,7 +19,7 @@ namespace rh::rw::engine
 struct SceneInfo
 {
     FrameInfo *mFrameInfo;
-    void *     mFrontendRenderBlock;
+    void *     mIm2DRenderBlock;
     void *     mIm3DRenderBlock;
     void *     mSkinMeshRenderBlock;
     void *     mSceneMeshRenderBlock;

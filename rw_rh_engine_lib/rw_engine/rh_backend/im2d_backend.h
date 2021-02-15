@@ -57,21 +57,11 @@ int32_t Im2DRenderIndexedPrimitiveFunction( RwPrimitiveType primType,
                                             int32_t         numVertices,
                                             int16_t *       indices,
                                             int32_t         numIndices );
-void    Im2DSetRaster( RwRaster *raster );
-
+struct ImmediateState;
 class Im2DClientGlobals
 {
   public:
-    Im2DClientGlobals() noexcept;
-
-    void SetRaster( uint64_t id );
-    /// Blend state
-    void SetBlendEnable( uint8_t state );
-    void SetBlendSrc( uint8_t state );
-    void SetBlendDest( uint8_t state );
-    void SetBlendOp( uint8_t state );
-    void SetDepthEnable( uint8_t state );
-    void SetDepthWriteEnable( uint8_t state );
+    Im2DClientGlobals( ImmediateState &im_state ) noexcept;
 
     void     RecordDrawCall( RwIm2DVertex *vertices, int32_t numVertices );
     void     RecordDrawCall( RwIm2DVertex *vertices, int32_t numVertices,
@@ -80,14 +70,13 @@ class Im2DClientGlobals
     void     Flush();
 
   private:
-    std::vector<Im2DDrawCall> mDrawCalls;
-    std::vector<RwIm2DVertex> mVertexBuffer;
-    std::vector<int16_t>      mIndexBuffer;
-    uint32_t                  mIndexCount;
-    uint32_t                  mVertexCount;
-    uint32_t                  mDrawCallCount;
-    uint64_t                  mCurrentRasterId;
-    Im2DState                 mCurrentState;
+    ImmediateState &          ImState;
+    std::vector<Im2DDrawCall> mDrawCalls{};
+    std::vector<RwIm2DVertex> mVertexBuffer{};
+    std::vector<int16_t>      mIndexBuffer{};
+    uint32_t                  mIndexCount    = 0;
+    uint32_t                  mVertexCount   = 0;
+    uint32_t                  mDrawCallCount = 0;
 };
 
 } // namespace rw::engine

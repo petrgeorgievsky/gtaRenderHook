@@ -44,7 +44,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
     rh::rw::engine::DrawAtomic(
         atomic, &geometry_interface_35,
         [&ltm, atomic]( rh::rw::engine::ResEnty *res_entry ) {
-            auto &renderer  = EngineClient::gRendererGlobals;
+            auto &renderer  = gRenderClient->RenderState.MeshDrawCalls;
             auto  mesh_list = geometry_interface_35.GetMeshList();
             auto  materials =
                 renderer.AllocateDrawCallMaterials( mesh_list.size() );
@@ -84,7 +84,7 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
     DrawAtomic(
         atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
-            auto &renderer  = EngineClient::gSkinRendererGlobals;
+            auto &renderer  = gRenderClient->RenderState.SkinMeshDrawCalls;
             auto  mesh_list = geometry_interface_35.GetMeshList();
             auto  materials =
                 renderer.AllocateDrawCallMaterials( mesh_list.size() );

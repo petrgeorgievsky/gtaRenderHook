@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "client_render_state.h"
 #include <common_headers.h>
 #include <ipc/shared_memory_queue_client.h>
 namespace rh::rw::engine
@@ -20,6 +21,8 @@ class RenderClient
         assert( TaskQueue );
         return *TaskQueue;
     }
+
+    ClientRenderState RenderState{};
 
   private:
     std::unique_ptr<SharedMemoryTaskQueue> TaskQueue;

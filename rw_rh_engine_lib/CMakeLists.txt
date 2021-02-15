@@ -102,6 +102,7 @@ set(SOURCES
         rw_engine/system_funcs/skinned_mesh_unload_cmd.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
+        render_client/client_render_state.cpp
         material_storage.cpp)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 #set_property(TARGET rw_rh_engine_lib PROPERTY

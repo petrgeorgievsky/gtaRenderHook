@@ -94,7 +94,7 @@ static int32_t SkinD3D8AtomicAllInOneNode( void * /*self*/,
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
     DrawAtomic(
         atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
-            auto &renderer = EngineClient::gSkinRendererGlobals;
+            auto &renderer = gRenderClient->RenderState.SkinMeshDrawCalls;
             static AnimHierarcyRw35 anim{};
 
             auto mesh_list = geometry_interface_35.GetMeshList();

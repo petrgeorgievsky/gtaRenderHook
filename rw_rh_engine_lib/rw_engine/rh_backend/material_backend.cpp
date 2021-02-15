@@ -65,13 +65,13 @@ uint64_t CreateMaterialData( RpMaterial *material )
     auto             ext = GetBackendMaterialExt( material );
     MaterialInitData initData{};
 
-    initData.mTexture = 0xBADF00D;
+    initData.mTexture = gNullRasterId;
     if ( material->texture && material->texture->raster )
     {
         auto raster       = GetBackendRasterExt( material->texture->raster );
         initData.mTexture = raster->mImageId;
     }
-    initData.mSpecTexture = 0xBADF00D;
+    initData.mSpecTexture = gNullRasterId;
     if ( ext->mSpecTex && ext->mSpecTex->raster )
     {
         auto raster           = GetBackendRasterExt( ext->mSpecTex->raster );

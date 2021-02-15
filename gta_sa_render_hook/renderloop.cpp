@@ -95,6 +95,8 @@ void RenderLoop::RenderOpaque()
             rh::rw::engine::DrawAtomic(
                 atomic, &geometry_interface_35,
                 [&ltm, &entity_ptr]( rh::rw::engine::ResEnty *res_entry ) {
+                    auto &renderer = rh::rw::engine::gRenderClient->RenderState
+                                         .MeshDrawCalls;
                     rh::rw::engine::DrawCallInfo info{};
                     info.mDrawCallId = reinterpret_cast<uint64_t>( entity_ptr );
                     info.mMeshId     = res_entry->meshData;
@@ -103,8 +105,7 @@ void RenderLoop::RenderOpaque()
                         ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
                         ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
                     };
-                    rh::rw::engine::EngineClient::gRendererGlobals
-                        .RecordDrawCall( info );
+                    renderer.RecordDrawCall( info );
                 } );
         }
     }

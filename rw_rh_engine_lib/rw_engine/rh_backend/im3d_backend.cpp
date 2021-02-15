@@ -14,19 +14,12 @@ namespace rh::rw::engine
 constexpr auto VERTEX_COUNT_LIMIT = 100000;
 constexpr auto INDEX_COUNT_LIMIT  = 100000;
 
-Im3DClient::Im3DClient() noexcept
+Im3DClient::Im3DClient( ImmediateState &im_state ) noexcept
+    : ImState( im_state )
 {
     mVertexBuffer.resize( VERTEX_COUNT_LIMIT );
     mIndexBuffer.resize( INDEX_COUNT_LIMIT );
     mDrawCalls.resize( 4000 );
-    mCurrentRasterId = gEmptyTextureId;
-    mCurrentState    = { (uint8_t)rh::engine::BlendOp::SrcAlpha,
-                      (uint8_t)rh::engine::BlendOp::InvSrcAlpha,
-                      0,
-                      0,
-                      0,
-                      0,
-                      0 };
 }
 
 void Im3DClient::Transform( RwIm3DVertex *vertices, uint32_t count,
@@ -67,9 +60,12 @@ void Im3DClient::RenderIndexedPrimitive( RwPrimitiveType primType,
     mDrawCalls[mDrawCallCount].mIndexCount  = numIndices;
     mDrawCalls[mDrawCallCount].mVertexCount = mStashedVerticesCount;
 
-    mDrawCalls[mDrawCallCount].mRasterId        = mCurrentRasterId;
-    mDrawCalls[mDrawCallCount].mWorldTransform  = mStashedWorldTransform;
-    mDrawCalls[mDrawCallCount].mState           = mCurrentState;
+    mDrawCalls[mDrawCallCount].mRasterId       = ImState.Raster;
+    mDrawCalls[mDrawCallCount].mWorldTransform = mStashedWorldTransform;
+    mDrawCalls[mDrawCallCount].mState          = {
+        ImState.ColorBlendSrc, ImState.ColorBlendDst, ImState.ColorBlendOp,
+        ImState.BlendEnable,   ImState.ZTestEnable,   ImState.ZWriteEnable,
+        ImState.StencilEnable };
     mDrawCalls[mDrawCallCount].mState.mPrimType = primType;
 
     mDrawCallCount++;
@@ -119,31 +115,6 @@ void Im3DClient::Flush()
     mIndexCount    = 0;
 }
 
-void Im3DClient::SetRaster( uint64_t id ) { mCurrentRasterId = id; }
-void Im3DClient::SetBlendEnable( uint8_t state )
-{
-    mCurrentState.mBlendEnable = state;
-}
-void Im3DClient::SetBlendSrc( uint8_t state )
-{
-    mCurrentState.mColorBlendSrc = state;
-}
-void Im3DClient::SetBlendDest( uint8_t state )
-{
-    mCurrentState.mColorBlendDst = state;
-}
-void Im3DClient::SetBlendOp( uint8_t state )
-{
-    mCurrentState.mColorBlendOp = state;
-}
-void Im3DClient::SetDepthEnable( uint8_t state )
-{
-    mCurrentState.mZTestEnable = state;
-}
-void Im3DClient::SetDepthWriteEnable( uint8_t state )
-{
-    mCurrentState.mZWriteEnable = state;
-}
 void Im3DClient::RenderPrimitive( RwPrimitiveType primType )
 {
 
@@ -158,9 +129,12 @@ void Im3DClient::RenderPrimitive( RwPrimitiveType primType )
     mDrawCalls[mDrawCallCount].mIndexCount  = 0;
     mDrawCalls[mDrawCallCount].mVertexCount = mStashedVerticesCount;
 
-    mDrawCalls[mDrawCallCount].mRasterId        = mCurrentRasterId;
-    mDrawCalls[mDrawCallCount].mWorldTransform  = mStashedWorldTransform;
-    mDrawCalls[mDrawCallCount].mState           = mCurrentState;
+    mDrawCalls[mDrawCallCount].mRasterId       = ImState.Raster;
+    mDrawCalls[mDrawCallCount].mWorldTransform = mStashedWorldTransform;
+    mDrawCalls[mDrawCallCount].mState          = {
+        ImState.ColorBlendSrc, ImState.ColorBlendDst, ImState.ColorBlendOp,
+        ImState.BlendEnable,   ImState.ZTestEnable,   ImState.ZWriteEnable,
+        ImState.StencilEnable };
     mDrawCalls[mDrawCallCount].mState.mPrimType = primType;
 
     mDrawCallCount++;
@@ -169,21 +143,26 @@ void Im3DClient::RenderPrimitive( RwPrimitiveType primType )
 int32_t Im3DRenderIndexedPrimitive( RwPrimitiveType primType, uint16_t *indices,
                                     int32_t numIndices )
 {
-    EngineClient::gIm3DGlobals.RenderIndexedPrimitive( primType, indices,
-                                                       numIndices );
+    assert( gRenderClient );
+    auto &im3d = gRenderClient->RenderState.Im3D;
+    im3d.RenderIndexedPrimitive( primType, indices, numIndices );
     return 1;
 }
 void *Im3DTransform( void *pVerts, uint32_t numVerts, RwMatrix *ltm,
                      uint32_t flags )
 {
-    EngineClient::gIm3DGlobals.Transform( static_cast<RwIm3DVertex *>( pVerts ),
-                                          numVerts, ltm, flags );
+    assert( gRenderClient );
+    auto &im3d = gRenderClient->RenderState.Im3D;
+    im3d.Transform( static_cast<RwIm3DVertex *>( pVerts ), numVerts, ltm,
+                    flags );
     return pVerts;
 }
 int32_t Im3DEnd() { return 1; }
 int32_t Im3DRenderPrimitive( RwPrimitiveType primType )
 {
-    EngineClient::gIm3DGlobals.RenderPrimitive( primType );
+    assert( gRenderClient );
+    auto &im3d = gRenderClient->RenderState.Im3D;
+    im3d.RenderPrimitive( primType );
     return 1;
 }
 int32_t Im3DRenderLine( int32_t vert1, int32_t vert2 ) { return 1; }

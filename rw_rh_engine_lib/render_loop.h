@@ -51,15 +51,6 @@ class CameraState
     int32_t           mFrameId{};
 };
 
-class EngineClient
-{
-  public:
-    static Im2DClientGlobals     gIm2DGlobals;
-    static Im3DClient            gIm3DGlobals;
-    static BackendRendererClient gRendererGlobals;
-    static SkinRendererClient    gSkinRendererGlobals;
-};
-
 class EngineState
 {
   public:
