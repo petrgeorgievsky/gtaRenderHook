@@ -223,6 +223,8 @@ int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
 
 void RenderSkyPolys() {}
 
+int32_t rwDevicePluginInit() { return 1; }
+
 BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
                        LPVOID /*lpReserved*/ )
 {
@@ -281,14 +283,17 @@ BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
         IdleHook::Patch();
 
         {
-            RedirectJump( 0x4C9A80,
-                          reinterpret_cast<void *>( rwD3D9RasterDtor ) );
+            // RedirectJump( 0x4C9A80,
+            //             reinterpret_cast<void *>( rwD3D9RasterDtor ) );
+            RedirectJump( 0x7F5F60,
+                          reinterpret_cast<void *>( rwDevicePluginInit ) );
+
             RedirectCall(
                 0x748A30,
                 reinterpret_cast<void *>( empty_void ) ); // CGammaInitialise
-            RedirectCall( 0x5BD779,
-                          reinterpret_cast<void *>(
-                              empty_void ) ); // CPostEffects10Initialise
+            // RedirectCall( 0x5BD779,
+            //              reinterpret_cast<void *>(
+            //                  empty_void ) ); // CPostEffects10Initialise
             RedirectCall( 0x53EA0D,
                           reinterpret_cast<void *>(
                               empty_void ) ); // 2CRealTimeShadowManager6Update
