@@ -6,6 +6,8 @@
 #include "rw_device_system_globals.h"
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/ScopedPtr.h>
+#include <render_client/render_client.h>
+#include <render_driver/render_driver.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 namespace rh::rw::engine
 {

@@ -4,6 +4,7 @@
 
 #include "gpu_mesh_buffer_pool.h"
 #include <Engine/Common/IDeviceState.h>
+#include <render_driver/render_driver.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 

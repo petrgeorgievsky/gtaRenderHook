@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <filesystem>
 #include <ipc/ipc_utils.h>
+#include <render_client/render_client.h>
 #include <render_loop.h>
 #include <rw_engine/rh_backend/material_backend.h>
 #include <rw_engine/rh_backend/raster_backend.h>

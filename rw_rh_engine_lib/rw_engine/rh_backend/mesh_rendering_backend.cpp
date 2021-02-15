@@ -8,6 +8,7 @@
 #include <Engine/Common/IShader.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <render_client/render_client.h>
 #include <rw_engine/system_funcs/mesh_load_cmd.h>
 #include <rw_engine/system_funcs/mesh_unload_cmd.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>

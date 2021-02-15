@@ -4,6 +4,7 @@
 #include "../rh_backend/raster_backend.h"
 #include <Engine/Common/ISwapchain.h>
 #include <Engine/Common/IWindow.h>
+#include <render_client/render_client.h>
 #include <render_loop.h>
 using namespace rh::rw::engine;
 

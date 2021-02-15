@@ -11,6 +11,7 @@
 #include <Engine/Common/IPipeline.h>
 #include <Engine/Common/types/blend_op.h>
 #include <array>
+#include <render_client/render_client.h>
 #include <render_loop.h>
 #include <unordered_map>
 #include <vector>

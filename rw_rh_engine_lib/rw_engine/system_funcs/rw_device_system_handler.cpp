@@ -33,6 +33,8 @@
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <ipc/ipc_utils.h>
 #include <map>
+#include <render_client/render_client.h>
+#include <render_driver/render_driver.h>
 #include <render_loop.h>
 #include <rendering_loop/ray_tracing/RayTracingRenderer.h>
 #include <rw_engine/rh_backend/material_backend.h>

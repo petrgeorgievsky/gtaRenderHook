@@ -25,6 +25,7 @@
 #include <imgui.h>
 #include <ipc/MemoryReader.h>
 #include <numeric>
+#include <render_driver/render_driver.h>
 #include <rendering_loop/compute_skin_animation.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 

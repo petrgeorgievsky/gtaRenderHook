@@ -17,6 +17,7 @@
 
 using namespace rh;
 using namespace rh::rw::engine;
+
 namespace rh::rw::engine
 {
 
@@ -39,6 +40,7 @@ RwTexturePointerTable g_pTexture_API = {
         GetAddressByGame( 0x5A7420, 0x5A76E0, 0x5A8BE0 ) ) };
 
 } // namespace rh::rw::engine
+
 BOOL WINAPI DllMain( HINSTANCE, DWORD ul_reason_for_call, LPVOID )
 {
     switch ( ul_reason_for_call )

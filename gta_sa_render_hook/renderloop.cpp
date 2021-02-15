@@ -1,5 +1,6 @@
 #include "renderloop.h"
 #include "gta_sa_internal_classes/renderer.h"
+#include <render_client/render_client.h>
 #include <render_loop.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/rw_macro_constexpr.h>

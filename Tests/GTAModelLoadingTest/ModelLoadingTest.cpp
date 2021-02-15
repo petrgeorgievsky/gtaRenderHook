@@ -3,6 +3,7 @@
 #include <DebugUtils/DebugLogger.h>
 #include <common_headers.h>
 #include <dinput.h>
+#include <render_client/render_client.h>
 #include <render_loop.h>
 #include <rw_engine/global_definitions.h>
 #include <rw_engine/rh_backend/raster_backend.h>

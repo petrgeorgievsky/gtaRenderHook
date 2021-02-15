@@ -14,6 +14,7 @@
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <array>
+#include <render_driver/render_driver.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 

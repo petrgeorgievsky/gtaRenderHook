@@ -5,6 +5,7 @@
 #include "GBufferPass.h"
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/IRenderPass.h>
+#include <render_driver/render_driver.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 namespace rh::rw::engine

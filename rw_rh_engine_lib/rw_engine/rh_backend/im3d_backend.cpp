@@ -5,6 +5,7 @@
 #include "im3d_backend.h"
 #include "im2d_backend.h"
 #include <Engine/Common/types/blend_op.h>
+#include <render_client/render_client.h>
 #include <render_loop.h>
 namespace rh::rw::engine
 {

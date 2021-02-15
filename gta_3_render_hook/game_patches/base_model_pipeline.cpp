@@ -6,6 +6,7 @@
 #include "../call_redirection_util.h"
 #include "../gta3_geometry_proxy.h"
 #include <MemoryInjectionUtils/InjectorHelpers.h>
+#include <render_client/render_client.h>
 #include <render_loop.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_frame/rw_frame.h>

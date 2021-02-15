@@ -13,6 +13,7 @@
 #include <d3d9.h>
 #include <ostream>
 #include <queue>
+#include <render_client/render_client.h>
 #include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_engine/rw_rh_convert_funcs.h>

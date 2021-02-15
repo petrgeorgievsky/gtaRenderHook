@@ -21,6 +21,7 @@ struct Im3DState
     uint8_t mStencilEnable;
     uint8_t mPrimType;
 };
+
 struct Im3DDrawCall
 {
     uint64_t            mRasterId;

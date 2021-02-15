@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <common.h>
 #include <ipc/ipc_utils.h>
+#include <render_client/render_client.h>
 #include <render_loop.h>
 #include <rw_engine/global_definitions.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
@@ -101,7 +102,7 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
             };
             static AnimHierarcyRw36 g_anim{};
             PrepareBoneMatrices( info.mBoneTransform, atomic, g_anim );
-            EngineClient::gSkinRendererGlobals.RecordDrawCall( info );
+            renderer.RecordDrawCall( info );
         } );
     return 1;
 }

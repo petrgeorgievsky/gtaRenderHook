@@ -4,6 +4,7 @@
 #include <Engine/Common/IDescriptorSetLayout.h>
 #include <Engine/Common/IDeviceState.h>
 #include <common_headers.h>
+#include <render_driver/render_driver.h>
 #include <rw_engine/rw_rh_pipeline.h>
 #include <rw_engine/rw_texture/rw_texture.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>

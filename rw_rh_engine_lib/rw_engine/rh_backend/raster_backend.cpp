@@ -6,6 +6,7 @@
 #include "material_backend.h"
 
 #include <cassert>
+#include <render_client/render_client.h>
 #include <rw_engine/system_funcs/raster_unload_cmd.h>
 
 namespace rh::rw::engine

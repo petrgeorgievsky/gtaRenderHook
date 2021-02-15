@@ -10,6 +10,7 @@
 #include <Engine/Common/types/comparison_func.h>
 #include <Engine/Common/types/sampler_filter.h>
 #include <ipc/MemoryReader.h>
+#include <render_driver/render_driver.h>
 #include <rendering_loop/DescriptorGenerator.h>
 #include <rendering_loop/ray_tracing/CameraDescription.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>

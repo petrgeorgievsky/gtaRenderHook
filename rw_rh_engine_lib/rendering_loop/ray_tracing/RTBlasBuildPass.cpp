@@ -10,6 +10,7 @@
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDebugUtils.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <render_driver/render_driver.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 
