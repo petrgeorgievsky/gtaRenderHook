@@ -62,7 +62,7 @@ void ModelLoadingTest::CustomRender()
             DrawAtomic(
                 atomic, &geometry_interface_36,
                 [&ltm, atomic]( ResEnty *res_entry ) {
-                    auto &       renderer = EngineClient::gRendererGlobals;
+                    auto &renderer = gRenderClient->RenderState.MeshDrawCalls;
                     DrawCallInfo info{};
                     info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
                     info.mMeshId         = res_entry->meshData;

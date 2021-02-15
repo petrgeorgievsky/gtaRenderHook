@@ -59,9 +59,5 @@ class EngineState
     static std::shared_ptr<IFrameRenderer> gFrameRenderer;
 };
 
-void InitRenderEvents();
-
-void ExecuteRender();
-
 } // namespace rw::engine
 } // namespace rh

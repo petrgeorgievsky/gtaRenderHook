@@ -31,7 +31,7 @@ class IFrameRenderer
     virtual ~IFrameRenderer()                                       = default;
     virtual void OnResize( const rh::engine::WindowParams &window ) = 0;
     virtual std::vector<rh::engine::CommandBufferSubmitInfo>
-    Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
+    Render( const SceneInfo *scene, rh::engine::ICommandBuffer *dest,
             const rh::engine::SwapchainFrame &frame ) = 0;
 };
 

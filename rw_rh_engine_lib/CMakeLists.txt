@@ -100,6 +100,7 @@ set(SOURCES
         rw_engine/system_funcs/mesh_unload_cmd.cpp
         rw_engine/system_funcs/skinned_mesh_load_cmd.cpp
         rw_engine/system_funcs/skinned_mesh_unload_cmd.cpp
+        rw_engine/system_funcs/render_scene_cmd.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
         render_client/client_render_state.cpp

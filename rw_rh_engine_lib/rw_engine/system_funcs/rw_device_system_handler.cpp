@@ -20,6 +20,7 @@
 #include "raster_load_cmd.h"
 #include "raster_lock_cmd.h"
 #include "raster_unload_cmd.h"
+#include "render_scene_cmd.h"
 #include "rw_device_system_globals.h"
 #include "set_adapter_cmd.h"
 #include "set_video_mode_cmd.h"
@@ -343,7 +344,7 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
         SkinnedMeshLoadCmdImpl::RegisterCallHandler( driver_task_queue );
         SkinnedMeshUnloadCmdImpl::RegisterCallHandler( driver_task_queue );
 
-        InitRenderEvents();
+        RenderSceneCmd::RegisterCallHandler( driver_task_queue );
     }
 
     is_registered = true;

@@ -59,7 +59,7 @@ class RayTracingRenderer : public IFrameRenderer
 
     void OnResize( const rh::engine::WindowParams &window ) override;
     std::vector<rh::engine::CommandBufferSubmitInfo>
-         Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
+         Render( const SceneInfo *scene, rh::engine::ICommandBuffer *dest,
                  const rh::engine::SwapchainFrame &frame ) override;
     void DrawGUI();
 
@@ -105,7 +105,7 @@ class RayTracingRenderer : public IFrameRenderer
     uint32_t                               mFrameHeight      = 0;
 
     bool RenderPrimaryRays( void *scene_data, void *skin_mesh_block );
-    void ProcessDynamicGeometry( SceneInfo *scene );
+    void ProcessDynamicGeometry( const SceneInfo *scene );
     friend class RayTracingTestPipe;
     std::vector<rh::engine::CommandBufferSubmitInfo> mRenderDispatchList;
     std::vector<float>                               mFrameTimeGraph;

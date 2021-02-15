@@ -68,20 +68,16 @@ uint64_t SkinRendererClient::Serialize( MemoryWriter &writer )
     /// Im2DDrawCall frame_drawcalls[frame_draw_call_count]
 
     // serialize drawcalls
-    auto &skip_offset = writer.Current<uint64_t>();
-    writer.Skip( sizeof( uint64_t ) );
     writer.Write( &DrawCallCount );
 
     if ( DrawCallCount <= 0 )
     {
-        skip_offset = writer.Pos();
         return writer.Pos();
     }
     writer.Write( &MaterialCount );
     writer.Write( MaterialsData.data(), MaterialCount );
     writer.Write( MeshData.data(), DrawCallCount );
 
-    skip_offset = writer.Pos();
     return writer.Pos();
 }
 

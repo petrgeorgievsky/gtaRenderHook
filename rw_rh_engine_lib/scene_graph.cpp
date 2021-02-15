@@ -14,16 +14,4 @@ SceneGraph *GetCurrentSceneGraph()
     return &local_graph;
 }
 
-void SerializeSceneGraph( MemoryWriter &memory_writer )
-{
-    GetCurrentSceneGraph()->mFrameInfo.mFrameId =
-        ( GetCurrentSceneGraph()->mFrameInfo.mFrameId + 1 ) % 1000;
-
-    memory_writer.Write( &GetCurrentSceneGraph()->mFrameInfo );
-
-    EngineClient::gIm2DGlobals.Serialize( memory_writer );
-    EngineClient::gIm3DGlobals.Serialize( memory_writer );
-    EngineClient::gSkinRendererGlobals.Serialize( memory_writer );
-    EngineClient::gRendererGlobals.Serialize( memory_writer );
-}
 } // namespace rh::rw::engine

@@ -45,5 +45,4 @@ struct SceneGraph
 
 SceneGraph *GetCurrentSceneGraph();
 
-void SerializeSceneGraph( MemoryWriter &memory_writer );
 } // namespace rh::rw::engine

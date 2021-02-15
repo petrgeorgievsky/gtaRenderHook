@@ -264,8 +264,7 @@ uint64_t Im2DRenderer::Render( void *                      memory,
                                rh::engine::ICommandBuffer *cmd_buffer )
 {
     MemoryReader stream( memory );
-    stream.Skip( sizeof( uint64_t ) );
-    uint64_t index_count = *stream.Read<uint64_t>();
+    uint64_t     index_count = *stream.Read<uint64_t>();
 
     // Update buffers
     if ( index_count > 0 )

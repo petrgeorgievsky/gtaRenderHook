@@ -115,39 +115,27 @@ uint64_t Im2DClientGlobals::Serialize( MemoryWriter &writer )
     /// RwIm2DVertex frame_vertices[frame_vertex_count]
     /// uint64 frame_draw_call_count
     /// Im2DDrawCall frame_drawcalls[frame_draw_call_count]
-    //
-    auto &block_end_offset = writer.Current<uint64_t>();
-    writer.Skip( sizeof( uint64_t ) );
 
     // serialize index buffer
     uint64_t index_count = mIndexCount;
     writer.Write( &index_count );
     if ( mIndexCount > 0 )
-    {
         writer.Write( mIndexBuffer.data(), mIndexCount );
-    }
 
     // serialize vertex buffer
     uint64_t vertex_count = mVertexCount;
     writer.Write( &vertex_count );
     if ( mVertexCount <= 0 )
-    {
-        block_end_offset = writer.Pos();
         return writer.Pos();
-    }
     writer.Write( mVertexBuffer.data(), mVertexCount );
 
     // serialize drawcalls
     uint64_t dc_count = mDrawCallCount;
     writer.Write( &dc_count );
     if ( mDrawCallCount <= 0 )
-    {
-        block_end_offset = writer.Pos();
         return writer.Pos();
-    }
-    writer.Write( mDrawCalls.data(), mDrawCallCount );
 
-    block_end_offset = writer.Pos();
+    writer.Write( mDrawCalls.data(), mDrawCallCount );
     return writer.Pos();
 }
 

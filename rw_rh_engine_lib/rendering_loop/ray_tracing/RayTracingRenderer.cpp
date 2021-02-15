@@ -124,7 +124,8 @@ RayTracingRenderer::RayTracingRenderer()
 void RayTracingRenderer::OnResize( const rh::engine::WindowParams &window ) {}
 
 std::vector<rh::engine::CommandBufferSubmitInfo>
-RayTracingRenderer::Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
+RayTracingRenderer::Render( const SceneInfo *                 scene,
+                            rh::engine::ICommandBuffer *      dest,
                             const rh::engine::SwapchainFrame &frame )
 {
     using namespace rh::engine;
@@ -204,7 +205,7 @@ RayTracingRenderer::Render( SceneInfo *scene, rh::engine::ICommandBuffer *dest,
         im2d->DrawQuad( mDeferredComposePass->GetResultView(), dest );
     }
     im3d->Render( scene->mIm3DRenderBlock, dest );
-    im2d->Render( scene->mFrontendRenderBlock, dest );
+    im2d->Render( scene->mIm2DRenderBlock, dest );
 
     if ( imgui )
     {
@@ -232,7 +233,7 @@ bool RayTracingRenderer::RenderPrimaryRays( void *scene_data,
     if ( draw_call_count <= 0 )
         return false;
 
-    skin_reader.Skip( sizeof( uint64_t ) * 2 );
+    skin_reader.Skip( sizeof( uint64_t ) );
 
     uint64_t                 material_count = *reader.Read<uint64_t>();
     ArrayProxy<MaterialData> materials(
@@ -306,16 +307,15 @@ bool RayTracingRenderer::RenderPrimaryRays( void *scene_data,
 rh::engine::ArrayProxy<SkinDrawCallInfo> GetSkinMeshArray( void *mesh_block )
 {
     MemoryReader reader( mesh_block );
-    reader.Skip( sizeof( uint64_t ) );
-    uint64_t drawcall_count  = *reader.Read<uint64_t>();
-    uint64_t materials_count = *reader.Read<uint64_t>();
+    uint64_t     drawcall_count  = *reader.Read<uint64_t>();
+    uint64_t     materials_count = *reader.Read<uint64_t>();
     reader.Skip( sizeof( MaterialData ) * materials_count );
 
     return rh::engine::ArrayProxy<SkinDrawCallInfo>(
         reader.Read<SkinDrawCallInfo>( drawcall_count ), drawcall_count );
 }
 
-void RayTracingRenderer::ProcessDynamicGeometry( SceneInfo *scene )
+void RayTracingRenderer::ProcessDynamicGeometry( const SceneInfo *scene )
 {
     using namespace rh::engine;
     rh::engine::ArrayProxy<SkinDrawCallInfo> skin_draw_calls =

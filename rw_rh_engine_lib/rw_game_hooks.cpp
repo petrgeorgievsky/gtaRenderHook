@@ -153,47 +153,8 @@ int32_t RwGameHooks::SetRenderState( RwRenderState nState, void *pParam )
     /* debug::DebugLogger::Log(
          "RWGAMEHOOKS_LOG: SetRenderState:" + std::to_string( nState ) +
          " value:" + std::to_string( (uint32_t)pParam ) );*/
-    if ( nState == RwRenderState::rwRENDERSTATETEXTURERASTER )
-    {
-        Im2DSetRaster( static_cast<RwRaster *>( pParam ) );
-    }
-    else if ( nState == RwRenderState::rwRENDERSTATESRCBLEND )
-    {
-        auto rh_blend_op = static_cast<uint8_t>(
-            RwBlendFunctionToRHBlendOp( static_cast<RwBlendFunction>(
-                reinterpret_cast<uint32_t>( pParam ) ) ) );
-        EngineClient::gIm2DGlobals.SetBlendSrc( rh_blend_op );
-        EngineClient::gIm3DGlobals.SetBlendSrc( rh_blend_op );
-    }
-    else if ( nState == RwRenderState::rwRENDERSTATEDESTBLEND )
-    {
-        auto rh_blend_op = static_cast<uint8_t>(
-            RwBlendFunctionToRHBlendOp( static_cast<RwBlendFunction>(
-                reinterpret_cast<uint32_t>( pParam ) ) ) );
-        EngineClient::gIm2DGlobals.SetBlendDest( rh_blend_op );
-        EngineClient::gIm3DGlobals.SetBlendDest( rh_blend_op );
-    }
-    else if ( nState == RwRenderState::rwRENDERSTATEVERTEXALPHAENABLE )
-    {
-        EngineClient::gIm2DGlobals.SetBlendEnable(
-            reinterpret_cast<uint32_t>( pParam ) != 0 );
-        EngineClient::gIm3DGlobals.SetBlendEnable(
-            reinterpret_cast<uint32_t>( pParam ) != 0 );
-    }
-    else if ( nState == RwRenderState::rwRENDERSTATEZTESTENABLE )
-    {
-        EngineClient::gIm2DGlobals.SetDepthEnable(
-            reinterpret_cast<uint32_t>( pParam ) != 0 );
-        EngineClient::gIm3DGlobals.SetDepthEnable(
-            reinterpret_cast<uint32_t>( pParam ) != 0 );
-    }
-    else if ( nState == RwRenderState::rwRENDERSTATEZWRITEENABLE )
-    {
-        EngineClient::gIm2DGlobals.SetDepthWriteEnable(
-            reinterpret_cast<uint32_t>( pParam ) != 0 );
-        EngineClient::gIm3DGlobals.SetDepthWriteEnable(
-            reinterpret_cast<uint32_t>( pParam ) != 0 );
-    }
+    assert( gRenderClient );
+    gRenderClient->RenderState.ImState.Update( nState, pParam );
     return 1;
 }
 
