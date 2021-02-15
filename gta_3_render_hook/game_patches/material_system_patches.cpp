@@ -32,10 +32,7 @@ RpMaterial *RpMaterialStreamRead( void *stream )
 
     // Old RenderWare doesn't support "Always" callbacks, so we just hack it in
     // for GTA 3
-    // TODO: Find a better solution?
-    if ( BackendMaterialStreamAlwaysCallback(
-             material, gBackendMaterialExtOffset,
-             sizeof( BackendMaterialExt ) ) == FALSE )
+    if ( BackendMaterialPlugin::CallAlwaysCb( material ) == FALSE )
         return nullptr;
     return material;
 }

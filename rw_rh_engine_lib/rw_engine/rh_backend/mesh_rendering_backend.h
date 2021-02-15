@@ -34,7 +34,6 @@ struct GeometrySplit
     uint32_t mIndexOffset;
     uint32_t mVertexCount;
     uint32_t mIndexCount;
-    uint64_t mMaterialIdx;
 };
 
 struct GeometryMaterial

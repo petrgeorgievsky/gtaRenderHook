@@ -15,12 +15,12 @@ void ImmediateState::Update( RwRenderState nState, void *pParam )
     {
         if ( pParam == nullptr )
         {
-            Raster = gNullRasterId;
+            Raster = BackendRasterPlugin::NullRasterId;
             return;
         }
-        auto *backend_ext =
-            GetBackendRasterExt( static_cast<RwRaster *>( pParam ) );
-        Raster = backend_ext->mImageId;
+        auto &backend_ext =
+            BackendRasterPlugin::GetData( static_cast<RwRaster *>( pParam ) );
+        Raster = backend_ext.mImageId;
         // weird hack to fix GTA 3 blend in menus
         // TODO: check for image alpha before doing this
         BlendEnable = true;

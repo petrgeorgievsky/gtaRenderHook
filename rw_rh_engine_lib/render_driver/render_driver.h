@@ -57,6 +57,8 @@ class RenderDriver
     RenderDriver();
     ~RenderDriver();
 
+    void RegisterTasks();
+
     bool OpenMainWindow( HWND window );
     bool CloseMainWindow();
 

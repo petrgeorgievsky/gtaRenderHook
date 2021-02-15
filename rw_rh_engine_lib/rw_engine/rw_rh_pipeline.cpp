@@ -193,10 +193,6 @@ RwResEntry *RHInstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         auto          mesh_material = mesh.material;
         GeometrySplit meshData{};
         meshData.mIndexOffset = startIndex;
-        auto mat_ext          = GetBackendMaterialExt( mesh_material );
-        if ( mat_ext->mMaterialId == 0xBADF00D )
-            mat_ext->mMaterialId = CreateMaterialData( mesh_material );
-        meshData.mMaterialIdx = mat_ext->mMaterialId; // mesh->material;
 
         indexCount = mesh.numIndices;
         MeshGetNumVerticesMinIndex( mesh.indices, indexCount,
@@ -208,8 +204,9 @@ RwResEntry *RHInstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         material.mDiffuseRasterIdx = -1;
         if ( mesh_material->texture && mesh_material->texture->raster )
         {
-            auto raster = GetBackendRasterExt( mesh_material->texture->raster );
-            material.mDiffuseRasterIdx = raster->mImageId;
+            auto &raster =
+                BackendRasterPlugin::GetData( mesh_material->texture->raster );
+            material.mDiffuseRasterIdx = raster.mImageId;
         }
         geometry_mats.push_back( material );
 

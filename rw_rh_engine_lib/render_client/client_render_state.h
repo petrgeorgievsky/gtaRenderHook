@@ -14,7 +14,7 @@ namespace rh::rw::engine
 
 struct ImmediateState
 {
-    uint64_t Raster = gNullRasterId;
+    uint64_t Raster = BackendRasterPlugin::NullRasterId;
 
     uint8_t ColorBlendSrc;
     uint8_t ColorBlendDst;

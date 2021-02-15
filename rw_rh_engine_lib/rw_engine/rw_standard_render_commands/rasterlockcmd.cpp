@@ -35,13 +35,13 @@ bool RwRasterLockCmd::Execute( void *&res_data_ptr )
     if ( mRaster->height == 0 )
         mRaster->height = 1;
 
-    auto backend_raster = GetBackendRasterExt( mRaster );
+    auto &backend_raster = BackendRasterPlugin::GetData( mRaster );
 
     if ( ( ( mAccessMode & rwRASTERLOCKREAD ) != 0 ) )
     {
         RasterLockCmdImpl lock_cmd{};
         auto              lock_result = lock_cmd.Invoke(
-            { .mImageId = backend_raster->mImageId,
+            { .mImageId = backend_raster.mImageId,
               .mWidth   = static_cast<uint32_t>( mRaster->width ),
               .mHeight  = static_cast<uint32_t>( mRaster->height ),
               .mLockMode = RasterLockParams::LockRead,

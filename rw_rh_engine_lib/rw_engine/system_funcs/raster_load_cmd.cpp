@@ -19,7 +19,7 @@ RasterLoadCmdImpl::RasterLoadCmdImpl( SharedMemoryTaskQueue &task_queue )
 uint64_t RasterLoadCmdImpl::Invoke( const RasterHeader &header,
                                     WriteMipLevelFunc   write_mip_level )
 {
-    uint64_t result_raster = gNullRasterId;
+    uint64_t result_raster = BackendRasterPlugin::NullRasterId;
     TaskQueue.ExecuteTask(
         SharedMemoryTaskType::RASTER_LOAD,
         [&header, &write_mip_level]( MemoryWriter &&writer ) {

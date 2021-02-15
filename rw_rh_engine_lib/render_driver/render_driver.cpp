@@ -8,6 +8,26 @@
 #include <Engine/Common/IImageView.h>
 #include <Engine/EngineConfigBlock.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+
+#include <rw_engine/system_funcs/get_adapter_cmd.h>
+#include <rw_engine/system_funcs/get_adapter_count_cmd.h>
+#include <rw_engine/system_funcs/get_adapter_info_cmd.h>
+#include <rw_engine/system_funcs/get_video_mode_cmd.h>
+#include <rw_engine/system_funcs/get_video_mode_count.h>
+#include <rw_engine/system_funcs/get_video_mode_info_cmd.h>
+#include <rw_engine/system_funcs/mesh_load_cmd.h>
+#include <rw_engine/system_funcs/mesh_unload_cmd.h>
+#include <rw_engine/system_funcs/raster_load_cmd.h>
+#include <rw_engine/system_funcs/raster_lock_cmd.h>
+#include <rw_engine/system_funcs/raster_unload_cmd.h>
+#include <rw_engine/system_funcs/render_scene_cmd.h>
+#include <rw_engine/system_funcs/set_adapter_cmd.h>
+#include <rw_engine/system_funcs/set_video_mode_cmd.h>
+#include <rw_engine/system_funcs/skinned_mesh_load_cmd.h>
+#include <rw_engine/system_funcs/skinned_mesh_unload_cmd.h>
+#include <rw_engine/system_funcs/start_cmd.h>
+#include <rw_engine/system_funcs/stop_cmd.h>
+
 namespace rh::rw::engine
 {
 
@@ -76,6 +96,39 @@ RenderDriver::~RenderDriver()
     IsRunning = false;
     if ( TaskQueueThread && TaskQueueThread->joinable() )
         TaskQueueThread->join();
+}
+
+void RenderDriver::RegisterTasks()
+{
+    /// Register driver tasks
+    assert( TaskQueue );
+    auto &task_queue = *TaskQueue;
+
+    StartSystemCmdImpl::RegisterCallHandler( task_queue );
+    StopSystemCmdImpl::RegisterCallHandler( task_queue );
+
+    // Adapter datasource
+    GetAdapterCountCmdImpl::RegisterCallHandler( task_queue );
+    GetAdapterIdCmdImpl::RegisterCallHandler( task_queue );
+    SetAdapterIdCmdImpl::RegisterCallHandler( task_queue );
+    GetAdapterInfoCmdImpl::RegisterCallHandler( task_queue );
+
+    // VideoMode datasource
+    GetVideoModeCountCmdImpl::RegisterCallHandler( task_queue );
+    GetVideoModeIdCmdImpl::RegisterCallHandler( task_queue );
+    SetVideoModeIdCmdImpl::RegisterCallHandler( task_queue );
+    GetVideoModeInfoCmdImpl::RegisterCallHandler( task_queue );
+
+    RasterDestroyCmdImpl::RegisterCallHandler( task_queue );
+    RasterLoadCmdImpl::RegisterCallHandler( task_queue );
+    RasterLockCmdImpl::RegisterCallHandler( task_queue );
+
+    LoadMeshCmdImpl::RegisterCallHandler( task_queue );
+    UnloadMeshCmdImpl::RegisterCallHandler( task_queue );
+    SkinnedMeshLoadCmdImpl::RegisterCallHandler( task_queue );
+    SkinnedMeshUnloadCmdImpl::RegisterCallHandler( task_queue );
+
+    RenderSceneCmd::RegisterCallHandler( task_queue );
 }
 
 void RasterData::Release()

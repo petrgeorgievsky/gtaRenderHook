@@ -261,8 +261,9 @@ uint64_t Im3DRenderer::Render( void *                      memory,
         if ( draw_call.mState.mPrimType != 3 )
             continue;
         PackedIm3DState s{};
-        s.s_val.enableBlend    = draw_call.mState.mBlendEnable;
-        s.s_val.hasTexture     = draw_call.mRasterId != gNullRasterId;
+        s.s_val.enableBlend = draw_call.mState.mBlendEnable;
+        s.s_val.hasTexture =
+            draw_call.mRasterId != BackendRasterPlugin::NullRasterId;
         s.s_val.srcBlendState  = draw_call.mState.mColorBlendSrc;
         s.s_val.destBlendState = draw_call.mState.mColorBlendDst;
         s.s_val.zTestEnable    = draw_call.mState.mZTestEnable;
@@ -281,7 +282,7 @@ uint64_t Im3DRenderer::Render( void *                      memory,
               .mDescriptorSetsOffset = 1,
               .mDescriptorSets       = { mMatrixDescriptorSetPool[dc_id] } } );
 
-        if ( draw_call.mRasterId != gNullRasterId )
+        if ( draw_call.mRasterId != BackendRasterPlugin::NullRasterId )
         {
             cmd_buffer->BindDescriptorSets(
                 { .mPipelineLayout       = mTexLayout,

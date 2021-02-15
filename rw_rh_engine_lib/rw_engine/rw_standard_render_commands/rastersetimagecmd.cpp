@@ -116,7 +116,7 @@ bool rh::rw::engine::RwRasterSetImageCmd::Execute()
         }
     }
 
-    auto *internalRaster = GetBackendRasterExt( m_pRaster );
+    auto &internalRaster = BackendRasterPlugin::GetData( m_pRaster );
 
     RasterHeader header{};
     header.mWidth         = m_pImage->width;
@@ -128,7 +128,7 @@ bool rh::rw::engine::RwRasterSetImageCmd::Execute()
 
     RasterLoadCmdImpl load_texture_cmd( gRenderClient->GetTaskQueue() );
 
-    internalRaster->mImageId = load_texture_cmd.Invoke(
+    internalRaster.mImageId = load_texture_cmd.Invoke(
         header, [&]( MemoryWriter &writer, MipLevelHeader &mip_header ) {
             mip_header.mSize = static_cast<uint32_t>( pixels_size );
             mip_header.mStride =

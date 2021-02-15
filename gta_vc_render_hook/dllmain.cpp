@@ -303,14 +303,14 @@ RpMaterial *RpMaterialStreamRead( void *stream )
     auto material = RpMaterialStreamReadImpl( stream );
     if ( material == nullptr )
         return nullptr;
-    auto mat_ext = GetBackendMaterialExt( material );
+    auto &mat_ext = BackendMaterialPlugin::GetData( material );
     if ( material->texture )
     {
         InitSpecStorage();
         auto string_s_name  = std::string( material->texture->name );
         auto spec_name_iter = g_specular_storage.find( string_s_name );
         if ( spec_name_iter != g_specular_storage.end() )
-            mat_ext->mSpecTex =
+            mat_ext.mSpecTex =
                 RwTextureRead( spec_name_iter->second.c_str(), nullptr );
     }
     return material;

@@ -319,13 +319,14 @@ uint64_t Im2DRenderer::Render( void *                      memory,
         // Compute pipeline hash
 
         PackedIm2DState s{};
-        s.s_val.enableBlend    = draw_call.mBlendState.mBlendEnable;
-        s.s_val.hasTexture     = draw_call.mRasterId != gNullRasterId;
+        s.s_val.enableBlend = draw_call.mBlendState.mBlendEnable;
+        s.s_val.hasTexture =
+            draw_call.mRasterId != BackendRasterPlugin::NullRasterId;
         s.s_val.srcBlendState  = draw_call.mBlendState.mColorBlendSrc;
         s.s_val.destBlendState = draw_call.mBlendState.mColorBlendDst;
         s.s_val.zTestEnable    = draw_call.mBlendState.mZTestEnable;
         s.s_val.zWriteEnable   = draw_call.mBlendState.mZWriteEnable;
-        if ( draw_call.mRasterId != gNullRasterId )
+        if ( draw_call.mRasterId != BackendRasterPlugin::NullRasterId )
         {
             cmd_buffer->BindDescriptorSets(
                 { .mPipelineLayout       = mTexLayout,

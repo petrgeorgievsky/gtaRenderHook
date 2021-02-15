@@ -2,56 +2,42 @@
 // Created by peter on 08.05.2020.
 //
 #pragma once
-
-#include <Engine/ResourcePool.h>
 #include <common_headers.h>
 #include <cstdint>
 namespace rh
 {
-
-namespace engine
-{
-} // namespace engine
-
 namespace rw::engine
 {
 
-struct BackendMaterialExt
+struct PluginPtrTable;
+struct BackendMaterialExt;
+
+/**
+ * RenderHook material plugin, holds additional material info
+ */
+class BackendMaterialPlugin
 {
-    uint64_t   mMaterialId;
-    RwTexture *mSpecTex;
+  public:
+    BackendMaterialPlugin( const PluginPtrTable &plugin_cb );
+    static uint8_t *           GetAddress( RpMaterial *material );
+    static BackendMaterialExt &GetData( RpMaterial *material );
+
+    /**
+     * Calls "Always" callback on material, used in case rw version doesn't
+     * support "Always" callback
+     */
+    static int32_t CallAlwaysCb( RpMaterial *material );
+
+  private:
+    static int32_t StreamAlwaysCallback(
+        void *object, [[maybe_unused]] [[maybe_unused]] int32_t offsetInObject,
+        [[maybe_unused]] [[maybe_unused]] int32_t sizeInObject );
+    static int32_t Offset;
 };
 
-extern int32_t gBackendMaterialExtOffset;
-
-/* Plugin Attach */
-int32_t BackendMaterialPluginAttach();
-void *  BackendMaterialCtor( void *                   object,
-                             [[maybe_unused]] int32_t offsetInObject,
-                             [[maybe_unused]] int32_t sizeInObject );
-void *  BackendMaterialDtor( void *                   object,
-                             [[maybe_unused]] int32_t offsetInObject,
-                             [[maybe_unused]] int32_t sizeInObject );
-
-int32_t
-BackendMaterialStreamAlwaysCallback( void *                   object,
-                                     [[maybe_unused]] int32_t offsetInObject,
-                                     [[maybe_unused]] int32_t sizeInObject );
-
-/* Open/Close */
-// void BackendRasterOpen();
-// void BackendRasterClose();
-
-BackendMaterialExt *GetBackendMaterialExt( RpMaterial *material );
-
-struct MaterialInitData
+struct BackendMaterialExt
 {
-    uint64_t mTexture;
-    uint64_t mSpecTexture;
-    RwRGBA   mColor;
-    float    ambient;  /**< ambient reflection coefficient */
-    float    specular; /**< specular reflection coefficient */
-    float    diffuse;  /**< reflection coefficient */
+    RwTexture *mSpecTex = nullptr;
 };
 
 struct MaterialData
@@ -63,7 +49,6 @@ struct MaterialData
     // float   diffuse;  /**< reflection coefficient */
 };
 
-uint64_t     CreateMaterialData( RpMaterial *material );
 MaterialData ConvertMaterialData( RpMaterial *material );
 
 } // namespace rw::engine

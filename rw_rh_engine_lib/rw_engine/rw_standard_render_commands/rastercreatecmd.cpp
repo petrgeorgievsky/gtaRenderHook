@@ -28,8 +28,8 @@ bool RwRasterCreateCmd::Execute()
     m_pRaster->palette  = nullptr;
 
     /* Retrieve a pointer to internal raster */
-    auto *internalRaster     = GetBackendRasterExt( m_pRaster );
-    internalRaster->mImageId = gNullRasterId;
+    auto &internalRaster    = BackendRasterPlugin::GetData( m_pRaster );
+    internalRaster.mImageId = BackendRasterPlugin::NullRasterId;
 
     if ( m_nFlags & rwRASTERDONTALLOCATE )
         return true;

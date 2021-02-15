@@ -8,7 +8,8 @@
 #include <ipc/shared_memory_queue_client.h>
 namespace rh::rw::engine
 {
-
+class ClientPlugins;
+struct PluginPtrTable;
 class RenderClient
 {
   public:
@@ -22,10 +23,13 @@ class RenderClient
         return *TaskQueue;
     }
 
+    bool RegisterPlugins( const PluginPtrTable &plugin_cb );
+
     ClientRenderState RenderState{};
 
   private:
-    std::unique_ptr<SharedMemoryTaskQueue> TaskQueue;
+    std::unique_ptr<SharedMemoryTaskQueue> TaskQueue{};
     PROCESS_INFORMATION                    RenderDriverProcess{};
+    std::unique_ptr<ClientPlugins>         Plugins{};
 };
 } // namespace rh::rw::engine

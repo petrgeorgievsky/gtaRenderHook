@@ -121,10 +121,6 @@ RwResEntry *RHInstanceSkinAtomicGeometry( RpGeometryInterface *geom_io,
     {
         GeometrySplit meshData{};
         meshData.mIndexOffset = startIndex;
-        auto mat_ext          = GetBackendMaterialExt( mesh->material );
-        if ( mat_ext->mMaterialId == 0xBADF00D )
-            mat_ext->mMaterialId = CreateMaterialData( mesh->material );
-        meshData.mMaterialIdx = mat_ext->mMaterialId; // mesh->material;
 
         indexCount = mesh->numIndices;
         MeshGetNumVerticesMinIndex( mesh->indices, indexCount,

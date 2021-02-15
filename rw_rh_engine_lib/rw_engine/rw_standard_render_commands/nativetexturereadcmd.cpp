@@ -252,11 +252,11 @@ bool RwNativeTextureReadCmd::Execute()
     case rh::engine::ImageBufferFormat::BC4: bytesPerBlock = 8; break;
     default: bytesPerBlock = 16; break;
     }
-    auto *internalRaster = GetBackendRasterExt( raster );
+    auto &internalRaster = BackendRasterPlugin::GetData( raster );
     debug_output.str( "" );
     debug_output.clear();
     debug_output << "Texture adress: 0x" << std::hex
-                 << reinterpret_cast<INT_PTR>( internalRaster ) << '\n';
+                 << reinterpret_cast<INT_PTR>( &internalRaster ) << '\n';
     rh::debug::DebugLogger::Log( debug_output.str() );
 
     auto convert_paletted_mip_level =
@@ -299,7 +299,8 @@ bool RwNativeTextureReadCmd::Execute()
     uint32_t mip_width  = nativeRaster.d3d9_.width;
     uint32_t mip_height = nativeRaster.d3d9_.height;
 
-    internalRaster->mImageId = load_texture_cmd.Invoke(
+    assert( internalRaster.mImageId == BackendRasterPlugin::NullRasterId );
+    internalRaster.mImageId = load_texture_cmd.Invoke(
         header, [&]( MemoryWriter &writer, MipLevelHeader &mip_header ) {
             writer.Skip( sizeof( MipLevelHeader ) );
 

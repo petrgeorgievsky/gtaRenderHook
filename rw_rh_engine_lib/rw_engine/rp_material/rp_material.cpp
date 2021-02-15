@@ -94,10 +94,10 @@ RpMaterial *RpMaterialCreate()
     material->texture = nullptr; /* Non textured */
 
     /* use the default material pipeline */
-    material->pipeline                             = nullptr;
-    material->surfaceProps                         = { 1.0F, 1.0F, 1.0F };
-    GetBackendMaterialExt( material )->mMaterialId = 0xBADF00D;
-    GetBackendMaterialExt( material )->mSpecTex    = nullptr;
+    material->pipeline     = nullptr;
+    material->surfaceProps = { 1.0F, 1.0F, 1.0F };
+    auto &mat_ext          = BackendMaterialPlugin::GetData( material );
+    mat_ext.mSpecTex       = nullptr;
     // RpMaterialSetSurfaceProperties( material, &defaultSurfaceProperties );
 
     /* Initialize memory allocated to toolkits */

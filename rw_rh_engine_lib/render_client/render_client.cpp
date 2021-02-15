@@ -4,8 +4,27 @@
 
 #include "render_client.h"
 #include <Engine/EngineConfigBlock.h>
+#include <rw_engine/rh_backend/material_backend.h>
+
 namespace rh::rw::engine
 {
+
+/**
+ * RenderClient RenderWare plugins storage
+ */
+class ClientPlugins
+{
+  public:
+    explicit ClientPlugins( const PluginPtrTable &plugin_cb )
+        : Raster( plugin_cb ), Material( plugin_cb )
+    {
+    }
+
+  private:
+    BackendRasterPlugin   Raster;
+    BackendMaterialPlugin Material;
+};
+
 RenderClient::RenderClient()
 {
     /// initialize SM task queue
@@ -30,4 +49,11 @@ RenderClient::~RenderClient()
     if ( RenderDriverProcess.hProcess )
         TerminateProcess( RenderDriverProcess.hProcess, 0 );
 }
+
+bool RenderClient::RegisterPlugins( const PluginPtrTable &plugin_cb )
+{
+    Plugins = std::make_unique<ClientPlugins>( plugin_cb );
+    return true;
+}
+
 } // namespace rh::rw::engine

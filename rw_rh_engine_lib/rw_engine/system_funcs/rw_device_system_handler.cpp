@@ -15,31 +15,16 @@
 #include "get_video_mode_cmd.h"
 #include "get_video_mode_count.h"
 #include "get_video_mode_info_cmd.h"
-#include "mesh_load_cmd.h"
-#include "mesh_unload_cmd.h"
-#include "raster_load_cmd.h"
-#include "raster_lock_cmd.h"
-#include "raster_unload_cmd.h"
-#include "render_scene_cmd.h"
 #include "rw_device_system_globals.h"
 #include "set_adapter_cmd.h"
 #include "set_video_mode_cmd.h"
-#include "skinned_mesh_load_cmd.h"
-#include "skinned_mesh_unload_cmd.h"
-#include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/ISwapchain.h>
 #include <Engine/Common/IWindow.h>
 #include <Engine/D3D11Impl/D3D11DeviceState.h>
 #include <Engine/EngineConfigBlock.h>
-#include <Engine/VulkanImpl/VulkanDeviceState.h>
-#include <ipc/ipc_utils.h>
 #include <map>
 #include <render_client/render_client.h>
 #include <render_driver/render_driver.h>
-#include <render_loop.h>
-#include <rendering_loop/ray_tracing/RayTracingRenderer.h>
-#include <rw_engine/rh_backend/material_backend.h>
-#include <rw_engine/rh_backend/skinned_mesh_backend.h>
 #include <rw_engine/rw_standard_render_commands/imagefindrasterformat.h>
 #include <rw_engine/rw_standard_render_commands/rasterdestroycmd.h>
 #include <rw_engine/rw_standard_render_commands/rasterlockcmd.h>
@@ -311,43 +296,15 @@ bool SystemRegister( RwDevice &device, RwMemoryFunctions *memory_funcs )
 
     if ( IPCSettings::mMode != IPCRenderMode::CrossProcessRenderer )
     {
-        BackendRasterPluginAttach();
-        BackendMaterialPluginAttach();
-        // BackendCameraPluginAttach();
+        assert( gRenderClient );
+        gRenderClient->RegisterPlugins( gRwDeviceGlobals.PluginFuncs );
     }
-    if ( is_registered )
-        return true;
-
     if ( IPCSettings::mMode != IPCRenderMode::CrossProcessClient )
     {
         assert( gRenderDriver );
-        auto &driver_task_queue = gRenderDriver->GetTaskQueue();
-        /// Register driver tasks
-        /// TODO: Move to RenderDriver
-        StartSystemCmdImpl::RegisterCallHandler( driver_task_queue );
-        StopSystemCmdImpl::RegisterCallHandler( driver_task_queue );
-        GetAdapterCountCmdImpl::RegisterCallHandler( driver_task_queue );
-        GetAdapterIdCmdImpl::RegisterCallHandler( driver_task_queue );
-        SetAdapterIdCmdImpl::RegisterCallHandler( driver_task_queue );
-        GetAdapterInfoCmdImpl::RegisterCallHandler( driver_task_queue );
-        GetVideoModeCountCmdImpl::RegisterCallHandler( driver_task_queue );
-        GetVideoModeIdCmdImpl::RegisterCallHandler( driver_task_queue );
-        SetVideoModeIdCmdImpl::RegisterCallHandler( driver_task_queue );
-        GetVideoModeInfoCmdImpl::RegisterCallHandler( driver_task_queue );
-
-        RasterDestroyCmdImpl::RegisterCallHandler( driver_task_queue );
-        RasterLoadCmdImpl::RegisterCallHandler( driver_task_queue );
-        RasterLockCmdImpl::RegisterCallHandler( driver_task_queue );
-
-        LoadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
-        UnloadMeshCmdImpl::RegisterCallHandler( driver_task_queue );
-        SkinnedMeshLoadCmdImpl::RegisterCallHandler( driver_task_queue );
-        SkinnedMeshUnloadCmdImpl::RegisterCallHandler( driver_task_queue );
-
-        RenderSceneCmd::RegisterCallHandler( driver_task_queue );
+        gRenderDriver->RegisterTasks();
     }
 
-    is_registered = true;
     return true;
 }
 

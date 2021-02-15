@@ -19,8 +19,6 @@
 using namespace rh::rw::engine;
 using namespace rh::engine;
 
-int32_t gCurrentTextureId = 0;
-
 constexpr auto VERTEX_COUNT_LIMIT = 100000;
 constexpr auto INDEX_COUNT_LIMIT  = 100000;
 

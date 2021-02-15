@@ -1,5 +1,4 @@
 #pragma once
-#include <Engine/ResourcePool.h>
 #include <cstdint>
 #include <vector>
 
@@ -7,37 +6,36 @@ struct RwRaster;
 
 namespace rh
 {
-
-namespace engine
-{
-class IWindow;
-class ISyncPrimitive;
-class IImageBuffer;
-class IImageView;
-} // namespace engine
-
 namespace rw::engine
 {
 
-struct BackendRasterExt
+struct BackendRasterExt;
+struct PluginPtrTable;
+
+/**
+ *
+ */
+class BackendRasterPlugin
 {
-    uint64_t mImageId;
+  public:
+    BackendRasterPlugin( const PluginPtrTable &plugin_cb );
+    static uint8_t *         GetAddress( RwRaster *raster );
+    static BackendRasterExt &GetData( RwRaster *raster );
+
+    static constexpr uint64_t NullRasterId = 0xBADF00D;
+
+  private:
+    static int32_t Offset;
 };
 
-constexpr uint64_t gNullRasterId = 0xBADF00D;
-extern int32_t     gBackendRasterExtOffset;
+struct BackendRasterExt
+{
+    uint64_t mImageId = BackendRasterPlugin::NullRasterId;
 
-/* Plugin Attach */
-int32_t BackendRasterPluginAttach();
-void *BackendRasterCtor( void *object, [[maybe_unused]] int32_t offsetInObject,
-                         [[maybe_unused]] int32_t sizeInObject );
-void *BackendRasterDtor( void *object, [[maybe_unused]] int32_t offsetInObject,
-                         [[maybe_unused]] int32_t sizeInObject );
-/* Open/Close */
-// void BackendRasterOpen();
-// void BackendRasterClose();
-
-BackendRasterExt *GetBackendRasterExt( RwRaster *raster );
+    ~BackendRasterExt();
+    BackendRasterExt()                           = default;
+    BackendRasterExt( const BackendRasterExt & ) = delete;
+};
 
 struct RasterHeader
 {
