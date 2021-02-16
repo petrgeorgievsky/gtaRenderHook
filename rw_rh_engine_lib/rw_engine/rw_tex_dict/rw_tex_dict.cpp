@@ -5,6 +5,7 @@
 #include "../rw_texture/rw_texture.h"
 #include "rw_engine/system_funcs/rw_device_system_globals.h"
 #include <fstream>
+#include <rw_engine/system_funcs/rw_device_standards.h>
 
 struct _rwStreamTexDictionary
 {

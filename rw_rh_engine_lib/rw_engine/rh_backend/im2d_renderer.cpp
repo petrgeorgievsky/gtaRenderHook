@@ -2,7 +2,7 @@
 // Created by peter on 25.06.2020.
 //
 
-#include "Im2DRenderer.h"
+#include "im2d_renderer.h"
 #include "im2d_backend.h"
 #include "raster_backend.h"
 #include <Engine/Common/IDeviceState.h>

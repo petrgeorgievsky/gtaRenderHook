@@ -9,8 +9,8 @@
 #include <Engine/VulkanImpl/VulkanImGUI.h>
 #include <array>
 #include <rendering_loop/frame_renderer.h>
-#include <rw_engine/rh_backend/Im2DRenderer.h>
 #include <rw_engine/rh_backend/im2d_backend.h>
+#include <rw_engine/rh_backend/im2d_renderer.h>
 #include <rw_engine/rh_backend/im3d_renderer.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/rh_backend/raster_backend.h>

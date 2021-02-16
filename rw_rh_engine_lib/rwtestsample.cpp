@@ -10,6 +10,7 @@
 #include <array>
 #include <common_headers.h>
 #include <ipc/ipc_utils.h>
+#include <rw_engine/system_funcs/rw_device_standards.h>
 #include <rw_game_hooks.h>
 #include <scene_graph.h>
 

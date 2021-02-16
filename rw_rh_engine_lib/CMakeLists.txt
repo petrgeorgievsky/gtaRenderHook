@@ -59,7 +59,7 @@ set(SOURCES
         rendering_loop/ray_tracing/scene_description/gpu_texture_pool.cpp
         rendering_loop/ray_tracing/scene_description/gpu_mesh_buffer_pool.cpp
         rendering_loop/compute_skin_animation.cpp
-        rw_engine/rh_backend/Im2DRenderer.cpp
+        rw_engine/rh_backend/im2d_renderer.cpp
         ipc/MemoryWriter.cpp
         ipc/MemoryReader.cpp
         rendering_loop/ray_tracing/RTBlasBuildPass.cpp
@@ -101,6 +101,7 @@ set(SOURCES
         rw_engine/system_funcs/skinned_mesh_load_cmd.cpp
         rw_engine/system_funcs/skinned_mesh_unload_cmd.cpp
         rw_engine/system_funcs/render_scene_cmd.cpp
+        rw_engine/system_funcs/rw_device_standards.cpp
         render_driver/render_driver.cpp
         render_client/render_client.cpp
         render_client/client_render_state.cpp

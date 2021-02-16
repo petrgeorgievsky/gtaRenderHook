@@ -3,6 +3,7 @@
 #include "rw_engine/rh_backend/camera_backend.h"
 #include "rw_engine/system_funcs/rw_device_system_globals.h"
 #include <common_headers.h>
+#include <rw_engine/system_funcs/rw_device_standards.h>
 
 namespace rh::rw::engine
 {
