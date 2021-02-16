@@ -4,7 +4,7 @@
 #include <cassert>
 #include <render_client/render_client.h>
 #include <rw_engine/system_funcs/raster_unload_cmd.h>
-#include <rw_game_hooks.h> // gRenderClient
+#include <rw_engine/system_funcs/rw_device_system_globals.h> // PluginPtrTable
 
 namespace rh::rw::engine
 {

@@ -1,32 +1,29 @@
-#include "../rh_backend/camera_backend.h"
-#include "../rh_backend/im2d_backend.h"
-#include "../rh_backend/mesh_rendering_backend.h"
-#include "../rh_backend/raster_backend.h"
-#include "../rw_api_injectors.h"
-#include "get_adapter_cmd.h"
-#include "get_adapter_count_cmd.h"
-#include "get_adapter_info_cmd.h"
-#include "get_video_mode_cmd.h"
-#include "get_video_mode_count.h"
-#include "get_video_mode_info_cmd.h"
-#include "rw_device_standards.h"
-#include "rw_device_system_globals.h"
-#include "set_adapter_cmd.h"
-#include "set_video_mode_cmd.h"
-#include <Engine/Common/ISwapchain.h>
-#include <Engine/Common/IWindow.h>
-#include <Engine/D3D11Impl/D3D11DeviceState.h>
-#include <Engine/EngineConfigBlock.h>
 #include <render_client/render_client.h>
 #include <render_driver/render_driver.h>
+
+#include <rw_engine/rw_api_injectors.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
+
+#include <rw_engine/system_funcs/rw_device_standards.h>
+
+#include <rw_engine/system_funcs/get_adapter_cmd.h>
+#include <rw_engine/system_funcs/get_adapter_count_cmd.h>
+#include <rw_engine/system_funcs/get_adapter_info_cmd.h>
+#include <rw_engine/system_funcs/set_adapter_cmd.h>
+
+#include <rw_engine/system_funcs/get_video_mode_cmd.h>
+#include <rw_engine/system_funcs/get_video_mode_count.h>
+#include <rw_engine/system_funcs/get_video_mode_info_cmd.h>
+#include <rw_engine/system_funcs/set_video_mode_cmd.h>
+
 #include <rw_engine/system_funcs/start_cmd.h>
 #include <rw_engine/system_funcs/stop_cmd.h>
+
+#include <Engine/EngineConfigBlock.h>
 
 namespace rh::rw::engine
 {
 HWND                                                gMainWindow;
-std::unique_ptr<RenderClient>                       gRenderClient = nullptr;
-std::unique_ptr<RenderDriver>                       gRenderDriver = nullptr;
 DeviceGlobals                                       gRwDeviceGlobals{};
 std::array<RwStandardFunc, rwSTANDARDNUMOFSTANDARD> gStandards{};
 

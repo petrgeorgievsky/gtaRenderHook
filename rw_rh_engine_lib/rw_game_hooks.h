@@ -2,15 +2,13 @@
 #include <basetsd.h>
 #include <cstdint>
 
-#include "rw_engine/system_funcs/rw_device_system_globals.h"
-
 namespace rh::rw::engine
 {
 
 struct RwGlobalPointerTable
 {
-    [[maybe_unused]] RwSystemFunc fpDefaultSystem;
-    uint32_t *                    opInternalRasterExtOffset;
+    [[maybe_unused]] void *fpDefaultSystem;
+    uint32_t *             opInternalRasterExtOffset;
     // RwResourcesAllocateResEntry_FN fpResourcesAllocateResEntry;
 };
 
@@ -65,24 +63,12 @@ class RwGameHooks
 
     static int32_t RenderSystem( int32_t request, void *out, void *inOut,
                                  int32_t in );
-    static int32_t SetRenderState( RwRenderState nState, void *pParam );
-    static int32_t GetRenderState( [[maybe_unused]] RwRenderState nState,
-                                   void *                         pParam );
-    static void    SetRefreshRate( uint32_t refreshRate );
-    static void    SetVideoMode( uint32_t videomode );
+    static int32_t SetRenderState( int32_t nState, void *pParam );
+    static int32_t GetRenderState( [[maybe_unused]] int32_t nState,
+                                   void *                   pParam );
 
-    [[maybe_unused]] static int32_t
-    Im2DRenderPrim( [[maybe_unused]] RwPrimitiveType primType,
-                    [[maybe_unused]] RwIm2DVertex *  vertices,
-                    [[maybe_unused]] int32_t         numVertices );
-    static int32_t
-    Im2DRenderIndexedPrim( [[maybe_unused]] RwPrimitiveType primType,
-                           [[maybe_unused]] RwIm2DVertex *  vertices,
-                           [[maybe_unused]] int32_t         numVertices,
-                           [[maybe_unused]] int16_t *       indices,
-                           [[maybe_unused]] int32_t         numIndices );
-    static int32_t Im2DRenderLine( void *vertices, int32_t numVertices,
-                                   int32_t vert1, int32_t vert2 );
+    static void SetRefreshRate( uint32_t refreshRate );
+    static void SetVideoMode( uint32_t videomode );
 
     static int32_t               Im3DSubmit();
     [[maybe_unused]] static void Im3DOpen();

@@ -11,6 +11,7 @@
 #include <DebugUtils/DebugLogger.h>
 #include <DebugUtils/Win32UncaughtExceptionHandler.h>
 #include <ipc/ipc_utils.h>
+#include <ipc/shared_memory_queue_client.h>
 #include <render_loop.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_game_hooks.h>

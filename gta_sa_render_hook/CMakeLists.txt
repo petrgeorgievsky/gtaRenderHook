@@ -24,7 +24,7 @@ set(SOURCES
         gta_sa_internal_classes/hud.cpp
         gta_sa_internal_classes/menumanager.cpp
         gta_sa_internal_classes/rw_func_ptrs.cpp
-        gta_sa_internal_classes/CColorSet.cpp gta_sa_internal_classes/CColorSet.h)
+        gta_sa_internal_classes/CColorSet.cpp)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -41,19 +41,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST} rh_engine_lib rw_rh_engine_lib)
-
-
-add_custom_command(TARGET ${PROJECT_NAME}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/rw_render_algorithms_lib/shaders $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders)
-
-add_custom_command(TARGET ${PROJECT_NAME}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/rw_ray_tracing_lib/shaders $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders)
-
-add_custom_command(TARGET ${PROJECT_NAME}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/rw_ray_tracing_lib/rh_resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/rh_resources)
 
 add_custom_command(TARGET ${PROJECT_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy_directory

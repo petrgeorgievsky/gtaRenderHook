@@ -2,10 +2,10 @@
 // Created by peter on 20.04.2020.
 //
 #include <DebugUtils/DebugLogger.h>
-#include <conio.h>
 #include <ipc/ipc_utils.h>
 #include <ipc/shared_memory_queue_client.h>
 #include <render_driver/render_driver.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
 #include <rw_game_hooks.h>
 struct RwMemoryFunctions
 {

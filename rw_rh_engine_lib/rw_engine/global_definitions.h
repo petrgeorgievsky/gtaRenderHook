@@ -4,7 +4,6 @@
 namespace rh::rw::engine
 {
 
-void *&GetInternalRaster( RwRaster *raster );
 /*
 struct CameraContext
 {

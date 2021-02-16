@@ -8,6 +8,7 @@
 
 namespace rh::rw::engine
 {
+std::unique_ptr<RenderClient> gRenderClient = nullptr;
 
 /**
  * RenderClient RenderWare plugins storage

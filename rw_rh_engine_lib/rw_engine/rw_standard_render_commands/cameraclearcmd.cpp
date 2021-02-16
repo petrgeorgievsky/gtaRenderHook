@@ -1,10 +1,6 @@
 #include "cameraclearcmd.h"
-#include "../global_definitions.h"
-#include "../rh_backend/camera_backend.h"
-#include <Engine/Common/types/image_clear_type.h>
-#include <Engine/IRenderer.h>
-#include <common.h>
 #include <scene_graph.h>
+
 using namespace rh::rw::engine;
 
 RwCameraClearCmd::RwCameraClearCmd( RwCamera *camera, RwRGBA *color,
@@ -13,8 +9,8 @@ RwCameraClearCmd::RwCameraClearCmd( RwCamera *camera, RwRGBA *color,
 {
     m_aClearColor = color;
 }
+RwCameraClearCmd::~RwCameraClearCmd() = default;
 
-RwCameraClearCmd::~RwCameraClearCmd() {}
 bool RwCameraClearCmd::Execute()
 {
     auto &frame       = GetCurrentSceneGraph()->mFrameInfo;

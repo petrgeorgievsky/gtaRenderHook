@@ -1,11 +1,12 @@
 //
 // Created by peter on 18.01.2021.
 //
-
 #include "rwd3d8_patches.h"
 #include "../call_redirection_util.h"
+
 #include <MemoryInjectionUtils/InjectorHelpers.h>
-#include <rw_game_hooks.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
+#include <vector>
 
 /// Old renderware videomode struct, lacks format and refresh-rate
 struct Rw35VideoMode
@@ -136,6 +137,7 @@ Rw35VideoMode *RwEngineGetVideoModeInfoFix( Rw35VideoMode *modeinfo,
     modeinfo->flags  = videoMode.flags;
     return modeinfo;
 }
+
 void RwD3D8Patches::Patch()
 {
     // GTA 3 stores some of the supported formats in binary file, and checks

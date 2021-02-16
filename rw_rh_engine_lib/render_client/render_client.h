@@ -32,4 +32,7 @@ class RenderClient
     PROCESS_INFORMATION                    RenderDriverProcess{};
     std::unique_ptr<ClientPlugins>         Plugins{};
 };
+
+extern std::unique_ptr<RenderClient> gRenderClient;
+
 } // namespace rh::rw::engine

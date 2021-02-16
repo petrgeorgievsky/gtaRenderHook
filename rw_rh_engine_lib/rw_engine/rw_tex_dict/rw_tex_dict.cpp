@@ -1,5 +1,4 @@
 #include "rw_tex_dict.h"
-//#include "../global_definitions.h"
 #include "../rw_macro_constexpr.h"
 #include "../rw_stream/rw_stream.h"
 #include "../rw_texture/rw_texture.h"

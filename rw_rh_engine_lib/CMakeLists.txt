@@ -42,11 +42,6 @@ set(SOURCES
         rw_engine/rw_rh_pipeline.cpp
         rwtestsample.cpp
         render_loop.cpp
-        #[[RwRenderEngine.cpp
-        rw_engine/global_definitions.cpp
-        rw_engine/rw_macro_constexpr.cpp
-        rw_engine/rw_im2d/rw_im2d.cpp
-]]
         rw_game_hooks.cpp
         rw_engine/system_funcs/rw_device_system_handler.cpp
         scene_graph.cpp ipc/ipc_utils.cpp ipc/shared_memory_queue_client.cpp

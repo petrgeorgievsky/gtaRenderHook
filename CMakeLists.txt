@@ -41,9 +41,6 @@ add_subdirectory(rh_engine_lib)
 # functions implemented using RenderHook engine and pointer tables used to replace RW engine backends.
 add_subdirectory(rw_rh_engine_lib)
 
-#add_subdirectory(rw_ray_tracing_lib)
-#add_subdirectory(rw_render_algorithms_lib)
-
 if (BUILD_TESTS)
     add_subdirectory(Tests)
 endif ()
@@ -57,6 +54,4 @@ if (BUILD_32BIT_LIBS)
         add_subdirectory(gta_vc_render_hook)
         add_subdirectory(gta_sa_render_hook)
     endif ()
-    #add_subdirectory(gta_sa_render_hook)
-    #add_subdirectory(gtasa_render_hook_rt)
 endif ()

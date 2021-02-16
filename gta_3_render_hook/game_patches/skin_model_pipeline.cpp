@@ -11,6 +11,7 @@
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_rh_skin_pipeline.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
 #include <rw_game_hooks.h>
 
 using namespace rh::rw::engine;

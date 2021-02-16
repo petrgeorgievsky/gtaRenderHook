@@ -30,6 +30,7 @@
 
 namespace rh::rw::engine
 {
+std::unique_ptr<RenderDriver> gRenderDriver = nullptr;
 
 RenderDriver::RenderDriver()
 {

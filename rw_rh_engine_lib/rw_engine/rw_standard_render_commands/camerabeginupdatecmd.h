@@ -1,5 +1,4 @@
 #pragma once
-#include <common_headers.h>
 struct RwCamera;
 namespace rh::rw::engine
 {
@@ -12,9 +11,7 @@ class RwCameraBeginUpdateCmd
     bool Execute();
 
   private:
-    void                SetupCameraContext();
-    DirectX::XMFLOAT4X4 GetCameraTransform();
-    DirectX::XMFLOAT4X4 GetProjectionTransform();
+    void SetupCameraContext();
 
   private:
     RwCamera *m_pCamera = nullptr;

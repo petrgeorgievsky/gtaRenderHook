@@ -1,10 +1,6 @@
 #include "cameraendupdatecmd.h"
-#include "../global_definitions.h"
-#include "../rh_backend/camera_backend.h"
 #include "../system_funcs/rw_device_system_globals.h"
 #include <DebugUtils/DebugLogger.h>
-#include <Engine/Common/ICommandBuffer.h>
-#include <Engine/Common/IDeviceState.h>
 
 using namespace rh::rw::engine;
 

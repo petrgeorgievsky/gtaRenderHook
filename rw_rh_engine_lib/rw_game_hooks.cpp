@@ -1,11 +1,10 @@
 #include "rw_game_hooks.h"
 #include "render_loop.h"
-#include "rw_engine/rh_backend/im2d_backend.h"
-#include <DebugUtils/DebugLogger.h>
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <render_client/render_client.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
 {
@@ -148,18 +147,16 @@ void RwGameHooks::Patch( const RwPointerTable &pointerTable )
                           reinterpret_cast<void *>( Im3DEnd ) );
 }
 
-int32_t RwGameHooks::SetRenderState( RwRenderState nState, void *pParam )
+int32_t RwGameHooks::SetRenderState( int32_t nState, void *pParam )
 {
-    /* debug::DebugLogger::Log(
-         "RWGAMEHOOKS_LOG: SetRenderState:" + std::to_string( nState ) +
-         " value:" + std::to_string( (uint32_t)pParam ) );*/
     assert( gRenderClient );
-    gRenderClient->RenderState.ImState.Update( nState, pParam );
+    gRenderClient->RenderState.ImState.Update(
+        static_cast<RwRenderState>( nState ), pParam );
     return 1;
 }
 
-int32_t RwGameHooks::GetRenderState( [[maybe_unused]] RwRenderState nState,
-                                     void *                         pParam )
+int32_t RwGameHooks::GetRenderState( [[maybe_unused]] int32_t nState,
+                                     void *                   pParam )
 {
     /* debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: GetRenderState:" +
                               std::to_string( nState ) );*/
@@ -184,28 +181,4 @@ void RwGameHooks::CheckNativeTextureSupport() {}
 
 int32_t RwGameHooks::CheckEnviromentMapSupport() { return true; }
 
-[[maybe_unused]] int32_t
-RwGameHooks::Im2DRenderPrim( [[maybe_unused]] RwPrimitiveType primType,
-                             [[maybe_unused]] RwIm2DVertex *  vertices,
-                             [[maybe_unused]] int32_t         numVertices )
-{
-    debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: Im2DRenderPrim" );
-    return 1;
-}
-
-int32_t
-RwGameHooks::Im2DRenderIndexedPrim( [[maybe_unused]] RwPrimitiveType primType,
-                                    [[maybe_unused]] RwIm2DVertex *  vertices,
-                                    [[maybe_unused]] int32_t  numVertices,
-                                    [[maybe_unused]] int16_t *indices,
-                                    [[maybe_unused]] int32_t  numIndices )
-{
-    debug::DebugLogger::Log( "RWGAMEHOOKS_LOG: Im2DRenderIndexedPrim" );
-    return 1;
-}
-
-int32_t RwGameHooks::Im2DRenderLine( void *, int32_t, int32_t, int32_t )
-{
-    return true;
-}
 } // namespace rh::rw::engine

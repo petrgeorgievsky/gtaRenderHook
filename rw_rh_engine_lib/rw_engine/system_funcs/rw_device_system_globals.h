@@ -1,10 +1,5 @@
 #pragma once
 #include "../../common_headers.h"
-#include <atomic>
-#include <cstdint>
-#include <ipc/shared_memory_queue_client.h>
-#include <memory>
-#include <thread>
 
 using RwSystemFunc = int32_t ( * )( int32_t nOption, void *pOut, void *pInOut,
                                     int32_t nIn );
@@ -37,11 +32,8 @@ enum RwCoreDeviceSystemFn
     rwDEVICESYSTEMDD = 0x1000
 };
 
-enum RwRenderState : int32_t;
-using RwRenderStateSetFunction = int32_t ( * )( RwRenderState nState,
-                                                void *        pParam );
-using RwRenderStateGetFunction = int32_t ( * )( RwRenderState nState,
-                                                void *        pParam );
+using RwRenderStateSetFunction = int32_t ( * )( int32_t nState, void *pParam );
+using RwRenderStateGetFunction = int32_t ( * )( int32_t nState, void *pParam );
 using RwIm2DRenderLineFunction = int32_t ( * )( RwIm2DVertex *vertices,
                                                 int32_t       numVertices,
                                                 int32_t vert1, int32_t vert2 );
@@ -163,13 +155,6 @@ struct RwVideoMode
 };
 
 using RwStandardFunc = int32_t ( * )( void *pOut, void *pInOut, int32_t nI );
-namespace rh::engine
-{
-class IDeviceState;
-class IWindow;
-class IImageBuffer;
-class IImageView;
-} // namespace rh::engine
 
 using RwPluginObjectConstructor = void *(*)( void *  object,
                                              int32_t offsetInObject,
@@ -198,11 +183,11 @@ using RwResourcesFreeResEntry     = int32_t ( * )( RwResEntry *entry );
 
 using RpSkinAtomicGetHAnimHierarchyFP =
     RpHAnimHierarchy *(*)( const RpAtomic *atomic );
-
 using RpSkinGeometryGetSkinFP       = RpSkin *(*)( const RpGeometry *atomic );
 using RpSkinGetSkinToBoneMatricesFP = const RwMatrix *(*)( RpSkin *skin );
 using RpSkinGetVertexBoneWeightsFP = const RwMatrixWeights *(*)( RpSkin *skin );
 using RpSkinGetVertexBoneIndicesFP = const uint32_t *(*)( RpSkin *skin );
+
 namespace rh::rw::engine
 {
 
@@ -260,10 +245,6 @@ class DeviceGlobals
 };
 
 extern DeviceGlobals gRwDeviceGlobals;
-class RenderClient;
-class RenderDriver;
-extern std::unique_ptr<RenderClient> gRenderClient;
-extern std::unique_ptr<RenderDriver> gRenderDriver;
 
 /**
  * Core device system task handler impl

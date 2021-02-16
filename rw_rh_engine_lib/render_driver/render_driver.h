@@ -91,4 +91,9 @@ class RenderDriver
     std::unique_ptr<rh::engine::IWindow>      MainWindow;
     std::unique_ptr<EngineResourceHolder>     Resources;
 };
+
+/**
+ * Global RenderDriver
+ */
+extern std::unique_ptr<RenderDriver> gRenderDriver;
 } // namespace rh::rw::engine
