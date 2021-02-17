@@ -140,6 +140,16 @@ RTBlasBuildPass::~RTBlasBuildPass()
     auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
     mesh_pool.RemoveOnRequestCallback( MeshPoolCallbackId );
     mesh_pool.RemoveOnDestructCallback( MeshPoolCallbackId );
+    // Cleanup blas pool
+    for ( auto blas : mBLASPool )
+    {
+        delete static_cast<
+            rh::engine::VulkanBottomLevelAccelerationStructure *>(
+            blas.mData.mBLAS );
+        blas.mData.mBLAS      = nullptr;
+        blas.mData.mBlasBuilt = false;
+        blas.mHasEntry        = false;
+    }
     delete mScratchBuffer;
     delete mBlasCmdBuffer;
     delete mBlasBuilt;
