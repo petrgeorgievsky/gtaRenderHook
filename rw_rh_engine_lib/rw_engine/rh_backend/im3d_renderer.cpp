@@ -34,7 +34,7 @@ Im3DRenderer::Im3DRenderer( rh::engine::IDeviceState &device,
     : Device( device ), RasterPool( raster_pool ), mCamDesc( cdsec )
 {
     mRenderPass = render_pass;
-    DescriptorGenerator d_gen{};
+    DescriptorGenerator d_gen{ Device };
 
     d_gen
         .AddDescriptor( 0, 0, 0, DescriptorType::ROBuffer, 1,

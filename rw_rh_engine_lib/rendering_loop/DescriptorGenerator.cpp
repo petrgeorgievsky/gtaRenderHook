@@ -10,27 +10,27 @@
 namespace rh::rw::engine
 {
 using namespace rh::engine;
+DescriptorGenerator::DescriptorGenerator( IDeviceState &device )
+    : Device( device )
+{
+}
 IDescriptorSetLayout *
 DescriptorGenerator::FinalizeDescriptorSet( uint32_t set, uint32_t max_count )
 {
-    auto &device                   = gRenderDriver->GetDeviceState();
-    mDescriptorSets[set].max_count = max_count;
-    return device.CreateDescriptorSetLayout(
-        { mDescriptorSets[set].bindings } );
+    DescriptorSets[set].max_count = max_count;
+    return Device.CreateDescriptorSetLayout( { DescriptorSets[set].bindings } );
 }
 
 rh::engine::IDescriptorSetAllocator *DescriptorGenerator::FinalizeAllocator()
 {
-    auto &device = gRenderDriver->GetDeviceState();
-
     uint32_t                        max_sets = 0;
     std::vector<DescriptorPoolSize> pool_sizes;
-    for ( auto &&[id, info] : mDescriptorSets )
+    for ( auto &&[id, info] : DescriptorSets )
     {
         for ( const auto &binding : info.bindings )
         {
-            auto pool_iter = std::find_if(
-                pool_sizes.begin(), pool_sizes.end(), [binding]( auto pool ) {
+            auto pool_iter =
+                std::ranges::find_if( pool_sizes, [&binding]( auto pool ) {
                     return pool.mType == binding.mDescriptorType;
                 } );
 
@@ -43,7 +43,7 @@ rh::engine::IDescriptorSetAllocator *DescriptorGenerator::FinalizeAllocator()
         max_sets += info.max_count;
     }
 
-    return device.CreateDescriptorSetAllocator(
+    return Device.CreateDescriptorSetAllocator(
         { .mDescriptorPools = pool_sizes, .mMaxSets = max_sets } );
 }
 
@@ -52,7 +52,7 @@ DescriptorGenerator &DescriptorGenerator::AddDescriptor(
     rh::engine::DescriptorType type, uint32_t count, uint32_t shader_stages,
     uint16_t flags )
 {
-    mDescriptorSets[set].bindings.push_back(
+    DescriptorSets[set].bindings.push_back(
         { binding, type, count, shader_stages, flags, register_id } );
     return *this;
 }

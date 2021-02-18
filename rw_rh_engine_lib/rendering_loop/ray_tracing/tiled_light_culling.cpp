@@ -47,7 +47,7 @@ TiledLightCulling::TiledLightCulling( const TiledLightCullingParams &params )
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::Compute } );
 
-    DescriptorGenerator desc_gen{};
+    DescriptorGenerator desc_gen{ device };
     desc_gen
         .AddDescriptor( 0, tb_Depth, 0, DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )

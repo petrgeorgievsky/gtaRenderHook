@@ -58,7 +58,7 @@ VarAwareTempAccumColorFilterPipe::VarAwareTempAccumColorFilterPipe()
 
     /// Descriptor layouts
 
-    DescriptorGenerator desc_gen{};
+    DescriptorGenerator desc_gen{ device };
     desc_gen
         .AddDescriptor( 0, r_OldColor, 0, DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )

@@ -29,7 +29,7 @@ RTReflectionRaysPass::RTReflectionRaysPass(
 {
 
     auto &              device = gRenderDriver->GetDeviceState();
-    DescriptorGenerator descriptorGenerator{};
+    DescriptorGenerator descriptorGenerator{ device };
 
     descriptorGenerator
         .AddDescriptor( 0, 0, 0, DescriptorType::RTAccelerationStruct, 1,

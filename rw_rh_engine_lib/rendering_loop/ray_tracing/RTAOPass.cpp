@@ -39,7 +39,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
 {
     auto &device = gRenderDriver->GetDeviceState();
 
-    DescriptorGenerator descriptorGenerator{};
+    DescriptorGenerator descriptorGenerator{ device };
     descriptorGenerator
         .AddDescriptor( 0, rtaoRTAS, 0, DescriptorType::RTAccelerationStruct, 1,
                         ShaderStage::RayGen | ShaderStage::RayHit )

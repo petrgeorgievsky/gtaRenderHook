@@ -42,7 +42,7 @@ RTSceneDescription::RTSceneDescription(
     mSceneDesc.resize( draw_count_limit );
     mSceneMaterials.resize( material_count_limit );
 
-    DescriptorGenerator descriptorGenerator{};
+    DescriptorGenerator descriptorGenerator{ Device };
     // Scene desc
     descriptorGenerator.AddDescriptor(
         0, scene_desc_bind_id, 0, DescriptorType::RWBuffer, 1,

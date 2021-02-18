@@ -157,7 +157,9 @@ BilateralFilterPipeline::GetPass( const BilateralFilterPassParams &params )
 BilateralFilterPipeline::BilateralFilterPipeline()
 {
     using namespace rh::engine;
-    DescriptorGenerator descriptorGenerator{};
+    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+
+    DescriptorGenerator descriptorGenerator{ device };
 
     // Main Descriptor Set layout
     descriptorGenerator
@@ -180,8 +182,6 @@ BilateralFilterPipeline::BilateralFilterPipeline()
     mDynamicBlurDescSetLayout =
         descriptorGenerator.FinalizeDescriptorSet( 1, 8 );
     mDescAllocator = descriptorGenerator.FinalizeAllocator();
-
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
 
     mPipelineLayout = device.CreatePipelineLayout(
         { .mSetLayouts = {

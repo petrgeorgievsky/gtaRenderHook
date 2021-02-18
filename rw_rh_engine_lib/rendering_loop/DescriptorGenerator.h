@@ -5,23 +5,28 @@
 #pragma once
 #include <Engine/Common/IDescriptorSetLayout.h>
 #include <map>
+
 namespace rh::engine
 {
 class IDescriptorSetAllocator;
-}
+class IDeviceState;
+} // namespace rh::engine
+
 namespace rh::rw::engine
 {
 
 class DescriptorGenerator
 {
-    struct DescritptorSet_Desc
+    struct DescriptorSetDesc
     {
         std::vector<rh::engine::DescriptorBinding> bindings;
         uint32_t                                   max_count = 0;
     };
-    std::map<uint32_t, DescritptorSet_Desc> mDescriptorSets;
+    rh::engine::IDeviceState &            Device;
+    std::map<uint32_t, DescriptorSetDesc> DescriptorSets;
 
   public:
+    DescriptorGenerator( rh::engine::IDeviceState &device );
     DescriptorGenerator &AddDescriptor( uint32_t set, uint32_t binding,
                                         uint32_t                   register_id,
                                         rh::engine::DescriptorType type,

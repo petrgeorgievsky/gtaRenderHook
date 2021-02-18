@@ -28,7 +28,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
       mWidth( params.mWidth ), mHeight( params.mHeight )
 {
     auto &              device = gRenderDriver->GetDeviceState();
-    DescriptorGenerator descriptorGenerator{};
+    DescriptorGenerator descriptorGenerator{ device };
     /// TLAS
     descriptorGenerator.AddDescriptor(
         0, 0, 0, DescriptorType::RTAccelerationStruct, 1,

@@ -16,7 +16,8 @@ using namespace rh::engine;
 DebugPipeline::DebugPipeline( const DebugPipelineInitParams &params )
     : mWidth( params.mWidth ), mHeight( params.mHeight )
 {
-    DescriptorGenerator descriptorGenerator{};
+    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    DescriptorGenerator descriptorGenerator{ device };
 
     // Main Descriptor Set layout
     descriptorGenerator.AddDescriptor( 0, 0, 0, DescriptorType::StorageTexture,
@@ -30,8 +31,6 @@ DebugPipeline::DebugPipeline( const DebugPipelineInitParams &params )
     std::array layouts = {
         static_cast<IDescriptorSetLayout *>( mDescSetLayout ) };
     mDescSet = mDescAllocator->AllocateDescriptorSets( { layouts } )[0];
-
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
 
     mPipelineLayout = device.CreatePipelineLayout( { .mSetLayouts = layouts } );
 

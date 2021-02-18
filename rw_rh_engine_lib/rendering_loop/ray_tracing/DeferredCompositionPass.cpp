@@ -20,7 +20,8 @@ DeferredCompositionPass::DeferredCompositionPass(
     : mPassParams( params )
 {
     using namespace rh::engine;
-    DescriptorGenerator descriptorGenerator{};
+    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    DescriptorGenerator descriptorGenerator{ device };
 
     // Main Descriptor Set layout
     descriptorGenerator.AddDescriptor( 0, 0, 0, DescriptorType::StorageTexture,
@@ -46,8 +47,6 @@ DeferredCompositionPass::DeferredCompositionPass(
     std::array layouts = {
         static_cast<IDescriptorSetLayout *>( mDescSetLayout ) };
     mDescSet = mDescAllocator->AllocateDescriptorSets( { layouts } )[0];
-
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
 
     mPipelineLayout = device.CreatePipelineLayout( { .mSetLayouts = layouts } );
 

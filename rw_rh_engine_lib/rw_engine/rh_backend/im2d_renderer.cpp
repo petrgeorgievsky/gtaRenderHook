@@ -39,7 +39,7 @@ Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
 {
     mRenderPass = render_pass;
     // screen stuff
-    DescriptorGenerator d_gen{};
+    DescriptorGenerator d_gen{ Device };
 
     d_gen
         .AddDescriptor( 0, 0, 0, DescriptorType::ROBuffer, 1,

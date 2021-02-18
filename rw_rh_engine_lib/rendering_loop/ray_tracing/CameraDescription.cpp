@@ -17,7 +17,7 @@ CameraDescription::CameraDescription()
 
     auto &device = gRenderDriver->GetDeviceState();
 
-    DescriptorGenerator descriptorGenerator{};
+    DescriptorGenerator descriptorGenerator{ device };
     descriptorGenerator.AddDescriptor(
         0, 0, 0, DescriptorType::ROBuffer, 1,
         ShaderStage::Vertex | ShaderStage::Pixel | ShaderStage::RayGen |
