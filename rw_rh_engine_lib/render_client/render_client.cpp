@@ -5,6 +5,7 @@
 #include "render_client.h"
 #include <Engine/EngineConfigBlock.h>
 #include <rw_engine/rh_backend/material_backend.h>
+#include <rw_engine/rh_backend/raster_backend.h>
 
 namespace rh::rw::engine
 {

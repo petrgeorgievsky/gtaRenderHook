@@ -5,7 +5,6 @@
 #include "material_backend.h"
 #include <Engine/ResourcePool.h>
 #include <common.h>
-#include <scene_graph.h>
 #include <span>
 #include <vector>
 
@@ -106,7 +105,6 @@ struct BackendMeshInitData
 };
 
 uint64_t CreateBackendMesh( const BackendMeshInitData &initData );
-void     CreateBackendMeshImpl( void *memory );
 void     DestroyBackendMesh( uint64_t id );
 
 /// TODO: Reiterate on this
@@ -117,55 +115,6 @@ class RenderingPipeline
 
     virtual void Draw( rh::engine::ICommandBuffer *cmd_buff,
                        const BackendMeshData &     mesh ) = 0;
-};
-class RayTracingTestPipe;
-class BackendRenderer
-{
-  public:
-    BackendRenderer();
-
-    void InitPipelines( FrameInfo *              frame,
-                        rh::engine::IRenderPass *main_render_pass );
-
-    void RegisterPipeline( RenderingPipeline *, uint64_t id );
-
-    uint64_t Render( void *memory, rh::engine::ICommandBuffer *cmd_buffer );
-    void     DispatchSomeRays( FrameInfo *                 pInfo,
-                               rh::engine::ICommandBuffer *pBuffer );
-    rh::engine::IImageView *GetRaytraceView();
-
-  private:
-    std::unordered_map<uint64_t, RenderingPipeline *> mPipelines;
-    void *                                            mTlas = nullptr;
-    void *              mTlasInstanceBuffer                 = nullptr;
-    RayTracingTestPipe *mRTPipe                             = nullptr;
-};
-
-struct DrawCallInfo
-{
-    uint64_t            mDrawCallId;
-    uint64_t            mMeshId;
-    uint64_t            mPipelineId;
-    uint64_t            mMaterialListStart;
-    uint64_t            mMaterialListCount;
-    DirectX::XMFLOAT4X3 mWorldTransform;
-};
-
-class BackendRendererClient
-{
-  public:
-    BackendRendererClient();
-
-    uint64_t                Serialize( MemoryWriter &memory_writer );
-    void                    Flush();
-    std::span<MaterialData> AllocateDrawCallMaterials( uint64_t count );
-    void                    RecordDrawCall( const DrawCallInfo &info );
-
-  private:
-    std::vector<DrawCallInfo> MeshData;
-    std::vector<MaterialData> MaterialsData;
-    uint64_t                  DrawCallCount;
-    uint64_t                  MaterialCount;
 };
 
 } // namespace rw::engine

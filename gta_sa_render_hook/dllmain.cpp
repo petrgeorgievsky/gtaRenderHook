@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <ipc/ipc_utils.h>
 #include <render_client/render_client.h>
-#include <render_loop.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_im2d/rw_im2d.h>
@@ -48,9 +47,9 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
             for ( auto i = 0; i < mesh_list.size(); i++ )
                 materials[i] = ConvertMaterialData( mesh_list[i].material );
             DrawCallInfo info{};
-            info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
-            info.mMeshId         = res_entry->meshData;
-            info.mWorldTransform = DirectX::XMFLOAT4X3{
+            info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
+            info.MeshId         = res_entry->meshData;
+            info.WorldTransform = DirectX::XMFLOAT4X3{
                 ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
                 ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
                 ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
@@ -89,15 +88,15 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
                 materials[i] = ConvertMaterialData( mesh_list[i].material );
 
             SkinDrawCallInfo info{};
-            info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
-            info.mMeshId         = res_entry->meshData;
-            info.mWorldTransform = DirectX::XMFLOAT4X3{
+            info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
+            info.MeshId         = res_entry->meshData;
+            info.WorldTransform = DirectX::XMFLOAT4X3{
                 ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
                 ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
                 ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
             };
             static AnimHierarcyRw36 g_anim{};
-            PrepareBoneMatrices( info.mBoneTransform, atomic, g_anim );
+            PrepareBoneMatrices( info.BoneTransform, atomic, g_anim );
             renderer.RecordDrawCall( info );
         } );
     return 1;
@@ -127,72 +126,32 @@ struct CPointLight
 void prepare_timecyc()
 {
 
-    auto &frame_info = rh::rw::engine::GetCurrentSceneGraph()->mFrameInfo;
-    auto &cur_cs     = *(CColourSet *)0xB7C4A0;
+    auto &sky_state = rh::rw::engine::gRenderClient->RenderState.SkyState;
+    auto &cur_cs    = *(CColourSet *)0xB7C4A0;
 
     auto *vec_to_sun_arr   = (RwV3d *)0xB7CA50;
     int & current_tc_value = *(int *)0xB79FD0;
 
-    frame_info.mSkyTopColor[0]    = float( cur_cs.m_nSkyTopRed ) / 255.0f;
-    frame_info.mSkyTopColor[1]    = float( cur_cs.m_nSkyTopGreen ) / 255.0f;
-    frame_info.mSkyTopColor[2]    = float( cur_cs.m_nSkyTopBlue ) / 255.0f;
-    frame_info.mSkyTopColor[3]    = 1.0f;
-    frame_info.mSkyBottomColor[0] = float( cur_cs.m_nSkyBottomRed ) / 255.0f;
-    frame_info.mSkyBottomColor[1] = float( cur_cs.m_nSkyBottomGreen ) / 255.0f;
-    frame_info.mSkyBottomColor[2] = float( cur_cs.m_nSkyBottomBlue ) / 255.0f;
-    frame_info.mSkyBottomColor[3] = 1.0f;
+    sky_state.mSkyTopColor[0]    = float( cur_cs.m_nSkyTopRed ) / 255.0f;
+    sky_state.mSkyTopColor[1]    = float( cur_cs.m_nSkyTopGreen ) / 255.0f;
+    sky_state.mSkyTopColor[2]    = float( cur_cs.m_nSkyTopBlue ) / 255.0f;
+    sky_state.mSkyTopColor[3]    = 1.0f;
+    sky_state.mSkyBottomColor[0] = float( cur_cs.m_nSkyBottomRed ) / 255.0f;
+    sky_state.mSkyBottomColor[1] = float( cur_cs.m_nSkyBottomGreen ) / 255.0f;
+    sky_state.mSkyBottomColor[2] = float( cur_cs.m_nSkyBottomBlue ) / 255.0f;
+    sky_state.mSkyBottomColor[3] = 1.0f;
 
-    frame_info.mAmbientColor[0] =
-        ( frame_info.mSkyTopColor[0] + frame_info.mSkyBottomColor[0] ) / 2.0f;
-    frame_info.mAmbientColor[1] =
-        ( frame_info.mSkyTopColor[1] + frame_info.mSkyBottomColor[1] ) / 2.0f;
-    frame_info.mAmbientColor[2] =
-        ( frame_info.mSkyTopColor[2] + frame_info.mSkyBottomColor[2] ) / 2.0f;
-    frame_info.mAmbientColor[3] = 1.0f;
-    frame_info.mSunDir[0]       = vec_to_sun_arr[current_tc_value].x;
-    frame_info.mSunDir[1]       = vec_to_sun_arr[current_tc_value].y;
-    frame_info.mSunDir[2]       = vec_to_sun_arr[current_tc_value].z;
-    frame_info.mSunDir[3]       = 1.0f;
-
-    auto *point_lights    = (CPointLight *)0xC3F0E0;
-    int & point_light_cnt = *(int *)0xC3F0D0;
-    /*
-        auto non_empty_point_lights = min( point_light_cnt, 32 );
-        for ( auto i = 0; i < non_empty_point_lights; i++ )
-        {
-            frame_info.mFirst4PointLights[i].mPos[0] =
-       point_lights[i].m_vecPosn.x; frame_info.mFirst4PointLights[i].mPos[1] =
-       point_lights[i].m_vecPosn.y; frame_info.mFirst4PointLights[i].mPos[2] =
-       point_lights[i].m_vecPosn.z; frame_info.mFirst4PointLights[i].mRadius =
-       point_lights[i].m_fRange;
-        }*/
-
-    for ( auto i = frame_info.mLightCount; i < 1024; i++ )
-    {
-        frame_info.mFirst4PointLights[i].mPos[0] = 0;
-        frame_info.mFirst4PointLights[i].mPos[1] = 0;
-        frame_info.mFirst4PointLights[i].mPos[2] = 0;
-        frame_info.mFirst4PointLights[i].mRadius = -1;
-    }
-
-    std::sort( std::begin( frame_info.mFirst4PointLights ),
-               std::end( frame_info.mFirst4PointLights ),
-               [&frame_info]( const rh::rw::engine::PointLight &x,
-                              const rh::rw::engine::PointLight &y ) {
-                   auto dist = []( const rh::rw::engine::PointLight &p,
-                                   const DirectX::XMFLOAT4X4 &       viewInv ) {
-                       float dir[3];
-                       dir[0] = p.mPos[0] - viewInv._41;
-                       dir[1] = p.mPos[1] - viewInv._42;
-                       dir[2] = p.mPos[2] - viewInv._43;
-                       return dir[0] * dir[0] + dir[1] * dir[1] +
-                              dir[2] * dir[2];
-                   };
-
-                   return ( dist( x, frame_info.mViewInv ) <
-                            dist( y, frame_info.mViewInv ) ) &&
-                          ( x.mRadius > y.mRadius );
-               } );
+    sky_state.mAmbientColor[0] =
+        ( sky_state.mSkyTopColor[0] + sky_state.mSkyBottomColor[0] ) / 2.0f;
+    sky_state.mAmbientColor[1] =
+        ( sky_state.mSkyTopColor[1] + sky_state.mSkyBottomColor[1] ) / 2.0f;
+    sky_state.mAmbientColor[2] =
+        ( sky_state.mSkyTopColor[2] + sky_state.mSkyBottomColor[2] ) / 2.0f;
+    sky_state.mAmbientColor[3] = 1.0f;
+    sky_state.mSunDir[0]       = vec_to_sun_arr[current_tc_value].x;
+    sky_state.mSunDir[1]       = vec_to_sun_arr[current_tc_value].y;
+    sky_state.mSunDir[2]       = vec_to_sun_arr[current_tc_value].z;
+    sky_state.mSunDir[3]       = 1.0f;
 }
 void *rwD3D9RasterDtor( void *object ) { return object; }
 
@@ -200,11 +159,11 @@ int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
                     int dz, float rad, float r, float g, float b, char fogtype,
                     char extrashadows )
 {
-    auto &frame_info = rh::rw::engine::GetCurrentSceneGraph()->mFrameInfo;
-    if ( frame_info.mLightCount > 1024 )
-        return 0;
+    using namespace rh::rw::engine;
+    assert( gRenderClient );
+    auto &light_state = gRenderClient->RenderState.Lights;
 
-    auto &l     = frame_info.mFirst4PointLights[frame_info.mLightCount];
+    PointLight l{};
     l.mPos[0]   = x;
     l.mPos[1]   = y;
     l.mPos[2]   = z;
@@ -213,7 +172,9 @@ int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
     l.mColor[1] = g;
     l.mColor[2] = b;
     l.mColor[3] = 1;
-    frame_info.mLightCount++;
+
+    light_state.RecordPointLight( std::move( l ) );
+
     return 1;
 }
 

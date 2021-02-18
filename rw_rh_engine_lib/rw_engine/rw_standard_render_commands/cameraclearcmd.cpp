@@ -1,5 +1,5 @@
 #include "cameraclearcmd.h"
-#include <scene_graph.h>
+#include <render_client/render_client.h>
 
 using namespace rh::rw::engine;
 
@@ -13,9 +13,10 @@ RwCameraClearCmd::~RwCameraClearCmd() = default;
 
 bool RwCameraClearCmd::Execute()
 {
-    auto &frame       = GetCurrentSceneGraph()->mFrameInfo;
-    frame.mClearColor = *m_aClearColor;
-    frame.mClearFlags = m_nClearMode;
-    frame.mClearDepth = 1.0f;
+    assert( gRenderClient );
+    auto &frame      = gRenderClient->RenderState.ViewportState;
+    frame.ClearColor = *m_aClearColor;
+    frame.ClearFlags = m_nClearMode;
+    frame.ClearDepth = 1.0f;
     return true;
 }

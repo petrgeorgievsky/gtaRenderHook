@@ -8,7 +8,8 @@
 #include <Engine/VulkanImpl/VulkanComputePipeline.h>
 #include <Engine/VulkanImpl/VulkanImGUI.h>
 #include <array>
-#include <rendering_loop/frame_renderer.h>
+#include <render_client/mesh_instance_state_recorder.h>
+#include <render_driver/frame_renderer.h>
 #include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rh_backend/im2d_renderer.h>
 #include <rw_engine/rh_backend/im3d_renderer.h>
@@ -22,6 +23,8 @@ class IFrameBuffer;
 class IBuffer;
 struct WindowParams;
 struct SwapchainFrame;
+class IDeviceState;
+class IDeviceState;
 class VulkanRayTracingPipeline;
 class VulkanCommandBuffer;
 class VulkanTopLevelAccelerationStructure;
@@ -49,17 +52,28 @@ class TiledLightCulling;
 class RTReflectionRaysPass;
 class DebugPipeline;
 class BilateralFilterPipeline;
+class EngineResourceHolder;
+struct SkinInstanceState;
+struct MeshInstanceState;
 
 using rh::engine::ScopedPointer;
+
+struct RendererCreateInfo
+{
+    rh::engine::IDeviceState &Device;
+    rh::engine::IWindow &     Window;
+    EngineResourceHolder &    Resources;
+};
+
 class RayTracingRenderer : public IFrameRenderer
 {
   public:
-    RayTracingRenderer();
+    RayTracingRenderer( const RendererCreateInfo &info );
     ~RayTracingRenderer() override;
 
     void OnResize( const rh::engine::WindowParams &window ) override;
     std::vector<rh::engine::CommandBufferSubmitInfo>
-         Render( const SceneInfo *scene, rh::engine::ICommandBuffer *dest,
+         Render( const FrameState &scene, rh::engine::ICommandBuffer *dest,
                  const rh::engine::SwapchainFrame &frame ) override;
     void DrawGUI();
 
@@ -72,6 +86,9 @@ class RayTracingRenderer : public IFrameRenderer
                     rh::engine::IRenderPass *         pass );
 
   private:
+    rh::engine::IDeviceState &  Device;
+    rh::engine::IWindow &       Window;
+    EngineResourceHolder &      Resources;
     ScopedPointer<Im2DRenderer> im2DRendererGlobals;
     ScopedPointer<Im3DRenderer> im3DRenderer;
     rh::engine::IFrameBuffer *  mFramebufferCache[gFramebufferCacheSize]{};
@@ -104,8 +121,9 @@ class RayTracingRenderer : public IFrameRenderer
     uint32_t                               mFrameWidth       = 0;
     uint32_t                               mFrameHeight      = 0;
 
-    bool RenderPrimaryRays( void *scene_data, void *skin_mesh_block );
-    void ProcessDynamicGeometry( const SceneInfo *scene );
+    bool RenderPrimaryRays( const MeshInstanceState &mesh_data,
+                            const SkinInstanceState &skin_data );
+    void ProcessDynamicGeometry( const SkinInstanceState &scene );
     friend class RayTracingTestPipe;
     std::vector<rh::engine::CommandBufferSubmitInfo> mRenderDispatchList;
     std::vector<float>                               mFrameTimeGraph;

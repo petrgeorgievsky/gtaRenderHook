@@ -1,5 +1,4 @@
 #include "rw_raster.h"
-#include "../global_definitions.h"
 #include "../rh_backend/raster_backend.h"
 #include "../system_funcs/rw_device_system_globals.h"
 #include <rw_engine/system_funcs/rw_device_standards.h>

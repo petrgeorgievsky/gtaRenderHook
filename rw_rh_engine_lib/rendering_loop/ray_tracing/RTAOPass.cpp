@@ -13,6 +13,7 @@
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <render_driver/gpu_resources/raster_pool.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>

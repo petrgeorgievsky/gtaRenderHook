@@ -5,9 +5,8 @@
 #include "CameraDescription.h"
 #include "rendering_loop/DescriptorGenerator.h"
 #include <Engine/Common/IDeviceState.h>
+#include <data_desc/viewport_state.h>
 #include <render_driver/render_driver.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
-#include <scene_graph.h>
 
 namespace rh::rw::engine
 {
@@ -34,13 +33,13 @@ CameraDescription::CameraDescription()
 
     // setup camera stuff
     mCameraBuffer =
-        device.CreateBuffer( { .mSize  = sizeof( DirectX::XMFLOAT4X4 ) * 6,
-                               .mUsage = BufferUsage::ConstantBuffer,
-                               .mFlags = BufferFlags::Dynamic,
+        device.CreateBuffer( { .mSize        = sizeof( CameraState ),
+                               .mUsage       = BufferUsage::ConstantBuffer,
+                               .mFlags       = BufferFlags::Dynamic,
                                .mInitDataPtr = nullptr } );
 
     std::array<BufferUpdateInfo, 1> buff_ui = {
-        { 0, sizeof( DirectX::XMFLOAT4X4 ) * 6, mCameraBuffer } };
+        { 0, sizeof( CameraState ), mCameraBuffer } };
     device.UpdateDescriptorSets( { .mSet            = mCameraSet,
                                    .mBinding        = 0,
                                    .mDescriptorType = DescriptorType::ROBuffer,
@@ -55,9 +54,9 @@ CameraDescription::~CameraDescription()
     delete mDescSetAlloc;
 }
 
-void CameraDescription::Update( FrameInfo *frame )
+void CameraDescription::Update( const CameraState &state )
 {
-    mCameraBuffer->Update( &frame->mView, sizeof( DirectX::XMFLOAT4X4 ) * 6 );
+    mCameraBuffer->Update( &state, sizeof( CameraState ) );
 }
 
 } // namespace rh::rw::engine

@@ -1,9 +1,11 @@
 #include "camerabeginupdatecmd.h"
-#include "../rh_backend/raster_backend.h"
-#include "../rw_macro_constexpr.h"
-#include "../system_funcs/rw_device_system_globals.h"
+
+#include <rw_engine/rh_backend/raster_backend.h>
+#include <rw_engine/rw_macro_constexpr.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
+
 #include <DebugUtils/DebugLogger.h>
-#include <scene_graph.h>
+#include <render_client/render_client.h>
 
 namespace rh::rw::engine
 {
@@ -27,8 +29,8 @@ RwCameraBeginUpdateCmd::RwCameraBeginUpdateCmd( RwCamera *camera )
 
     // "Fixes" some bugs related to camera update being called 2+ times between
     // frames, TODO: Implement a way to handle multiple cameras?
-    if ( GetCurrentSceneGraph()->mFrameInfo.camera_updated )
-        return;
+    // if ( GetCurrentSceneGraph()->mFrameInfo.camera_updated )
+    //    return;
     SetupCameraContext();
 }
 
@@ -60,7 +62,7 @@ void RwCameraBeginUpdateCmd::SetupCameraContext()
     auto proj = XMLoadFloat4x4( &clip_space_transform );
     auto proj_inv = XMMatrixInverse( nullptr, proj );
 
-    auto &frame_info = GetCurrentSceneGraph()->mFrameInfo;
+    auto &frame_info = gRenderClient->RenderState.ViewportState.Camera;
 
     frame_info.mViewPrev = frame_info.mView;
     frame_info.mProjPrev = frame_info.mProj;
@@ -70,7 +72,7 @@ void RwCameraBeginUpdateCmd::SetupCameraContext()
     DirectX::XMStoreFloat4x4( &frame_info.mViewInv, world_matrix );
     DirectX::XMStoreFloat4x4( &frame_info.mProjInv, proj_inv );
 
-    frame_info.camera_updated = true;
+    // frame_info.camera_updated = true;
 }
 
 DirectX::XMFLOAT4X4 GetCameraTransform( RwCamera *camera )

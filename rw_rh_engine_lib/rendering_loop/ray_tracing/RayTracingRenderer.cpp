@@ -22,17 +22,19 @@
 #include <Engine/EngineConfigBlock.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <data_desc/frame_info.h>
 #include <imgui.h>
 #include <ipc/MemoryReader.h>
 #include <numeric>
+#include <render_driver/gpu_resources/resource_mgr.h>
 #include <render_driver/render_driver.h>
 #include <rendering_loop/compute_skin_animation.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
 {
 
-RayTracingRenderer::RayTracingRenderer()
+RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
+    : Device( info.Device ), Window( info.Window ), Resources( info.Resources )
 {
     const uint32_t rtx_resolution_w =
         rh::engine::EngineConfigBlock::It.RendererWidth;
@@ -42,7 +44,8 @@ RayTracingRenderer::RayTracingRenderer()
     for ( auto &fb : mFramebufferCache )
         fb = nullptr;
     mCameraDescription = new CameraDescription();
-    mSkinAnimationPipe = new SkinAnimationPipeline( 110 );
+    mSkinAnimationPipe =
+        new SkinAnimationPipeline( { Device, Resources, 110 } );
 
     // Filters
     mVarTempAcummFilterPipe      = new VarAwareTempAccumFilterPipe();
@@ -50,9 +53,9 @@ RayTracingRenderer::RayTracingRenderer()
     mBilPipe                     = new BilateralFilterPipeline();
 
     // RT Stuff
-    mBlasBuildPass    = new RTBlasBuildPass();
+    mBlasBuildPass    = new RTBlasBuildPass( { Device, Resources } );
     mTlasBuildPass    = new RTTlasBuildPass();
-    mSceneDescription = new RTSceneDescription();
+    mSceneDescription = new RTSceneDescription( { Device, Resources } );
 
     mPrimaryRaysPass = new RTPrimaryRaysPass( { .mScene  = mSceneDescription,
                                                 .mCamera = mCameraDescription,
@@ -60,7 +63,7 @@ RayTracingRenderer::RayTracingRenderer()
                                                 .mHeight = rtx_resolution_h } );
 
     mTiledLightCulling = new TiledLightCulling( TiledLightCullingParams{
-        .mDevice       = gRenderDriver->GetDeviceState(),
+        .mDevice       = Device,
         .mCameraDesc   = mCameraDescription,
         .mWidth        = rtx_resolution_w,
         .mHeight       = rtx_resolution_h,
@@ -113,39 +116,38 @@ RayTracingRenderer::RayTracingRenderer()
             rtx_resolution_h } );
 
     // Utility TODO: Make it less painful
-    mDebugPipeline = new DebugPipeline( DebugPipelineInitParams{
+    /*mDebugPipeline = new DebugPipeline( DebugPipelineInitParams{
         .mWidth           = rtx_resolution_w,
         .mHeight          = rtx_resolution_h,
         .mTiledLightsList = mTiledLightCulling->GetTileListBuffer() } );
-
+*/
     mFrameTimeGraph.resize( 100, 0.00f );
 }
 
 void RayTracingRenderer::OnResize( const rh::engine::WindowParams &window ) {}
 
 std::vector<rh::engine::CommandBufferSubmitInfo>
-RayTracingRenderer::Render( const SceneInfo *                 scene,
+RayTracingRenderer::Render( const FrameState &                state,
                             rh::engine::ICommandBuffer *      dest,
                             const rh::engine::SwapchainFrame &frame )
 {
     using namespace rh::engine;
 
-    auto &device       = gRenderDriver->GetDeviceState();
-    auto  forward_pass = GetForwardPass();
-    auto  framebuffer  = GetFrameBuffer( frame, forward_pass );
-    auto  im2d         = GetIm2DRenderer( forward_pass );
-    auto  im3d         = GetIm3DRenderer( forward_pass );
-    auto  imgui        = GetImGui( forward_pass );
+    auto forward_pass = GetForwardPass();
+    auto framebuffer  = GetFrameBuffer( frame, forward_pass );
+    auto im2d         = GetIm2DRenderer( forward_pass );
+    auto im3d         = GetIm3DRenderer( forward_pass );
+    auto imgui        = GetImGui( forward_pass );
 
     auto record_start = std::chrono::high_resolution_clock::now();
 
-    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
+    auto &mesh_pool = Resources.GetMeshPool();
     for ( const auto &item : mSkinDrawCallList )
-        mesh_pool.FreeResource( item.mMeshId );
+        mesh_pool.FreeResource( item.MeshId );
     mSkinDrawCallList.clear();
     mRenderDispatchList.clear();
 
-    ProcessDynamicGeometry( scene );
+    ProcessDynamicGeometry( state.SkinInstances );
 
     mBlasBuildPass->Execute();
     if ( mBlasBuildPass->Completed() )
@@ -156,8 +158,8 @@ RayTracingRenderer::Render( const SceneInfo *                 scene,
                 : nullptr ) );
     }
 
-    auto raytraced = RenderPrimaryRays( scene->mSceneMeshRenderBlock,
-                                        scene->mSkinMeshRenderBlock );
+    auto raytraced =
+        RenderPrimaryRays( state.MeshInstances, state.SkinInstances );
 
     dest->BeginRecord();
 
@@ -168,28 +170,27 @@ RayTracingRenderer::Render( const SceneInfo *                 scene,
                        .maxDepth = 1.0 } } );
     dest->SetScissors( 0, { Scissor{ 0, 0, frame.mWidth, frame.mHeight } } );
 
-    mCameraDescription->Update( scene->mFrameInfo );
+    mCameraDescription->Update( state.Viewport->Camera );
     if ( raytraced )
     {
         mSceneDescription->Update();
-        mPrimaryRaysPass->Execute( mTLAS, dest, *scene->mFrameInfo );
-        mTiledLightCulling->Execute( dest, *scene->mFrameInfo );
+        mPrimaryRaysPass->Execute( mTLAS, dest, *state.Sky );
+        mTiledLightCulling->Execute( dest, state.Lights );
         mRTAOPass->Execute( mTLAS, dest );
-        mRTShadowsPass->Execute( mTLAS, dest, *scene->mFrameInfo );
-        mRTReflectionPass->Execute( mTLAS, dest, *scene->mFrameInfo );
+        mRTShadowsPass->Execute( mTLAS, dest );
+        mRTReflectionPass->Execute( mTLAS, dest );
         mDeferredComposePass->Execute( dest );
         mPrimaryRaysPass->ConvertNormalsToShaderRO( dest );
         // mDebugPipeline->Execute( dest );
     }
 
     std::array clear_values = {
-        ClearValue{
-            ClearValueType::Color,
-            ClearValue::ClearColor{ scene->mFrameInfo->mClearColor.red,
-                                    scene->mFrameInfo->mClearColor.green,
-                                    scene->mFrameInfo->mClearColor.blue,
-                                    scene->mFrameInfo->mClearColor.alpha },
-            {} },
+        ClearValue{ ClearValueType::Color,
+                    ClearValue::ClearColor{ state.Viewport->ClearColor.red,
+                                            state.Viewport->ClearColor.green,
+                                            state.Viewport->ClearColor.blue,
+                                            state.Viewport->ClearColor.alpha },
+                    {} },
         ClearValue{ ClearValueType::Depth,
                     {},
                     ClearValue::ClearDepthStencil{ 1.0f, 0 } } };
@@ -204,8 +205,8 @@ RayTracingRenderer::Render( const SceneInfo *                 scene,
         im2d->DrawDepthMask( mPrimaryRaysPass->GetNormalsView(), dest );
         im2d->DrawQuad( mDeferredComposePass->GetResultView(), dest );
     }
-    im3d->Render( scene->mIm3DRenderBlock, dest );
-    im2d->Render( scene->mIm2DRenderBlock, dest );
+    im3d->Render( state.Im3D, dest );
+    im2d->Render( state.Im2D, dest );
 
     if ( imgui )
     {
@@ -222,50 +223,36 @@ RayTracingRenderer::Render( const SceneInfo *                 scene,
     return mRenderDispatchList;
 }
 
-bool RayTracingRenderer::RenderPrimaryRays( void *scene_data,
-                                            void *skin_mesh_block )
+bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
+                                            const SkinInstanceState &skin_data )
 {
     using namespace rh::engine;
-    MemoryReader reader( scene_data );
-    MemoryReader skin_reader( skin_mesh_block );
 
-    uint64_t draw_call_count = *reader.Read<uint64_t>();
+    uint64_t draw_call_count =
+        mesh_data.DrawCalls.Size() + skin_data.DrawCalls.Size();
     if ( draw_call_count <= 0 )
         return false;
-
-    skin_reader.Skip( sizeof( uint64_t ) );
-
-    uint64_t                 material_count = *reader.Read<uint64_t>();
-    ArrayProxy<MaterialData> materials(
-        reader.Read<MaterialData>( material_count ), material_count );
-
-    uint64_t skin_material_count = *skin_reader.Read<uint64_t>();
-    ArrayProxy<MaterialData> skin_materials(
-        skin_reader.Read<MaterialData>( skin_material_count ),
-        skin_material_count );
 
     // Build TLAS
     std::vector<VkAccelerationStructureInstanceNV> instance_buffer{};
     instance_buffer.reserve( draw_call_count );
     uint64_t i = 0;
 
-    ArrayProxy<DrawCallInfo> static_meshes(
-        reader.Read<DrawCallInfo>( draw_call_count ), draw_call_count );
-
-    for ( const auto &dc : static_meshes )
+    for ( const auto &dc : mesh_data.DrawCalls )
     {
-        const auto &mesh = mBlasBuildPass->GetBlas( dc.mMeshId );
+        const auto &mesh = mBlasBuildPass->GetBlas( dc.MeshId );
         if ( !mesh.mBlasBuilt )
             continue;
 
         mSceneDescription->RecordDrawCall(
-            dc, &materials[dc.mMaterialListStart], dc.mMaterialListCount );
+            dc, &mesh_data.Materials[dc.MaterialListStart],
+            dc.MaterialListCount );
 
         auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
 
         VkAccelerationStructureInstanceNV instance{};
-        std::copy( &dc.mWorldTransform.m[0][0],
-                   &dc.mWorldTransform.m[0][0] + 3 * 4,
+        std::copy( &dc.WorldTransform.m[0][0],
+                   &dc.WorldTransform.m[0][0] + 3 * 4,
                    &instance.transform.matrix[0][0] );
         instance.mask                           = 0xFF;
         instance.accelerationStructureReference = blas->GetAddress();
@@ -277,18 +264,18 @@ bool RayTracingRenderer::RenderPrimaryRays( void *scene_data,
 
     for ( const auto &skindc : mSkinDrawCallList )
     {
-        const auto &mesh = mBlasBuildPass->GetBlas( skindc.mMeshId );
+        const auto &mesh = mBlasBuildPass->GetBlas( skindc.MeshId );
         if ( !mesh.mBlasBuilt )
             continue;
         mSceneDescription->RecordDrawCall(
-            skindc, &skin_materials[skindc.mMaterialListStart],
-            skindc.mMaterialListCount );
+            skindc, &skin_data.Materials[skindc.MaterialListStart],
+            skindc.MaterialListCount );
 
         auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
 
         VkAccelerationStructureInstanceNV instance{};
-        std::copy( &skindc.mWorldTransform.m[0][0],
-                   &skindc.mWorldTransform.m[0][0] + 3 * 4,
+        std::copy( &skindc.WorldTransform.m[0][0],
+                   &skindc.WorldTransform.m[0][0] + 3 * 4,
                    &instance.transform.matrix[0][0] );
         instance.mask                           = 0xFF;
         instance.accelerationStructureReference = blas->GetAddress();
@@ -296,6 +283,7 @@ bool RayTracingRenderer::RenderPrimaryRays( void *scene_data,
         instance_buffer.push_back( instance );
         i++;
     }
+
     delete mTLAS;
     mTLAS = mTlasBuildPass->Execute( std::move( instance_buffer ) );
     mRenderDispatchList.push_back( mTlasBuildPass->GetSubmitInfo(
@@ -304,33 +292,20 @@ bool RayTracingRenderer::RenderPrimaryRays( void *scene_data,
     return true;
 }
 
-rh::engine::ArrayProxy<SkinDrawCallInfo> GetSkinMeshArray( void *mesh_block )
-{
-    MemoryReader reader( mesh_block );
-    uint64_t     drawcall_count  = *reader.Read<uint64_t>();
-    uint64_t     materials_count = *reader.Read<uint64_t>();
-    reader.Skip( sizeof( MaterialData ) * materials_count );
-
-    return rh::engine::ArrayProxy<SkinDrawCallInfo>(
-        reader.Read<SkinDrawCallInfo>( drawcall_count ), drawcall_count );
-}
-
-void RayTracingRenderer::ProcessDynamicGeometry( const SceneInfo *scene )
+void RayTracingRenderer::ProcessDynamicGeometry(
+    const SkinInstanceState &state )
 {
     using namespace rh::engine;
-    rh::engine::ArrayProxy<SkinDrawCallInfo> skin_draw_calls =
-        GetSkinMeshArray( scene->mSkinMeshRenderBlock );
-
-    if ( skin_draw_calls.Size() <= 0 )
+    if ( state.DrawCalls.Size() <= 0 )
         return;
 
     // Generate Skin Meshes
     auto animated_meshes =
-        mSkinAnimationPipe->AnimateSkinnedMeshes( skin_draw_calls );
+        mSkinAnimationPipe->AnimateSkinnedMeshes( state.DrawCalls );
     if ( animated_meshes.empty() )
         return;
 
-    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
+    auto &mesh_pool = Resources.GetMeshPool();
 
     // Generate dynamic geometry transforms
     for ( auto &dc : animated_meshes )
@@ -343,11 +318,11 @@ void RayTracingRenderer::ProcessDynamicGeometry( const SceneInfo *scene )
         dc.mData.mIndexBuffer->AddRef();
 
         DrawCallInfo sdc{};
-        sdc.mDrawCallId = dc.mInstanceId;
-        sdc.mMeshId = mesh_pool.RequestResource( std::move( backendMeshData ) );
-        sdc.mWorldTransform    = dc.mTransform;
-        sdc.mMaterialListStart = dc.mMaterialListStart;
-        sdc.mMaterialListCount = dc.mMaterialListCount;
+        sdc.DrawCallId = dc.mInstanceId;
+        sdc.MeshId = mesh_pool.RequestResource( std::move( backendMeshData ) );
+        sdc.WorldTransform    = dc.mTransform;
+        sdc.MaterialListStart = dc.mMaterialListStart;
+        sdc.MaterialListCount = dc.mMaterialListCount;
 
         mSkinDrawCallList.push_back( sdc );
     }
@@ -396,10 +371,9 @@ void RayTracingRenderer::DrawGUI()
 rh::engine::IRenderPass *RayTracingRenderer::GetForwardPass()
 {
     using namespace rh::engine;
-    auto &device = gRenderDriver->GetDeviceState();
     if ( mForwardPass != nullptr )
         return mForwardPass;
-    mForwardPass = device.CreateRenderPass( RenderPassCreateParams{
+    mForwardPass = Device.CreateRenderPass( RenderPassCreateParams{
         .mAttachments =
             {
                 // main framebuffer TODO: Maybe allow for HDR?
@@ -425,23 +399,21 @@ RayTracingRenderer::GetImGui( rh::engine::IRenderPass *pass )
 {
 
     using namespace rh::engine;
-    auto &device = gRenderDriver->GetDeviceState();
-    auto &window = gRenderDriver->GetMainWindow();
     if ( mImGUI )
         return mImGUI;
 
-    mImGUI = dynamic_cast<VulkanDeviceState &>( device ).CreateImGUI( &window );
+    mImGUI = dynamic_cast<VulkanDeviceState &>( Device ).CreateImGUI( &Window );
 
     mImGUI->Init( { pass } );
 
-    ScopedPointer cmd_buffer = device.CreateCommandBuffer();
+    ScopedPointer cmd_buffer = Device.CreateCommandBuffer();
 
     cmd_buffer->BeginRecord();
     mImGUI->UploadFonts( cmd_buffer );
     cmd_buffer->EndRecord();
 
-    device.ExecuteCommandBuffer( cmd_buffer, nullptr, nullptr );
-    device.Wait( { cmd_buffer->ExecutionFinishedPrimitive() } );
+    Device.ExecuteCommandBuffer( cmd_buffer, nullptr, nullptr );
+    Device.Wait( { cmd_buffer->ExecutionFinishedPrimitive() } );
 
     return mImGUI;
 }
@@ -451,7 +423,8 @@ RayTracingRenderer::GetIm2DRenderer( rh::engine::IRenderPass *pass )
 {
     if ( im2DRendererGlobals != nullptr )
         return im2DRendererGlobals;
-    im2DRendererGlobals = new Im2DRenderer( mCameraDescription, pass );
+    im2DRendererGlobals = new Im2DRenderer( Device, Resources.GetRasterPool(),
+                                            mCameraDescription, pass );
     return im2DRendererGlobals;
 }
 
@@ -460,7 +433,8 @@ RayTracingRenderer::GetIm3DRenderer( rh::engine::IRenderPass *pass )
 {
     if ( im3DRenderer != nullptr )
         return im3DRenderer;
-    im3DRenderer = new Im3DRenderer( mCameraDescription, pass );
+    im3DRenderer = new Im3DRenderer( Device, Resources.GetRasterPool(),
+                                     mCameraDescription, pass );
     return im3DRenderer;
 }
 
@@ -470,7 +444,6 @@ RayTracingRenderer::GetFrameBuffer( const rh::engine::SwapchainFrame &frame,
 {
     auto &framebuffer = mFramebufferCache[frame.mImageId];
     using namespace rh::engine;
-    auto &device = gRenderDriver->GetDeviceState();
 
     if ( framebuffer != nullptr )
         return framebuffer;
@@ -485,19 +458,19 @@ RayTracingRenderer::GetFrameBuffer( const rh::engine::SwapchainFrame &frame,
         ds_buffer.mFormat    = ImageBufferFormat::D24S8;
         ds_buffer.mUsage     = ImageBufferUsage::DepthStencilAttachment;
         ds_buffer.mDimension = ImageDimensions::d2D;
-        mDepthBuffer         = device.CreateImageBuffer( ds_buffer );
+        mDepthBuffer         = Device.CreateImageBuffer( ds_buffer );
 
         ImageViewCreateInfo ds_view{};
         ds_view.mBuffer  = mDepthBuffer;
         ds_view.mFormat  = ImageBufferFormat::D24S8;
         ds_view.mUsage   = ImageViewUsage::DepthStencilTarget;
-        mDepthBufferView = device.CreateImageView( ds_view );
+        mDepthBufferView = Device.CreateImageView( ds_view );
 
         mFrameWidth  = frame.mWidth;
         mFrameHeight = frame.mHeight;
     }
 
-    framebuffer = device.CreateFrameBuffer(
+    framebuffer = Device.CreateFrameBuffer(
         { .width      = frame.mWidth,
           .height     = frame.mHeight,
           .imageViews = { frame.mImageView, mDepthBufferView },

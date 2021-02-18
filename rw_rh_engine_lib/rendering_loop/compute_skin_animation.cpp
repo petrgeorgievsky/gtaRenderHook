@@ -6,8 +6,8 @@
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDebugUtils.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
-#include <render_driver/render_driver.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
+#include <render_client/skin_instance_state_recorder.h>
+#include <render_driver/gpu_resources/resource_mgr.h>
 #include <span>
 
 namespace rh::rw::engine
@@ -17,11 +17,13 @@ static const int bone_matrix_count         = 256;
 constexpr int    bone_matrix_bind_idx      = 2;
 constexpr int    prev_bone_matrix_bind_idx = 3;
 
-SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
-    : mMaxAnims( max_anims )
+SkinAnimationPipeline::SkinAnimationPipeline(
+    const SkinAnimationPipelineCreateInfo &info )
+    : Device( info.Device ), Resources( info.Resources ),
+      mMaxAnims( info.AnimBufferLimit )
 {
     using namespace rh::engine;
-    auto &device   = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    auto &device   = (VulkanDeviceState &)Device;
     mAnimateFinish = device.CreateSyncPrimitive( SyncPrimitiveType::GPU );
 
 #ifdef _DEBUG
@@ -31,9 +33,9 @@ SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
 
     DescriptorSetAllocatorCreateParams dsc_all_cp{};
     std::array                         dsc_pool_sizes = {
-        DescriptorPoolSize{ DescriptorType::RWBuffer, 4 * max_anims } };
+        DescriptorPoolSize{ DescriptorType::RWBuffer, 4 * mMaxAnims } };
 
-    dsc_all_cp.mMaxSets         = max_anims;
+    dsc_all_cp.mMaxSets         = mMaxAnims;
     dsc_all_cp.mDescriptorPools = dsc_pool_sizes;
     mDescAllocator = device.CreateDescriptorSetAllocator( dsc_all_cp );
     //
@@ -53,7 +55,7 @@ SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
 
     mDescSetLayout = device.CreateDescriptorSetLayout( { desc_set_bindings } );
 
-    std::vector<IDescriptorSetLayout *> layout_array( max_anims,
+    std::vector<IDescriptorSetLayout *> layout_array( mMaxAnims,
                                                       mDescSetLayout );
 
     DescriptorSetsAllocateParams all_params{};
@@ -78,13 +80,13 @@ SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
     create_info.mLayout                  = mPipelineLayout;
     mPipeline = device.CreateComputePipeline( create_info );
 
-    mBoneMatrixPool.resize( max_anims * 2 );
+    mBoneMatrixPool.resize( mMaxAnims * 2 );
 
     BufferCreateInfo bone_buff_ci{};
     bone_buff_ci.mSize  = sizeof( DirectX::XMFLOAT4X3 ) * bone_matrix_count;
     bone_buff_ci.mUsage = BufferUsage::StorageBuffer;
     bone_buff_ci.mFlags = BufferFlags::Dynamic;
-    for ( int idx = 0; idx < max_anims; idx++ )
+    for ( int idx = 0; idx < mMaxAnims; idx++ )
     {
         mBoneMatrixPool[idx] = device.CreateBuffer( bone_buff_ci );
 #ifdef _DEBUG
@@ -103,7 +105,7 @@ SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
         device.UpdateDescriptorSets( mtx_updateInfo );
     }
 
-    for ( int idx = max_anims; idx < max_anims * 2; idx++ )
+    for ( int idx = mMaxAnims; idx < mMaxAnims * 2; idx++ )
     {
         mBoneMatrixPool[idx] = device.CreateBuffer( bone_buff_ci );
 #ifdef _DEBUG
@@ -114,7 +116,7 @@ SkinAnimationPipeline::SkinAnimationPipeline( uint32_t max_anims )
         std::array mtx_buffer_update = {
             BufferUpdateInfo{ 0, VK_WHOLE_SIZE, mBoneMatrixPool[idx] } };
         DescriptorSetUpdateInfo mtx_updateInfo{};
-        mtx_updateInfo.mSet              = mDescSetPool[idx - max_anims];
+        mtx_updateInfo.mSet              = mDescSetPool[idx - mMaxAnims];
         mtx_updateInfo.mBinding          = prev_bone_matrix_bind_idx;
         mtx_updateInfo.mDescriptorType   = DescriptorType::RWBuffer;
         mtx_updateInfo.mBufferUpdateInfo = mtx_buffer_update;
@@ -134,10 +136,8 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
     using namespace rh::engine;
     //
 
-    auto &dev_state =
-        dynamic_cast<VulkanDeviceState &>( gRenderDriver->GetDeviceState() );
-    auto &resources      = gRenderDriver->GetResources();
-    auto &skin_mesh_pool = resources.GetSkinMeshPool();
+    auto &dev_state      = dynamic_cast<VulkanDeviceState &>( Device );
+    auto &skin_mesh_pool = Resources.GetSkinMeshPool();
 
     std::vector<AnimatedMeshDrawCall> result_drawcalls{};
     result_drawcalls.reserve( draw_calls.Size() );
@@ -150,12 +150,12 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
     uint64_t idx = 0;
     for ( auto &skin_dc : draw_calls )
     {
-        const auto &mesh_info = skin_mesh_pool.GetResource( skin_dc.mMeshId );
+        const auto &mesh_info = skin_mesh_pool.GetResource( skin_dc.MeshId );
 
         AnimatedMeshDrawCall anim_dc{};
-        anim_dc.mInstanceId        = skin_dc.mSkinId;
-        anim_dc.mMaterialListStart = skin_dc.mMaterialListStart;
-        anim_dc.mMaterialListCount = skin_dc.mMaterialListCount;
+        anim_dc.mInstanceId        = skin_dc.DrawCallId;
+        anim_dc.mMaterialListStart = skin_dc.MaterialListStart;
+        anim_dc.mMaterialListCount = skin_dc.MaterialListCount;
         anim_dc.mData.mVertexCount = mesh_info.mVertexCount;
         anim_dc.mData.mIndexCount  = mesh_info.mIndexCount;
         anim_dc.mData.mIndexBuffer = mesh_info.mIndexBuffer;
@@ -170,7 +170,7 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
 
         // update buffers
 
-        mBoneMatrixPool[idx]->Update( &skin_dc.mBoneTransform->f[0],
+        mBoneMatrixPool[idx]->Update( &skin_dc.BoneTransform->f[0],
                                       sizeof( DirectX::XMFLOAT4X3 ) * 256 );
         auto it = mAnimationCache.find( anim_dc.mInstanceId );
         if ( it != mAnimationCache.end() )
@@ -181,11 +181,11 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
         else
         {
             mBoneMatrixPool[idx + mMaxAnims]->Update(
-                &skin_dc.mBoneTransform->f[0],
+                &skin_dc.BoneTransform->f[0],
                 sizeof( DirectX::XMFLOAT4X3 ) * 256 );
         }
-        std::copy( std::begin( skin_dc.mBoneTransform ),
-                   std::end( skin_dc.mBoneTransform ),
+        std::copy( std::begin( skin_dc.BoneTransform ),
+                   std::end( skin_dc.BoneTransform ),
                    std::begin( mAnimationCache[anim_dc.mInstanceId] ) );
 
         std::array in_buffer_update  = { BufferUpdateInfo{
@@ -223,7 +223,7 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
               1, 1 } );
         idx++;
 
-        anim_dc.mTransform = skin_dc.mWorldTransform;
+        anim_dc.mTransform = skin_dc.WorldTransform;
 
         result_drawcalls.push_back( anim_dc );
     }

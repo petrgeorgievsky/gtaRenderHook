@@ -14,6 +14,7 @@ class IBuffer;
 class IDescriptorSetAllocator;
 class IDescriptorSetLayout;
 class IDescriptorSet;
+class IDeviceState;
 } // namespace rh::engine
 namespace rh::rw::engine
 {
@@ -32,11 +33,18 @@ struct SceneObjDesc
 class GPUTexturePool;
 class GPUModelBuffersPool;
 class GPUSceneMaterialsPool;
+struct DrawCallInfo;
+class EngineResourceHolder;
+struct RTSceneDescriptionCreateInfo
+{
+    rh::engine::IDeviceState &Device;
+    EngineResourceHolder &    Resources;
+};
 
 class RTSceneDescription
 {
   public:
-    RTSceneDescription();
+    RTSceneDescription( const RTSceneDescriptionCreateInfo &info );
     virtual ~RTSceneDescription();
 
     rh::engine::IDescriptorSetLayout *DescLayout();
@@ -47,6 +55,8 @@ class RTSceneDescription
     void Update();
 
   private:
+    rh::engine::IDeviceState &                         Device;
+    EngineResourceHolder &                             Resources;
     std::vector<SceneObjDesc>                          mSceneDesc;
     std::vector<MaterialData>                          mSceneMaterials;
     uint64_t                                           mDrawCalls = 0;

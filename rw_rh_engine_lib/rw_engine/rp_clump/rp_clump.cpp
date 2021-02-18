@@ -1,15 +1,17 @@
 #include "rp_clump.h"
-#include "../rp_atomic/rp_atomic.h"
-#include "../rp_geometry/rp_geometry.h"
-#include "../rw_frame/rw_frame.h"
-#include "../rw_macro_constexpr.h"
-#include "../rw_stream/rw_stream.h"
-#include <DebugUtils/DebugLogger.h>
+#include <rw_engine/rp_atomic/rp_atomic.h>
+#include <rw_engine/rp_geometry/rp_geometry.h>
+#include <rw_engine/rw_frame/rw_frame.h>
+#include <rw_engine/rw_macro_constexpr.h>
+#include <rw_engine/rw_stream/rw_stream.h>
+
 #include <common_headers.h>
+
+#include <DebugUtils/DebugLogger.h>
+
 #include <fstream>
 
-bool rh::rw::engine::LoadClump( RpClump *&                   clump,
-                                const std::filesystem::path &dff_path )
+bool rh::rw::engine::LoadClump( RpClump *&clump, const std::string &dff_path )
 {
     std::ifstream stream( dff_path, std::ios_base::in | std::ios_base::binary );
 

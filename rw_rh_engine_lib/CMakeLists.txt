@@ -16,7 +16,6 @@ set(SOURCES
         rw_engine/rw_frame/rw_frame.cpp
         rw_engine/rw_texture/rw_texture.cpp
         rw_engine/rh_backend/raster_backend.cpp
-        rw_engine/rh_backend/camera_backend.cpp
         rw_engine/rh_backend/im2d_backend.cpp
         rw_engine/rp_clump/rp_clump.cpp
         rw_engine/rp_atomic/rp_atomic.cpp
@@ -41,10 +40,9 @@ set(SOURCES
         rw_engine/rw_api_injectors.cpp
         rw_engine/rw_rh_pipeline.cpp
         rwtestsample.cpp
-        render_loop.cpp
         rw_game_hooks.cpp
         rw_engine/system_funcs/rw_device_system_handler.cpp
-        scene_graph.cpp ipc/ipc_utils.cpp ipc/shared_memory_queue_client.cpp
+        ipc/ipc_utils.cpp ipc/shared_memory_queue_client.cpp
         ipc/shared_memory_queue_client.h rw_engine/rh_backend/mesh_rendering_backend.cpp
         rendering_loop/ray_tracing/RayTracingRenderer.cpp
         rendering_loop/deferred_render/GBufferPass.cpp
@@ -69,7 +67,6 @@ set(SOURCES
         rendering_loop/ray_tracing/DeferredCompositionPass.cpp
         rendering_loop/ray_tracing/ComputeVelocityBuffer.cpp
         rendering_loop/ray_tracing/RTShadowsPass.cpp
-        rendering_loop/main_renderer.cpp
         rendering_loop/ray_tracing/VarAwareTempAccumFilter.cpp
         rendering_loop/ray_tracing/VarAwareTempAccumFilterColor.cpp
         rendering_loop/ray_tracing/scene_description/gpu_scene_materials_pool.cpp
@@ -100,7 +97,8 @@ set(SOURCES
         render_driver/render_driver.cpp
         render_client/render_client.cpp
         render_client/client_render_state.cpp
-        material_storage.cpp)
+        render_client/im2d_state_recorder.cpp
+        material_storage.cpp data_desc/immediate_mode/im_state.cpp render_driver/framebuffer_loop.cpp render_driver/framebuffer_loop.h data_desc/frame_info.h render_driver/framebuffer_state.cpp render_driver/framebuffer_state.h data_desc/light_system/point_light.h data_desc/light_system/lighting_state.h render_client/light_state_recorder.cpp render_client/light_state_recorder.h render_driver/gpu_resources/resource_mgr.cpp render_driver/gpu_resources/resource_mgr.h render_driver/gpu_resources/raster_pool.cpp render_driver/gpu_resources/raster_pool.h render_client/im3d_state_recorder.cpp render_client/im3d_state_recorder.h render_client/mesh_instance_state_recorder.cpp render_client/mesh_instance_state_recorder.h render_client/skin_instance_state_recorder.cpp render_client/skin_instance_state_recorder.h data_desc/viewport_state.h data_desc/sky_state.h data_desc/light_system/lighting_state.cpp data_desc/instances/mesh_instance.cpp data_desc/instances/mesh_instance.h data_desc/frame_info.cpp)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 #set_property(TARGET rw_rh_engine_lib PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

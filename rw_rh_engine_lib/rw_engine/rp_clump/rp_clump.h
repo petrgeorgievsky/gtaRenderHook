@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <filesystem>
+#include <string>
 struct RpClump;
 struct RpAtomic;
 struct rwFrameList;
@@ -14,5 +14,5 @@ RpClump * RpClumpStreamRead( void *stream );
 RpClump * RpClumpAddAtomic( RpClump *clump, RpAtomic *atomic ) noexcept;
 RpAtomic *ClumpAtomicStreamRead( void *stream, rwFrameList *fl,
                                  rpGeometryList *gl );
-bool      LoadClump( RpClump *&clump, const std::filesystem::path &dff_path );
+bool      LoadClump( RpClump *&clump, const std::string &dff_path );
 } // namespace rh::rw::engine

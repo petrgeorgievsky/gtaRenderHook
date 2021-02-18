@@ -1,27 +1,28 @@
 #include "nativetexturereadcmd.h"
-#include "../global_definitions.h"
-#include "../rh_backend/raster_backend.h"
-#include "../rw_macro_constexpr.h"
-#include "../system_funcs/rw_device_system_globals.h"
-#include <DebugUtils/DebugLogger.h>
-#include <Engine/Common/IDeviceState.h>
-#include <Engine/Common/types/image_buffer_format.h>
-#include <Engine/Common/types/image_buffer_info.h>
-#include <Engine/Common/types/image_buffer_type.h>
-#include <algorithm>
+
 #include <common_headers.h>
-#include <d3d9.h>
+
+#include <chrono>
 #include <ostream>
 #include <queue>
+#include <span>
+
+#include <d3d9.h>
+
 #include <render_client/render_client.h>
-#include <rw_engine/rh_backend/im2d_backend.h>
+
+#include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_api_injectors.h>
+#include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
 #include <rw_engine/system_funcs/raster_load_cmd.h>
-#include <span>
-#include <sstream>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
-using namespace rh::rw::engine;
+#include <DebugUtils/DebugLogger.h>
+#include <Engine/Common/types/image_buffer_format.h>
+
+namespace rh::rw::engine
+{
 
 struct rwNativeTexture
 {
@@ -109,16 +110,19 @@ bool RwNativeTextureReadCmd::Execute()
 
     auto timestamp = std::chrono::high_resolution_clock::now();
 
-    if ( !g_pIO_API.fpFindChunk( m_pStream, rwID_STRUCT, &length, &version ) )
+    auto &io         = g_pIO_API;
+    auto &rw_texture = g_pTexture_API;
+
+    if ( !io.fpFindChunk( m_pStream, rwID_STRUCT, &length, &version ) )
         return false;
-    g_pIO_API.fpRead( m_pStream, reinterpret_cast<void *>( &nativeTexture ),
-                      sizeof( rwNativeTexture ) );
+    io.fpRead( m_pStream, reinterpret_cast<void *>( &nativeTexture ),
+               sizeof( rwNativeTexture ) );
 
     std::stringstream debug_output;
     debug_output << nativeTexture;
 
-    g_pIO_API.fpRead( m_pStream, reinterpret_cast<void *>( &nativeRaster ),
-                      sizeof( rwD3DNativeRaster ) );
+    io.fpRead( m_pStream, reinterpret_cast<void *>( &nativeRaster ),
+               sizeof( rwD3DNativeRaster ) );
 
     bool compressed = false, isCubemap = false;
 
@@ -209,9 +213,8 @@ bool RwNativeTextureReadCmd::Execute()
 
         palette.resize( size / sizeof( RwRGBA ) );
 
-        if ( g_pIO_API.fpRead( m_pStream,
-                               reinterpret_cast<void *>( palette.data() ),
-                               size ) != size )
+        if ( io.fpRead( m_pStream, reinterpret_cast<void *>( palette.data() ),
+                        size ) != size )
         {
             rh::debug::DebugLogger::Error(
                 "Failed to read 4bit palette data!" );
@@ -228,9 +231,8 @@ bool RwNativeTextureReadCmd::Execute()
 
         palette.resize( size / sizeof( RwRGBA ) );
 
-        if ( g_pIO_API.fpRead( m_pStream,
-                               reinterpret_cast<void *>( palette.data() ),
-                               size ) != size )
+        if ( io.fpRead( m_pStream, reinterpret_cast<void *>( palette.data() ),
+                        size ) != size )
         {
             rh::debug::DebugLogger::Error(
                 "Failed to read 8bit palette data!" );
@@ -252,6 +254,7 @@ bool RwNativeTextureReadCmd::Execute()
     case rh::engine::ImageBufferFormat::BC4: bytesPerBlock = 8; break;
     default: bytesPerBlock = 16; break;
     }
+
     auto &internalRaster = BackendRasterPlugin::GetData( raster );
     debug_output.str( "" );
     debug_output.clear();
@@ -314,10 +317,9 @@ bool RwNativeTextureReadCmd::Execute()
                     sizeof( uint32_t ) );
 
             uint32_t size;
-            g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
-                              sizeof( size ) );
-            g_pIO_API.fpRead( m_pStream, reinterpret_cast<char *>( pixels ),
-                              size );
+            io.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
+                       sizeof( size ) );
+            io.fpRead( m_pStream, reinterpret_cast<char *>( pixels ), size );
 
             if ( convert_from_pal )
                 convert_paletted_mip_level( mip_header, mip_width, mip_height,
@@ -346,7 +348,7 @@ bool RwNativeTextureReadCmd::Execute()
             return true;
         } );
 
-    RwTexture *texture = g_pTexture_API.fpCreateTexture( raster );
+    RwTexture *texture = rw_texture.fpCreateTexture( raster );
     if ( texture == nullptr )
         return false;
     rwTexture::SetFilterMode(
@@ -355,11 +357,12 @@ bool RwNativeTextureReadCmd::Execute()
         texture, ( (uint32_t)nativeTexture.filterAndAddress >> 8u ) & 0x0Fu );
     rwTexture::SetAddressingV(
         texture, ( (uint32_t)nativeTexture.filterAndAddress >> 12u ) & 0x0Fu );
-    if ( g_pTexture_API.fpTextureSetName )
-        g_pTexture_API.fpTextureSetName( texture, nativeTexture.name );
-    if ( g_pTexture_API.fpTextureSetMaskName )
-        g_pTexture_API.fpTextureSetMaskName( texture, nativeTexture.mask );
+    if ( rw_texture.fpTextureSetName )
+        rw_texture.fpTextureSetName( texture, nativeTexture.name );
+    if ( rw_texture.fpTextureSetMaskName )
+        rw_texture.fpTextureSetMaskName( texture, nativeTexture.mask );
     *m_pTexture = texture;
+
     debug_output.clear();
     debug_output << "Texture loading : " << std::dec
                  << std::chrono::duration_cast<std::chrono::microseconds>(
@@ -367,5 +370,7 @@ bool RwNativeTextureReadCmd::Execute()
                         .count()
                  << " mcs.";
     debug::DebugLogger::Log( debug_output.str() );
+
     return true;
 }
+} // namespace rh::rw::engine

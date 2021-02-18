@@ -5,7 +5,6 @@
 #include <Engine/IRenderer.h>
 #include <common_headers.h>
 #include <render_client/render_client.h>
-#include <rw_engine/global_definitions.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_image/rw_image_funcs.h>
 #include <rw_engine/rw_macro_constexpr.h>

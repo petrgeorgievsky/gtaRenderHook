@@ -3,10 +3,13 @@
 //
 
 #include "get_adapter_info_cmd.h"
-#include "rw_device_system_globals.h"
-#include <Engine/Common/IDeviceState.h>
+
 #include <ipc/shared_memory_queue_client.h>
 #include <render_driver/render_driver.h>
+
+#include <DebugUtils/DebugLogger.h>
+#include <Engine/Common/IDeviceState.h>
+
 namespace rh::rw::engine
 {
 

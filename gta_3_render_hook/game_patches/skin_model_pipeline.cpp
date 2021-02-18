@@ -7,7 +7,6 @@
 #include "../gta3_geometry_proxy.h"
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <render_client/render_client.h>
-#include <render_loop.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_rh_skin_pipeline.h>
@@ -105,14 +104,14 @@ static int32_t SkinD3D8AtomicAllInOneNode( void * /*self*/,
                 materials[i] = ConvertMaterialData( mesh_list[i].material );
 
             SkinDrawCallInfo info{};
-            info.mSkinId         = reinterpret_cast<uint64_t>( atomic );
-            info.mMeshId         = res_entry->meshData;
-            info.mWorldTransform = DirectX::XMFLOAT4X3{
+            info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
+            info.MeshId         = res_entry->meshData;
+            info.WorldTransform = DirectX::XMFLOAT4X3{
                 ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
                 ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
                 ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
             };
-            PrepareBoneMatrices( info.mBoneTransform, atomic, anim );
+            PrepareBoneMatrices( info.BoneTransform, atomic, anim );
 
             renderer.RecordDrawCall( info );
         } );

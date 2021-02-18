@@ -1,8 +1,9 @@
 #include "rw_game_hooks.h"
-#include "render_loop.h"
+#include <DebugUtils/DebugLogger.h>
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <render_client/render_client.h>
-#include <rw_engine/rw_api_injectors.h>
+#include <rw_engine/rh_backend/im2d_backend.h>
+#include <rw_engine/rh_backend/im3d_backend.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 
@@ -36,9 +37,11 @@ void RwGameHooks::Patch( const RwPointerTable &pointerTable )
         gRwDeviceGlobals.fpOldSystem = gRwDeviceGlobals.DevicePtr->fpSystem;
         gRwDeviceGlobals.DevicePtr->fpSystem = SystemHandler;
         gRwDeviceGlobals.DevicePtr->fpIm2DRenderPrimitive =
-            Im2DRenderPrimitiveFunction;
+            reinterpret_cast<RwIm2DRenderPrimitiveFunction>(
+                Im2DRenderPrimitiveFunction );
         gRwDeviceGlobals.DevicePtr->fpIm2DRenderIndexedPrimitive =
-            Im2DRenderIndexedPrimitiveFunction;
+            reinterpret_cast<RwIm2DRenderIndexedPrimitiveFunction>(
+                Im2DRenderIndexedPrimitiveFunction );
         gRwDeviceGlobals.DevicePtr->fpRenderStateSet = SetRenderState;
         gRwDeviceGlobals.DevicePtr->fpRenderStateGet = GetRenderState;
 
@@ -150,8 +153,7 @@ void RwGameHooks::Patch( const RwPointerTable &pointerTable )
 int32_t RwGameHooks::SetRenderState( int32_t nState, void *pParam )
 {
     assert( gRenderClient );
-    gRenderClient->RenderState.ImState.Update(
-        static_cast<RwRenderState>( nState ), pParam );
+    gRenderClient->RenderState.ImState.Update( nState, pParam );
     return 1;
 }
 

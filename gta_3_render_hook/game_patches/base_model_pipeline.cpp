@@ -7,8 +7,6 @@
 #include "../gta3_geometry_proxy.h"
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <render_client/render_client.h>
-#include <render_loop.h>
-#include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_game_hooks.h>
@@ -40,9 +38,9 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
                 materials[i] = ConvertMaterialData( mesh_list[i].material );
 
             DrawCallInfo info{};
-            info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
-            info.mMeshId         = res_entry->meshData;
-            info.mWorldTransform = DirectX::XMFLOAT4X3{
+            info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
+            info.MeshId         = res_entry->meshData;
+            info.WorldTransform = DirectX::XMFLOAT4X3{
                 ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
                 ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
                 ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,

@@ -2,40 +2,29 @@
 // Created by peter on 10.02.2021.
 //
 #pragma once
-#include <common_headers.h>
-#include <rw_engine/rh_backend/im2d_backend.h>
-#include <rw_engine/rh_backend/im3d_backend.h>
-#include <rw_engine/rh_backend/mesh_rendering_backend.h>
-#include <rw_engine/rh_backend/raster_backend.h>
-#include <rw_engine/rh_backend/skinned_mesh_backend.h>
+#include "data_desc/immediate_mode/im_state.h"
+#include "data_desc/sky_state.h"
+#include "data_desc/viewport_state.h"
+#include "im2d_state_recorder.h"
+#include "im3d_state_recorder.h"
+#include "light_state_recorder.h"
+#include "mesh_instance_state_recorder.h"
+#include "skin_instance_state_recorder.h"
 
 namespace rh::rw::engine
 {
 
-struct ImmediateState
-{
-    uint64_t Raster = BackendRasterPlugin::NullRasterId;
-
-    uint8_t ColorBlendSrc;
-    uint8_t ColorBlendDst;
-    uint8_t ColorBlendOp;
-    uint8_t BlendEnable;
-
-    uint8_t ZTestEnable;
-    uint8_t ZWriteEnable;
-    uint8_t StencilEnable;
-
-    void Update( RwRenderState nState, void *pParam );
-};
-
 class ClientRenderState
 {
   public:
-    ImmediateState        ImState;
-    Im2DClientGlobals     Im2D{ ImState };
-    Im3DClient            Im3D{ ImState };
-    BackendRendererClient MeshDrawCalls{};
-    SkinRendererClient    SkinMeshDrawCalls{};
+    MainViewportState         ViewportState;
+    SkyState                  SkyState;
+    ImmediateState            ImState;
+    Im2DStateRecorder         Im2D{ ImState };
+    Im3DStateRecorder         Im3D{ ImState };
+    MeshInstanceStateRecorder MeshDrawCalls{};
+    SkinInstanceStateRecorder SkinMeshDrawCalls{};
+    LightStateRecorder        Lights{};
 };
 
 } // namespace rh::rw::engine

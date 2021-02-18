@@ -13,14 +13,14 @@ class IDescriptorSetAllocator;
 
 namespace rh::rw::engine
 {
-struct FrameInfo;
+struct CameraState;
 class CameraDescription
 {
   public:
     CameraDescription();
     virtual ~CameraDescription();
 
-    void Update( FrameInfo *frame );
+    void Update( const CameraState &state );
 
     rh::engine::IDescriptorSetLayout *GetSetLayout()
     {

@@ -4,11 +4,15 @@
 
 #include "raster_lock_cmd.h"
 #include "rw_device_system_globals.h"
-#include <Engine/Common/IDeviceState.h>
-#include <Engine/Common/ScopedPtr.h>
+
 #include <render_client/render_client.h>
+#include <render_driver/gpu_resources/resource_mgr.h>
 #include <render_driver/render_driver.h>
 #include <rw_engine/rh_backend/raster_backend.h>
+
+#include <Engine/Common/IDeviceState.h>
+#include <Engine/Common/ScopedPtr.h>
+
 namespace rh::rw::engine
 {
 

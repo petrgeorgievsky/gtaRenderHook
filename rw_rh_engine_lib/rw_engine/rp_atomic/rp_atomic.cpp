@@ -1,7 +1,7 @@
 #include "rp_atomic.h"
-#include "../rp_geometry/rp_geometry.h"
-#include "../rw_frame/rw_frame.h"
-#include "../rw_macro_constexpr.h"
+#include <rw_engine/rp_geometry/rp_geometry.h>
+#include <rw_engine/rw_frame/rw_frame.h>
+#include <rw_engine/rw_macro_constexpr.h>
 
 #include <common_headers.h>
 namespace rh::rw::engine

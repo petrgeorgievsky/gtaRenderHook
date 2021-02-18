@@ -1,16 +1,17 @@
 #include "imagefindrasterformat.h"
 #include <common_headers.h>
 #include <rw_engine/rw_image/rw_image_funcs.h>
-#include <rw_engine/rw_rh_convert_funcs.h>
 
-using namespace rh::rw::engine;
-rh::rw::engine::RwImageFindRasterFormatCmd::RwImageFindRasterFormatCmd(
-    RwRaster *raster, RwImage *image, uint32_t flags )
+namespace rh::rw::engine
+{
+RwImageFindRasterFormatCmd::RwImageFindRasterFormatCmd( RwRaster *raster,
+                                                        RwImage * image,
+                                                        uint32_t  flags )
     : m_pRaster( raster ), m_pImage( image ), m_nFlags( flags )
 {
 }
 
-bool rh::rw::engine::RwImageFindRasterFormatCmd::Execute()
+bool RwImageFindRasterFormatCmd::Execute()
 {
     m_pRaster->width  = m_pImage->width;
     m_pRaster->height = m_pImage->height;
@@ -82,3 +83,4 @@ bool rh::rw::engine::RwImageFindRasterFormatCmd::Execute()
 
     return true;
 }
+} // namespace rh::rw::engine

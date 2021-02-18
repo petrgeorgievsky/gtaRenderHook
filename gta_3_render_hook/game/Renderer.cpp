@@ -11,7 +11,7 @@
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <algorithm>
 #include <cmath>
-#include <scene_graph.h>
+#include <render_client/render_client.h>
 #include <span>
 
 enum Visbility
@@ -317,7 +317,7 @@ void RenderWater()
 void Renderer::Render()
 {
     // Setup timecycle(move out of here)
-    auto &frame_info = rh::rw::engine::GetCurrentSceneGraph()->mFrameInfo;
+    auto &sky_state = rh::rw::engine::gRenderClient->RenderState.SkyState;
     int & m_nCurrentSkyBottomBlue =
         *(int *)GetAddressByGame( 0x8F2BD0, 0x8F6414, 0x906554 );
     int &m_nCurrentSkyBottomGreen =
@@ -343,58 +343,24 @@ void Renderer::Render()
     auto *vec_to_sun_arr =
         (RwV3d *)GetAddressByGame( 0x665548, 0x665548, 0x675688 );
 
-    frame_info.mSkyTopColor[0]    = float( m_nCurrentSkyTopRed ) / 255.0f;
-    frame_info.mSkyTopColor[1]    = float( m_nCurrentSkyTopGreen ) / 255.0f;
-    frame_info.mSkyTopColor[2]    = float( m_nCurrentSkyTopBlue ) / 255.0f;
-    frame_info.mSkyTopColor[3]    = 1.0f;
-    frame_info.mSkyBottomColor[0] = float( m_nCurrentSkyBottomRed ) / 255.0f;
-    frame_info.mSkyBottomColor[1] = float( m_nCurrentSkyBottomGreen ) / 255.0f;
-    frame_info.mSkyBottomColor[2] = float( m_nCurrentSkyBottomBlue ) / 255.0f;
-    frame_info.mSkyBottomColor[3] = 1.0f;
-    frame_info.mAmbientColor[0]   = m_fCurrentAmbientRed;
-    frame_info.mAmbientColor[1]   = m_fCurrentAmbientGreen;
-    frame_info.mAmbientColor[2]   = m_fCurrentAmbientBlue;
-    frame_info.mAmbientColor[3]   = 1.0f;
+    sky_state.mSkyTopColor[0]    = float( m_nCurrentSkyTopRed ) / 255.0f;
+    sky_state.mSkyTopColor[1]    = float( m_nCurrentSkyTopGreen ) / 255.0f;
+    sky_state.mSkyTopColor[2]    = float( m_nCurrentSkyTopBlue ) / 255.0f;
+    sky_state.mSkyTopColor[3]    = 1.0f;
+    sky_state.mSkyBottomColor[0] = float( m_nCurrentSkyBottomRed ) / 255.0f;
+    sky_state.mSkyBottomColor[1] = float( m_nCurrentSkyBottomGreen ) / 255.0f;
+    sky_state.mSkyBottomColor[2] = float( m_nCurrentSkyBottomBlue ) / 255.0f;
+    sky_state.mSkyBottomColor[3] = 1.0f;
+    sky_state.mAmbientColor[0]   = m_fCurrentAmbientRed;
+    sky_state.mAmbientColor[1]   = m_fCurrentAmbientGreen;
+    sky_state.mAmbientColor[2]   = m_fCurrentAmbientBlue;
+    sky_state.mAmbientColor[3]   = 1.0f;
     //
 
-    frame_info.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
-    frame_info.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;
-    frame_info.mSunDir[2] = vec_to_sun_arr[current_tc_value].z;
-    frame_info.mSunDir[3] = 1.0f;
-
-    // auto * point_lights    = (CPointLight *)0x7096D0;
-    // short &point_light_cnt = *(short *)GetAddressByGame( 0, 0x95CDF6, 0 );
-
-    for ( auto i = frame_info.mLightCount; i < 1024; i++ )
-    {
-        frame_info.mFirst4PointLights[i].mPos[0]   = 0;
-        frame_info.mFirst4PointLights[i].mPos[1]   = 0;
-        frame_info.mFirst4PointLights[i].mPos[2]   = 0;
-        frame_info.mFirst4PointLights[i].mRadius   = -1;
-        frame_info.mFirst4PointLights[i].mColor[0] = 0;
-        frame_info.mFirst4PointLights[i].mColor[1] = 0;
-        frame_info.mFirst4PointLights[i].mColor[2] = 0;
-        frame_info.mFirst4PointLights[i].mColor[3] = 1;
-    }
-
-    std::sort(
-        std::begin( frame_info.mFirst4PointLights ),
-        std::begin( frame_info.mFirst4PointLights ) + frame_info.mLightCount,
-        [&frame_info]( const rh::rw::engine::PointLight &x,
-                       const rh::rw::engine::PointLight &y ) {
-            auto dist = []( const rh::rw::engine::PointLight &p,
-                            const DirectX::XMFLOAT4X4 &       viewInv ) {
-                float dir[3];
-                dir[0] = p.mPos[0] - viewInv._41;
-                dir[1] = p.mPos[1] - viewInv._42;
-                dir[2] = p.mPos[2] - viewInv._43;
-                return dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2];
-            };
-
-            return dist( x, frame_info.mViewInv ) <
-                       dist( y, frame_info.mViewInv ) &&
-                   ( x.mRadius > y.mRadius );
-        } );
+    sky_state.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
+    sky_state.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;
+    sky_state.mSunDir[2] = vec_to_sun_arr[current_tc_value].z;
+    sky_state.mSunDir[3] = 1.0f;
 
     for ( uint32_t id = 0; id < mNoOfVisibleEntities; id++ )
         mVisibleEntities[id]->Render();

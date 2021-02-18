@@ -13,6 +13,7 @@
 #include <Engine/Common/types/sampler_filter.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <render_driver/gpu_resources/raster_pool.h>
 #include <rendering_loop/DescriptorGenerator.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
@@ -246,8 +247,7 @@ RTReflectionRaysPass::RTReflectionRaysPass(
     mShaderBindTable->Unlock();
 }
 void RTReflectionRaysPass::Execute( void *                      tlas,
-                                    rh::engine::ICommandBuffer *cmd_buffer,
-                                    const FrameInfo &           frame )
+                                    rh::engine::ICommandBuffer *cmd_buffer )
 {
     //
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );

@@ -14,7 +14,6 @@
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
-#include <scene_graph.h>
 
 namespace rh::rw::engine
 {

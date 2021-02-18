@@ -3,17 +3,23 @@
 //
 
 #include "im2d_renderer.h"
-#include "im2d_backend.h"
-#include "raster_backend.h"
+#include <ipc/MemoryReader.h>
+#include <render_client/im2d_state_recorder.h>
+#include <render_driver/gpu_resources/raster_pool.h>
+
+#include <rendering_loop/DescriptorGenerator.h>
+#include <rendering_loop/ray_tracing/CameraDescription.h>
+
+#include <rw_engine/rh_backend/im2d_backend.h>
+#include <rw_engine/rh_backend/raster_backend.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
+
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/blend_op.h>
 #include <Engine/Common/types/comparison_func.h>
 #include <Engine/Common/types/sampler_filter.h>
-#include <ipc/MemoryReader.h>
-#include <render_driver/render_driver.h>
-#include <rendering_loop/DescriptorGenerator.h>
-#include <rendering_loop/ray_tracing/CameraDescription.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
+
+#include <span>
 
 namespace rh::rw::engine
 {
@@ -25,12 +31,13 @@ constexpr auto TEXTURE_DESC_POOL_SIZE = 1000;
 
 constexpr auto Im2DCallbackId = 421;
 
-Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
-                            rh::engine::IRenderPass *render_pass )
-    : mCamDesc( cdsec )
+Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
+                            RasterPoolType &          raster_pool,
+                            CameraDescription *       cdsec,
+                            rh::engine::IRenderPass * render_pass )
+    : Device( device ), RasterPool( raster_pool ), mCamDesc( cdsec )
 {
-    mRenderPass  = render_pass;
-    auto &device = gRenderDriver->GetDeviceState();
+    mRenderPass = render_pass;
     // screen stuff
     DescriptorGenerator d_gen{};
 
@@ -48,10 +55,10 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
     mDescSetAllocator = d_gen.FinalizeAllocator();
 
     // create pipeline layouts
-    mTexLayout = device.CreatePipelineLayout(
+    mTexLayout = Device.CreatePipelineLayout(
         { { mGlobalSetLayout, cdsec->GetSetLayout(),
             mTextureDescSetLayout } } );
-    mNoTexLayout = device.CreatePipelineLayout(
+    mNoTexLayout = Device.CreatePipelineLayout(
         { { mGlobalSetLayout, cdsec->GetSetLayout() } } );
 
     // create pipelines
@@ -70,17 +77,17 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
                              .mEntryPoint  = "DepthMaskPS",
                              .mShaderStage = ShaderStage::Pixel };
 
-    mBaseVertex.shader     = device.CreateShader( mBaseVertex.desc );
-    mTexPixel.shader       = device.CreateShader( mTexPixel.desc );
-    mNoTexPixel.shader     = device.CreateShader( mNoTexPixel.desc );
-    mDepthMaskPixel.shader = device.CreateShader( mDepthMaskPixel.desc );
+    mBaseVertex.shader     = Device.CreateShader( mBaseVertex.desc );
+    mTexPixel.shader       = Device.CreateShader( mTexPixel.desc );
+    mNoTexPixel.shader     = Device.CreateShader( mNoTexPixel.desc );
+    mDepthMaskPixel.shader = Device.CreateShader( mDepthMaskPixel.desc );
 
     // create buffers
-    mVertexBuffer = device.CreateBuffer(
+    mVertexBuffer = Device.CreateBuffer(
         { .mSize  = sizeof( RwIm2DVertex ) * VERTEX_COUNT_LIMIT,
           .mUsage = BufferUsage::VertexBuffer } );
     mIndexBuffer =
-        device.CreateBuffer( { .mSize  = sizeof( int16_t ) * INDEX_COUNT_LIMIT,
+        Device.CreateBuffer( { .mSize  = sizeof( int16_t ) * INDEX_COUNT_LIMIT,
                                .mUsage = BufferUsage::IndexBuffer } );
 
     std::vector tex_layout_array =
@@ -91,7 +98,7 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
 
     SamplerDesc sampler_desc{};
     sampler_desc.mInfo.filtering = SamplerFilter::Linear;
-    mTextureSampler              = device.CreateSampler( sampler_desc );
+    mTextureSampler              = Device.CreateSampler( sampler_desc );
 
     for ( auto &i : mDescriptorSetPool )
     {
@@ -102,7 +109,7 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
         info.mBinding         = 0;
         info.mSet             = i;
         info.mImageUpdateInfo = sampler_upd_info;
-        device.UpdateDescriptorSets( info );
+        Device.UpdateDescriptorSets( info );
     }
 
     std::array<rh::engine::IDescriptorSetLayout *, 1> layout_array_ = {
@@ -127,7 +134,7 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
     rs_buff_create_info.mUsage       = rh::engine::BufferUsage::ConstantBuffer;
     rs_buff_create_info.mFlags       = rh::engine::BufferFlags::Immutable;
     rs_buff_create_info.mInitDataPtr = &buff;
-    mGlobalsBuffer = device.CreateBuffer( rs_buff_create_info );
+    mGlobalsBuffer = Device.CreateBuffer( rs_buff_create_info );
 
     rh::engine::DescriptorSetUpdateInfo desc_set_upd_info{};
     desc_set_upd_info.mSet              = mBaseDescSet;
@@ -135,7 +142,7 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
     std::array update_info              = { rh::engine::BufferUpdateInfo{
         0, sizeof( RenderStateBuffer ), mGlobalsBuffer } };
     desc_set_upd_info.mBufferUpdateInfo = update_info;
-    device.UpdateDescriptorSets( desc_set_upd_info );
+    Device.UpdateDescriptorSets( desc_set_upd_info );
 
     /// pip create
 
@@ -174,7 +181,7 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
             .enableBlending      = true } },
         { 1.0f, 1.0f, 1.0f, 1.0f } };
 
-    mPipelineNoTex = device.CreateRasterPipeline(
+    mPipelineNoTex = Device.CreateRasterPipeline(
         { .mRenderPass           = render_pass,
           .mLayout               = mNoTexLayout,
           .mShaderStages         = { vs_stage_desc, ps_stage_notex_desc },
@@ -182,7 +189,7 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
           .mTopology             = Topology::TriangleList,
           .mBlendState           = default_blend_state } );
 
-    mPipelineTex = device.CreateRasterPipeline(
+    mPipelineTex = Device.CreateRasterPipeline(
         { .mRenderPass           = render_pass,
           .mLayout               = mTexLayout,
           .mShaderStages         = { vs_stage_desc, ps_stage_desc },
@@ -203,7 +210,7 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
     depth_state.enableDepthBuffer   = true;
     depth_state.enableDepthWrite    = true;
     depth_state.depthComparisonFunc = ComparisonFunc::Always;
-    mDepthMaskPipeline              = device.CreateRasterPipeline(
+    mDepthMaskPipeline              = Device.CreateRasterPipeline(
         { .mRenderPass           = render_pass,
           .mLayout               = mTexLayout,
           .mShaderStages         = { vs_stage_desc, ps_stage_depthmask_desc },
@@ -212,20 +219,17 @@ Im2DRenderer::Im2DRenderer( CameraDescription *      cdsec,
           .mBlendState           = default_blend_state,
           .mDepthStencilState    = depth_state } );
 
-    auto &resources   = gRenderDriver->GetResources();
-    auto &raster_pool = resources.GetRasterPool();
-    raster_pool.AddOnDestructCallback(
+    RasterPool.AddOnDestructCallback(
         [this]( RasterData &data, uint64_t id ) { mTextureCache.erase( id ); },
         Im2DCallbackId );
 }
 
 Im2DRenderer::~Im2DRenderer()
 {
-    auto &resources   = gRenderDriver->GetResources();
-    auto &raster_pool = resources.GetRasterPool();
-    raster_pool.RemoveOnDestructCallback( Im2DCallbackId );
+    RasterPool.RemoveOnDestructCallback( Im2DCallbackId );
     delete mPipelineTex;
     delete mPipelineNoTex;
+    delete mDepthMaskPipeline;
     for ( auto &ptr : mDescriptorSetPool )
         delete ptr;
     delete mBaseDescSet;
@@ -238,6 +242,7 @@ Im2DRenderer::~Im2DRenderer()
     delete mBaseVertex.shader;
     delete mNoTexPixel.shader;
     delete mTexPixel.shader;
+    delete mDepthMaskPixel.shader;
     delete mTexLayout;
     delete mNoTexLayout;
     delete mDescSetAllocator;
@@ -260,40 +265,37 @@ struct PackedIm2DState
     };
 };
 
-uint64_t Im2DRenderer::Render( void *                      memory,
+uint64_t Im2DRenderer::Render( const Im2DRenderState &     state,
                                rh::engine::ICommandBuffer *cmd_buffer )
 {
-    MemoryReader stream( memory );
-    uint64_t     index_count = *stream.Read<uint64_t>();
-
     // Update buffers
-    if ( index_count > 0 )
-        mIndexBuffer->Update( stream.Read<int16_t>( index_count ),
-                              index_count * sizeof( int16_t ), 0 );
+    if ( state.IndexBuffer.Size() > 0 )
+        mIndexBuffer->Update( state.IndexBuffer.Data(),
+                              state.IndexBuffer.Size() * sizeof( int16_t ), 0 );
 
-    uint64_t vertex_count = *stream.Read<uint64_t>();
-    if ( vertex_count <= 0 )
-        return stream.Pos();
+    if ( state.VertexBuffer.Size() <= 0 )
+        return 0;
 
-    auto vertices = stream.Read<RwIm2DVertex>( vertex_count );
-
-    auto current_display_mode = []() {
-        auto &   device = gRenderDriver->GetDeviceState();
+    auto current_display_mode = [this]() {
         uint32_t display_mode;
-        device.GetCurrentDisplayMode( display_mode );
+        Device.GetCurrentDisplayMode( display_mode );
         DisplayModeInfo info{};
-        device.GetDisplayModeInfo( display_mode, info );
+        Device.GetDisplayModeInfo( display_mode, info );
         return info;
     }();
 
     // Transform to screen-space
-    for ( auto &vtx : std::span( vertices, vertex_count ) )
+    // TODO: at the moment this doesn't fit well, maybe move that to a different
+    // place
+    for ( auto &vtx : std::span( (RwIm2DVertex *)state.VertexBuffer.Data(),
+                                 state.VertexBuffer.Size() ) )
     {
         vtx.x = vtx.x * ( 2.0f / float( current_display_mode.width ) ) - 1.0f;
         vtx.y = vtx.y * ( 2.0f / float( current_display_mode.height ) ) - 1.0f;
     }
 
-    mVertexBuffer->Update( vertices, vertex_count * sizeof( RwIm2DVertex ),
+    mVertexBuffer->Update( state.VertexBuffer.Data(),
+                           state.VertexBuffer.Size() * sizeof( RwIm2DVertex ),
                            mVertexBufferOffset );
 
     // Bind buffers
@@ -306,15 +308,11 @@ uint64_t Im2DRenderer::Render( void *                      memory,
           .mDescriptorSetsOffset = 0,
           .mDescriptorSets       = { mBaseDescSet, mCamDesc->GetDescSet() } } );
 
-    uint64_t draw_call_count = *stream.Read<uint64_t>();
-    if ( draw_call_count <= 0 )
-        return stream.Pos();
-
-    ArrayProxy<Im2DDrawCall> draw_calls(
-        stream.Read<Im2DDrawCall>( draw_call_count ), draw_call_count );
+    if ( state.DrawCalls.Size() <= 0 )
+        return 0;
 
     auto vertex_offset = mVertexBufferOffset / sizeof( RwIm2DVertex );
-    for ( auto &draw_call : draw_calls )
+    for ( auto &draw_call : state.DrawCalls )
     {
         // Compute pipeline hash
 
@@ -351,9 +349,9 @@ uint64_t Im2DRenderer::Render( void *                      memory,
         }
     }
 
-    mVertexBufferOffset += vertex_count * sizeof( RwIm2DVertex );
+    mVertexBufferOffset += state.VertexBuffer.Size() * sizeof( RwIm2DVertex );
 
-    return stream.Pos();
+    return 0;
 }
 
 void Im2DRenderer::DrawQuad( rh::engine::IImageView *    texture,
@@ -390,7 +388,7 @@ void Im2DRenderer::DrawQuad( rh::engine::IImageView *    texture,
         info.mDescriptorType  = DescriptorType::ROTexture;
         info.mSet             = texDescriptorSet;
         info.mImageUpdateInfo = img_upd_info;
-        gRenderDriver->GetDeviceState().UpdateDescriptorSets( info );
+        Device.UpdateDescriptorSets( info );
         mDescriptorSetPoolId =
             ( mDescriptorSetPoolId + 1 ) % mDescriptorSetPool.size();
     }
@@ -418,12 +416,9 @@ rh::engine::IDescriptorSet *Im2DRenderer::GetRasterDescSet( uint64_t id )
     //    return cache_entry->second;
     // else
     {
-        auto &resources   = gRenderDriver->GetResources();
-        auto &raster_pool = resources.GetRasterPool();
-
         auto set = mTextureCache[id] = mDescriptorSetPool[mDescriptorSetPoolId];
-        auto img_view                = raster_pool.GetResource( id ).mImageView;
-        gRenderDriver->GetDeviceState().UpdateDescriptorSets(
+        auto img_view                = RasterPool.GetResource( id ).mImageView;
+        Device.UpdateDescriptorSets(
             { .mSet             = set,
               .mBinding         = 1,
               .mDescriptorType  = DescriptorType::ROTexture,
@@ -482,8 +477,6 @@ rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
     if ( mIm2DPipelines.contains( hash ) )
         return mIm2DPipelines.at( hash );
 
-    auto &device = gRenderDriver->GetDeviceState();
-
     PackedIm2DState s{};
     s.i_val = hash;
 
@@ -525,7 +518,7 @@ rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
         depth_state.depthComparisonFunc = ComparisonFunc::Always;
     }
 
-    mIm2DPipelines[hash] = device.CreateRasterPipeline(
+    mIm2DPipelines[hash] = Device.CreateRasterPipeline(
         { .mRenderPass   = mRenderPass,
           .mLayout       = s.s_val.hasTexture ? mTexLayout : mNoTexLayout,
           .mShaderStages = { vs_stage_desc, s.s_val.hasTexture
@@ -573,7 +566,7 @@ void Im2DRenderer::DrawDepthMask( rh::engine::IImageView *    texture,
         info.mDescriptorType  = DescriptorType::ROTexture;
         info.mSet             = texDescriptorSet;
         info.mImageUpdateInfo = img_upd_info;
-        gRenderDriver->GetDeviceState().UpdateDescriptorSets( info );
+        Device.UpdateDescriptorSets( info );
         mDescriptorSetPoolId =
             ( mDescriptorSetPoolId + 1 ) % mDescriptorSetPool.size();
     }

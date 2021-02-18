@@ -10,6 +10,7 @@
 #include <Engine/Common/types/shader_stage.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <data_desc/light_system/lighting_state.h>
 #include <rendering_loop/DescriptorGenerator.h>
 namespace rh::rw::engine
 {
@@ -126,12 +127,15 @@ TiledLightCulling::TiledLightCulling( const TiledLightCullingParams &params )
                        { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, mTileBuffer } } )
         .End();
 }
-void TiledLightCulling::Execute( rh::engine::ICommandBuffer *     dest,
-                                 const rh::rw::engine::FrameInfo &info )
+
+void TiledLightCulling::Execute( rh::engine::ICommandBuffer *dest,
+                                 const AnalyticLightsState & info )
 {
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( dest );
-    mLightBuffer->Update( &info.mFirst4PointLights[0],
-                          1024 * sizeof( PointLight ) );
+    if ( info.PointLights.Size() > 0 )
+        mLightBuffer->Update( info.PointLights.Data(),
+                              min( 1024u, info.PointLights.Size() ) *
+                                  sizeof( PointLight ) );
     vk_cmd_buff->BindComputePipeline( mBuildTilesPipeline );
 
     vk_cmd_buff->BindDescriptorSets(

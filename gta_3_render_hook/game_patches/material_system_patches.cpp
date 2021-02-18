@@ -8,7 +8,7 @@
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <common_headers.h>
 #include <material_storage.h>
-#include <render_loop.h>
+#include <rw_engine/rh_backend/material_backend.h>
 
 using namespace rh::rw::engine;
 

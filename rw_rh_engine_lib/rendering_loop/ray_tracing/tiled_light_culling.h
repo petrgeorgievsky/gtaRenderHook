@@ -11,7 +11,6 @@
 
 #include <Engine/Common/ScopedPtr.h>
 #include <cstdint>
-#include <scene_graph.h>
 
 namespace rh::engine
 {
@@ -34,6 +33,7 @@ namespace rh::rw::engine
 template <typename T> using SPtr = rh::engine::ScopedPointer<T>;
 
 class CameraDescription;
+struct AnalyticLightsState;
 struct TiledLightCullingParams
 {
     // dependencies
@@ -51,8 +51,8 @@ class TiledLightCulling
   public:
     TiledLightCulling( const TiledLightCullingParams &params );
 
-    void                 Execute( rh::engine::ICommandBuffer *     dest,
-                                  const rh::rw::engine::FrameInfo &info );
+    void                 Execute( rh::engine::ICommandBuffer *dest,
+                                  const AnalyticLightsState & info );
     rh::engine::IBuffer *GetTileListBuffer() { return mTileBuffer; }
     rh::engine::IBuffer *GetLightIdxListBuffer() { return mLightIdxListBuffer; }
     rh::engine::IBuffer *GetLightBuffer() { return mLightBuffer; }

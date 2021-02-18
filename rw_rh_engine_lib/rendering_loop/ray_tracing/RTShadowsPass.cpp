@@ -14,6 +14,7 @@
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <array>
+#include <render_driver/gpu_resources/raster_pool.h>
 #include <render_driver/render_driver.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
@@ -277,8 +278,8 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
         .mHeight            = mHeight } );
 }
 
-void RTShadowsPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
-                             const FrameInfo &frame )
+void RTShadowsPass::Execute( void *                      tlas,
+                             rh::engine::ICommandBuffer *cmd_buffer )
 {
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 

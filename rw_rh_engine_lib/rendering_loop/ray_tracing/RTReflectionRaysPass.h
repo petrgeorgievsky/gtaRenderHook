@@ -51,8 +51,7 @@ class RTReflectionRaysPass
   public:
     RTReflectionRaysPass( const RTReflectionInitParams &params );
 
-    void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
-                  const FrameInfo &frame );
+    void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer );
 
     rh::engine::IImageView *GetReflectionView()
     {

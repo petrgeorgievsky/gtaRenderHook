@@ -10,9 +10,9 @@
 #include <array>
 #include <common_headers.h>
 #include <ipc/ipc_utils.h>
+#include <render_client/render_client.h>
 #include <rw_engine/system_funcs/rw_device_standards.h>
 #include <rw_game_hooks.h>
-#include <scene_graph.h>
 
 using namespace rh::rw::engine;
 
@@ -233,18 +233,15 @@ void RwTestSample::CustomShutdown()
 void RwTestSample::Render()
 {
     RwCameraBeginUpdateCmd( m_pMainCamera ).Execute();
-    auto &frame                           = GetCurrentSceneGraph()->mFrameInfo;
-    frame.mSkyTopColor[0]                 = 0.5f;
-    frame.mSkyTopColor[1]                 = 0.5f;
-    frame.mSkyTopColor[2]                 = 0.5f;
-    frame.mSkyTopColor[3]                 = 1.0f;
-    frame.mSunDir[0]                      = -0.5f;
-    frame.mSunDir[1]                      = 0.5f;
-    frame.mSunDir[2]                      = -0.5f;
-    frame.mSunDir[3]                      = 1.0f;
-    frame.mFirst4PointLights[0].mRadius   = 10.0f;
-    frame.mFirst4PointLights[0].mPos[0]   = -10.0f;
-    frame.mFirst4PointLights[0].mColor[0] = 1.0f;
+    auto &sky_state           = gRenderClient->RenderState.SkyState;
+    sky_state.mSkyTopColor[0] = 0.5f;
+    sky_state.mSkyTopColor[1] = 0.5f;
+    sky_state.mSkyTopColor[2] = 0.5f;
+    sky_state.mSkyTopColor[3] = 1.0f;
+    sky_state.mSunDir[0]      = -0.5f;
+    sky_state.mSunDir[1]      = 0.5f;
+    sky_state.mSunDir[2]      = -0.5f;
+    sky_state.mSunDir[3]      = 1.0f;
 
     CustomRender();
     RwCameraEndUpdateCmd( m_pMainCamera ).Execute();

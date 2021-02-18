@@ -1,8 +1,11 @@
 #include "rasterlockcmd.h"
 #include <common_headers.h>
 #include <render_client/render_client.h>
+
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/system_funcs/raster_lock_cmd.h>
+
+#include <DebugUtils/DebugLogger.h>
 
 namespace rh::rw::engine
 {

@@ -12,6 +12,7 @@ namespace rh::engine
 {
 class VulkanCommandBuffer;
 class IBuffer;
+class IDeviceState;
 } // namespace rh::engine
 
 namespace rh::rw::engine
@@ -28,11 +29,17 @@ template <typename T> struct PoolEntry
     T    mData;
     bool mHasEntry = false;
 };
+class EngineResourceHolder;
+struct BlasBuildPassCreateInfo
+{
+    rh::engine::IDeviceState &Device;
+    EngineResourceHolder &    Resources;
+};
 
 class RTBlasBuildPass
 {
   public:
-    RTBlasBuildPass();
+    RTBlasBuildPass( const BlasBuildPassCreateInfo &info );
     ~RTBlasBuildPass();
     void RequestBlasBuild( uint64_t mesh_id );
     void Execute();
@@ -46,6 +53,8 @@ class RTBlasBuildPass
     }
 
   private:
+    rh::engine::IDeviceState &           Device;
+    EngineResourceHolder &               Resources;
     std::vector<uint64_t>                mNewBLASList;
     std::queue<uint64_t>                 mBLASQueue;
     std::vector<PoolEntry<BLASMeshData>> mBLASPool;

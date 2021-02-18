@@ -10,10 +10,13 @@
 #include <Engine/Common/types/blend_op.h>
 #include <Engine/Common/types/comparison_func.h>
 #include <Engine/Common/types/sampler_filter.h>
-#include <Engine/Common/types/shader_stage.h>
-#include <render_driver/render_driver.h>
+
+#include <render_client/im3d_state_recorder.h>
+#include <render_driver/gpu_resources/raster_pool.h>
+
 #include <rendering_loop/DescriptorGenerator.h>
 #include <rendering_loop/ray_tracing/CameraDescription.h>
+
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
@@ -25,11 +28,12 @@ constexpr auto INDEX_COUNT_LIMIT      = 100000;
 constexpr auto DRAW_CALL_POOL_SIZE    = 1000;
 constexpr auto TEXTURE_DESC_POOL_SIZE = 1000;
 
-Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
+Im3DRenderer::Im3DRenderer( rh::engine::IDeviceState &device,
+                            RasterPoolType &          raster_pool,
+                            CameraDescription *cdsec, IRenderPass *render_pass )
+    : Device( device ), RasterPool( raster_pool ), mCamDesc( cdsec )
 {
-    mRenderPass                = render_pass;
-    mCamDesc                   = cdsec;
-    auto &              device = gRenderDriver->GetDeviceState();
+    mRenderPass = render_pass;
     DescriptorGenerator d_gen{};
 
     d_gen
@@ -46,10 +50,10 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
     mDescSetAllocator = d_gen.FinalizeAllocator();
 
     // create pipeline layouts
-    mTexLayout = device.CreatePipelineLayout(
+    mTexLayout = Device.CreatePipelineLayout(
         { { cdsec->GetSetLayout(), mObjectSetLayout,
             mTextureDescSetLayout } } );
-    mNoTexLayout = device.CreatePipelineLayout(
+    mNoTexLayout = Device.CreatePipelineLayout(
         { { cdsec->GetSetLayout(), mObjectSetLayout } } );
 
     // shaders
@@ -64,16 +68,16 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
                          .mEntryPoint  = "NoTexPS",
                          .mShaderStage = ShaderStage::Pixel };
 
-    mBaseVertex.shader = device.CreateShader( mBaseVertex.desc );
-    mTexPixel.shader   = device.CreateShader( mTexPixel.desc );
-    mNoTexPixel.shader = device.CreateShader( mNoTexPixel.desc );
+    mBaseVertex.shader = Device.CreateShader( mBaseVertex.desc );
+    mTexPixel.shader   = Device.CreateShader( mTexPixel.desc );
+    mNoTexPixel.shader = Device.CreateShader( mNoTexPixel.desc );
 
     // create buffers
-    mVertexBuffer = device.CreateBuffer(
+    mVertexBuffer = Device.CreateBuffer(
         { .mSize  = sizeof( RwIm3DVertex ) * VERTEX_COUNT_LIMIT,
           .mUsage = BufferUsage::VertexBuffer } );
     mIndexBuffer =
-        device.CreateBuffer( { .mSize  = sizeof( uint16_t ) * INDEX_COUNT_LIMIT,
+        Device.CreateBuffer( { .mSize  = sizeof( uint16_t ) * INDEX_COUNT_LIMIT,
                                .mUsage = BufferUsage::IndexBuffer } );
 
     std::vector tex_layout_array = std::vector(
@@ -84,7 +88,7 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
 
     SamplerDesc sampler_desc{};
     sampler_desc.mInfo.filtering = SamplerFilter::Linear;
-    mTextureSampler              = device.CreateSampler( sampler_desc );
+    mTextureSampler              = Device.CreateSampler( sampler_desc );
 
     for ( auto &i : mDescriptorSetPool )
     {
@@ -95,7 +99,7 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
         info.mBinding         = 0;
         info.mSet             = i;
         info.mImageUpdateInfo = sampler_upd_info;
-        device.UpdateDescriptorSets( info );
+        Device.UpdateDescriptorSets( info );
     }
 
     std::vector obj_layout_array = std::vector(
@@ -104,7 +108,7 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
     alloc_params.mLayouts = obj_layout_array;
     mMatrixDescriptorSetPool =
         mDescSetAllocator->AllocateDescriptorSets( alloc_params );
-    mMatrixBuffer = device.CreateBuffer(
+    mMatrixBuffer = Device.CreateBuffer(
         BufferCreateInfo{ sizeof( DirectX::XMFLOAT4X4 ) * DRAW_CALL_POOL_SIZE,
                           BufferUsage::ConstantBuffer, Dynamic, nullptr } );
     uint32_t buff_offset = 0;
@@ -118,9 +122,17 @@ Im3DRenderer::Im3DRenderer( CameraDescription *cdsec, IRenderPass *render_pass )
         info.mBinding          = 0;
         info.mSet              = i;
         info.mBufferUpdateInfo = buffer_upd_info;
-        device.UpdateDescriptorSets( info );
+        Device.UpdateDescriptorSets( info );
         buff_offset += sizeof( DirectX::XMFLOAT4X4 );
     }
+}
+
+Im3DRenderer::~Im3DRenderer()
+{
+    for ( auto &ptr : mDescriptorSetPool )
+        delete ptr;
+    for ( auto &ptr : mMatrixDescriptorSetPool )
+        delete ptr;
 }
 
 struct PackedIm3DState
@@ -156,8 +168,6 @@ rh::engine::IPipeline *Im3DRenderer::GetCachedPipeline( uint64_t hash )
 {
     if ( mIm3DPipelines.contains( hash ) )
         return mIm3DPipelines.at( hash );
-
-    auto &device = gRenderDriver->GetDeviceState();
 
     PackedIm3DState s{};
     s.i_val = hash;
@@ -201,7 +211,7 @@ rh::engine::IPipeline *Im3DRenderer::GetCachedPipeline( uint64_t hash )
         depth_state.depthComparisonFunc = ComparisonFunc::Always;
     }
 
-    mIm3DPipelines[hash] = device.CreateRasterPipeline(
+    mIm3DPipelines[hash] = Device.CreateRasterPipeline(
         { .mRenderPass   = mRenderPass,
           .mLayout       = s.s_val.hasTexture ? mTexLayout : mNoTexLayout,
           .mShaderStages = { vs_stage_desc, s.s_val.hasTexture
@@ -214,23 +224,22 @@ rh::engine::IPipeline *Im3DRenderer::GetCachedPipeline( uint64_t hash )
 
     return mIm3DPipelines[hash];
 }
-void     Im3DRenderer::Reset() { mVertexBufferOffset = 0; }
-uint64_t Im3DRenderer::Render( void *                      memory,
+void Im3DRenderer::Reset() { mVertexBufferOffset = 0; }
+
+uint64_t Im3DRenderer::Render( const Im3DRenderState &     state,
                                rh::engine::ICommandBuffer *cmd_buffer )
 {
-    MemoryReader stream( memory );
-    uint64_t     index_count = *stream.Read<uint64_t>();
-
     // Update buffers
-    if ( index_count > 0 )
-        mIndexBuffer->Update( stream.Read<int16_t>( index_count ),
-                              index_count * sizeof( int16_t ), 0 );
+    if ( state.IndexBuffer.Size() > 0 )
+        mIndexBuffer->Update( state.IndexBuffer.Data(),
+                              state.IndexBuffer.Size() * sizeof( uint16_t ),
+                              0 );
 
-    uint64_t vertex_count = *stream.Read<uint64_t>();
+    uint64_t vertex_count = state.VertexBuffer.Size();
     if ( vertex_count <= 0 )
-        return stream.Pos();
+        return 0;
 
-    mVertexBuffer->Update( stream.Read<RwIm3DVertex>( vertex_count ),
+    mVertexBuffer->Update( state.VertexBuffer.Data(),
                            vertex_count * sizeof( RwIm3DVertex ),
                            mVertexBufferOffset );
 
@@ -244,33 +253,30 @@ uint64_t Im3DRenderer::Render( void *                      memory,
           .mDescriptorSetsOffset = 0,
           .mDescriptorSets       = { mCamDesc->GetDescSet() } } );
 
-    uint64_t draw_call_count = *stream.Read<uint64_t>();
+    auto draw_call_count = state.DrawCalls.Size();
     if ( draw_call_count <= 0 )
-        return stream.Pos();
-
-    ArrayProxy<Im3DDrawCall> draw_calls(
-        stream.Read<Im3DDrawCall>( draw_call_count ), draw_call_count );
+        return 0;
 
     auto     vertex_offset = mVertexBufferOffset / sizeof( RwIm3DVertex );
     uint32_t dc_id         = 0;
     auto *   matrix_buffers =
         static_cast<DirectX::XMFLOAT4X4 *>( mMatrixBuffer->Lock() );
-    for ( auto &draw_call : draw_calls )
+    for ( auto &draw_call : state.DrawCalls )
     {
         // Compute pipeline hash
-        if ( draw_call.mState.mPrimType != 3 )
+        if ( draw_call.State.PrimType != 3 )
             continue;
         PackedIm3DState s{};
-        s.s_val.enableBlend = draw_call.mState.mBlendEnable;
+        s.s_val.enableBlend = draw_call.State.BlendEnable;
         s.s_val.hasTexture =
-            draw_call.mRasterId != BackendRasterPlugin::NullRasterId;
-        s.s_val.srcBlendState  = draw_call.mState.mColorBlendSrc;
-        s.s_val.destBlendState = draw_call.mState.mColorBlendDst;
-        s.s_val.zTestEnable    = draw_call.mState.mZTestEnable;
-        s.s_val.zWriteEnable   = draw_call.mState.mZWriteEnable;
+            draw_call.RasterId != BackendRasterPlugin::NullRasterId;
+        s.s_val.srcBlendState  = draw_call.State.ColorBlendSrc;
+        s.s_val.destBlendState = draw_call.State.ColorBlendDst;
+        s.s_val.zTestEnable    = draw_call.State.ZTestEnable;
+        s.s_val.zWriteEnable   = draw_call.State.ZWriteEnable;
 
-        std::copy( &draw_call.mWorldTransform.m[0][0],
-                   &draw_call.mWorldTransform.m[0][0] + 3 * 4,
+        std::copy( &draw_call.WorldTransform.m[0][0],
+                   &draw_call.WorldTransform.m[0][0] + 3 * 4,
                    &matrix_buffers[dc_id].m[0][0] );
         matrix_buffers[dc_id].m[3][0] = 0.0f;
         matrix_buffers[dc_id].m[3][1] = 0.0f;
@@ -282,28 +288,26 @@ uint64_t Im3DRenderer::Render( void *                      memory,
               .mDescriptorSetsOffset = 1,
               .mDescriptorSets       = { mMatrixDescriptorSetPool[dc_id] } } );
 
-        if ( draw_call.mRasterId != BackendRasterPlugin::NullRasterId )
+        if ( draw_call.RasterId != BackendRasterPlugin::NullRasterId )
         {
             cmd_buffer->BindDescriptorSets(
                 { .mPipelineLayout       = mTexLayout,
                   .mDescriptorSetsOffset = 2,
                   .mDescriptorSets       = {
-                      GetRasterDescSet( draw_call.mRasterId ) } } );
+                      GetRasterDescSet( draw_call.RasterId ) } } );
         }
 
         cmd_buffer->BindPipeline( GetCachedPipeline( s.i_val ) );
-        if ( draw_call.mIndexCount > 0 )
+        if ( draw_call.IndexCount > 0 )
         {
             cmd_buffer->DrawIndexed(
-                draw_call.mIndexCount, 1, draw_call.mIndexBufferOffset,
-                vertex_offset + draw_call.mVertexBufferOffset, 0 );
+                draw_call.IndexCount, 1, draw_call.IndexBufferOffset,
+                vertex_offset + draw_call.VertexBufferOffset, 0 );
         }
         else
         {
-
-            cmd_buffer->Draw( draw_call.mVertexCount, 1,
-                              vertex_offset + draw_call.mVertexBufferOffset,
-                              0 );
+            cmd_buffer->Draw( draw_call.VertexCount, 1,
+                              vertex_offset + draw_call.VertexBufferOffset, 0 );
         }
         dc_id++;
     }
@@ -311,15 +315,13 @@ uint64_t Im3DRenderer::Render( void *                      memory,
 
     mVertexBufferOffset += vertex_count * sizeof( RwIm3DVertex );
 
-    return stream.Pos();
+    return 0;
 }
 rh::engine::IDescriptorSet *Im3DRenderer::GetRasterDescSet( uint64_t id )
 {
-    auto &resources   = gRenderDriver->GetResources();
-    auto &raster_pool = resources.GetRasterPool();
-    auto  set         = mDescriptorSetPool[mDescriptorSetPoolId];
-    auto  img_view    = raster_pool.GetResource( id ).mImageView;
-    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
+    auto set      = mDescriptorSetPool[mDescriptorSetPoolId];
+    auto img_view = RasterPool.GetResource( id ).mImageView;
+    Device.UpdateDescriptorSets(
         { .mSet             = set,
           .mBinding         = 1,
           .mDescriptorType  = DescriptorType::ROTexture,
@@ -328,13 +330,6 @@ rh::engine::IDescriptorSet *Im3DRenderer::GetRasterDescSet( uint64_t id )
     mDescriptorSetPoolId =
         ( mDescriptorSetPoolId + 1 ) % mDescriptorSetPool.size();
     return set;
-}
-Im3DRenderer::~Im3DRenderer()
-{
-    for ( auto &ptr : mDescriptorSetPool )
-        delete ptr;
-    for ( auto &ptr : mMatrixDescriptorSetPool )
-        delete ptr;
 }
 
 } // namespace rh::rw::engine

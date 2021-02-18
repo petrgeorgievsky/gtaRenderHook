@@ -7,11 +7,10 @@
 #include "DescriptorUpdater.h"
 #include "rendering_loop/DescriptorGenerator.h"
 #include "utils.h"
-#include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/sampler_filter.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
+#include <data_desc/sky_state.h>
 
 namespace rh::rw::engine
 {
@@ -197,24 +196,24 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
 }
 
 void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
-                                 const FrameInfo &frame )
+                                 const SkyState &state )
 {
     mFrame                  = 1 - mFrame;
-    gSkyCfg.skyColor[0]     = frame.mSkyTopColor[0];
-    gSkyCfg.skyColor[1]     = frame.mSkyTopColor[1];
-    gSkyCfg.skyColor[2]     = frame.mSkyTopColor[2];
-    gSkyCfg.skyColor[3]     = frame.mSkyTopColor[3];
-    gSkyCfg.ambientColor[0] = frame.mAmbientColor[0];
-    gSkyCfg.ambientColor[1] = frame.mAmbientColor[1];
-    gSkyCfg.ambientColor[2] = frame.mAmbientColor[2];
-    gSkyCfg.ambientColor[3] = frame.mAmbientColor[3];
-    gSkyCfg.horizonColor[0] = frame.mSkyBottomColor[0];
-    gSkyCfg.horizonColor[1] = frame.mSkyBottomColor[1];
-    gSkyCfg.horizonColor[2] = frame.mSkyBottomColor[2];
-    gSkyCfg.horizonColor[3] = frame.mSkyBottomColor[3];
-    gSkyCfg.sunDir[0]       = frame.mSunDir[0];
-    gSkyCfg.sunDir[1]       = frame.mSunDir[1];
-    gSkyCfg.sunDir[2]       = frame.mSunDir[2];
+    gSkyCfg.skyColor[0]     = state.mSkyTopColor[0];
+    gSkyCfg.skyColor[1]     = state.mSkyTopColor[1];
+    gSkyCfg.skyColor[2]     = state.mSkyTopColor[2];
+    gSkyCfg.skyColor[3]     = state.mSkyTopColor[3];
+    gSkyCfg.ambientColor[0] = state.mAmbientColor[0];
+    gSkyCfg.ambientColor[1] = state.mAmbientColor[1];
+    gSkyCfg.ambientColor[2] = state.mAmbientColor[2];
+    gSkyCfg.ambientColor[3] = state.mAmbientColor[3];
+    gSkyCfg.horizonColor[0] = state.mSkyBottomColor[0];
+    gSkyCfg.horizonColor[1] = state.mSkyBottomColor[1];
+    gSkyCfg.horizonColor[2] = state.mSkyBottomColor[2];
+    gSkyCfg.horizonColor[3] = state.mSkyBottomColor[3];
+    gSkyCfg.sunDir[0]       = state.mSunDir[0];
+    gSkyCfg.sunDir[1]       = state.mSunDir[1];
+    gSkyCfg.sunDir[2]       = state.mSunDir[2];
     gSkyCfg.sunDir[3]       = 1.0f;
     mSkyCfg->Update( &gSkyCfg, sizeof( SkyCfg ) );
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );

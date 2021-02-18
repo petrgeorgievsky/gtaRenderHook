@@ -15,7 +15,7 @@
 
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <common_headers.h>
-#include <scene_graph.h>
+#include <render_client/render_client.h>
 
 // static RwRGBA gColourTop = *reinterpret_cast<RwRGBA *>( 0xB72CA0 );
 static HHOOK g_hImGuiHook;
@@ -93,32 +93,31 @@ void IdleHook::Idle( void *data )
         // GetCursorPos( &pMousePos );
         RsMouseSetPos( &mousePos );
 
-        auto &frame_info = rh::rw::engine::GetCurrentSceneGraph()->mFrameInfo;
-        auto &cur_cs     = *(CColourSet *)0xB7C4A0;
+        auto &sky_state = rh::rw::engine::gRenderClient->RenderState.SkyState;
+        auto &cur_cs    = *(CColourSet *)0xB7C4A0;
 
         auto *vec_to_sun_arr   = (RwV3d *)0xB7CA50;
         int & current_tc_value = *(int *)0xB79FD0;
 
-        frame_info.mSkyTopColor[0] = float( cur_cs.m_nSkyTopRed ) / 255.0f;
-        frame_info.mSkyTopColor[1] = float( cur_cs.m_nSkyTopGreen ) / 255.0f;
-        frame_info.mSkyTopColor[2] = float( cur_cs.m_nSkyTopBlue ) / 255.0f;
-        frame_info.mSkyTopColor[3] = 1.0f;
-        frame_info.mSkyBottomColor[0] =
-            float( cur_cs.m_nSkyBottomRed ) / 255.0f;
-        frame_info.mSkyBottomColor[1] =
+        sky_state.mSkyTopColor[0]    = float( cur_cs.m_nSkyTopRed ) / 255.0f;
+        sky_state.mSkyTopColor[1]    = float( cur_cs.m_nSkyTopGreen ) / 255.0f;
+        sky_state.mSkyTopColor[2]    = float( cur_cs.m_nSkyTopBlue ) / 255.0f;
+        sky_state.mSkyTopColor[3]    = 1.0f;
+        sky_state.mSkyBottomColor[0] = float( cur_cs.m_nSkyBottomRed ) / 255.0f;
+        sky_state.mSkyBottomColor[1] =
             float( cur_cs.m_nSkyBottomGreen ) / 255.0f;
-        frame_info.mSkyBottomColor[2] =
+        sky_state.mSkyBottomColor[2] =
             float( cur_cs.m_nSkyBottomBlue ) / 255.0f;
-        frame_info.mSkyBottomColor[3] = 1.0f;
-        frame_info.mAmbientColor[0]   = cur_cs.m_fAmbientRed;
-        frame_info.mAmbientColor[1]   = cur_cs.m_fAmbientGreen;
-        frame_info.mAmbientColor[2]   = cur_cs.m_fAmbientBlue;
-        frame_info.mAmbientColor[3]   = 1.0f;
+        sky_state.mSkyBottomColor[3] = 1.0f;
+        sky_state.mAmbientColor[0]   = cur_cs.m_fAmbientRed;
+        sky_state.mAmbientColor[1]   = cur_cs.m_fAmbientGreen;
+        sky_state.mAmbientColor[2]   = cur_cs.m_fAmbientBlue;
+        sky_state.mAmbientColor[3]   = 1.0f;
 
-        frame_info.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
-        frame_info.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;
-        frame_info.mSunDir[2] = vec_to_sun_arr[current_tc_value].z;
-        frame_info.mSunDir[3] = 1.0f;
+        sky_state.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
+        sky_state.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;
+        sky_state.mSunDir[2] = vec_to_sun_arr[current_tc_value].z;
+        sky_state.mSunDir[3] = 1.0f;
 
         CRenderer::ConstructRenderList();
         CRenderer::PreRender();

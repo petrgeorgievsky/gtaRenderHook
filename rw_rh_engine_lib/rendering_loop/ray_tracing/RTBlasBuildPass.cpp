@@ -3,16 +3,11 @@
 //
 
 #include "RTBlasBuildPass.h"
-#include <Engine/Common/IBuffer.h>
-#include <Engine/Common/ICommandBuffer.h>
-#include <Engine/Common/IDeviceState.h>
 #include <Engine/VulkanImpl/VulkanBottomLevelAccelerationStructure.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDebugUtils.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
-#include <render_driver/render_driver.h>
-#include <rw_engine/rh_backend/mesh_rendering_backend.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
+#include <render_driver/gpu_resources/resource_mgr.h>
 
 namespace rh::rw::engine
 {
@@ -24,15 +19,13 @@ void RTBlasBuildPass::RequestBlasBuild( uint64_t mesh_id )
     mBLASQueue.push( mesh_id );
 }
 
-RTBlasBuildPass::RTBlasBuildPass()
+RTBlasBuildPass::RTBlasBuildPass( const BlasBuildPassCreateInfo &info )
+    : Device( info.Device ), Resources( info.Resources )
 {
-    // todo: read from config
-    auto &device = gRenderDriver->GetDeviceState();
-
     mBlasCmdBuffer = dynamic_cast<rh::engine::VulkanCommandBuffer *>(
-        device.CreateCommandBuffer() );
+        Device.CreateCommandBuffer() );
     mBlasBuilt =
-        device.CreateSyncPrimitive( rh::engine::SyncPrimitiveType::GPU );
+        Device.CreateSyncPrimitive( rh::engine::SyncPrimitiveType::GPU );
 #ifdef _DEBUG
     rh::engine::VulkanDebugUtils::SetDebugName(
         mBlasCmdBuffer, std::string( "blas_build_cmd_buffer" ) );
@@ -40,14 +33,14 @@ RTBlasBuildPass::RTBlasBuildPass()
         mBlasBuilt, std::string( "blas_build_finish_sp" ) );
 #endif
 
-    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
+    auto &mesh_pool = Resources.GetMeshPool();
 
     mBLASPool.resize( mesh_pool.GetSize() );
 
     mesh_pool.AddOnRequestCallback(
         [this]( BackendMeshData &data, uint64_t id ) {
-            auto &device = dynamic_cast<rh::engine::VulkanDeviceState &>(
-                gRenderDriver->GetDeviceState() );
+            auto &device =
+                dynamic_cast<rh::engine::VulkanDeviceState &>( Device );
             mBLASPool[id].mHasEntry = true;
             rh::engine::AccelerationStructureCreateInfo ac_ci{};
             ac_ci.mVertexBuffer       = data.mVertexBuffer->Get();
@@ -80,7 +73,6 @@ void RTBlasBuildPass::Execute()
     mCompleted = false;
     if ( mBLASQueue.empty() )
         return;
-    auto &device = gRenderDriver->GetDeviceState();
     std::vector<VulkanBottomLevelAccelerationStructure *> blas_list{};
     blas_list.reserve( 50 );
 
@@ -103,7 +95,7 @@ void RTBlasBuildPass::Execute()
     if ( !mScratchBuffer || mScratchBufferSize < scratch_buff_size )
     {
         delete mScratchBuffer;
-        mScratchBuffer     = device.CreateBuffer( { scratch_buff_size,
+        mScratchBuffer     = Device.CreateBuffer( { scratch_buff_size,
                                                 BufferUsage::RayTracingScratch,
                                                 BufferFlags::Dynamic } );
         mScratchBufferSize = scratch_buff_size;
@@ -137,7 +129,7 @@ RTBlasBuildPass::GetSubmitInfo( rh::engine::ISyncPrimitive *dependency )
 }
 RTBlasBuildPass::~RTBlasBuildPass()
 {
-    auto &mesh_pool = gRenderDriver->GetResources().GetMeshPool();
+    auto &mesh_pool = Resources.GetMeshPool();
     mesh_pool.RemoveOnRequestCallback( MeshPoolCallbackId );
     mesh_pool.RemoveOnDestructCallback( MeshPoolCallbackId );
     // Cleanup blas pool

@@ -8,7 +8,6 @@
 #include <Engine/Common/types/shader_stage.h>
 #include <array>
 #include <common_headers.h>
-#include <rw_engine/global_definitions.h>
 #include <rw_engine/rw_raster/rw_raster.h>
 #include <rw_engine/rw_rh_convert_funcs.h>
 #include <rw_engine/rw_stream/rw_stream.h>

@@ -8,8 +8,9 @@
 #include "scene_description/gpu_scene_materials_pool.h"
 #include "scene_description/gpu_texture_pool.h"
 #include <Engine/Common/IDeviceState.h>
+#include <render_client/mesh_instance_state_recorder.h>
+#include <render_driver/gpu_resources/resource_mgr.h>
 #include <render_driver/render_driver.h>
-#include <rw_engine/rh_backend/material_backend.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 
@@ -20,7 +21,9 @@ using namespace rh::engine;
 
 constexpr auto SceneDescCallbacksId = 0x52;
 
-RTSceneDescription::RTSceneDescription()
+RTSceneDescription::RTSceneDescription(
+    const RTSceneDescriptionCreateInfo &info )
+    : Device( info.Device ), Resources( info.Resources )
 {
 
     constexpr auto draw_count_limit     = 10000;
@@ -35,7 +38,6 @@ RTSceneDescription::RTSceneDescription()
     constexpr auto material_buff_bind_id       = 4;
     constexpr auto materials_bind_id           = 5;
     constexpr auto materials_idx_remap_bind_id = 6;
-    auto &         device = gRenderDriver->GetDeviceState();
 
     mSceneDesc.resize( draw_count_limit );
     mSceneMaterials.resize( material_count_limit );
@@ -85,13 +87,13 @@ RTSceneDescription::RTSceneDescription()
         new GPUModelBuffersPool( mSceneSet, model_count_limit,
                                  index_buff_bind_id, vertex_buff_desc_bind_id );
 
-    mSceneDescBuffer = device.CreateBuffer(
+    mSceneDescBuffer = Device.CreateBuffer(
         { .mSize        = sizeof( SceneObjDesc ) * draw_count_limit,
           .mUsage       = BufferUsage::StorageBuffer,
           .mFlags       = BufferFlags::Dynamic,
           .mInitDataPtr = nullptr } );
 
-    mMaterialDescBuffer = device.CreateBuffer(
+    mMaterialDescBuffer = Device.CreateBuffer(
         { .mSize        = sizeof( MaterialData ) * material_count_limit,
           .mUsage       = BufferUsage::StorageBuffer,
           .mFlags       = BufferFlags::Dynamic,
@@ -102,19 +104,18 @@ RTSceneDescription::RTSceneDescription()
     std::array mdesc_buff_ui = {
         BufferUpdateInfo{ 0, VK_WHOLE_SIZE, mMaterialDescBuffer } };
 
-    device.UpdateDescriptorSets( { .mSet            = mSceneSet,
+    Device.UpdateDescriptorSets( { .mSet            = mSceneSet,
                                    .mBinding        = scene_desc_bind_id,
                                    .mDescriptorType = DescriptorType::RWBuffer,
                                    .mBufferUpdateInfo = sdesc_buff_ui } );
-    device.UpdateDescriptorSets( { .mSet            = mSceneSet,
+    Device.UpdateDescriptorSets( { .mSet            = mSceneSet,
                                    .mBinding        = material_buff_bind_id,
                                    .mDescriptorType = DescriptorType::RWBuffer,
                                    .mBufferUpdateInfo = mdesc_buff_ui } );
 
     /// Setup callbacks
-    auto &resources   = gRenderDriver->GetResources();
-    auto &raster_pool = resources.GetRasterPool();
-    auto &mesh_pool   = resources.GetMeshPool();
+    auto &raster_pool = Resources.GetRasterPool();
+    auto &mesh_pool   = Resources.GetMeshPool();
 
     mesh_pool.AddOnRequestCallback(
         [this]( BackendMeshData &data, uint64_t id ) {
@@ -138,10 +139,8 @@ RTSceneDescription::RTSceneDescription()
 
 RTSceneDescription::~RTSceneDescription()
 {
-
-    auto &resources   = gRenderDriver->GetResources();
-    auto &raster_pool = resources.GetRasterPool();
-    auto &mesh_pool   = resources.GetMeshPool();
+    auto &raster_pool = Resources.GetRasterPool();
+    auto &mesh_pool   = Resources.GetMeshPool();
     mesh_pool.RemoveOnDestructCallback( SceneDescCallbacksId );
     mesh_pool.RemoveOnRequestCallback( SceneDescCallbacksId );
     raster_pool.RemoveOnDestructCallback( SceneDescCallbacksId );
@@ -169,11 +168,10 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
                                          uint64_t            material_count )
 {
     SceneObjDesc &obj_desc    = mSceneDesc[mDrawCalls];
-    auto &        resources   = gRenderDriver->GetResources();
-    auto &        raster_pool = resources.GetRasterPool();
-    auto &        mesh_pool   = resources.GetMeshPool();
+    auto &        raster_pool = Resources.GetRasterPool();
+    auto &        mesh_pool   = Resources.GetMeshPool();
 
-    const auto &mesh = mesh_pool.GetResource( dc.mMeshId );
+    const auto &mesh = mesh_pool.GetResource( dc.MeshId );
     for ( auto i = 0; i < material_count; i++ )
     {
         mSceneMaterials[i + mMaterials] = materials[i];
@@ -200,10 +198,10 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
         mSceneMaterials[i + mMaterials].mSpecTexture = spec_tex_pool_id;
     }
 
-    obj_desc.objId     = mModelBuffersPool->GetModelId( dc.mMeshId );
+    obj_desc.objId     = mModelBuffersPool->GetModelId( dc.MeshId );
     obj_desc.txtOffset = mMaterials;
 
-    std::copy( &dc.mWorldTransform.m[0][0], &dc.mWorldTransform.m[0][0] + 3 * 4,
+    std::copy( &dc.WorldTransform.m[0][0], &dc.WorldTransform.m[0][0] + 3 * 4,
                &obj_desc.transform.m[0][0] );
     obj_desc.transform.m[3][3] = 1.0f;
 
@@ -212,17 +210,17 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
                      DirectX::XMLoadFloat4x4( &obj_desc.transform ) ) ) );
     DirectX::XMStoreFloat4x4( &obj_desc.transfomIT, it_mtx );
 
-    if ( dc.mDrawCallId != 0 )
+    if ( dc.DrawCallId != 0 )
     {
         // update prev transform
         // TODO:
-        auto iter = mPrevTransformMap.find( dc.mDrawCallId );
+        auto iter = mPrevTransformMap.find( dc.DrawCallId );
         if ( iter != mPrevTransformMap.end() )
             obj_desc.prevTransfom = iter->second;
         else
             DirectX::XMStoreFloat4x4( &obj_desc.prevTransfom, it_mtx );
 
-        mPrevTransformMap[dc.mDrawCallId] = obj_desc.transform;
+        mPrevTransformMap[dc.DrawCallId] = obj_desc.transform;
     }
     else
     {

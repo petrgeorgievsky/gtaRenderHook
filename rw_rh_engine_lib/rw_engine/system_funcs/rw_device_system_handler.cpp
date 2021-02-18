@@ -19,6 +19,8 @@
 #include <rw_engine/system_funcs/start_cmd.h>
 #include <rw_engine/system_funcs/stop_cmd.h>
 
+#include <DebugUtils/DebugLogger.h>
+#include <Engine/Common/IDeviceState.h>
 #include <Engine/EngineConfigBlock.h>
 
 namespace rh::rw::engine

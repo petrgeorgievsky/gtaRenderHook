@@ -3,9 +3,8 @@
 #include <DebugUtils/DebugLogger.h>
 #include <common_headers.h>
 #include <dinput.h>
+#include <filesystem>
 #include <render_client/render_client.h>
-#include <render_loop.h>
-#include <rw_engine/global_definitions.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rp_clump/rp_clump.h>
 #include <rw_engine/rw_camera/rw_camera.h>
@@ -64,9 +63,9 @@ void ModelLoadingTest::CustomRender()
                 [&ltm, atomic]( ResEnty *res_entry ) {
                     auto &renderer = gRenderClient->RenderState.MeshDrawCalls;
                     DrawCallInfo info{};
-                    info.mDrawCallId     = reinterpret_cast<uint64_t>( atomic );
-                    info.mMeshId         = res_entry->meshData;
-                    info.mWorldTransform = DirectX::XMFLOAT4X3{
+                    info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
+                    info.MeshId         = res_entry->meshData;
+                    info.WorldTransform = DirectX::XMFLOAT4X3{
                         ltm->at.x, ltm->right.x, ltm->up.x, ltm->pos.x,
                         ltm->at.y, ltm->right.y, ltm->up.y, ltm->pos.y,
                         ltm->at.z, ltm->right.z, ltm->up.z, ltm->pos.z,

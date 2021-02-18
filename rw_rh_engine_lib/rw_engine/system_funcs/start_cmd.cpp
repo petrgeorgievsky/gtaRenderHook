@@ -3,10 +3,10 @@
 //
 #include "start_cmd.h"
 #include "rw_device_system_globals.h"
+#include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/IDeviceState.h>
 #include <ipc/shared_memory_queue_client.h>
 #include <render_driver/render_driver.h>
-#include <rendering_loop/ray_tracing/RayTracingRenderer.h>
 
 namespace rh::rw::engine
 {
@@ -38,12 +38,6 @@ void CreateWindowTaskImpl( void *memory )
         debug::DebugLogger::ErrorFmt( "Failed to open window:%X", wnd );
         return;
     }
-
-    // Init renderer state
-    // TODO: Refactor
-    EngineState::gCameraState =
-        std::make_unique<CameraState>( gRenderDriver->GetDeviceState() );
-    EngineState::gFrameRenderer = std::make_shared<RayTracingRenderer>();
 }
 
 void StartSystemCmdImpl::RegisterCallHandler(

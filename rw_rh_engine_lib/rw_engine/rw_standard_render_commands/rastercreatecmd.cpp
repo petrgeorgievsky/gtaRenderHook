@@ -1,10 +1,9 @@
 #include "rastercreatecmd.h"
-#include "../global_definitions.h"
-#include "../rh_backend/raster_backend.h"
-#include "../system_funcs/rw_device_system_globals.h"
+
+#include <rw_engine/rh_backend/raster_backend.h>
+#include <rw_engine/system_funcs/rw_device_system_globals.h>
+
 #include <DebugUtils/DebugLogger.h>
-#include <Engine/Common/types/image_buffer_info.h>
-#include <Engine/Common/types/image_buffer_type.h>
 
 using namespace rh::rw::engine;
 

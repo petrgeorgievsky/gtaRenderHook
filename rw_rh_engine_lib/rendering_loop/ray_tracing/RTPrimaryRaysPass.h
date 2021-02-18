@@ -35,14 +35,14 @@ struct PrimaryRaysConfig
     uint32_t mWidth;
     uint32_t mHeight;
 };
-
+struct SkyState;
 class RTPrimaryRaysPass
 {
   public:
     RTPrimaryRaysPass( const PrimaryRaysConfig &config );
 
     void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
-                  const FrameInfo &frame );
+                  const SkyState &frame );
 
     rh::engine::IImageView *GetNormalsView() { return mNormalsBufferView[0]; }
     rh::engine::IImageView *GetPrevNormalsView()

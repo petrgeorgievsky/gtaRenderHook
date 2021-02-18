@@ -20,6 +20,7 @@ class IDescriptorSet;
 class IBuffer;
 class IShader;
 class ISyncPrimitive;
+class IDeviceState;
 } // namespace rh::engine
 namespace rh::rw::engine
 {
@@ -31,11 +32,21 @@ struct AnimatedMeshDrawCall
     SkinMeshData        mData;
     DirectX::XMFLOAT4X3 mTransform;
 };
+class EngineResourceHolder;
+struct SkinAnimationPipelineCreateInfo
+{
+    // dependencies
+    rh::engine::IDeviceState &Device;
+    EngineResourceHolder &    Resources;
+    // params
+    uint32_t AnimBufferLimit;
+};
+struct SkinDrawCallInfo;
 using rh::engine::ScopedPointer;
 class SkinAnimationPipeline
 {
   public:
-    SkinAnimationPipeline( uint32_t max_anims );
+    SkinAnimationPipeline( const SkinAnimationPipelineCreateInfo &info );
     ~SkinAnimationPipeline();
 
     std::vector<AnimatedMeshDrawCall> AnimateSkinnedMeshes(
@@ -44,6 +55,8 @@ class SkinAnimationPipeline
     GetAnimateSubmitInfo( rh::engine::ISyncPrimitive *dependency );
 
   private:
+    rh::engine::IDeviceState &                         Device;
+    EngineResourceHolder &                             Resources;
     ScopedPointer<rh::engine::IShader>                 mAnimShader;
     ScopedPointer<rh::engine::VulkanComputePipeline>   mPipeline;
     ScopedPointer<rh::engine::IPipelineLayout>         mPipelineLayout;

@@ -5,17 +5,17 @@
 #include "PointLights.h"
 #include "../call_redirection_util.h"
 #include <MemoryInjectionUtils/InjectorHelpers.h>
-#include <scene_graph.h>
+#include <render_client/render_client.h>
 
 int32_t PointLights::AddLight( char a1, float x, float y, float z, float dx,
                                int dy, int dz, float rad, float r, float g,
                                float b, char fogtype, char extrashadows )
 {
-    auto &frame_info = rh::rw::engine::GetCurrentSceneGraph()->mFrameInfo;
-    if ( frame_info.mLightCount > 1024 )
-        return 0;
+    using namespace rh::rw::engine;
+    assert( gRenderClient );
+    auto &light_state = gRenderClient->RenderState.Lights;
 
-    auto &l     = frame_info.mFirst4PointLights[frame_info.mLightCount];
+    PointLight l{};
     l.mPos[0]   = x;
     l.mPos[1]   = y;
     l.mPos[2]   = z;
@@ -24,7 +24,8 @@ int32_t PointLights::AddLight( char a1, float x, float y, float z, float dx,
     l.mColor[1] = g;
     l.mColor[2] = b;
     l.mColor[3] = 1;
-    frame_info.mLightCount++;
+
+    light_state.RecordPointLight( std::move( l ) );
     return 1;
 }
 

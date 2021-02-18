@@ -7,7 +7,6 @@
 
 #include <array>
 #include <cstdint>
-#include <scene_graph.h>
 namespace rh::engine
 {
 class IImageView;
@@ -62,8 +61,7 @@ class RTShadowsPass
   public:
     rh::engine::IImageView *GetShadowsView(); // { return mShadowsBufferView; }
 
-    void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer,
-                  const FrameInfo &frame );
+    void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer );
 
     RTShadowsPass( const RTShadowsInitParams &params );
 
