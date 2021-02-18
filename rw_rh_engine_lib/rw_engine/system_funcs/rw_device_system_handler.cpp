@@ -152,9 +152,7 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     {
         break;
     }
-    default:
-        throw std::logic_error(
-            "Unsupported system command called via rwSystemHandler!" );
+    default: return 0;
     }
     return 1;
 }
