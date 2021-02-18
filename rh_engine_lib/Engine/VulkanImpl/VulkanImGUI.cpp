@@ -156,6 +156,7 @@ VulkanImGUI::~VulkanImGUI()
 {
     ImGui_ImplVulkan_DestroyFontUploadObjects();
     ImGui_ImplVulkan_Shutdown();
+    vkDestroyDescriptorPool( mDevice, mDescriptorPool, nullptr );
     // ImGui_ImplWin32_Shutdown();
 }
 } // namespace rh::engine
