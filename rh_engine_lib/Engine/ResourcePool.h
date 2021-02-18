@@ -203,7 +203,7 @@ template <typename T> class ResourcePool
 
   private:
     uint64_t                                   mGarbageCount    = 0;
-    uint64_t                                   mFreeResourceIdx = 0;
+    int64_t                                    mFreeResourceIdx = 0;
     std::vector<ResourceFlags>                 mResourcePool{};
     std::vector<T>                             mResourcePoolData{};
     std::vector<std::pair<uint64_t, Callback>> mDestructCallbacks{};
