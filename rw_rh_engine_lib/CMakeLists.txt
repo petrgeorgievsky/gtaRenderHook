@@ -55,6 +55,7 @@ set(SOURCES
         rw_engine/rh_backend/im2d_renderer.cpp
         ipc/MemoryWriter.cpp
         ipc/MemoryReader.cpp
+
         rendering_loop/ray_tracing/RTBlasBuildPass.cpp
         rendering_loop/ray_tracing/RTTlasBuildPass.cpp
         rendering_loop/ray_tracing/RTSceneDescription.cpp
@@ -73,6 +74,8 @@ set(SOURCES
         rendering_loop/ray_tracing/tiled_light_culling.cpp
         rendering_loop/ray_tracing/RTReflectionRaysPass.cpp
         rendering_loop/ray_tracing/debug_pipeline.cpp
+        rendering_loop/ray_tracing/DescriptorUpdater.cpp
+
         rw_engine/rh_backend/im3d_backend.cpp
         rw_engine/rh_backend/im3d_renderer.cpp
         rw_engine/system_funcs/raster_lock_cmd.cpp
@@ -94,11 +97,27 @@ set(SOURCES
         rw_engine/system_funcs/skinned_mesh_unload_cmd.cpp
         rw_engine/system_funcs/render_scene_cmd.cpp
         rw_engine/system_funcs/rw_device_standards.cpp
+
+        data_desc/immediate_mode/im_state.cpp
+        data_desc/light_system/lighting_state.cpp
+        data_desc/instances/mesh_instance.cpp
+        data_desc/frame_info.cpp
+
         render_driver/render_driver.cpp
+        render_driver/framebuffer_loop.cpp
+        render_driver/framebuffer_state.cpp
+        render_driver/gpu_resources/resource_mgr.cpp
+        render_driver/gpu_resources/raster_pool.cpp
+
         render_client/render_client.cpp
         render_client/client_render_state.cpp
         render_client/im2d_state_recorder.cpp
-        material_storage.cpp data_desc/immediate_mode/im_state.cpp render_driver/framebuffer_loop.cpp render_driver/framebuffer_loop.h data_desc/frame_info.h render_driver/framebuffer_state.cpp render_driver/framebuffer_state.h data_desc/light_system/point_light.h data_desc/light_system/lighting_state.h render_client/light_state_recorder.cpp render_client/light_state_recorder.h render_driver/gpu_resources/resource_mgr.cpp render_driver/gpu_resources/resource_mgr.h render_driver/gpu_resources/raster_pool.cpp render_driver/gpu_resources/raster_pool.h render_client/im3d_state_recorder.cpp render_client/im3d_state_recorder.h render_client/mesh_instance_state_recorder.cpp render_client/mesh_instance_state_recorder.h render_client/skin_instance_state_recorder.cpp render_client/skin_instance_state_recorder.h data_desc/viewport_state.h data_desc/sky_state.h data_desc/light_system/lighting_state.cpp data_desc/instances/mesh_instance.cpp data_desc/instances/mesh_instance.h data_desc/frame_info.cpp)
+        render_client/light_state_recorder.cpp
+        render_client/im3d_state_recorder.cpp
+        render_client/mesh_instance_state_recorder.cpp
+        render_client/skin_instance_state_recorder.cpp
+
+        material_storage.cpp)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 #set_property(TARGET rw_rh_engine_lib PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
