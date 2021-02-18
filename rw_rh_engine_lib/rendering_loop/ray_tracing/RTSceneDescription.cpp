@@ -81,11 +81,11 @@ RTSceneDescription::RTSceneDescription(
         static_cast<IDescriptorSetLayout *>( mSceneSetLayout ) };
     mSceneSet = mDescSetAlloc->AllocateDescriptorSets( { layout_array } )[0];
 
-    mTexturePool = new GPUTexturePool( mSceneSet, texture_desc_bind_id,
-                                       texture_count_limit );
-    mModelBuffersPool =
-        new GPUModelBuffersPool( mSceneSet, model_count_limit,
-                                 index_buff_bind_id, vertex_buff_desc_bind_id );
+    mTexturePool = new GPUTexturePool(
+        { Device, mSceneSet, texture_desc_bind_id, texture_count_limit } );
+    mModelBuffersPool = new GPUModelBuffersPool(
+        { Device, mSceneSet, model_count_limit, index_buff_bind_id,
+          vertex_buff_desc_bind_id } );
 
     mSceneDescBuffer = Device.CreateBuffer(
         { .mSize        = sizeof( SceneObjDesc ) * draw_count_limit,

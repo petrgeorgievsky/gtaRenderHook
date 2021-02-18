@@ -4,18 +4,16 @@
 
 #include "gpu_texture_pool.h"
 #include <Engine/Common/IDeviceState.h>
-#include <render_driver/render_driver.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
 {
 
-GPUTexturePool::GPUTexturePool( rh::engine::IDescriptorSet *desc_set,
-                                uint32_t binding_id, uint64_t descriptor_count )
-    : mGPUPool( desc_set ), mBindingId( binding_id )
+GPUTexturePool::GPUTexturePool( const GPUTexturePoolCreateInfo &info )
+    : Device( info.Device ), mGPUPool( info.DescSet ),
+      mBindingId( info.TexturePoolBinding )
 {
-    mSlotAvailability.resize( descriptor_count, 1 );
-    mBuffersRemap.resize( descriptor_count, -1 );
+    mSlotAvailability.resize( info.TextureCount, 1 );
+    mBuffersRemap.resize( info.TextureCount, -1 );
 }
 
 uint64_t GPUTexturePool::StoreTexture( rh::engine::IImageView *image,
@@ -38,12 +36,13 @@ uint64_t GPUTexturePool::StoreTexture( rh::engine::IImageView *image,
     imgUpdateInfo.mDescriptorType  = DescriptorType::ROTexture;
     imgUpdateInfo.mArrayStartIdx   = id;
     imgUpdateInfo.mImageUpdateInfo = img_upd_list;
-    gRenderDriver->GetDeviceState().UpdateDescriptorSets( imgUpdateInfo );
+    Device.UpdateDescriptorSets( imgUpdateInfo );
 
     mBuffersRemap[tex_id] = id;
     mSlotAvailability[id] = 0;
     return id;
 }
+
 void GPUTexturePool::RemoveTexture( uint64_t id )
 {
     auto slot_id = GetTexId( id );
@@ -52,6 +51,7 @@ void GPUTexturePool::RemoveTexture( uint64_t id )
     mSlotAvailability[slot_id] = 1;
     mBuffersRemap[id]          = -1;
 }
+
 int32_t GPUTexturePool::GetTexId( uint64_t tex_id )
 {
     return mBuffersRemap[tex_id];

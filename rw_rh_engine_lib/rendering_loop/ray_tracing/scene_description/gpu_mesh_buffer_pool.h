@@ -10,32 +10,37 @@ namespace rh
 namespace engine
 {
 class IDescriptorSet;
+class IDeviceState;
 class IImageView;
 } // namespace engine
 namespace rw::engine
 {
 struct BackendMeshData;
 
+struct GPUModelBuffersPoolCreateInfo
+{
+    // dependencies
+    rh::engine::IDeviceState &Device;
+
+    // args
+    rh::engine::IDescriptorSet *DescSet;
+    uint64_t                    BufferCount;
+    uint32_t                    IndexBufferBinding;
+    uint32_t                    VertexBufferBinding;
+};
+
 class GPUModelBuffersPool
 {
   public:
-    GPUModelBuffersPool( rh::engine::IDescriptorSet *desc_set,
-                         uint64_t buffer_count, uint32_t index_buffer_binding,
-                         uint32_t vertex_buffer_binding );
+    GPUModelBuffersPool( const GPUModelBuffersPoolCreateInfo &info );
 
     void    StoreModel( const BackendMeshData &model, uint64_t model_id );
     int32_t GetModelId( uint64_t model_id );
 
-    void RemoveModel( uint64_t id )
-    {
-        auto slot_id = GetModelId( id );
-        if ( slot_id < 0 )
-            return;
-        mSlotAvailability[slot_id] = 1;
-        mBuffersRemap[id]          = -1;
-    }
+    void RemoveModel( uint64_t id );
 
   private:
+    rh::engine::IDeviceState &  Device;
     std::vector<char>           mSlotAvailability;
     std::vector<int32_t>        mBuffersRemap;
     rh::engine::IDescriptorSet *mGPUPool;
