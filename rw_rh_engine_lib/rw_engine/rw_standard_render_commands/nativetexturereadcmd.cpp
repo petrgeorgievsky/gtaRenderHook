@@ -6,6 +6,7 @@
 #include <ostream>
 #include <queue>
 #include <span>
+#include <sstream>
 
 #include <d3d9.h>
 
