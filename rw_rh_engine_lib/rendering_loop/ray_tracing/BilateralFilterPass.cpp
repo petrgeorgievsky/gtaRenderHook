@@ -27,7 +27,7 @@ BilateralFilterPass::BilateralFilterPass(
     mDescSetH = desc_sets[0];
     mDescSetV = desc_sets[1];
 
-    DescSetUpdateBatch updateBatch{};
+    DescSetUpdateBatch updateBatch{ mParent->Device };
     updateBatch.Begin( mDescSetH )
         .UpdateImage( 0, DescriptorType::StorageTexture,
                       { { ImageLayout::General, mPassParams.mInputImage } } )
@@ -154,12 +154,14 @@ BilateralFilterPipeline::GetPass( const BilateralFilterPassParams &params )
     return new BilateralFilterPass( this, params );
 }
 
-BilateralFilterPipeline::BilateralFilterPipeline()
+BilateralFilterPipeline::BilateralFilterPipeline(
+    rh::engine::IDeviceState &device )
+    : Device( device )
 {
     using namespace rh::engine;
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    auto &vk_device = (VulkanDeviceState &)Device;
 
-    DescriptorGenerator descriptorGenerator{ device };
+    DescriptorGenerator descriptorGenerator{ Device };
 
     // Main Descriptor Set layout
     descriptorGenerator
@@ -183,10 +185,10 @@ BilateralFilterPipeline::BilateralFilterPipeline()
         descriptorGenerator.FinalizeDescriptorSet( 1, 8 );
     mDescAllocator = descriptorGenerator.FinalizeAllocator();
 
-    mPipelineLayout = device.CreatePipelineLayout(
+    mPipelineLayout = Device.CreatePipelineLayout(
         { .mSetLayouts = {
               static_cast<IDescriptorSetLayout *>( mDescSetLayout ) } } );
-    mPipelineDynamicBlurLayout = device.CreatePipelineLayout(
+    mPipelineDynamicBlurLayout = Device.CreatePipelineLayout(
         { .mSetLayouts = { static_cast<IDescriptorSetLayout *>(
               mDynamicBlurDescSetLayout ) } } );
 
@@ -194,43 +196,43 @@ BilateralFilterPipeline::BilateralFilterPipeline()
                                 "shaders/vulkan/engine/bilateral_filter.comp",
                             .mEntryPoint  = "main",
                             .mShaderStage = ShaderStage::Compute };
-    mBilateralBlurShader = device.CreateShader( shader_desc );
+    mBilateralBlurShader = Device.CreateShader( shader_desc );
 
     ShaderDesc dyn_shader_desc{
         .mShaderPath  = "shaders/vulkan/engine/bilateral_filter_dynamic.comp",
         .mEntryPoint  = "main",
         .mShaderStage = ShaderStage::Compute };
-    mDynamicBilateralBlurShader = device.CreateShader( dyn_shader_desc );
+    mDynamicBilateralBlurShader = Device.CreateShader( dyn_shader_desc );
     ShaderDesc dyn_shader_h_desc{
         .mShaderPath  = "shaders/vulkan/engine/bilateral_filter_dynamic_h.comp",
         .mEntryPoint  = "main",
         .mShaderStage = ShaderStage::Compute };
-    mDynamicBilateralBlurHShader = device.CreateShader( dyn_shader_h_desc );
+    mDynamicBilateralBlurHShader = Device.CreateShader( dyn_shader_h_desc );
     ShaderDesc dyn_shader_v_desc{
         .mShaderPath  = "shaders/vulkan/engine/bilateral_filter_dynamic_v.comp",
         .mEntryPoint  = "main",
         .mShaderStage = ShaderStage::Compute };
-    mDynamicBilateralBlurVShader = device.CreateShader( dyn_shader_v_desc );
+    mDynamicBilateralBlurVShader = Device.CreateShader( dyn_shader_v_desc );
 
-    mPipeline = device.CreateComputePipeline(
+    mPipeline = vk_device.CreateComputePipeline(
         { .mLayout      = mPipelineLayout,
           .mShaderStage = { .mStage      = shader_desc.mShaderStage,
                             .mShader     = mBilateralBlurShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mPipelineDynamicBlur = device.CreateComputePipeline(
+    mPipelineDynamicBlur = vk_device.CreateComputePipeline(
         { .mLayout      = mPipelineDynamicBlurLayout,
           .mShaderStage = { .mStage      = shader_desc.mShaderStage,
                             .mShader     = mDynamicBilateralBlurShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mPipelineDynamicBlurV = device.CreateComputePipeline(
+    mPipelineDynamicBlurV = vk_device.CreateComputePipeline(
         { .mLayout      = mPipelineDynamicBlurLayout,
           .mShaderStage = { .mStage      = dyn_shader_v_desc.mShaderStage,
                             .mShader     = mDynamicBilateralBlurVShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mPipelineDynamicBlurH = device.CreateComputePipeline(
+    mPipelineDynamicBlurH = vk_device.CreateComputePipeline(
         { .mLayout      = mPipelineDynamicBlurLayout,
           .mShaderStage = { .mStage      = dyn_shader_h_desc.mShaderStage,
                             .mShader     = mDynamicBilateralBlurHShader,

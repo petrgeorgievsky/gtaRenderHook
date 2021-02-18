@@ -33,6 +33,8 @@ class VarAwareTempAccumColorFilterPipe;
 
 struct RTReflectionInitParams
 {
+    rh::engine::IDeviceState &Device;
+
     uint32_t                          mWidth;
     uint32_t                          mHeight;
     RTSceneDescription *              mScene;
@@ -59,6 +61,7 @@ class RTReflectionRaysPass
     }
 
   private:
+    rh::engine::IDeviceState &         Device;
     uint32_t                           mWidth;
     uint32_t                           mHeight;
     RTSceneDescription *               mScene;

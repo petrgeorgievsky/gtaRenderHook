@@ -9,7 +9,6 @@
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <rendering_loop/DescriptorGenerator.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
 {
@@ -37,23 +36,25 @@ enum accum_slot_ids
     a_NewTSPP          = 6
 };
 
-VarAwareTempAccumFilterPipe::VarAwareTempAccumFilterPipe()
+VarAwareTempAccumFilterPipe::VarAwareTempAccumFilterPipe(
+    rh::engine::IDeviceState &device )
+    : Device( device )
 {
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    auto &vk_device = (VulkanDeviceState &)Device;
 
     /// Shaders
-    mReProjectShader = device.CreateShader(
+    mReProjectShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/reverse_reproject_pass.comp",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::Compute } );
-    mAccumulateShader = device.CreateShader(
+    mAccumulateShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/history_accum_pass.comp",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::Compute } );
 
     /// Descriptor layouts
 
-    DescriptorGenerator desc_gen{ device };
+    DescriptorGenerator desc_gen{ Device };
     desc_gen
         .AddDescriptor( 0, r_OldFrame, 0, DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
@@ -92,16 +93,16 @@ VarAwareTempAccumFilterPipe::VarAwareTempAccumFilterPipe()
     mDescSetAlloc            = desc_gen.FinalizeAllocator();
 
     mReProjectLayout =
-        device.CreatePipelineLayout( { { mReProjectDescSetLayout } } );
+        Device.CreatePipelineLayout( { { mReProjectDescSetLayout } } );
     mAccumulateLayout =
-        device.CreatePipelineLayout( { { mAccumulateDescSetLayout } } );
+        Device.CreatePipelineLayout( { { mAccumulateDescSetLayout } } );
 
     // pipelines
-    mReProjectPipeline = device.CreateComputePipeline(
+    mReProjectPipeline = vk_device.CreateComputePipeline(
         { mReProjectLayout,
           { ShaderStage::Compute, mReProjectShader, "main" } } );
 
-    mAccumulatePipeline = device.CreateComputePipeline(
+    mAccumulatePipeline = vk_device.CreateComputePipeline(
         { mAccumulateLayout,
           { ShaderStage::Compute, mAccumulateShader, "main" } } );
 }
@@ -116,7 +117,7 @@ VATAFilterPass::VATAFilterPass( VarAwareTempAccumFilterPipe *pipeline,
                                 const VATAPassParam &        params )
     : mParent( pipeline ), mWidth( params.mWidth ), mHeight( params.mHeight )
 {
-    auto &device = params.mDevice;
+    auto &device = mParent->Device;
 
     auto desc_sets = pipeline->mDescSetAlloc->AllocateDescriptorSets(
         { { pipeline->mAccumulateDescSetLayout,
@@ -160,7 +161,7 @@ VATAFilterPass::VATAFilterPass( VarAwareTempAccumFilterPipe *pipeline,
 
     /// Bind descriptors
 
-    DescSetUpdateBatch descBatch{};
+    DescSetUpdateBatch descBatch{ device };
     descBatch.Begin( mReprojDescSet )
         .UpdateImage( r_OldFrame, DescriptorType::StorageTexture,
                       { { ImageLayout::General, mAccumulateValueView } } )

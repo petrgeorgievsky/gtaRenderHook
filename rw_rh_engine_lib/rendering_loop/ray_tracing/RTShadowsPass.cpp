@@ -24,11 +24,11 @@ namespace rh::rw::engine
 using namespace rh::engine;
 
 RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
-    : mCamera( params.mCamera ), mScene( params.mScene ),
-      mWidth( params.mWidth ), mHeight( params.mHeight )
+    : Device( params.Device ), mCamera( params.mCamera ),
+      mScene( params.mScene ), mWidth( params.mWidth ),
+      mHeight( params.mHeight )
 {
-    auto &              device = gRenderDriver->GetDeviceState();
-    DescriptorGenerator descriptorGenerator{ device };
+    DescriptorGenerator descriptorGenerator{ Device };
     /// TLAS
     descriptorGenerator.AddDescriptor(
         0, 0, 0, DescriptorType::RTAccelerationStruct, 1,
@@ -72,7 +72,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
         mCamera->GetSetLayout(), mScene->DescLayout() };
 
     mPipeLayout =
-        device.CreatePipelineLayout( { .mSetLayouts = layout_array } );
+        Device.CreatePipelineLayout( { .mSetLayouts = layout_array } );
 
     std::array tex_layout_array = {
         static_cast<IDescriptorSetLayout *>( mRayTraceSetLayout ) };
@@ -83,29 +83,29 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
 
     // setup camera stuff
     mTextureSampler =
-        device.CreateSampler( { Sampler{ SamplerFilter::Linear } } );
+        Device.CreateSampler( { Sampler{ SamplerFilter::Linear } } );
 
     std::array sampler_upd_info = { ImageUpdateInfo{
         ImageLayout::ShaderReadOnly, nullptr, mTextureSampler } };
-    device.UpdateDescriptorSets( { .mSet             = mRayTraceSet,
+    Device.UpdateDescriptorSets( { .mSet             = mRayTraceSet,
                                    .mBinding         = 3,
                                    .mDescriptorType  = DescriptorType::Sampler,
                                    .mImageUpdateInfo = sampler_upd_info } );
 
     // create shaders
-    mRayGenShader = device.CreateShader(
+    mRayGenShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/rt_shadows.rgen",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayGen } );
-    mClosestHitShader = device.CreateShader(
+    mClosestHitShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/rt_shadows.rchit",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayHit } );
-    mAnyHitShader = device.CreateShader(
+    mAnyHitShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/rt_shadows.rahit",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayAnyHit } );
-    mMissShader = device.CreateShader(
+    mMissShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/raytrace_shadow.rmiss",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayMiss } );
@@ -114,21 +114,21 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
     mShadowsBuffer = Create2DRenderTargetBuffer( params.mWidth, params.mHeight,
                                                  ImageBufferFormat::RGBA16 );
     mShadowsBufferView =
-        device.CreateImageView( { mShadowsBuffer, ImageBufferFormat::RGBA16,
+        Device.CreateImageView( { mShadowsBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );
     mTempBlurShadowsBuffer = Create2DRenderTargetBuffer(
         params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
-    mTempBlurShadowsBufferView = device.CreateImageView(
+    mTempBlurShadowsBufferView = Device.CreateImageView(
         { mTempBlurShadowsBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
     mBlurredShadowsBuffer = Create2DRenderTargetBuffer(
         params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
-    mBlurredShadowsBufferView = device.CreateImageView(
+    mBlurredShadowsBufferView = Device.CreateImageView(
         { mBlurredShadowsBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
 
     mParamsBuffer =
-        device.CreateBuffer( { .mSize  = sizeof( ShadowParams ),
+        Device.CreateBuffer( { .mSize  = sizeof( ShadowParams ),
                                .mUsage = BufferUsage::ConstantBuffer } );
 
     auto noise       = ReadBMP( "resources/blue_noise.bmp" );
@@ -139,7 +139,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
         std::array<ImageUpdateInfo, 1> img_ui = {
             { ImageLayout::General, mShadowsBufferView, nullptr } };
 
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet             = mRayTraceSet,
               .mBinding         = 1,
               .mDescriptorType  = DescriptorType::StorageTexture,
@@ -148,7 +148,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
     {
         std::array<ImageUpdateInfo, 1> img_ui = {
             { ImageLayout::General, params.mNormalsView, nullptr } };
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet             = mRayTraceSet,
               .mBinding         = 2,
               .mDescriptorType  = DescriptorType::StorageTexture,
@@ -157,14 +157,14 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
     {
         std::array<ImageUpdateInfo, 1> img_ui = {
             { ImageLayout::ShaderReadOnly, mNoiseBufferView, nullptr } };
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet             = mRayTraceSet,
               .mBinding         = 4,
               .mDescriptorType  = DescriptorType::ROTexture,
               .mImageUpdateInfo = img_ui } );
     }
     {
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet              = mRayTraceSet,
               .mBinding          = 5,
               .mDescriptorType   = DescriptorType::ROBuffer,
@@ -173,7 +173,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
                                        .mBuffer = params.mSkyCfg } } } );
     }
     {
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet              = mRayTraceSet,
               .mBinding          = 6,
               .mDescriptorType   = DescriptorType::ROBuffer,
@@ -182,7 +182,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
                                        .mBuffer = mParamsBuffer } } } );
     }
     {
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet              = mRayTraceSet,
               .mBinding          = 7,
               .mDescriptorType   = DescriptorType::RWBuffer,
@@ -191,7 +191,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
                                        .mBuffer = params.mLightBuffer } } } );
     }
     {
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet              = mRayTraceSet,
               .mBinding          = 8,
               .mDescriptorType   = DescriptorType::RWBuffer,
@@ -200,7 +200,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
                                        .mBuffer = params.mTileBuffer } } } );
     }
     {
-        device.UpdateDescriptorSets(
+        Device.UpdateDescriptorSets(
             { .mSet              = mRayTraceSet,
               .mBinding          = 9,
               .mDescriptorType   = DescriptorType::RWBuffer,
@@ -234,7 +234,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
     } );
 
     mPipeline =
-        dynamic_cast<VulkanDeviceState &>( device ).CreateRayTracingPipeline(
+        dynamic_cast<VulkanDeviceState &>( Device ).CreateRayTracingPipeline(
             { .mLayout       = mPipeLayout,
               .mShaderStages = stage_descs,
               .mShaderGroups = rt_groups } );
@@ -242,7 +242,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
     auto sbt = mPipeline->GetShaderBindingTable();
 
     mShaderBindTable =
-        device.CreateBuffer( { .mSize  = static_cast<uint32_t>( sbt.size() ),
+        Device.CreateBuffer( { .mSize  = static_cast<uint32_t>( sbt.size() ),
                                .mUsage = BufferUsage::RayTracingScratch,
                                .mFlags = BufferFlags::Dynamic } );
     /// Weird stuff from nvidia tutorial, I guess they fill in some data with
@@ -259,8 +259,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
 
     // Filtering
     mVarianceTAFilter = params.mTAFilterPipeline->GetFilter(
-        VATAColorPassParam{ .mDevice        = device,
-                            .mWidth         = mWidth,
+        VATAColorPassParam{ .mWidth         = mWidth,
                             .mHeight        = mHeight,
                             .mInputValue    = mShadowsBufferView,
                             .mPrevDepth     = params.mPrevNormalsView,

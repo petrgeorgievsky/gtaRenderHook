@@ -34,12 +34,11 @@ enum rtao_slot_ids
 };
 
 RTAOPass::RTAOPass( const RTAOInitParams &params )
-    : mScene( params.mScene ), mCamera( params.mCamera ),
-      mWidth( params.mWidth ), mHeight( params.mHeight )
+    : Device( params.Device ), mScene( params.mScene ),
+      mCamera( params.mCamera ), mWidth( params.mWidth ),
+      mHeight( params.mHeight )
 {
-    auto &device = gRenderDriver->GetDeviceState();
-
-    DescriptorGenerator descriptorGenerator{ device };
+    DescriptorGenerator descriptorGenerator{ Device };
     descriptorGenerator
         .AddDescriptor( 0, rtaoRTAS, 0, DescriptorType::RTAccelerationStruct, 1,
                         ShaderStage::RayGen | ShaderStage::RayHit )
@@ -64,7 +63,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
         mCamera->GetSetLayout(), mScene->DescLayout() };
 
     mPipeLayout =
-        device.CreatePipelineLayout( { .mSetLayouts = layout_array } );
+        Device.CreatePipelineLayout( { .mSetLayouts = layout_array } );
 
     // Desc set allocator
     mDescSetAlloc = descriptorGenerator.FinalizeAllocator();
@@ -77,28 +76,28 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     mRayTraceSet = results[0];
 
     // setup camera stuff
-    mTextureSampler = device.CreateSampler( {} );
+    mTextureSampler = Device.CreateSampler( {} );
 
     // create shaders
-    mRayGenShader = device.CreateShader(
+    mRayGenShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/rt_ao.rgen",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayGen } );
-    mClosestHitShader = device.CreateShader(
+    mClosestHitShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/rt_shadows.rchit",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayHit } );
-    mAnyHitShader = device.CreateShader(
+    mAnyHitShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/rt_shadows.rahit",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayAnyHit } );
-    mMissShader = device.CreateShader(
+    mMissShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/raytrace_shadow.rmiss",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::RayMiss } );
 
     mParamsBuffer =
-        device.CreateBuffer( { .mSize  = sizeof( AOParams ),
+        Device.CreateBuffer( { .mSize  = sizeof( AOParams ),
                                .mUsage = BufferUsage::ConstantBuffer } );
 
     // create rt buffers
@@ -107,19 +106,19 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
         mAOBuffer[i] = Create2DRenderTargetBuffer(
             params.mWidth, params.mHeight, ImageBufferFormat::RG16 );
         mAOBufferView[i] =
-            device.CreateImageView( { mAOBuffer[i], ImageBufferFormat::RG16,
+            Device.CreateImageView( { mAOBuffer[i], ImageBufferFormat::RG16,
                                       ImageViewUsage::RWTexture } );
     }
 
     mTempBlurAOBuffer = Create2DRenderTargetBuffer(
         params.mWidth, params.mHeight, ImageBufferFormat::R16 );
     mTempBlurAOBufferView =
-        device.CreateImageView( { mTempBlurAOBuffer, ImageBufferFormat::R16,
+        Device.CreateImageView( { mTempBlurAOBuffer, ImageBufferFormat::R16,
                                   ImageViewUsage::RWTexture } );
     mBlurredAOBuffer = Create2DRenderTargetBuffer(
         params.mWidth, params.mHeight, ImageBufferFormat::R16 );
     mBlurredAOBufferView =
-        device.CreateImageView( { mBlurredAOBuffer, ImageBufferFormat::R16,
+        Device.CreateImageView( { mBlurredAOBuffer, ImageBufferFormat::R16,
                                   ImageViewUsage::RWTexture } );
 
     auto noise       = ReadBMP( "resources/blue_noise.bmp" );
@@ -127,26 +126,29 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     mNoiseBufferView = noise.mImageView;
     // Bind descriptor buffers
 
-    DescSetUpdateBatch setUpdateBatch{};
-
+    DescSetUpdateBatch setUpdateBatch{ Device };
+    // clang-format off
     setUpdateBatch.Begin( mRayTraceSet )
-        .UpdateImage( rtaoResult, DescriptorType::StorageTexture,
-                      { { ImageLayout::General, mAOBufferView[0], nullptr } } )
-        .UpdateImage(
-            rtaoNormalDepth, DescriptorType::StorageTexture,
-            { { ImageLayout::General, params.mNormalsView, nullptr } } )
-        .UpdateImage( rtaoDefaultSampler, DescriptorType::Sampler,
-                      { ImageUpdateInfo{ ImageLayout::ShaderReadOnly, nullptr,
-                                         mTextureSampler } } )
-        .UpdateImage(
-            rtaoNoiseTexture, DescriptorType::ROTexture,
-            { { ImageLayout::ShaderReadOnly, mNoiseBufferView, nullptr } } )
-        .UpdateImage(
-            rtaoMotionVectors, DescriptorType::StorageTexture,
-            { { ImageLayout::General, params.mMotionVectorsView, nullptr } } )
-        .UpdateBuffer( rtaoParamsBuffer, DescriptorType::ROBuffer,
+        .UpdateImage( rtaoResult,
+                                DescriptorType::StorageTexture,
+                        { { ImageLayout::General, mAOBufferView[0], nullptr } } )
+        .UpdateImage( rtaoNormalDepth,
+                                DescriptorType::StorageTexture,
+                        { { ImageLayout::General, params.mNormalsView, nullptr } } )
+        .UpdateImage( rtaoDefaultSampler,
+                                DescriptorType::Sampler,
+                        { { ImageLayout::ShaderReadOnly, nullptr, mTextureSampler } } )
+        .UpdateImage( rtaoNoiseTexture,
+                                DescriptorType::ROTexture,
+                        { { ImageLayout::ShaderReadOnly, mNoiseBufferView, nullptr } } )
+        .UpdateImage( rtaoMotionVectors,
+                            DescriptorType::StorageTexture,
+                { { ImageLayout::General, params.mMotionVectorsView, nullptr } } )
+        .UpdateBuffer( rtaoParamsBuffer,
+                                DescriptorType::ROBuffer,
                        { { 0, sizeof( AOParams ), (IBuffer *)mParamsBuffer } } )
         .End();
+    // clang-format on
 
     /// TODO: Make it easier to create raytracing hitgroups/sbt's
     std::vector<ShaderStageDesc> stage_descs{};
@@ -172,7 +174,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     } );
 
     mPipeline =
-        dynamic_cast<VulkanDeviceState &>( device ).CreateRayTracingPipeline(
+        dynamic_cast<VulkanDeviceState &>( Device ).CreateRayTracingPipeline(
             { .mLayout       = mPipeLayout,
               .mShaderStages = stage_descs,
               .mShaderGroups = rt_groups } );
@@ -180,7 +182,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     auto sbt = mPipeline->GetShaderBindingTable();
 
     mShaderBindTable =
-        device.CreateBuffer( { .mSize  = static_cast<uint32_t>( sbt.size() ),
+        Device.CreateBuffer( { .mSize  = static_cast<uint32_t>( sbt.size() ),
                                .mUsage = BufferUsage::RayTracingScratch,
                                .mFlags = BufferFlags::Dynamic } );
     /// Weird stuff from nvidia tutorial, I guess they fill in some data with
@@ -196,8 +198,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     mShaderBindTable->Unlock();
 
     mVarianceTAFilter = params.mTAFilterPipeline->GetFilter(
-        VATAPassParam{ .mDevice        = device,
-                       .mWidth         = mWidth,
+        VATAPassParam{ .mWidth         = mWidth,
                        .mHeight        = mHeight,
                        .mInputValue    = mAOBufferView[0],
                        .mPrevDepth     = params.mPrevNormalsView,
@@ -222,7 +223,7 @@ void RTAOPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer )
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
     std::array<AccelStructUpdateInfo, 1> accel_ui = { { tlas } };
-    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
+    Device.UpdateDescriptorSets(
         { .mSet            = mRayTraceSet,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,

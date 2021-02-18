@@ -19,6 +19,7 @@ class ICommandBuffer;
 class IDescriptorSetAllocator;
 class IDescriptorSet;
 class IDescriptorSetLayout;
+class IDeviceState;
 } // namespace rh::engine
 namespace rh::rw::engine
 {
@@ -31,6 +32,8 @@ class BilateralFilterPipeline;
 class BilateralFilterPass;
 struct RTAOInitParams
 {
+    rh::engine::IDeviceState &Device;
+
     RTSceneDescription *         mScene;
     CameraDescription *          mCamera;
     VarAwareTempAccumFilterPipe *mTAFilterPipeline;
@@ -51,6 +54,7 @@ class RTAOPass
     void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer );
 
   private:
+    rh::engine::IDeviceState &         Device;
     RTSceneDescription *               mScene;
     CameraDescription *                mCamera;
     ScopedPointer<BilateralFilterPass> mBilFil0;

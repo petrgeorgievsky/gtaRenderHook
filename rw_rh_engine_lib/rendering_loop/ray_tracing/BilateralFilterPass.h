@@ -15,6 +15,7 @@ class IShader;
 class ICommandBuffer;
 class IImageView;
 class IImageBuffer;
+class IDeviceState;
 } // namespace rh::engine
 
 namespace rh::rw::engine
@@ -57,10 +58,11 @@ class BilateralFilterPass
 class BilateralFilterPipeline
 {
   public:
-    BilateralFilterPipeline();
+    BilateralFilterPipeline( rh::engine::IDeviceState &device );
     BilateralFilterPass *GetPass( const BilateralFilterPassParams &params );
 
   private:
+    rh::engine::IDeviceState &                       Device;
     ScopedPointer<rh::engine::IShader>               mBilateralBlurShader;
     ScopedPointer<rh::engine::VulkanComputePipeline> mPipeline;
     ScopedPointer<rh::engine::IPipelineLayout>       mPipelineLayout;

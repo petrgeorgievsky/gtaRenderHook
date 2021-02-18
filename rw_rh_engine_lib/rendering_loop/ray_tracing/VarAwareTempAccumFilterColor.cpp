@@ -9,7 +9,6 @@
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <rendering_loop/DescriptorGenerator.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
 {
@@ -41,24 +40,26 @@ enum accum_slot_ids
     a_NewTSPP            = 8
 };
 
-VarAwareTempAccumColorFilterPipe::VarAwareTempAccumColorFilterPipe()
+VarAwareTempAccumColorFilterPipe::VarAwareTempAccumColorFilterPipe(
+    rh::engine::IDeviceState &device )
+    : Device( device )
 {
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    auto &vk_device = (VulkanDeviceState &)Device;
 
     /// Shaders
-    mReProjectShader = device.CreateShader(
+    mReProjectShader = Device.CreateShader(
         { .mShaderPath =
               "shaders/vulkan/engine/reverse_reproject_pass_rgb.comp",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::Compute } );
-    mAccumulateShader = device.CreateShader(
+    mAccumulateShader = Device.CreateShader(
         { .mShaderPath  = "shaders/vulkan/engine/history_accum_pass_rgb.comp",
           .mEntryPoint  = "main",
           .mShaderStage = ShaderStage::Compute } );
 
     /// Descriptor layouts
 
-    DescriptorGenerator desc_gen{ device };
+    DescriptorGenerator desc_gen{ Device };
     desc_gen
         .AddDescriptor( 0, r_OldColor, 0, DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
@@ -112,11 +113,11 @@ VarAwareTempAccumColorFilterPipe::VarAwareTempAccumColorFilterPipe()
         device.CreatePipelineLayout( { { mAccumulateDescSetLayout } } );
 
     // pipelines
-    mReProjectPipeline = device.CreateComputePipeline(
+    mReProjectPipeline = vk_device.CreateComputePipeline(
         { mReProjectLayout,
           { ShaderStage::Compute, mReProjectShader, "main" } } );
 
-    mAccumulatePipeline = device.CreateComputePipeline(
+    mAccumulatePipeline = vk_device.CreateComputePipeline(
         { mAccumulateLayout,
           { ShaderStage::Compute, mAccumulateShader, "main" } } );
 }
@@ -132,7 +133,7 @@ VATAColorFilterPass::VATAColorFilterPass(
     const VATAColorPassParam &        params )
     : mParent( pipeline ), mWidth( params.mWidth ), mHeight( params.mHeight )
 {
-    auto &device = params.mDevice;
+    auto &device = mParent->Device;
 
     auto desc_sets = pipeline->mDescSetAlloc->AllocateDescriptorSets(
         { { pipeline->mAccumulateDescSetLayout,
@@ -188,7 +189,7 @@ VATAColorFilterPass::VATAColorFilterPass(
 
     /// Bind descriptors
 
-    DescSetUpdateBatch descBatch{};
+    DescSetUpdateBatch descBatch{ device };
     descBatch.Begin( mReprojDescSet )
         .UpdateImage( r_OldColor, DescriptorType::StorageTexture,
                       { { ImageLayout::General, mAccumulateValueView } } )

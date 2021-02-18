@@ -3,55 +3,28 @@
 //
 #pragma once
 #include <Engine/Common/IDeviceState.h>
-#include <render_driver/render_driver.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
+
 namespace rh::rw::engine
 {
 class DescSetUpdateBatch
 {
   private:
-    rh::engine::IDescriptorSet *mActiveSet   = nullptr;
-    rh::engine::IDeviceState &  mDeviceState = gRenderDriver->GetDeviceState();
+    rh::engine::IDeviceState &  Device;
+    rh::engine::IDescriptorSet *mActiveSet = nullptr;
 
   public:
-    [[nodiscard]] DescSetUpdateBatch &Begin( rh::engine::IDescriptorSet *set )
-    {
-        mActiveSet = set;
-        return *this;
-    }
+    DescSetUpdateBatch( rh::engine::IDeviceState &device );
+
+    [[nodiscard]] DescSetUpdateBatch &Begin( rh::engine::IDescriptorSet *set );
+    DescSetUpdateBatch &              End();
+
     DescSetUpdateBatch &UpdateImage(
         uint32_t binding, rh::engine::DescriptorType type,
         rh::engine::ArrayProxy<rh::engine::ImageUpdateInfo> update_info,
-        uint32_t array_start_idx = 0 )
-    {
-        rh::engine::DescriptorSetUpdateInfo updateInfo{};
-        updateInfo.mSet             = mActiveSet;
-        updateInfo.mBinding         = binding;
-        updateInfo.mDescriptorType  = type;
-        updateInfo.mImageUpdateInfo = update_info;
-        updateInfo.mArrayStartIdx   = array_start_idx;
-        mDeviceState.UpdateDescriptorSets( updateInfo );
-        return *this;
-    }
-
+        uint32_t array_start_idx = 0 );
     DescSetUpdateBatch &UpdateBuffer(
         uint32_t binding, rh::engine::DescriptorType type,
         rh::engine::ArrayProxy<rh::engine::BufferUpdateInfo> update_info,
-        uint32_t array_start_idx = 0 )
-    {
-        rh::engine::DescriptorSetUpdateInfo updateInfo{};
-        updateInfo.mSet              = mActiveSet;
-        updateInfo.mBinding          = binding;
-        updateInfo.mDescriptorType   = type;
-        updateInfo.mBufferUpdateInfo = update_info;
-        updateInfo.mArrayStartIdx    = array_start_idx;
-        mDeviceState.UpdateDescriptorSets( updateInfo );
-        return *this;
-    }
-    DescSetUpdateBatch &End()
-    {
-        mActiveSet = nullptr;
-        return *this;
-    }
+        uint32_t array_start_idx = 0 );
 };
 } // namespace rh::rw::engine

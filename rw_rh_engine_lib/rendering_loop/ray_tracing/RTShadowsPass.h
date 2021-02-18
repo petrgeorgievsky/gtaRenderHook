@@ -20,6 +20,7 @@ class ICommandBuffer;
 class IDescriptorSetAllocator;
 class IDescriptorSet;
 class IDescriptorSetLayout;
+class IDeviceState;
 } // namespace rh::engine
 
 namespace rh::rw::engine
@@ -40,6 +41,7 @@ struct Light
 
 struct RTShadowsInitParams
 {
+    rh::engine::IDeviceState &        Device;
     uint32_t                          mWidth;
     uint32_t                          mHeight;
     RTSceneDescription *              mScene;
@@ -66,6 +68,7 @@ class RTShadowsPass
     RTShadowsPass( const RTShadowsInitParams &params );
 
   private:
+    rh::engine::IDeviceState &         Device;
     RTSceneDescription *               mScene;
     CameraDescription *                mCamera;
     ScopedPointer<BilateralFilterPass> mBilFil0;

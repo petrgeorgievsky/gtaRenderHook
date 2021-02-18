@@ -14,9 +14,10 @@ namespace rh::rw::engine
 using namespace rh::engine;
 
 DebugPipeline::DebugPipeline( const DebugPipelineInitParams &params )
-    : mWidth( params.mWidth ), mHeight( params.mHeight )
+    : Device( params.Device ), mWidth( params.mWidth ),
+      mHeight( params.mHeight )
 {
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    auto &              device = (VulkanDeviceState &)Device;
     DescriptorGenerator descriptorGenerator{ device };
 
     // Main Descriptor Set layout
@@ -53,7 +54,7 @@ DebugPipeline::DebugPipeline( const DebugPipelineInitParams &params )
                                   ImageViewUsage::RWTexture } );
 
     /// Generate descriptors
-    DescSetUpdateBatch{}
+    DescSetUpdateBatch{ device }
         .Begin( mDescSet )
         .UpdateImage( 0, DescriptorType::StorageTexture,
                       { { ImageLayout::General, mOutputBufferView, nullptr } } )

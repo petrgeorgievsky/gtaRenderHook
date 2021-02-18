@@ -9,14 +9,12 @@
 #include "VarAwareTempAccumFilter.h"
 #include "VarAwareTempAccumFilterColor.h"
 #include "utils.h"
-#include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/sampler_filter.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <render_driver/gpu_resources/raster_pool.h>
 #include <rendering_loop/DescriptorGenerator.h>
 #include <rw_engine/rh_backend/raster_backend.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
 {
@@ -24,11 +22,12 @@ using namespace rh::engine;
 
 RTReflectionRaysPass::RTReflectionRaysPass(
     const RTReflectionInitParams &params )
-    : mCamera( params.mCamera ), mScene( params.mScene ),
-      mHeight( params.mHeight ), mWidth( params.mWidth )
+    : Device( params.Device ), mCamera( params.mCamera ),
+      mScene( params.mScene ), mHeight( params.mHeight ),
+      mWidth( params.mWidth )
 {
 
-    auto &              device = gRenderDriver->GetDeviceState();
+    auto &              device = Device;
     DescriptorGenerator descriptorGenerator{ device };
 
     descriptorGenerator
@@ -129,7 +128,6 @@ RTReflectionRaysPass::RTReflectionRaysPass(
           ImageViewUsage::RWTexture } );
 
     mVarTAColorPass = params.mVarTAColorFilterPipe->GetFilter( {
-        .mDevice        = device,
         .mWidth         = mWidth,
         .mHeight        = mHeight,
         .mInputValue    = mReflectionBufferView,
@@ -155,7 +153,7 @@ RTReflectionRaysPass::RTReflectionRaysPass(
     mNoiseBufferView = noise.mImageView;
 
     // Bind descriptor buffers
-    DescSetUpdateBatch descSetUpdateBatch{};
+    DescSetUpdateBatch descSetUpdateBatch{ device };
 
     descSetUpdateBatch.Begin( mRayTraceSet )
         .UpdateImage(
@@ -252,7 +250,7 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
     //
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
-    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
+    Device.UpdateDescriptorSets(
         { .mSet            = mRayTraceSet,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,

@@ -17,6 +17,7 @@ class IPipelineLayout;
 class IDescriptorSetLayout;
 class IDescriptorSetAllocator;
 class IDescriptorSet;
+class IDeviceState;
 } // namespace rh::engine
 
 namespace rh::rw::engine
@@ -24,6 +25,10 @@ namespace rh::rw::engine
 template <typename T> using SPtr = rh::engine::ScopedPointer<T>;
 struct DebugPipelineInitParams
 {
+    // dependencies
+    rh::engine::IDeviceState &Device;
+
+    // args
     uint32_t                mWidth;
     uint32_t                mHeight;
     rh::engine::IImageView *mDebugView{};
@@ -38,6 +43,7 @@ class DebugPipeline
     rh::engine::IImageView *GetResultView() { return mOutputBufferView; }
 
   private:
+    rh::engine::IDeviceState &                Device;
     uint32_t                                  mWidth;
     uint32_t                                  mHeight;
     SPtr<rh::engine::IImageBuffer>            mOutputBuffer;

@@ -29,8 +29,6 @@ template <typename T> using SPtr = rh::engine::ScopedPointer<T>;
 struct VATAPassParam
 {
     // dependencies
-    rh::engine::IDeviceState &mDevice;
-
     uint32_t                mWidth{};
     uint32_t                mHeight{};
     rh::engine::IImageView *mInputValue;
@@ -95,11 +93,12 @@ class VATAFilterPass
 class VarAwareTempAccumFilterPipe
 {
   public:
-    VarAwareTempAccumFilterPipe();
+    VarAwareTempAccumFilterPipe( rh::engine::IDeviceState &device );
 
     VATAFilterPass *GetFilter( const VATAPassParam &params );
 
   private:
+    rh::engine::IDeviceState &                Device;
     SPtr<rh::engine::IDescriptorSetAllocator> mDescSetAlloc;
 
     // Pipeline for re-projection pass

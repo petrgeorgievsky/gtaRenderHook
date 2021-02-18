@@ -20,7 +20,7 @@ DeferredCompositionPass::DeferredCompositionPass(
     : mPassParams( params )
 {
     using namespace rh::engine;
-    auto &device = (VulkanDeviceState &)gRenderDriver->GetDeviceState();
+    auto &              device = (VulkanDeviceState &)mPassParams.Device;
     DescriptorGenerator descriptorGenerator{ device };
 
     // Main Descriptor Set layout
@@ -69,7 +69,7 @@ DeferredCompositionPass::DeferredCompositionPass(
                                   ImageViewUsage::RWTexture } );
 
     /// Generate descriptors
-    DescSetUpdateBatch{}
+    DescSetUpdateBatch{ device }
         .Begin( mDescSet )
         .UpdateImage(
             0, DescriptorType::StorageTexture,

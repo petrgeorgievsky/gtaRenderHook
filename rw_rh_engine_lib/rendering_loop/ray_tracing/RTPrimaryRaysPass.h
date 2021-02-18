@@ -29,8 +29,9 @@ class CameraDescription;
 struct PrimaryRaysConfig
 {
     // Dependencies
-    RTSceneDescription *mScene;
-    CameraDescription * mCamera;
+    rh::engine::IDeviceState &Device;
+    RTSceneDescription *      mScene;
+    CameraDescription *       mCamera;
 
     uint32_t mWidth;
     uint32_t mHeight;
@@ -56,6 +57,7 @@ class RTPrimaryRaysPass
     void ConvertNormalsToShaderRO( rh::engine::ICommandBuffer *dest );
 
   private:
+    rh::engine::IDeviceState &                Device;
     RTSceneDescription *                      mScene;
     CameraDescription *                       mCamera;
     SPtr<rh::engine::IDescriptorSetAllocator> mDescSetAlloc;

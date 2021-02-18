@@ -16,12 +16,15 @@ class IDescriptorSetLayout;
 class IDescriptorSetAllocator;
 class IDescriptorSet;
 class IBuffer;
+class IDeviceState;
 } // namespace rh::engine
 namespace rh::rw::engine
 {
 using rh::engine::ScopedPointer;
 struct DeferredCompositionPassParams
 {
+    rh::engine::IDeviceState &Device;
+
     rh::engine::IImageView *mAlbedoBuffer;
     rh::engine::IImageView *mNormalDepthBuffer;
     rh::engine::IImageView *mMaterialParamsBuffer;
@@ -41,6 +44,7 @@ class DeferredCompositionPass
     rh::engine::IImageView *GetResultView() { return mOutputBufferView; }
 
   private:
+    DeferredCompositionPassParams                      mPassParams;
     ScopedPointer<rh::engine::IImageBuffer>            mOutputBuffer;
     ScopedPointer<rh::engine::IImageView>              mOutputBufferView;
     ScopedPointer<rh::engine::IShader>                 mCompositionShader;
@@ -48,7 +52,6 @@ class DeferredCompositionPass
     ScopedPointer<rh::engine::IPipelineLayout>         mPipelineLayout;
     ScopedPointer<rh::engine::IDescriptorSetLayout>    mDescSetLayout;
     ScopedPointer<rh::engine::IDescriptorSetAllocator> mDescAllocator;
-    DeferredCompositionPassParams                      mPassParams;
     ScopedPointer<rh::engine::IDescriptorSet>          mDescSet;
 };
 } // namespace rh::rw::engine

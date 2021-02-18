@@ -48,16 +48,18 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
         new SkinAnimationPipeline( { Device, Resources, 110 } );
 
     // Filters
-    mVarTempAcummFilterPipe      = new VarAwareTempAccumFilterPipe();
-    mVarTempAccumColorFilterPipe = new VarAwareTempAccumColorFilterPipe();
-    mBilPipe                     = new BilateralFilterPipeline();
+    mVarTempAcummFilterPipe = new VarAwareTempAccumFilterPipe( Device );
+    mVarTempAccumColorFilterPipe =
+        new VarAwareTempAccumColorFilterPipe( Device );
+    mBilPipe = new BilateralFilterPipeline( Device );
 
     // RT Stuff
     mBlasBuildPass    = new RTBlasBuildPass( { Device, Resources } );
     mTlasBuildPass    = new RTTlasBuildPass();
     mSceneDescription = new RTSceneDescription( { Device, Resources } );
 
-    mPrimaryRaysPass = new RTPrimaryRaysPass( { .mScene  = mSceneDescription,
+    mPrimaryRaysPass = new RTPrimaryRaysPass( { .Device  = Device,
+                                                .mScene  = mSceneDescription,
                                                 .mCamera = mCameraDescription,
                                                 .mWidth  = rtx_resolution_w,
                                                 .mHeight = rtx_resolution_h } );
@@ -70,13 +72,14 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
         .mCurrentDepth = mPrimaryRaysPass->GetNormalsView() } );
 
     mRTAOPass = new RTAOPass( RTAOInitParams{
-        mSceneDescription, mCameraDescription, mVarTempAcummFilterPipe,
+        Device, mSceneDescription, mCameraDescription, mVarTempAcummFilterPipe,
         mBilPipe, mPrimaryRaysPass->GetNormalsView(),
         mPrimaryRaysPass->GetPrevNormalsView(),
         mPrimaryRaysPass->GetMotionView(), rtx_resolution_w,
         rtx_resolution_h } );
 
     mRTShadowsPass    = new RTShadowsPass( RTShadowsInitParams{
+        Device,
         rtx_resolution_w,
         rtx_resolution_h,
         mSceneDescription,
@@ -92,6 +95,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
         mPrimaryRaysPass->GetSkyCfg(),
     } );
     mRTReflectionPass = new RTReflectionRaysPass( RTReflectionInitParams{
+        .Device                = Device,
         .mWidth                = rtx_resolution_w,
         .mHeight               = rtx_resolution_h,
         .mScene                = mSceneDescription,
@@ -107,7 +111,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
     // Opaque object composition:
     mDeferredComposePass =
         new DeferredCompositionPass( DeferredCompositionPassParams{
-            mPrimaryRaysPass->GetAlbedoView(),
+            Device, mPrimaryRaysPass->GetAlbedoView(),
             mPrimaryRaysPass->GetNormalsView(),
             mPrimaryRaysPass->GetMaterialsView(), mRTAOPass->GetAOView(),
             mRTShadowsPass->GetShadowsView(),

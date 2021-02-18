@@ -111,7 +111,7 @@ TiledLightCulling::TiledLightCulling( const TiledLightCullingParams &params )
 
     // tb_Depth = 0, tb_TileCfg = 1, tb_Lights = 2, tb_LightsIdList = 3,
     // tb_TileInfo = 4
-    DescSetUpdateBatch descBatch{};
+    DescSetUpdateBatch descBatch{ device };
     descBatch.Begin( mBuildTilesDescSet )
         .UpdateImage( tb_Depth, DescriptorType::StorageTexture,
                       { { ImageLayout::General, params.mCurrentDepth } } )

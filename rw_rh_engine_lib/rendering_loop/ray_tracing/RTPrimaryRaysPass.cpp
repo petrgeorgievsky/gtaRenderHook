@@ -27,10 +27,11 @@ struct SkyCfg
 SkyCfg gSkyCfg{};
 
 RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
-    : mScene( config.mScene ), mCamera( config.mCamera ),
-      mWidth( config.mWidth ), mHeight( config.mHeight )
+    : Device( config.Device ), mScene( config.mScene ),
+      mCamera( config.mCamera ), mWidth( config.mWidth ),
+      mHeight( config.mHeight )
 {
-    auto &              device = gRenderDriver->GetDeviceState();
+    auto &              device = Device;
     DescriptorGenerator descriptorGenerator{ device };
 
     descriptorGenerator
@@ -126,7 +127,7 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
                                   ImageViewUsage::RWTexture } );
 
     // Bind descriptor buffers
-    DescSetUpdateBatch descSetUpdateBatch{};
+    DescSetUpdateBatch descSetUpdateBatch{ device };
 
     descSetUpdateBatch.Begin( mRayTraceSet )
         .UpdateImage( 1, DescriptorType::StorageTexture,
@@ -218,7 +219,7 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
     mSkyCfg->Update( &gSkyCfg, sizeof( SkyCfg ) );
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
-    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
+    Device.UpdateDescriptorSets(
         { .mSet            = mRayTraceSet,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,

@@ -28,9 +28,6 @@ template <typename T> using SPtr = rh::engine::ScopedPointer<T>;
 
 struct VATAColorPassParam
 {
-    // dependencies
-    rh::engine::IDeviceState &mDevice;
-
     uint32_t                mWidth{};
     uint32_t                mHeight{};
     rh::engine::IImageView *mInputValue;
@@ -100,11 +97,12 @@ class VATAColorFilterPass
 class VarAwareTempAccumColorFilterPipe
 {
   public:
-    VarAwareTempAccumColorFilterPipe();
+    VarAwareTempAccumColorFilterPipe( rh::engine::IDeviceState &device );
 
     VATAColorFilterPass *GetFilter( const VATAColorPassParam &params );
 
   private:
+    rh::engine::IDeviceState &                Device;
     SPtr<rh::engine::IDescriptorSetAllocator> mDescSetAlloc;
 
     // Pipeline for re-projection pass
