@@ -33,18 +33,33 @@ VulkanShader::VulkanShader( const VulkanShaderDesc &desc )
 
     // Read SPIR-V in temp buffer
     // TODO: Provide a way to load compiled shaders or shader packages
-    std::ifstream spirv_buff;
-
     char dir_path[4096];
     GetModuleFileNameA( nullptr, dir_path, 4096 );
-    std::filesystem::path dir_path_ =
-        std::filesystem::path( dir_path ).parent_path();
-    auto f_path = dir_path_ / spir_v_path;
+    using namespace std::filesystem;
+    path dir_path_ = path( dir_path ).parent_path();
+    auto f_path    = dir_path_ / spir_v_path;
+
+    if ( !exists( f_path ) )
+    {
+        debug::DebugLogger::ErrorFmt(
+            "Failed to compile shader %s: Invalid shader path %s",
+            desc.mDesc.mShaderPath.c_str(), f_path.string().c_str() );
+    }
+
+    std::ifstream spirv_buff;
 
     spirv_buff.open( f_path.generic_string(), std::ios::binary );
+    if ( !spirv_buff.is_open() )
+    {
+        debug::DebugLogger::ErrorFmt(
+            "Failed to open shader %s: Invalid shader path %s",
+            desc.mDesc.mShaderPath.c_str(), f_path.string().c_str() );
+    }
+
     spirv_buff.seekg( 0, std::ios::end );
     std::size_t buff_size = static_cast<size_t>( spirv_buff.tellg() );
     spirv_buff.seekg( 0, std::ios::beg );
+
     std::vector<uint32_t> buffer;
     buffer.resize( buff_size / 4 + 1 );
     spirv_buff.read( reinterpret_cast<char *>( buffer.data() ), buff_size );
