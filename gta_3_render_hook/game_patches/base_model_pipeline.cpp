@@ -21,7 +21,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
     auto *geom   = reinterpret_cast<RpGeometryGTA3 *>( atomic->geometry );
     geometry_interface_35.Init( geom );
 
-    if ( RwRHInstanceAtomic( atomic, &geometry_interface_35 ) !=
+    if ( InstanceAtomic( atomic, &geometry_interface_35 ) !=
          RenderStatus::Instanced )
         return 0;
 

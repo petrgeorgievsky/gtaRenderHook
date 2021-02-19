@@ -3,10 +3,10 @@
 //
 
 #include "rw_rh_skin_pipeline.h"
+#include "i_anim_hierarcy.h"
 #include <DirectXMathConvert.inl>
 #include <DirectXMathMatrix.inl>
 #include <Engine/Common/types/primitive_type.h>
-#include <common.h>
 #include <rw_engine/rh_backend/material_backend.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/rh_backend/raster_backend.h>
@@ -385,8 +385,8 @@ void PrepareBoneMatrices( DirectX::XMFLOAT4X3 *matrix_cache, RpAtomic *atomic,
     }
 }
 
-RenderStatus RwRHInstanceSkinAtomic( RpAtomic *           atomic,
-                                     RpGeometryInterface *geom_io )
+RenderStatus InstanceSkinAtomic( RpAtomic *           atomic,
+                                 RpGeometryInterface *geom_io )
 {
     geom_io->Init( atomic->geometry );
 
@@ -423,19 +423,13 @@ RenderStatus RwRHInstanceSkinAtomic( RpAtomic *           atomic,
         if ( resEntry )
         {
             auto *rEntry = reinterpret_cast<ResEnty *>( resEntry );
-            // rh::engine::IPrimitiveBatch *resEntryHeader;
-            // TODO: Deal with updates
-            // if ( rEntry->batchId != meshHeader->serialNum )
-            //{
-            /* Destroy resources to force reinstance */
-            /* if ( rEntry->frameId != GetCurrentSceneGraph()->mFrameId )
-             {
-                 DeviceGlobals::ResourceFuncs.FreeResourceEntry( resEntry );
-                 // RHDebug::DebugLogger::Log( "test" );
-                 rEntry->meshData = 0xBADF00D;
-                 resEntry         = nullptr;
-             }*/
-            //}
+
+            if ( rEntry->batchId != meshHeader->serialNum )
+            {
+                /* Destroy resources to force reinstance */
+                gRwDeviceGlobals.ResourceFuncs.FreeResourceEntry( rEntry );
+                resEntry = nullptr;
+            }
         }
         if ( resEntry != nullptr )
             return RenderStatus::Instanced;

@@ -1,7 +1,7 @@
 #include "renderloop.h"
 #include "gta_sa_internal_classes/renderer.h"
 #include <render_client/render_client.h>
-#include <rw_engine/rh_backend/mesh_rendering_backend.h>
+#include <rw_engine/rp_geometry_rw36.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_rh_pipeline.h>
 #include <rw_game_hooks.h>
@@ -84,8 +84,8 @@ void RenderLoop::RenderOpaque()
         {
             auto atomic = reinterpret_cast<RpAtomic *>( rw_obj );
             geometry_interface_35.Init( atomic->geometry );
-            if ( rh::rw::engine::RwRHInstanceAtomic( atomic,
-                                                     &geometry_interface_35 ) !=
+            if ( rh::rw::engine::InstanceAtomic( atomic,
+                                                 &geometry_interface_35 ) !=
                  rh::rw::engine::RenderStatus::Instanced )
                 continue;
 

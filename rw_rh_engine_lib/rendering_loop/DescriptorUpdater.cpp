@@ -2,7 +2,7 @@
 // Created by peter on 09.08.2020.
 //
 
-#include "DescriptorUpdater.h"
+#include "rendering_loop/DescriptorUpdater.h"
 namespace rh::rw::engine
 {
 DescSetUpdateBatch::DescSetUpdateBatch( rh::engine::IDeviceState &device )

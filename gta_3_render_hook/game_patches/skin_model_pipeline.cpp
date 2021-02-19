@@ -7,6 +7,7 @@
 #include "../gta3_geometry_proxy.h"
 #include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <render_client/render_client.h>
+#include <rw_engine/i_anim_hierarcy.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_rh_skin_pipeline.h>
@@ -85,7 +86,7 @@ static int32_t SkinD3D8AtomicAllInOneNode( void * /*self*/,
     auto *geom = reinterpret_cast<RpGeometryGTA3 *>( atomic->geometry );
     geometry_interface_35.Init( geom );
 
-    if ( RwRHInstanceSkinAtomic( atomic, &geometry_interface_35 ) !=
+    if ( InstanceSkinAtomic( atomic, &geometry_interface_35 ) !=
          RenderStatus::Instanced )
         return 0;
     //

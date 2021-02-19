@@ -3,7 +3,7 @@
 //
 
 #include "VarAwareTempAccumFilter.h"
-#include "DescriptorUpdater.h"
+#include "rendering_loop/DescriptorUpdater.h"
 #include "utils.h"
 
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>

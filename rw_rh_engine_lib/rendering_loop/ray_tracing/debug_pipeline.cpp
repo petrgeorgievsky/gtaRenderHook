@@ -4,7 +4,7 @@
 
 #include "debug_pipeline.h"
 #include "../DescriptorGenerator.h"
-#include "DescriptorUpdater.h"
+#include "rendering_loop/DescriptorUpdater.h"
 #include "utils.h"
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>

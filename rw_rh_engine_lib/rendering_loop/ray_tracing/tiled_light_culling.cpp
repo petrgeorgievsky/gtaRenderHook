@@ -4,8 +4,8 @@
 
 #include "tiled_light_culling.h"
 #include "CameraDescription.h"
-#include "DescriptorUpdater.h"
 #include "RTShadowsPass.h"
+#include "rendering_loop/DescriptorUpdater.h"
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/shader_stage.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>

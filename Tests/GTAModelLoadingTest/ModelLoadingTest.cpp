@@ -7,6 +7,7 @@
 #include <render_client/render_client.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rp_clump/rp_clump.h>
+#include <rw_engine/rp_geometry_rw36.h>
 #include <rw_engine/rw_camera/rw_camera.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_im2d/rw_im2d.h>
@@ -215,9 +216,8 @@ void ModelLoadingTest::LoadDFF( const rh::engine::String &path )
             next = rw::engine::rwLLLink::GetNext( cur );
             if ( atomic )
             {
-                rw::engine::RenderStatus status =
-                    rw::engine::RwRHInstanceAtomic( atomic,
-                                                    &geometry_interface_36 );
+                rw::engine::RenderStatus status = rw::engine::InstanceAtomic(
+                    atomic, &geometry_interface_36 );
                 switch ( status )
                 {
                 case rw::engine::RenderStatus::Failure:

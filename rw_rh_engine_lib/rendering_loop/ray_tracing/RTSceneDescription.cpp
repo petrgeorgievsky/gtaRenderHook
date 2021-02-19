@@ -82,7 +82,7 @@ RTSceneDescription::RTSceneDescription(
     mSceneSet = mDescSetAlloc->AllocateDescriptorSets( { layout_array } )[0];
 
     mTexturePool = new GPUTexturePool(
-        { Device, mSceneSet, texture_desc_bind_id, texture_count_limit } );
+        { Device, mSceneSet, texture_count_limit, texture_desc_bind_id } );
     mModelBuffersPool = new GPUModelBuffersPool(
         { Device, mSceneSet, model_count_limit, index_buff_bind_id,
           vertex_buff_desc_bind_id } );

@@ -5,7 +5,9 @@
 #include <filesystem>
 #include <ipc/ipc_utils.h>
 #include <render_client/render_client.h>
+#include <rw_engine/anim_hierarcy_rw36.h>
 #include <rw_engine/rh_backend/raster_backend.h>
+#include <rw_engine/rp_geometry_rw36.h>
 #include <rw_engine/rw_api_injectors.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
@@ -59,7 +61,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
     atomic           = static_cast<RpAtomic *>( params->dataParam );
     RpGeometry *geom = atomic->geometry;
     geometry_interface_35.Init( geom );
-    if ( RwRHInstanceAtomic( atomic, &geometry_interface_35 ) !=
+    if ( InstanceAtomic( atomic, &geometry_interface_35 ) !=
          RenderStatus::Instanced )
         return 0;
 
@@ -97,7 +99,7 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
     // RpMeshHeader *meshHeader = geom->mesh;
 
     geometry_interface_35.Init( geom );
-    if ( RwRHInstanceSkinAtomic( atomic, &geometry_interface_35 ) !=
+    if ( InstanceSkinAtomic( atomic, &geometry_interface_35 ) !=
          RenderStatus::Instanced )
         return 0;
 

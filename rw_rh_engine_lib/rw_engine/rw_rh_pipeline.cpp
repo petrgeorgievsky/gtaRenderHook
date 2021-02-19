@@ -1,18 +1,12 @@
 #include "rw_rh_pipeline.h"
 #include "rw_api_injectors.h"
 #include "system_funcs/rw_device_system_globals.h"
-#include <Engine/Common/IBuffer.h>
 #include <Engine/Common/IDeviceState.h>
-#include <Engine/Common/types/index_buffer_info.h>
 #include <Engine/Common/types/primitive_type.h>
-#include <Engine/Common/types/vertex_buffer_info.h>
 #include <algorithm>
 #include <common_headers.h>
-#include <rw_engine/rh_backend/material_backend.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/rh_backend/raster_backend.h>
-#include <rw_engine/rw_frame/rw_frame.h>
-#include <rw_engine/rw_macro_constexpr.h>
 
 namespace rh::rw::engine
 {
@@ -132,26 +126,9 @@ void GenerateNormals( VertexDescPosColorUVNormals *verticles,
     }
 }
 
-DirectX::XMFLOAT3 Transform( const DirectX::XMFLOAT4 &  pos,
-                             const DirectX::XMFLOAT4X3 &mat )
-{
-    DirectX::XMFLOAT3 bp{};
-    bp.x = pos.x * mat.m[0][0] + pos.y * mat.m[1][0] + pos.z * mat.m[2][0] +
-           pos.w * mat.m[3][0];
-    bp.y = pos.x * mat.m[0][1] + pos.y * mat.m[1][1] + pos.z * mat.m[2][1] +
-           pos.w * mat.m[3][1];
-    bp.z = pos.x * mat.m[0][2] + pos.y * mat.m[1][2] + pos.z * mat.m[2][2] +
-           pos.w * mat.m[3][2];
-    /*DirectX::XMMATRIX btl      = DirectX::XMLoadFloat4x3( &mat );
-    auto              pos_dx   = DirectX::XMLoadFloat4( &pos );
-    auto              bone_pos = btl * pos_dx;
-    DirectX::XMStoreFloat4( &bp, bone_pos );*/
-    return bp;
-}
-
-RwResEntry *RHInstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
-                                      RwResEntry *&       resEntryPointer,
-                                      const RpMeshHeader *meshHeader )
+RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
+                                    RwResEntry *&       resEntryPointer,
+                                    const RpMeshHeader *meshHeader )
 {
     using namespace rh::engine;
     ResEnty *resEntry;
@@ -346,8 +323,7 @@ RwResEntry *RHInstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
     return reinterpret_cast<RwResEntry *>( resEntry );
 }
 
-RenderStatus RwRHInstanceAtomic( RpAtomic *           atomic,
-                                 RpGeometryInterface *geom_io )
+RenderStatus InstanceAtomic( RpAtomic *atomic, RpGeometryInterface *geom_io )
 {
     geom_io->Init( atomic->geometry );
 
@@ -384,15 +360,13 @@ RenderStatus RwRHInstanceAtomic( RpAtomic *           atomic,
         if ( resEntry )
         {
             auto *rEntry = reinterpret_cast<ResEnty *>( resEntry );
-            // rh::engine::IPrimitiveBatch *resEntryHeader;
-            // TODO: Deal with updates
-            // if ( rEntry->batchId != meshHeader->serialNum )
-            //{
-            /* Destroy resources to force reinstance */
-            // RwResourcesFreeResEntry( resEntry );
-            // RHDebug::DebugLogger::Log( "test" );
-            //    resEntry = nullptr;
-            //}
+
+            if ( rEntry->batchId != meshHeader->serialNum )
+            {
+                /* Destroy resources to force reinstance */
+                gRwDeviceGlobals.ResourceFuncs.FreeResourceEntry( rEntry );
+                resEntry = nullptr;
+            }
         }
         if ( resEntry != nullptr )
             return RenderStatus::Instanced;
@@ -409,7 +383,7 @@ RenderStatus RwRHInstanceAtomic( RpAtomic *           atomic,
             owner           = atomic->geometry;
             resEntryPointer = geom_io->GetResEntryRef();
         }
-        resEntry = RHInstanceAtomicGeometry(
+        resEntry = InstanceAtomicGeometry(
             geom_io, owner, geom_io->GetResEntryRef(), meshHeader );
         if ( resEntry == nullptr )
             return RenderStatus::Failure;
@@ -455,73 +429,5 @@ void DrawAtomic( RpAtomic *atomic, RpGeometryInterface *geom_io,
     // if ( resEntry && resEntry->modelInstance )
     //    pipeline->DrawMesh( context, resEntry->modelInstance );
 }
-
-void *RpGeometryRw36::GetResEntry()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->repEntry;
-}
-
-RwResEntry *&RpGeometryRw36::GetResEntryRef()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->repEntry;
-}
-
-int32_t RpGeometryRw36::GetVertexCount()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->numVertices;
-}
-
-int32_t RpGeometryRw36::GetMorphTargetCount()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->numMorphTargets;
-}
-
-RpMorphTarget *RpGeometryRw36::GetMorphTarget( uint32_t id )
-{
-    return &static_cast<RpGeometry *>( m_pGeometryImpl )->morphTarget[id];
-}
-
-RwTexCoords *RpGeometryRw36::GetTexCoordSetPtr( uint32_t id )
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->texCoords[id];
-}
-
-RwRGBA *RpGeometryRw36::GetVertexColorPtr()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->preLitLum;
-}
-
-void RpGeometryRw36::Unlock()
-{
-    static_cast<RpGeometry *>( m_pGeometryImpl )->lockedSinceLastInst = 0;
-}
-
-int32_t RpGeometryRw36::GetTriangleCount()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->numTriangles;
-}
-
-RpTriangle *RpGeometryRw36::GetTrianglePtr()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->triangles;
-}
-
-uint32_t RpGeometryRw36::GetFlags()
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->flags;
-}
-
-RpMeshHeader *RpGeometryRw36::GetMeshHeader() const
-{
-    return static_cast<RpGeometry *>( m_pGeometryImpl )->mesh;
-}
-std::span<RpMesh> RpGeometryRw36::GetMeshList() const
-{
-    auto  header     = GetMeshHeader();
-    auto *mesh_begin = reinterpret_cast<RpMesh *>( header + 1 );
-    return std::span<RpMesh>( mesh_begin, mesh_begin + header->numMeshes );
-}
-
-void RpGeometryInterface::Init( void *geometry ) { m_pGeometryImpl = geometry; }
 
 } // namespace rh::rw::engine

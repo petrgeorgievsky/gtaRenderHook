@@ -4,7 +4,7 @@
 
 #include "BilateralFilterPass.h"
 #include "rendering_loop/DescriptorGenerator.h"
-#include "rendering_loop/ray_tracing/DescriptorUpdater.h"
+#include "rendering_loop/DescriptorUpdater.h"
 #include "utils.h"
 
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
