@@ -9,8 +9,11 @@
 #endif
 
 #pragma warning( push, 0 )
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #define VMA_IMPLEMENTATION
-#include "vk_mem_alloc.h"
+#include <vk_mem_alloc.h>
+#pragma clang diagnostic pop
 #pragma warning( pop )
 
 rh::engine::VulkanMemoryAllocator::VulkanMemoryAllocator(

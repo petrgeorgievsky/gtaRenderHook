@@ -43,7 +43,7 @@ VulkanSwapchain::VulkanSwapchain(
         }
     };
 
-    // TODO: Add ability to select prefered swapchain fmt
+    // TODO: Add ability to select preferred swapchain fmt
     auto swapchain_fmt = surface_formats[0];
     auto present_mode =
         select_present_mode( create_params.mPresentParams.mVsyncType );

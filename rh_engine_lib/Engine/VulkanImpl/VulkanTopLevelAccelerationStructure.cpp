@@ -3,8 +3,10 @@
 //
 
 #include "VulkanTopLevelAccelerationStructure.h"
-#include "vk_mem_alloc.h"
 #include <DebugUtils/DebugLogger.h>
+
+#include <vk_mem_alloc.h>
+
 namespace rh::engine
 {
 

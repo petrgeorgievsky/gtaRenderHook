@@ -684,4 +684,3 @@ RpGeometry *RpGeometryAddRef( RpGeometry *geometry )
 }
 
 } // namespace rh::rw::engine
-  

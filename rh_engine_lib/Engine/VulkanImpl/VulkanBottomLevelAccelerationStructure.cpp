@@ -4,8 +4,9 @@
 
 #include "VulkanBottomLevelAccelerationStructure.h"
 #include "VulkanBuffer.h"
-#include "vk_mem_alloc.h"
 #include <DebugUtils/DebugLogger.h>
+
+#include <vk_mem_alloc.h>
 
 using namespace rh::engine;
 
