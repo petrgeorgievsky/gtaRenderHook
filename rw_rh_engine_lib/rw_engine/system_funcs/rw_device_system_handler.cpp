@@ -52,6 +52,8 @@ bool SystemGetModeInfo( uint32_t id, RwVideoMode &info );
 int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
 {
     auto sys_fn = static_cast<RwCoreDeviceSystemFn>( nOption );
+    debug::DebugLogger::LogFmt( "system handler call: %i",
+                                debug::LogLevel::Info, nOption );
     switch ( sys_fn )
     {
     case rwDEVICESYSTEMREGISTER:
@@ -59,87 +61,130 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
         auto deviceOut       = reinterpret_cast<RwDevice *>( pOut );
         auto memoryFunctions = reinterpret_cast<RwMemoryFunctions *>( pInOut );
         if ( !SystemRegister( *deviceOut, memoryFunctions ) )
+        {
+            debug::DebugLogger::Error( "Failed to register engine" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMOPEN:
     {
         assert( pInOut );
         if ( !SystemOpen( *static_cast<RwEngineOpenParams *>( pInOut ) ) )
+        {
+            debug::DebugLogger::Error( "Failed to open engine" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMCLOSE:
     {
         if ( !SystemClose() )
+        {
+            debug::DebugLogger::Error( "Failed to close engine" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMSTANDARDS:
     {
         if ( !SystemStandards( reinterpret_cast<RwStandardFunc *>( pOut ) ) )
+        {
+            debug::DebugLogger::Error( "Failed to init standard functions" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMSTART:
     {
         if ( !SystemStart() )
+        {
+            debug::DebugLogger::Error( "Failed to start engine" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMSTOP:
     {
         if ( !SystemStop() )
+        {
+            debug::DebugLogger::Error( "Failed to stop engine" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMGETNUMSUBSYSTEMS:
     {
         if ( !SystemGetNumSubSystems( *static_cast<uint32_t *>( pOut ) ) )
+        {
+            debug::DebugLogger::Error( "Failed to retrieve subsystems count" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMGETCURRENTSUBSYSTEM:
     {
         if ( !SystemGetCurrentSubSystem( *static_cast<uint32_t *>( pOut ) ) )
+        {
+            debug::DebugLogger::Error( "Failed to retrieve current subsystem" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMSETSUBSYSTEM:
     {
         if ( !SystemSetSubSystem( nIn ) )
+        {
+            debug::DebugLogger::Error( "Failed to set current subsystem" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMGETSUBSYSTEMINFO:
     {
         if ( !SystemGetSubSystemInfo( nIn, *(RwSubSystemInfo *)pOut ) )
+        {
+            debug::DebugLogger::Error( "Failed to retrieve subsystem info" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMGETNUMMODES:
     {
         if ( !SystemGetNumModes( *static_cast<uint32_t *>( pOut ) ) )
+        {
+            debug::DebugLogger::Error(
+                "Failed to retrieve display mode count" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMGETMODE:
     {
         if ( !SystemGetMode( *static_cast<uint32_t *>( pOut ) ) )
+        {
+            debug::DebugLogger::Error(
+                "Failed to retrieve current display mode" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMUSEMODE:
     {
         if ( !SystemUseMode( nIn ) )
+        {
+            debug::DebugLogger::Error( "Failed to set current display mode" );
             return 0;
-
+        }
         break;
     }
     case rwDEVICESYSTEMGETMODEINFO:
     {
         if ( !SystemGetModeInfo( nIn, *static_cast<RwVideoMode *>( pOut ) ) )
+        {
+            debug::DebugLogger::Error( "Failed to retrieve display mode info" );
             return 0;
+        }
         break;
     }
     case rwDEVICESYSTEMFINALIZESTART:
@@ -152,7 +197,11 @@ int32_t SystemHandler( int32_t nOption, void *pOut, void *pInOut, int32_t nIn )
     {
         break;
     }
-    default: return 0;
+    default:
+    {
+        debug::DebugLogger::Error( "Unknown engine system command" );
+        return 0;
+    }
     }
     return 1;
 }
