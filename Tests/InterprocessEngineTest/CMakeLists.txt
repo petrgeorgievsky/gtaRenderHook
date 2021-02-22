@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 20)
 
 project(InterprocessEngineTest)
 
@@ -11,6 +10,10 @@ include_directories(. ../../rh_engine_lib ${DEPENDENCY_INCLUDE_LIST})
 
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST} rh_engine_lib)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
+        )
 #set_property(TARGET ${PROJECT_NAME} PROPERTY
 #             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 

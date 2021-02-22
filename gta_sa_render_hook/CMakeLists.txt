@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 20)
 
 project(gta_sa_render_hook)
 set(GTA_SA_FOLDER CACHE PATH "GTA SA folder")
@@ -32,6 +31,7 @@ add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".asi")
 set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
         RUNTIME_OUTPUT_DIRECTORY_DEBUG ${GTA_SA_FOLDER}/
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${GTA_SA_FOLDER}/
         RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${GTA_SA_FOLDER}/

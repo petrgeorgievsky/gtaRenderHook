@@ -1,5 +1,3 @@
-set(CMAKE_CXX_STANDARD 20)
-
 project(gta_vc_render_hook)
 option(USE_VULKAN_API "Add RenderHook Vulkan API implementation" ON)
 set(GTA_VC_FOLDER CACHE PATH "GTA VC folder")
@@ -18,8 +16,9 @@ set(SOURCES
 #set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
-set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".asi")
 set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
+        SUFFIX ".asi"
         RUNTIME_OUTPUT_DIRECTORY_DEBUG ${GTA_VC_FOLDER}/
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${GTA_VC_FOLDER}/
         RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${GTA_VC_FOLDER}/

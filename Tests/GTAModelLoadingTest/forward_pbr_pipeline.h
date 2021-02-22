@@ -6,7 +6,6 @@
 namespace rh::engine
 {
 class IRenderingContext;
-class D3D11ConstantBuffer;
 class IPipelineLayout;
 class IDescriptorSetLayout;
 class IPipeline;

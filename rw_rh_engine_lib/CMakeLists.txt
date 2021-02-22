@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 20)
 
 project(rw_rh_engine_lib)
 
@@ -119,6 +118,12 @@ set(SOURCES
 
         material_storage.cpp rw_engine/rp_geometry_rw36.cpp rw_engine/rp_geometry_rw36.h rw_engine/i_rp_geometry.h rw_engine/i_anim_hierarcy.h rw_engine/anim_hierarcy_rw36.cpp rw_engine/anim_hierarcy_rw36.h)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
+        #UNITY_BUILD TRUE
+        )
+
 #set_property(TARGET rw_rh_engine_lib PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
@@ -130,5 +135,4 @@ if (USE_VULKAN_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)
 endif ()
 
-target_link_libraries(rw_rh_engine_lib ${DEPENDENCY_LIB_LIST} rh_engine_lib imgui::imgui)
-target_compile_options(rw_rh_engine_lib PRIVATE)
+target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST} rh_engine_lib imgui::imgui)

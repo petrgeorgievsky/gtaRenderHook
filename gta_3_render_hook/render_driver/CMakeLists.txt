@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 20)
 
 project(gta_3_render_driver)
 
@@ -18,6 +17,7 @@ add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
         RUNTIME_OUTPUT_DIRECTORY_DEBUG ${GTA_3_FOLDER}/
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${GTA_3_FOLDER}/
         RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${GTA_3_FOLDER}/

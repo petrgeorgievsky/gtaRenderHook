@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 20)
 
 project(TextureLoadingTest)
 
@@ -12,8 +11,10 @@ include_directories(../../rw_rh_engine_lib ../../rh_engine_lib ${DEPENDENCY_INCL
 
 add_executable(TextureLoadingTest WIN32 ${SOURCES})
 target_link_libraries(TextureLoadingTest ${DEPENDENCY_LIB_LIST} rh_engine_lib rw_rh_engine_lib)
-#set_property(TARGET TextureLoadingTest PROPERTY
-#        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
+        )
 
 add_custom_command(TARGET ${PROJECT_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy

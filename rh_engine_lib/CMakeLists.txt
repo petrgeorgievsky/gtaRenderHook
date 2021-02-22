@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.10.2)
-set(CMAKE_CXX_STANDARD 20)
 
 project(rh_engine_lib)
 
@@ -87,6 +86,10 @@ set(SOURCES ${SOURCES}
         ConfigUtils/Serializable.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
+        UNITY_BUILD TRUE)
 
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DANDROID_BUILD -DVK_USE_PLATFORM_ANDROID_KHR)

@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 20)
 
 project(ClearScreenTest)
 
@@ -14,8 +13,10 @@ include(../../rw_rh_engine_lib/install_rw_library.cmake)
 add_executable(ClearScreenTest WIN32 ${SOURCES})
 target_link_libraries(ClearScreenTest ${DEPENDENCY_LIB_LIST} rh_engine_lib)
 install_rw_library()
-#set_property(TARGET ClearScreenTest PROPERTY
-#             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
+        )
 
 add_custom_command(TARGET ${PROJECT_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy
