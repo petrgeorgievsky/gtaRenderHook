@@ -52,13 +52,13 @@ D3D11DeviceState::~D3D11DeviceState()
 {
     rh::debug::DebugLogger::Log( "D3D11DeviceState destructor..." );
 
-    for ( auto output : m_vOutputs )
+    for ( auto &output : m_vOutputs )
     {
         output->Release();
         output = nullptr;
     }
 
-    for ( auto adapter : m_vAdapters )
+    for ( auto &adapter : m_vAdapters )
     {
         adapter->Release();
         adapter = nullptr;
