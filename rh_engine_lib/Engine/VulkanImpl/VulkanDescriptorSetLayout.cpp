@@ -1,4 +1,5 @@
 #include "VulkanDescriptorSetLayout.h"
+#include "VulkanCommon.h"
 #include "VulkanConvert.h"
 using namespace rh::engine;
 
@@ -60,7 +61,7 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(
     std::ranges::transform(
         create_info.mBindingList, std::back_inserter( layout_bindings ),
         []( const DescriptorBinding &binding ) { return Convert( binding ); } );
-    
+
     std::vector<vk::DescriptorBindingFlags> flags;
     for ( const auto &b : create_info.mBindingList )
         flags.push_back( ConvertDescriptorFlags( b.mFlags ) );
@@ -75,7 +76,11 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(
     create_info_impl.bindingCount =
         static_cast<uint32_t>( layout_bindings.size() );
     create_info_impl.pBindings = layout_bindings.data();
-    mDescSetLayoutImpl = mDevice.createDescriptorSetLayout( create_info_impl );
+    auto result = mDevice.createDescriptorSetLayout( create_info_impl );
+    if ( !CALL_VK_API( result.result,
+                       TEXT( "Failed to create descriptor set layout!" ) ) )
+        return;
+    mDescSetLayoutImpl = result.value;
 }
 
 VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout()

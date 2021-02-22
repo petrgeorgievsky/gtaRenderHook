@@ -55,7 +55,7 @@ class VulkanTopLevelAccelerationStructure
     vk::AccelerationStructureInfoNV mAccelInfo;
 
     VmaAllocator     mAllocator;
-    VmaAllocation    mAllocation;
+    VmaAllocation    mAllocation{};
     vk::DeviceMemory mAccelMemory;
     std::uint64_t    mScratchSize;
 };

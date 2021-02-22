@@ -1,6 +1,7 @@
 #include "VulkanImageView.h"
 #include "VulkanConvert.h"
 #include "VulkanImage.h"
+#include <DebugUtils/DebugLogger.h>
 using namespace rh::engine;
 /*
 VulkanImageView::VulkanImageView( vk::ImageView view )
@@ -19,7 +20,15 @@ VulkanImageView::VulkanImageView( vk::Device                   device,
     create_info.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
     create_info.subresourceRange.layerCount = 1;
     create_info.subresourceRange.levelCount = 1;
-    m_vkImageView = m_vkDevice.createImageView( create_info );
+    
+    auto result = m_vkDevice.createImageView( create_info );
+    if ( result.result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::ErrorFmt( "Failed to create image view:%s",
+                                      vk::to_string( result.result ).c_str() );
+    }
+    else
+        m_vkImageView = result.value;
 }
 
 VulkanImageView::VulkanImageView(
@@ -40,7 +49,15 @@ VulkanImageView::VulkanImageView(
     create_info.subresourceRange.layerCount   = 1;
     create_info.subresourceRange.levelCount   = create_params.mLevelCount;
     create_info.subresourceRange.baseMipLevel = create_params.mBaseLevel;
-    m_vkImageView = m_vkDevice.createImageView( create_info );
+    auto result = m_vkDevice.createImageView( create_info );
+
+    if ( result.result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::ErrorFmt( "Failed to create image view:%s",
+                                      vk::to_string( result.result ).c_str() );
+    }
+    else
+        m_vkImageView = result.value;
 }
 
 VulkanImageView::~VulkanImageView()

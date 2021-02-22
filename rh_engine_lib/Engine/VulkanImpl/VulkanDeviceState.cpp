@@ -90,7 +90,7 @@ VulkanDeviceState::VulkanDeviceState()
         for ( auto l : m_aLayers )
             required_layers.insert( l );
         std::set<std::string_view> supported_layers{};
-        for ( auto &l : layer_properties )
+        for ( auto &l : layer_properties.value )
             supported_layers.insert( std::string_view( l.layerName ) );
 
         std::set<std::string_view> unsupported_layers{};
@@ -117,7 +117,7 @@ VulkanDeviceState::VulkanDeviceState()
         for ( auto ext : m_aExtensions )
             required_extensions.insert( ext );
         std::set<std::string_view> supported_extensions{};
-        for ( auto &l : extension_properties )
+        for ( auto &l : extension_properties.value )
             supported_extensions.insert( std::string_view( l.extensionName ) );
 
         std::vector<std::string_view> unsupported_extensions{};
@@ -160,8 +160,14 @@ VulkanDeviceState::VulkanDeviceState()
         return;
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init( m_vkInstance );
+    auto adapter_res = m_vkInstance.enumeratePhysicalDevices();
     // Enumerate GPUS
-    m_aAdapters = m_vkInstance.enumeratePhysicalDevices();
+    if ( !CALL_VK_API( adapter_res.result,
+                       TEXT( "VulkanRenderer failed to initialize: Failed to "
+                             "enumerate GPU's!" ) ) )
+        return;
+
+    m_aAdapters = adapter_res.value;
     // Query GPU info
     for ( auto gpu : m_aAdapters )
         m_aAdaptersInfo.emplace_back( gpu );
@@ -325,21 +331,37 @@ bool VulkanDeviceState::Init()
         static_cast<uint32_t>( device_extensions.size() );
     info.ppEnabledExtensionNames = device_extensions.data();
 
-    m_vkDevice = m_aAdapters[m_uiCurrentAdapter].createDevice( info );
+    auto extensions =
+        m_aAdapters[m_uiCurrentAdapter].enumerateDeviceExtensionProperties();
+    for ( auto ext : extensions.value )
+        debug::DebugLogger::LogFmt( "Device Extension supported: %s",
+                                    LogLevel::Info, ext.extensionName.data() );
+
+    auto device_res = m_aAdapters[m_uiCurrentAdapter].createDevice( info );
+    if ( !CALL_VK_API( device_res.result,
+                       TEXT( "Failed to create logical device!" ) ) )
+        return false;
+    m_vkDevice = device_res.value;
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init( m_vkDevice );
 
     m_vkMainQueue = m_vkDevice.getQueue( m_iGraphicsQueueFamilyIdx, 0 );
 
-    m_vkCommandPool = m_vkDevice.createCommandPool(
+    auto command_pool_res = m_vkDevice.createCommandPool(
         { vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
           m_iGraphicsQueueFamilyIdx } );
+
+    if ( !CALL_VK_API( command_pool_res.result,
+                       TEXT( "Failed to create main command pool!" ) ) )
+        return false;
+    m_vkCommandPool = command_pool_res.value;
 
     VulkanMemoryAllocatorCreateInfo vk_malloc_ci{};
     vk_malloc_ci.mPhysicalDevice = m_aAdapters[m_uiCurrentAdapter];
     vk_malloc_ci.mDevice         = m_vkDevice;
     mDefaultAllocator            = new VulkanMemoryAllocator( vk_malloc_ci );
 
+    DebugLogger::Log( "VulkanDeviceState initialization finished" );
     return true;
 }
 
@@ -520,8 +542,12 @@ ICommandBuffer *VulkanDeviceState::GetMainCommandBuffer()
     cmd_buffer_alloc_info.commandBufferCount = 1;
     auto cmd_buffer =
         m_vkDevice.allocateCommandBuffers( cmd_buffer_alloc_info );
+
+    if ( !CALL_VK_API( cmd_buffer.result,
+                       TEXT( "Failed to allocate main command buffer!" ) ) )
+        return nullptr;
     return ( mMainCmdBuffer = new VulkanCommandBuffer(
-                 m_vkDevice, m_vkCommandPool, cmd_buffer[0] ) );
+                 m_vkDevice, m_vkCommandPool, cmd_buffer.value[0] ) );
 }
 
 ICommandBuffer *rh::engine::VulkanDeviceState::CreateCommandBuffer()
@@ -532,8 +558,11 @@ ICommandBuffer *rh::engine::VulkanDeviceState::CreateCommandBuffer()
     cmd_buffer_alloc_info.commandBufferCount = 1;
     auto cmd_buffer =
         m_vkDevice.allocateCommandBuffers( cmd_buffer_alloc_info );
+    if ( !CALL_VK_API( cmd_buffer.result,
+                       TEXT( "Failed to allocate command buffer!" ) ) )
+        return nullptr;
     return new VulkanCommandBuffer( m_vkDevice, m_vkCommandPool,
-                                    cmd_buffer[0] );
+                                    cmd_buffer.value[0] );
 }
 
 void VulkanDeviceState::ExecuteCommandBuffer( ICommandBuffer *buffer,
@@ -572,10 +601,11 @@ void VulkanDeviceState::ExecuteCommandBuffer( ICommandBuffer *buffer,
     auto vk_cmd_buf_exec_sp = dynamic_cast<VulkanCPUSyncPrimitive *>(
         vk_cmd_buffer_ptr->ExecutionFinishedPrimitive() );
 
-    m_vkMainQueue.submit( { queue_submit_info },
-                          vk_cmd_buf_exec_sp
-                              ? static_cast<vk::Fence>( *vk_cmd_buf_exec_sp )
-                              : nullptr );
+    auto result = m_vkMainQueue.submit(
+        { queue_submit_info },
+        vk_cmd_buf_exec_sp ? static_cast<vk::Fence>( *vk_cmd_buf_exec_sp )
+                           : nullptr );
+    CALL_VK_API( result, TEXT( "Failed to submit cmd buffer!" ) );
 }
 
 IFrameBuffer *
@@ -726,6 +756,7 @@ void VulkanDeviceState::Wait(
     if ( !CALL_VK_API( m_vkDevice.waitForFences( fence_list, true, ~0u ),
                        "Wait for fences failed!" ) )
         return;
+
     m_vkDevice.resetFences( fence_list );
 }
 
@@ -813,7 +844,11 @@ void VulkanDeviceState::UpdateDescriptorSets(
         m_vkDevice.updateDescriptorSets( { write_desc_set }, {} );
 }
 
-void VulkanDeviceState::WaitForGPU() { m_vkDevice.waitIdle(); }
+void VulkanDeviceState::WaitForGPU()
+{
+    auto result = m_vkDevice.waitIdle();
+    CALL_VK_API( result, TEXT( "Failed to wait for gpu to go idle!" ) );
+}
 VulkanTopLevelAccelerationStructure *
 VulkanDeviceState::CreateTLAS( const TLASCreateInfo &create_info )
 {
@@ -896,11 +931,11 @@ void VulkanDeviceState::DispatchToGPU(
         buffers.Data()[buffers.Size() - 1].mCmdBuffer );
     auto vk_cmd_buf_exec_sp = dynamic_cast<VulkanCPUSyncPrimitive *>(
         vk_cmd_buffer_ptr->ExecutionFinishedPrimitive() );
-
-    m_vkMainQueue.submit( queue_submit_info_vec,
-                          vk_cmd_buf_exec_sp
-                              ? static_cast<vk::Fence>( *vk_cmd_buf_exec_sp )
-                              : nullptr );
+    auto result = m_vkMainQueue.submit(
+        queue_submit_info_vec,
+        vk_cmd_buf_exec_sp ? static_cast<vk::Fence>( *vk_cmd_buf_exec_sp )
+                           : nullptr );
+    CALL_VK_API( result, TEXT( "Failed to submit gpu work!" ) );
 }
 
 VulkanImGUI *VulkanDeviceState::CreateImGUI( IWindow *wnd )

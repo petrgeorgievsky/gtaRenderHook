@@ -1,6 +1,7 @@
 #include "VulkanRenderPass.h"
+#include "VulkanCommon.h"
 #include "VulkanConvert.h"
-using namespace rh::engine;
+
 namespace rh::engine
 {
 vk::AttachmentDescription Convert( const AttachmentDescription &desc )
@@ -80,7 +81,6 @@ vk::SubpassDescription Convert( const SubpassDescription &desc,
     }
     return vk_desc;
 }
-} // namespace rh::engine
 
 VulkanRenderPass::VulkanRenderPass(
     const VulkanRenderPassCreateInfo &create_info )
@@ -115,8 +115,11 @@ VulkanRenderPass::VulkanRenderPass(
     vk_create_info.pSubpasses = subpass_desc_list.data();
     vk_create_info.subpassCount =
         static_cast<uint32_t>( subpass_desc_list.size() );
-
-    m_vkRenderPass = m_vkDevice.createRenderPass( vk_create_info );
+    auto result = m_vkDevice.createRenderPass( vk_create_info );
+    if ( !CALL_VK_API( result.result,
+                       TEXT( "Failed to create acceleration structure!" ) ) )
+        return;
+    m_vkRenderPass = result.value;
 }
 
 VulkanRenderPass::~VulkanRenderPass()
@@ -125,3 +128,4 @@ VulkanRenderPass::~VulkanRenderPass()
 }
 
 VulkanRenderPass::operator vk::RenderPass() { return m_vkRenderPass; }
+} // namespace rh::engine

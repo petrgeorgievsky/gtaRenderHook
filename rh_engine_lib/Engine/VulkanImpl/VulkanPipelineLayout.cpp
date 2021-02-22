@@ -1,4 +1,5 @@
 #include "VulkanPipelineLayout.h"
+#include "VulkanCommon.h"
 
 rh::engine::VulkanPipelineLayout::VulkanPipelineLayout(
     const VulkanPipelineLayoutCreateInfo &create_info )
@@ -21,7 +22,9 @@ rh::engine::VulkanPipelineLayout::VulkanPipelineLayout(
     create_info_impl.setLayoutCount =
         static_cast<uint32_t>( desc_set_layouts_impl.size() );
 
-    mPipelineLayoutImpl = mDevice.createPipelineLayout( create_info_impl );
+    auto result = mDevice.createPipelineLayout( create_info_impl );
+    CALL_VK_API( result.result, TEXT( "Failed to submit gpu work!" ) );
+    mPipelineLayoutImpl = result.value;
 }
 
 rh::engine::VulkanPipelineLayout::~VulkanPipelineLayout()

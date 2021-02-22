@@ -122,10 +122,19 @@ void VulkanCommandBuffer::BeginRecord()
 {
     vk::CommandBufferBeginInfo begin_info{};
     begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-    m_vkCmdBuffer.begin( begin_info );
+    auto result      = m_vkCmdBuffer.begin( begin_info );
+    if ( result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt( "Failed to begin cmd buffer recording:%s",
+                                      vk::to_string( result ).c_str() );
 }
 
-void VulkanCommandBuffer::EndRecord() { m_vkCmdBuffer.end(); }
+void VulkanCommandBuffer::EndRecord()
+{
+    auto result = m_vkCmdBuffer.end();
+    if ( result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt( "Failed to begin cmd buffer recording:%s",
+                                      vk::to_string( result ).c_str() );
+}
 
 // TODO: Pass Params!!!!
 void VulkanCommandBuffer::BeginRenderPass( const RenderPassBeginInfo &params )

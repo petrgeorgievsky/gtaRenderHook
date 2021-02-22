@@ -26,7 +26,14 @@ VulkanDescriptorSetAllocator::VulkanDescriptorSetAllocator(
     ci_impl.poolSizeCount = static_cast<uint32_t>( pool_sizes.size() );
     ci_impl.pPoolSizes    = pool_sizes.data();
     ci_impl.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
-    mPool         = mDevice.createDescriptorPool( ci_impl );
+    auto result   = mDevice.createDescriptorPool( ci_impl );
+    if ( result.result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::ErrorFmt( "Failed to create descriptor pool :%s",
+                                      vk::to_string( result.result ).c_str() );
+    }
+    else
+        mPool = result.value;
 }
 
 VulkanDescriptorSetAllocator::~VulkanDescriptorSetAllocator()
@@ -50,12 +57,18 @@ rh::engine::VulkanDescriptorSetAllocator::AllocateDescriptorSets(
 
     alloc_i.pSetLayouts        = set_layouts.data();
     alloc_i.descriptorSetCount = static_cast<uint32_t>( set_layouts.size() );
-    auto result_impl           = mDevice.allocateDescriptorSets( alloc_i );
 
-    std::vector<IDescriptorSet *> result{};
-    result.reserve( result_impl.size() );
+    auto result = mDevice.allocateDescriptorSets( alloc_i );
+    if ( result.result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::ErrorFmt( "Failed to allocate descriptor sets:%s",
+                                      vk::to_string( result.result ).c_str() );
+    }
 
-    std::ranges::transform( result_impl, std::back_inserter( result ),
+    std::vector<IDescriptorSet *> result_set{};
+    result_set.reserve( result.value.size() );
+
+    std::ranges::transform( result.value, std::back_inserter( result_set ),
                             [this]( const auto &desc ) {
                                 return new VulkanDescriptorSet( {
                                     .mDevice  = mDevice,
@@ -63,5 +76,5 @@ rh::engine::VulkanDescriptorSetAllocator::AllocateDescriptorSets(
                                     .mDescSet = desc,
                                 } );
                             } );
-    return result;
+    return result_set;
 }

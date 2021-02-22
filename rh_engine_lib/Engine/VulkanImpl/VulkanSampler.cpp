@@ -1,5 +1,6 @@
 #include "VulkanSampler.h"
 #include "Engine/Common/types/sampler_filter.h"
+#include <DebugUtils/DebugLogger.h>
 
 using namespace rh::engine;
 
@@ -11,9 +12,6 @@ VulkanSampler::VulkanSampler( const VulkanSamplerDesc &desc )
     switch ( desc.mInfo.filtering )
     {
     case SamplerFilter::Unknown:
-        create_info.magFilter = vk::Filter::eNearest;
-        create_info.minFilter = vk::Filter::eNearest;
-        break;
     case SamplerFilter::Point:
         create_info.magFilter = vk::Filter::eNearest;
         create_info.minFilter = vk::Filter::eNearest;
@@ -36,7 +34,14 @@ VulkanSampler::VulkanSampler( const VulkanSamplerDesc &desc )
     create_info.compareEnable           = false;
     create_info.maxAnisotropy           = 16.0f;
     create_info.maxLod                  = 1000.0f;
-    mSamplerImpl                        = mDevice.createSampler( create_info );
+    auto result                         = mDevice.createSampler( create_info );
+    if ( result.result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::ErrorFmt( "Failed to create sampler:%s",
+                                      vk::to_string( result.result ).c_str() );
+    }
+    else
+        mSamplerImpl = result.value;
 }
 
 VulkanSampler::~VulkanSampler() { mDevice.destroySampler( mSamplerImpl ); }

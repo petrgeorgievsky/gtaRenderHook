@@ -33,22 +33,21 @@ void EngineConfigBlock::Deserialize( Serializable *serializable )
 {
     assert( serializable != nullptr );
     // TODO: Add better handling of such errors
-    try
-    {
-        IsWindowed = serializable->Get<bool>( "IsWindowed" );
-        SharedMemorySizeMB =
-            serializable->Get<uint32_t>( "SharedMemorySizeMB" );
-        RenderingAPI_id = serializable->Get<uint32_t>( "RenderingAPI" );
-        RendererWidth   = serializable->Get<uint32_t>( "RendererWidth" );
-        RendererHeight  = serializable->Get<uint32_t>( "RendererHeight" );
-    }
-    catch ( const std::exception &ex )
+    // try
+    //{
+    IsWindowed         = serializable->Get<bool>( "IsWindowed" );
+    SharedMemorySizeMB = serializable->Get<uint32_t>( "SharedMemorySizeMB" );
+    RenderingAPI_id    = serializable->Get<uint32_t>( "RenderingAPI" );
+    RendererWidth      = serializable->Get<uint32_t>( "RendererWidth" );
+    RendererHeight     = serializable->Get<uint32_t>( "RendererHeight" );
+    //}
+    /*catch ( const std::exception &ex )
     {
         rh::debug::DebugLogger::ErrorFmt(
             "Failed to deserialize engine config block, resetting: %s",
             ex.what() );
         Reset();
-    }
+    }*/
 }
 void EngineConfigBlock::Reset()
 {

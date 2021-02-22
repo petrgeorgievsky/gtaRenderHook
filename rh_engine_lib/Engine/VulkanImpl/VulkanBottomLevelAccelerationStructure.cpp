@@ -4,6 +4,7 @@
 
 #include "VulkanBottomLevelAccelerationStructure.h"
 #include "VulkanBuffer.h"
+#include "VulkanCommon.h"
 #include <DebugUtils/DebugLogger.h>
 
 #include <vk_mem_alloc.h>
@@ -46,7 +47,12 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
         vk::BuildAccelerationStructureFlagBitsNV::ePreferFastTrace;
     vk_ac_create_info.info = mAccelInfo;
 
-    mAccel = mDevice.createAccelerationStructureNV( vk_ac_create_info );
+    auto result = mDevice.createAccelerationStructureNV( vk_ac_create_info );
+
+    if ( !CALL_VK_API( result.result,
+                       TEXT( "Failed to create acceleration structure!" ) ) )
+        return;
+    mAccel = result.value;
 
     vk::AccelerationStructureMemoryRequirementsInfoNV
         accelerationStructureMemoryRequirementsInfoNv{};
@@ -81,9 +87,8 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
     bind_info.memory                = allocationDetail.deviceMemory;
     bind_info.memoryOffset          = allocationDetail.offset;
 
-    auto result = mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info );
-
-    if ( result != vk::Result::eSuccess )
+    if ( mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info ) !=
+         vk::Result::eSuccess )
     {
         debug::DebugLogger::Error( "Failed to bind BLAS memory!" );
         std::terminate();

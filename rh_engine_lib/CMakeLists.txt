@@ -89,8 +89,14 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 20
-        UNITY_BUILD TRUE)
+        UNITY_BUILD TRUE
+        )
 
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /EHs-c-)
+else ()
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)
+endif ()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DANDROID_BUILD -DVK_USE_PLATFORM_ANDROID_KHR)
 else ()
@@ -99,20 +105,21 @@ else ()
 endif ()
 
 if (USE_VULKAN_API)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API -DVULKAN_HPP_NO_EXCEPTIONS -DJSON_NOEXCEPTION)
 endif ()
 
 
 set(RH_COMPILE_OPTIONS "")
 set(RH_LINK_OPTIONS "")
 
-if (MSVC)
-    # warning level 4 and all warnings as errors
-    #set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} /W4 /WX)
-else ()
-    # lots of warnings and all warnings as errors
-    #set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -Wall -Wextra -pedantic -Werror)
-endif ()
+# unfortunately it seems this doesn't, due to VMA having warnings with x86 arch
+#if (MSVC)
+#    # warning level 4 and all warnings as errors
+#    set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} /W4 /WX)
+#else ()
+#    # lots of warnings and all warnings as errors
+#    set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -Wall -Wextra -pedantic -Werror)
+#endif ()
 
 if (USE_SANITIZERS)
     set(RH_COMPILE_OPTIONS "${RH_COMPILE_OPTIONS} -fno-omit-frame-pointer -fsanitize=address")

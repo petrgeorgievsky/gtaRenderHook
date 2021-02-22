@@ -1,11 +1,18 @@
 #include "VulkanCPUSyncPrimitive.h"
-using namespace rh::engine;
+#include <DebugUtils/DebugLogger.h>
+namespace rh::engine
+{
 
 VulkanCPUSyncPrimitive::VulkanCPUSyncPrimitive( vk::Device device )
     : m_vkDevice( device )
 {
     vk::FenceCreateInfo info{};
-    m_vkSyncPrim = m_vkDevice.createFence( info );
+
+    auto result = m_vkDevice.createFence( info );
+    if ( result.result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt( "Failed to create fence:%s",
+                                      vk::to_string( result.result ).c_str() );
+    m_vkSyncPrim = result.value;
 }
 
 VulkanCPUSyncPrimitive::~VulkanCPUSyncPrimitive()
@@ -14,3 +21,4 @@ VulkanCPUSyncPrimitive::~VulkanCPUSyncPrimitive()
 }
 
 VulkanCPUSyncPrimitive::operator vk::Fence() { return m_vkSyncPrim; }
+} // namespace rh::engine

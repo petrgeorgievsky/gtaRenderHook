@@ -1,11 +1,20 @@
 #include "VulkanGPUSyncPrimitive.h"
+#include <DebugUtils/DebugLogger.h>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 VulkanGPUSyncPrimitive::VulkanGPUSyncPrimitive( vk::Device device )
     : m_vkDevice( device )
 {
-    m_vkSyncPrim = m_vkDevice.createSemaphore( {} );
+    auto result = m_vkDevice.createSemaphore( {} );
+    if ( result.result != vk::Result::eSuccess )
+    {
+        debug::DebugLogger::ErrorFmt( "Failed to create sampler:%s",
+                                      vk::to_string( result.result ).c_str() );
+    }
+    else
+        m_vkSyncPrim = result.value;
 }
 
 VulkanGPUSyncPrimitive::~VulkanGPUSyncPrimitive()
@@ -14,3 +23,4 @@ VulkanGPUSyncPrimitive::~VulkanGPUSyncPrimitive()
 }
 
 VulkanGPUSyncPrimitive::operator vk::Semaphore() { return m_vkSyncPrim; }
+} // namespace rh::engine

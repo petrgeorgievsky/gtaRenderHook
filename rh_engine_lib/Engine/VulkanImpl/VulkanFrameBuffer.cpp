@@ -1,4 +1,5 @@
 #include "VulkanFrameBuffer.h"
+#include "VulkanCommon.h"
 
 using namespace rh::engine;
 
@@ -15,9 +16,12 @@ VulkanFrameBuffer::VulkanFrameBuffer( vk::Device                    device,
     create_info.width           = w;
     create_info.height          = h;
     create_info.renderPass      = renderPass;
-
-    m_vkFrameBuffer = m_vkDevice.createFramebuffer( create_info );
-    m_rhInfo        = {w, h};
+    auto result                 = m_vkDevice.createFramebuffer( create_info );
+    if ( !CALL_VK_API( result.result,
+                       TEXT( "Failed to create framebuffer!" ) ) )
+        return;
+    m_vkFrameBuffer = result.value;
+    m_rhInfo        = { w, h };
 }
 
 VulkanFrameBuffer::~VulkanFrameBuffer()

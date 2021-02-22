@@ -24,7 +24,8 @@ VulkanSwapchain::VulkanSwapchain(
             [&surface_present_modes](
                 vk::PresentModeKHR present_mode ) -> bool {
             return std::any_of(
-                surface_present_modes.begin(), surface_present_modes.end(),
+                surface_present_modes.value.begin(),
+                surface_present_modes.value.end(),
                 [&present_mode]( auto el ) { return el == present_mode; } );
         };
 
@@ -44,13 +45,13 @@ VulkanSwapchain::VulkanSwapchain(
     };
 
     // TODO: Add ability to select preferred swapchain fmt
-    auto swapchain_fmt = surface_formats[0];
+    auto swapchain_fmt = surface_formats.value[0];
     auto present_mode =
         select_present_mode( create_params.mPresentParams.mVsyncType );
     auto buffer_count =
-        std::min<>( std::max<>( surface_caps.minImageCount,
+        std::min<>( std::max<>( surface_caps.value.minImageCount,
                                 create_params.mPresentParams.mBufferCount ),
-                    surface_caps.maxImageCount );
+                    surface_caps.value.maxImageCount );
 
     // Swapchain creation
     vk::SwapchainCreateInfoKHR swapchain_info{};
@@ -58,19 +59,25 @@ VulkanSwapchain::VulkanSwapchain(
     swapchain_info.minImageCount    = buffer_count;
     swapchain_info.imageFormat      = swapchain_fmt.format;
     swapchain_info.imageColorSpace  = swapchain_fmt.colorSpace;
-    swapchain_info.imageExtent      = surface_caps.currentExtent;
+    swapchain_info.imageExtent      = surface_caps.value.currentExtent;
     swapchain_info.imageArrayLayers = 1;
     swapchain_info.imageUsage       = vk::ImageUsageFlagBits::eColorAttachment;
     swapchain_info.queueFamilyIndexCount = 1;
     swapchain_info.pQueueFamilyIndices   = &create_params.mPresentQueueIdx;
-    swapchain_info.preTransform          = surface_caps.currentTransform;
+    swapchain_info.preTransform          = surface_caps.value.currentTransform;
     swapchain_info.compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque;
     swapchain_info.presentMode      = present_mode;
     swapchain_info.imageSharingMode = vk::SharingMode::eExclusive;
     // vk::SurfaceFullScreenExclusiveInfoEXT fs_ex{};
     // fs_ex.fullScreenExclusive = vk::FullScreenExclusiveEXT::eDefault;
     // swapchain_info.setPNext( &fs_ex );
-    m_vkSwapChain = m_vkDevice.createSwapchainKHR( swapchain_info );
+    auto swapchain_res = m_vkDevice.createSwapchainKHR( swapchain_info );
+    if ( swapchain_res.result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt(
+            "Failed to create swapchain:%s",
+            vk::to_string( swapchain_res.result ).c_str() );
+    else
+        m_vkSwapChain = swapchain_res.value;
     // try to acquire exclusive fullscreen
     // if ( !create_params.mPresentParams.mWindowed )
     //    m_vkDevice.acquireFullScreenExclusiveModeEXT( m_vkSwapChain );
@@ -78,7 +85,13 @@ VulkanSwapchain::VulkanSwapchain(
     mWidth  = swapchain_info.imageExtent.width;
     mHeight = swapchain_info.imageExtent.height;
 
-    m_vkSwapchainImages = m_vkDevice.getSwapchainImagesKHR( m_vkSwapChain );
+    auto swapchain_img_res = m_vkDevice.getSwapchainImagesKHR( m_vkSwapChain );
+    if ( swapchain_img_res.result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt(
+            "Failed to retrieve swapchain images:%s",
+            vk::to_string( swapchain_img_res.result ).c_str() );
+    else
+        m_vkSwapchainImages = swapchain_img_res.value;
     m_vkSwapchainImageViews.reserve( m_vkSwapchainImages.size() );
 
     for ( auto img : m_vkSwapchainImages )

@@ -7,6 +7,7 @@
 #include "SyncPrimitives/VulkanGPUSyncPrimitive.h"
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
+#include <DebugUtils/DebugLogger.h>
 namespace rh::engine
 {
 
@@ -20,7 +21,12 @@ void VulkanDebugUtils::SetDebugName( IBuffer *buffer, std::string name )
     objectNameInfo.objectType  = vk::Buffer::objectType;
     objectNameInfo.pObjectName = name.data();
 
-    buffer_impl->mDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
+    auto result =
+        buffer_impl->mDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
+    if ( result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt(
+            "Failed to set debug utils object \"%s\" a name:%s", name.c_str(),
+            vk::to_string( result ).c_str() );
 }
 
 void VulkanDebugUtils::SetDebugName( ICommandBuffer *buffer, std::string name )
@@ -33,11 +39,17 @@ void VulkanDebugUtils::SetDebugName( ICommandBuffer *buffer, std::string name )
     objectNameInfo.objectType  = vk::CommandBuffer::objectType;
     objectNameInfo.pObjectName = name.data();
 
-    buffer_impl->mDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
+    auto result =
+        buffer_impl->mDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
+    if ( result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt(
+            "Failed to set debug utils object \"%s\" a name:%s", name.c_str(),
+            vk::to_string( result ).c_str() );
 }
 
 void VulkanDebugUtils::SetDebugName( ISyncPrimitive *sp, std::string name )
 {
+    vk::Result result = vk::Result::eErrorUnknown;
     if ( auto *gpu_impl = dynamic_cast<VulkanGPUSyncPrimitive *>( sp ) )
     {
         vk::DebugUtilsObjectNameInfoEXT objectNameInfo{};
@@ -46,7 +58,8 @@ void VulkanDebugUtils::SetDebugName( ISyncPrimitive *sp, std::string name )
         objectNameInfo.objectType  = vk::Semaphore::objectType;
         objectNameInfo.pObjectName = name.data();
 
-        gpu_impl->m_vkDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
+        result =
+            gpu_impl->m_vkDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
     }
     else if ( auto *cpu_impl = dynamic_cast<VulkanCPUSyncPrimitive *>( sp ) )
     {
@@ -56,8 +69,13 @@ void VulkanDebugUtils::SetDebugName( ISyncPrimitive *sp, std::string name )
         objectNameInfo.objectType  = vk::Fence::objectType;
         objectNameInfo.pObjectName = name.data();
 
-        cpu_impl->m_vkDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
+        result =
+            cpu_impl->m_vkDevice.setDebugUtilsObjectNameEXT( objectNameInfo );
     }
+    if ( result != vk::Result::eSuccess )
+        debug::DebugLogger::ErrorFmt(
+            "Failed to set debug utils object \"%s\" a name:%s", name.c_str(),
+            vk::to_string( result ).c_str() );
 }
 
 } // namespace rh::engine

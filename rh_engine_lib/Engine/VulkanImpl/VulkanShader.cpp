@@ -1,5 +1,6 @@
 #include "VulkanShader.h"
 #include "DebugUtils/DebugLogger.h"
+#include "VulkanCommon.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -19,7 +20,7 @@ VulkanShader::VulkanShader( const VulkanShaderDesc &desc )
     case ShaderStage::RayHit: shader_type = "rchit"; break;
     case ShaderStage::RayAnyHit: shader_type = "rahit"; break;
     case ShaderStage::Compute: shader_type = "comp"; break;
-    default: throw std::runtime_error( "not implemented" );
+    default: std::terminate();
     }
 
     std::string spir_v_path = desc.mDesc.mShaderPath + "_" +
@@ -29,7 +30,7 @@ VulkanShader::VulkanShader( const VulkanShaderDesc &desc )
     bool result = TranslateHLSL_to_SPIRV( desc.mDesc.mShaderPath, spir_v_path,
                                           shader_type, desc.mDesc.mEntryPoint );
     if ( !result )
-        throw std::runtime_error( "failed to translate shader to spirv" );
+        std::terminate();
 
     // Read SPIR-V in temp buffer
     // TODO: Provide a way to load compiled shaders or shader packages
@@ -66,9 +67,14 @@ VulkanShader::VulkanShader( const VulkanShaderDesc &desc )
 
     // Create shader module
     vk::ShaderModuleCreateInfo sm_ci{};
-    sm_ci.codeSize = buff_size;
-    sm_ci.pCode    = buffer.data();
-    mShaderImpl    = mDevice.createShaderModule( sm_ci );
+    sm_ci.codeSize     = buff_size;
+    sm_ci.pCode        = buffer.data();
+    auto shader_result = mDevice.createShaderModule( sm_ci );
+
+    if ( !CALL_VK_API( shader_result.result,
+                       TEXT( "Failed to create shader module!" ) ) )
+        return;
+    mShaderImpl = shader_result.value;
 }
 
 VulkanShader::~VulkanShader()
@@ -132,5 +138,8 @@ bool rh::engine::TranslateHLSL_to_SPIRV( const std::string &path,
     // Close process and thread handles.
     CloseHandle( proc_info.hProcess );
     CloseHandle( proc_info.hThread );
+    if ( exit_code == S_OK )
+        debug::DebugLogger::ErrorFmt( "glslangValidator returned %i",
+                                      exit_code );
     return exit_code == S_OK;
 }

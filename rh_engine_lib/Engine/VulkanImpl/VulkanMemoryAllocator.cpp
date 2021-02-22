@@ -66,6 +66,6 @@ vk::DeviceMemory rh::engine::VulkanMemoryAllocator::AllocateDeviceMemory(
         info.mRequirements.memoryTypeBits,
         info.mDeviceLocal ? vk::MemoryPropertyFlagBits::eDeviceLocal
                           : vk::MemoryPropertyFlagBits::eHostVisible );
-
-    return mDevice.allocateMemory( memory_alloc_info );
+    return vk::DeviceMemory();
+    // return mDevice.allocateMemory( memory_alloc_info );
 }
