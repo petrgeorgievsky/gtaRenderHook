@@ -945,3 +945,8 @@ VulkanImGUI *VulkanDeviceState::CreateImGUI( IWindow *wnd )
           m_aAdapters[m_uiCurrentAdapter], m_vkDevice,
           m_iGraphicsQueueFamilyIdx, m_vkMainQueue } );
 }
+
+const DeviceLimitsInfo &VulkanDeviceState::GetLimits()
+{
+    return m_aAdaptersInfo[m_uiCurrentAdapter].GetLimitsInfo();
+}

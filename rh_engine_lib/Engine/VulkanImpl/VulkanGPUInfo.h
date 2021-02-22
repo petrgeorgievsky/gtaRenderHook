@@ -3,6 +3,7 @@
 //
 #pragma once
 #include "common.h"
+#include <Engine/Common/IDeviceState.h>
 
 namespace rh::engine
 {
@@ -30,8 +31,10 @@ class VulkanGPUInfo
   public:
     VulkanGPUInfo( vk::PhysicalDevice gpu );
     const VulkanRayTracingInfo &GetRayTracingInfo() const;
+    const DeviceLimitsInfo &    GetLimitsInfo() const;
 
   private:
+    DeviceLimitsInfo     LimitsInfo;
     VulkanRayTracingInfo mRTInfo;
 };
 } // namespace rh::engine

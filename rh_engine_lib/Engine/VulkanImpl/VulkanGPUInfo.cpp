@@ -21,11 +21,19 @@ VulkanGPUInfo::VulkanGPUInfo( vk::PhysicalDevice gpu )
     mRTInfo.mShaderGroupHandleSize  = rt_props.shaderGroupHandleSize;
     mRTInfo.mShaderGroupHandleAlign = rt_props.shaderGroupBaseAlignment;
     mRTInfo.mMaxRecursionDepth      = rt_props.maxRecursionDepth;
+
+    LimitsInfo.BufferOffsetMinAlign =
+        props.properties.limits.minUniformBufferOffsetAlignment;
 }
 
 const VulkanRayTracingInfo &VulkanGPUInfo::GetRayTracingInfo() const
 {
     return mRTInfo;
+}
+
+const DeviceLimitsInfo &VulkanGPUInfo::GetLimitsInfo() const
+{
+    return LimitsInfo;
 }
 
 } // namespace rh::engine

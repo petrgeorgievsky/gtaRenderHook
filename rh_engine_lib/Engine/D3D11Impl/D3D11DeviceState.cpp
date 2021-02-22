@@ -16,8 +16,8 @@
 #include <cassert>
 #include <d3d11.h>
 
-using namespace rh::engine;
-
+namespace rh::engine
+{
 D3D11DeviceState::D3D11DeviceState()
 {
     m_driverType     = D3D_DRIVER_TYPE_NULL;
@@ -541,3 +541,10 @@ void D3D11DeviceState::DispatchToGPU(
                                                  false );
     }
 }
+const DeviceLimitsInfo &D3D11DeviceState::GetLimits()
+{
+    static DeviceLimitsInfo limits{};
+    limits.BufferOffsetMinAlign = 256;
+    return limits;
+}
+} // namespace rh::engine

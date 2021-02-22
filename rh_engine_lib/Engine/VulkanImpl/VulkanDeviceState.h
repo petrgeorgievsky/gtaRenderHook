@@ -102,7 +102,8 @@ class VulkanDeviceState : public IDeviceState
     CreateRayTracingPipeline( const RayTracingPipelineCreateInfo &params );
     VulkanComputePipeline *
     CreateComputePipeline( const ComputePipelineCreateParams &params );
-    VulkanImGUI *CreateImGUI( IWindow *wnd );
+    VulkanImGUI *           CreateImGUI( IWindow *wnd );
+    const DeviceLimitsInfo &GetLimits() override;
 
   private:
     // Vulkan renderer instance - used to work with platform-specific stuff

@@ -55,6 +55,7 @@ class D3D11DeviceState : public IDeviceState
     void Wait( const ArrayProxy<ISyncPrimitive *> &primitiveList ) override;
     void DispatchToGPU(
         const ArrayProxy<CommandBufferSubmitInfo> &buffers ) override;
+    const DeviceLimitsInfo &GetLimits() override;
 
   private:
     /// Device driver type - represents where to do the graphics work on GPU or

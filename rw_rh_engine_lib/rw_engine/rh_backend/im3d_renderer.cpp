@@ -108,8 +108,11 @@ Im3DRenderer::Im3DRenderer( rh::engine::IDeviceState &device,
     alloc_params.mLayouts = obj_layout_array;
     mMatrixDescriptorSetPool =
         mDescSetAllocator->AllocateDescriptorSets( alloc_params );
+
+    auto matrix_size = Device.GetLimits().GetMinAlignedBufferEntrySize(
+        sizeof( DirectX::XMFLOAT4X4 ) );
     mMatrixBuffer = Device.CreateBuffer(
-        BufferCreateInfo{ sizeof( DirectX::XMFLOAT4X4 ) * DRAW_CALL_POOL_SIZE,
+        BufferCreateInfo{ matrix_size * DRAW_CALL_POOL_SIZE,
                           BufferUsage::ConstantBuffer, Dynamic, nullptr } );
     uint32_t buff_offset = 0;
 
@@ -123,7 +126,7 @@ Im3DRenderer::Im3DRenderer( rh::engine::IDeviceState &device,
         info.mSet              = i;
         info.mBufferUpdateInfo = buffer_upd_info;
         Device.UpdateDescriptorSets( info );
-        buff_offset += sizeof( DirectX::XMFLOAT4X4 );
+        buff_offset += matrix_size;
     }
 }
 

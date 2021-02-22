@@ -56,6 +56,21 @@ struct ImageUpdateInfo
     ISampler *  mSampler = nullptr;
 };
 
+/**
+ * Contains device limits
+ */
+struct DeviceLimitsInfo
+{
+    // Alignment of an offset to buffer object
+    uint32_t BufferOffsetMinAlign;
+
+    uint32_t GetMinAlignedBufferEntrySize( uint32_t s ) const
+    {
+        return ( s + ( BufferOffsetMinAlign - 1 ) ) &
+               ~( BufferOffsetMinAlign - 1 );
+    }
+};
+
 struct AccelStructUpdateInfo
 {
     void *mTLAS;
@@ -200,6 +215,8 @@ class IDeviceState
      */
     virtual IWindow *CreateDeviceWindow( HWND              window,
                                          const OutputInfo &info ) = 0;
+
+    virtual const DeviceLimitsInfo &GetLimits() = 0;
 
     virtual ICommandBuffer *GetMainCommandBuffer() = 0;
 
