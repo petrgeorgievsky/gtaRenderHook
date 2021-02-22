@@ -5,18 +5,16 @@
 #include "RTTlasBuildPass.h"
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
-#include <render_driver/render_driver.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
 
 namespace rh::rw::engine
 {
 using namespace rh::engine;
-RTTlasBuildPass::RTTlasBuildPass()
-{
-    auto &device = gRenderDriver->GetDeviceState();
 
+RTTlasBuildPass::RTTlasBuildPass( rh::engine::IDeviceState &device )
+    : Device( device )
+{
     mTlasScratchBuffer =
-        device.CreateBuffer( { .mSize  = 1024 * 1024 * 8,
+        Device.CreateBuffer( { .mSize  = 1024 * 1024 * 8,
                                .mUsage = BufferUsage::RayTracingScratch,
                                .mFlags = BufferFlags::Dynamic } );
 
@@ -27,7 +25,7 @@ RTTlasBuildPass::RTTlasBuildPass()
         .mSize  = 8000 * sizeof( VkAccelerationStructureInstanceNV ),
         .mUsage = BufferUsage::RayTracingScratch,
         .mFlags = BufferFlags::Dynamic };
-    mTlasBuffer = device.CreateBuffer( bufferCreateInfo );
+    mTlasBuffer = Device.CreateBuffer( bufferCreateInfo );
 }
 
 RTTlasBuildPass::~RTTlasBuildPass()
@@ -40,8 +38,7 @@ RTTlasBuildPass::~RTTlasBuildPass()
 VulkanTopLevelAccelerationStructure *RTTlasBuildPass::Execute(
     std::vector<VkAccelerationStructureInstanceNV> &&instance_buffer )
 {
-    auto &device =
-        dynamic_cast<VulkanDeviceState &>( gRenderDriver->GetDeviceState() );
+    auto &device = dynamic_cast<VulkanDeviceState &>( Device );
 
     auto tlas = device.CreateTLAS( { .mMaxInstanceCount = static_cast<uint32_t>(
                                          instance_buffer.size() ) } );

@@ -56,7 +56,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
 
     // RT Stuff
     mBlasBuildPass    = new RTBlasBuildPass( { Device, Resources } );
-    mTlasBuildPass    = new RTTlasBuildPass();
+    mTlasBuildPass    = new RTTlasBuildPass( Device );
     mSceneDescription = new RTSceneDescription( { Device, Resources } );
 
     mPrimaryRaysPass = new RTPrimaryRaysPass( { .Device  = Device,

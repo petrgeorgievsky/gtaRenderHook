@@ -17,7 +17,7 @@ namespace rh::rw::engine
 class RTTlasBuildPass
 {
   public:
-    RTTlasBuildPass();
+    RTTlasBuildPass( rh::engine::IDeviceState &device );
     virtual ~RTTlasBuildPass();
 
     rh::engine::VulkanTopLevelAccelerationStructure *
@@ -28,6 +28,7 @@ class RTTlasBuildPass
     GetSubmitInfo( rh::engine::ISyncPrimitive *dependency );
 
   private:
+    rh::engine::IDeviceState &       Device;
     rh::engine::VulkanCommandBuffer *mTlasCmdBuffer     = nullptr;
     rh::engine::IBuffer *            mTlasScratchBuffer = nullptr;
     rh::engine::IBuffer *            mTlasBuffer;
