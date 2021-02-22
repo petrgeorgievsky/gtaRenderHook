@@ -1,6 +1,5 @@
 #pragma once
 #include "../Common/IDeviceState.h"
-#include "D3D11DeviceOutputView.h"
 #include <d3dcommon.h>
 
 // d3d11 struct forwards:

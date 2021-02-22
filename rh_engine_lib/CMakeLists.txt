@@ -36,15 +36,15 @@ set(VULKAN_SOURCES
         Engine/VulkanImpl/VulkanRayTracingPipeline.cpp
         Engine/VulkanImpl/VulkanComputePipeline.cpp
         Engine/VulkanImpl/VulkanImGUI.cpp
-        Engine/VulkanImpl/VulkanGPUInfo.cpp)
+        Engine/VulkanImpl/VulkanGPUInfo.cpp
+        Engine/VulkanImpl/VulkanDebugUtils.cpp
+        )
 
 set(D3D11_SOURCES
+
         Engine/D3D11Impl/D3D11DeviceState.cpp
         Engine/D3D11Impl/D3D11CommandBuffer.cpp
         Engine/D3D11Impl/D3D11Convert.cpp
-        Engine/D3D11Impl/D3D11InputLayout.cpp
-        Engine/D3D11Impl/D3D11DeviceOutputView.cpp
-        Engine/D3D11Impl/D3D11PrimitiveBatch.cpp
         Engine/D3D11Impl/D3D11Window.cpp
         Engine/D3D11Impl/D3D11Swapchain.cpp
         Engine/D3D11Impl/D3D11ImageView.cpp
@@ -58,25 +58,6 @@ set(D3D11_SOURCES
         Engine/D3D11Impl/D3D11DescriptorSet.cpp
         Engine/D3D11Impl/D3D11Buffer.cpp
         Engine/D3D11Impl/D3D11Pipeline.cpp
-
-        Engine/D3D11Impl/Buffers/D3D11Buffer.cpp
-        Engine/D3D11Impl/Buffers/D3D11IndexBuffer.cpp
-        Engine/D3D11Impl/Buffers/D3D11VertexBuffer.cpp
-        Engine/D3D11Impl/Buffers/D3D11DynamicIndexBuffer.cpp
-        Engine/D3D11Impl/Buffers/D3D11DynamicVertexBuffer.cpp
-        Engine/D3D11Impl/Buffers/D3D11ConstantBuffer.cpp
-        Engine/D3D11Impl/Buffers/D3D11StructuredBuffer.cpp
-
-        Engine/D3D11Impl/ImageBuffers/D3D11Texture2D.cpp
-        Engine/D3D11Impl/ImageBuffers/D3D11DepthStencilBuffer.cpp
-        Engine/D3D11Impl/ImageBuffers/D3D11BackBuffer.cpp
-        Engine/D3D11Impl/ImageBuffers/D3D11Texture2DArray.cpp
-        #Engine/D3D11Impl/ImageBuffers/D3D11RenderTarget.cpp
-
-        Engine/D3D11Impl/Shaders/D3D11Shader.cpp
-        Engine/D3D11Impl/Shaders/D3D11VertexShader.cpp
-        Engine/D3D11Impl/Shaders/D3D11PixelShader.cpp
-        Engine/D3D11Impl/Shaders/D3D11ComputeShader.cpp
         )
 
 # android support for future
@@ -96,15 +77,14 @@ else ()
 endif ()
 
 set(SOURCES ${SOURCES}
-        TestUtils/TestSample.cpp
-        DebugUtils/DebugLogger.cpp
-        Engine/VulkanImpl/VulkanDebugUtils.cpp
-        ConfigUtils/ConfigurationManager.cpp
         Engine/EngineConfigBlock.cpp
+        TestUtils/TestSample.cpp
         TestUtils/BitmapLoader.cpp
-        ConfigUtils/Serializable.cpp
+        TestUtils/test_dump_util.cpp
+        DebugUtils/DebugLogger.cpp
         DebugUtils/Win32UncaughtExceptionHandler.cpp
-        TestUtils/test_dump_util.cpp)
+        ConfigUtils/ConfigurationManager.cpp
+        ConfigUtils/Serializable.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
@@ -119,9 +99,36 @@ if (USE_VULKAN_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)
 endif ()
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
+set(RH_COMPILE_OPTIONS "")
+set(RH_LINK_OPTIONS "")
+
+if (MSVC)
+    # warning level 4 and all warnings as errors
+    #set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} /W4 /WX)
+else ()
+    # lots of warnings and all warnings as errors
+    #set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -Wall -Wextra -pedantic -Werror)
+endif ()
+
+if (USE_SANITIZERS)
+    set(RH_COMPILE_OPTIONS "${RH_COMPILE_OPTIONS} -fno-omit-frame-pointer -fsanitize=address")
+    set(RH_LINK_OPTIONS "${RH_LINK_OPTIONS} -fsanitize=address")
+endif ()
+
+set(RH_DEBUG_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -D_DEBUG -ftime-trace)
+set(RH_DEBUG_LINK_OPTIONS "${RH_LINK_OPTIONS}")
+
+set(RH_RELEASE_COMPILE_OPTIONS "${RH_COMPILE_OPTIONS}")
+set(RH_RELEASE_LINK_OPTIONS "${RH_LINK_OPTIONS}")
+
+target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:${RH_DEBUG_COMPILE_OPTIONS}>")
+target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RH_RELEASE_COMPILE_OPTIONS}>")
+target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${RH_RELEASE_COMPILE_OPTIONS}>")
+
+target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:${RH_DEBUG_LINK_OPTIONS}>")
+target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RH_RELEASE_LINK_OPTIONS}>")
+target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${RH_RELEASE_LINK_OPTIONS}>")
 #target_compile_options(${PROJECT_NAME} PRIVATE -fno-omit-frame-pointer -fsanitize=address)
 #target_link_options(${PROJECT_NAME} PRIVATE -fno-omit-frame-pointer -fsanitize=address)
 
@@ -131,7 +138,6 @@ target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
         nlohmann_json::nlohmann_json
         )
 
-target_compile_options(${PROJECT_NAME} PRIVATE -ftime-trace)
 if (NOT (CLANG_ANALYSER_PATH STREQUAL ""))
     add_custom_command(TARGET ${PROJECT_NAME}
             PRE_BUILD
