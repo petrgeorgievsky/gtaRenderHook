@@ -6,18 +6,15 @@
 #include "rendering_loop/DescriptorGenerator.h"
 #include <Engine/Common/IDeviceState.h>
 #include <data_desc/viewport_state.h>
-#include <render_driver/render_driver.h>
 
 namespace rh::rw::engine
 {
 using namespace rh::engine;
 
-CameraDescription::CameraDescription()
+CameraDescription::CameraDescription( rh::engine::IDeviceState &device )
+    : Device( device )
 {
-
-    auto &device = gRenderDriver->GetDeviceState();
-
-    DescriptorGenerator descriptorGenerator{ device };
+    DescriptorGenerator descriptorGenerator{ Device };
     descriptorGenerator.AddDescriptor(
         0, 0, 0, DescriptorType::ROBuffer, 1,
         ShaderStage::Vertex | ShaderStage::Pixel | ShaderStage::RayGen |
@@ -33,14 +30,14 @@ CameraDescription::CameraDescription()
 
     // setup camera stuff
     mCameraBuffer =
-        device.CreateBuffer( { .mSize        = sizeof( CameraState ),
+        Device.CreateBuffer( { .mSize        = sizeof( CameraState ),
                                .mUsage       = BufferUsage::ConstantBuffer,
                                .mFlags       = BufferFlags::Dynamic,
                                .mInitDataPtr = nullptr } );
 
     std::array<BufferUpdateInfo, 1> buff_ui = {
-        { 0, sizeof( CameraState ), mCameraBuffer } };
-    device.UpdateDescriptorSets( { .mSet            = mCameraSet,
+        { { 0, sizeof( CameraState ), mCameraBuffer } } };
+    Device.UpdateDescriptorSets( { .mSet            = mCameraSet,
                                    .mBinding        = 0,
                                    .mDescriptorType = DescriptorType::ROBuffer,
                                    .mBufferUpdateInfo = buff_ui } );

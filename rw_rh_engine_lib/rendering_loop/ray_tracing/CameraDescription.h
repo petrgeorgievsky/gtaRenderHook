@@ -9,6 +9,7 @@ class IBuffer;
 class IDescriptorSetLayout;
 class IDescriptorSet;
 class IDescriptorSetAllocator;
+class IDeviceState;
 } // namespace rh::engine
 
 namespace rh::rw::engine
@@ -17,7 +18,7 @@ struct CameraState;
 class CameraDescription
 {
   public:
-    CameraDescription();
+    CameraDescription( rh::engine::IDeviceState &device );
     virtual ~CameraDescription();
 
     void Update( const CameraState &state );
@@ -29,6 +30,7 @@ class CameraDescription
     rh::engine::IDescriptorSet *GetDescSet() { return mCameraSet; }
 
   private:
+    rh::engine::IDeviceState &           Device;
     rh::engine::IDescriptorSetAllocator *mDescSetAlloc;
     rh::engine::IDescriptorSetLayout *   mCameraSetLayout;
     rh::engine::IDescriptorSet *         mCameraSet;

@@ -40,10 +40,11 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
         rh::engine::EngineConfigBlock::It.RendererWidth;
     const uint32_t rtx_resolution_h =
         rh::engine::EngineConfigBlock::It.RendererHeight;
+
     // Non-RT stuff:
     for ( auto &fb : mFramebufferCache )
         fb = nullptr;
-    mCameraDescription = new CameraDescription();
+    mCameraDescription = new CameraDescription( Device );
     mSkinAnimationPipe =
         new SkinAnimationPipeline( { Device, Resources, 110 } );
 
