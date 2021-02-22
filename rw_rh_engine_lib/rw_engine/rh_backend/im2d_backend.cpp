@@ -28,9 +28,8 @@ RwIm2DVertex *TriFanToTriList( RwIm2DVertex *vertices_in,
     return vertices_out;
 }
 
-int32_t rh::rw::engine::Im2DRenderPrimitiveFunction( int32_t       primType,
-                                                     RwIm2DVertex *vertices,
-                                                     int32_t       numVertices )
+int32_t Im2DRenderPrimitiveFunction( int32_t primType, RwIm2DVertex *vertices,
+                                     int32_t numVertices )
 {
     if ( gRwDeviceGlobals.DeviceGlobalsPtr->curCamera == nullptr )
         return 1;
@@ -53,9 +52,11 @@ int32_t rh::rw::engine::Im2DRenderPrimitiveFunction( int32_t       primType,
     return 1;
 }
 
-int32_t rh::rw::engine::Im2DRenderIndexedPrimitiveFunction(
-    int32_t primType, RwIm2DVertex *vertices, int32_t numVertices,
-    int16_t *indices, int32_t numIndices )
+int32_t Im2DRenderIndexedPrimitiveFunction( int32_t       primType,
+                                            RwIm2DVertex *vertices,
+                                            int32_t       numVertices,
+                                            int16_t *     indices,
+                                            int32_t       numIndices )
 {
     if ( gRwDeviceGlobals.DeviceGlobalsPtr->curCamera == nullptr )
         return 1;

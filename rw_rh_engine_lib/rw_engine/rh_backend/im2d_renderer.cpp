@@ -402,7 +402,7 @@ void Im2DRenderer::DrawQuad( rh::engine::IImageView *    texture,
     cmd_buffer->BindDescriptorSets( tex_desc_set_bind );
 
     std::array<VertexBufferBinding, 1> vbuffers = {
-        { mVertexBuffer, 0, sizeof( RwIm2DVertex ) } };
+        { { mVertexBuffer, 0, sizeof( RwIm2DVertex ) } } };
     cmd_buffer->BindVertexBuffers( 0, vbuffers );
 
     cmd_buffer->BindPipeline( mPipelineTex );
@@ -580,7 +580,7 @@ void Im2DRenderer::DrawDepthMask( rh::engine::IImageView *    texture,
     cmd_buffer->BindDescriptorSets( tex_desc_set_bind );
 
     std::array<VertexBufferBinding, 1> vbuffers = {
-        { mVertexBuffer, 0, sizeof( RwIm2DVertex ) } };
+        { { mVertexBuffer, 0, sizeof( RwIm2DVertex ) } } };
     cmd_buffer->BindVertexBuffers( 0, vbuffers );
 
     cmd_buffer->BindPipeline( mDepthMaskPipeline );

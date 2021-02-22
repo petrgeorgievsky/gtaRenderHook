@@ -15,9 +15,9 @@ class RwCameraClearCmd
     bool Execute();
 
   private:
-    RwCamera *m_pCamera = nullptr;
-    RwRGBA *  m_aClearColor;
-    int32_t   m_nClearMode = 0;
+    [[maybe_unused]] RwCamera *m_pCamera = nullptr;
+    RwRGBA *                   m_aClearColor;
+    int32_t                    m_nClearMode = 0;
 };
 
 } // namespace rh::rw::engine

@@ -31,13 +31,11 @@ RTSceneDescription::RTSceneDescription(
     constexpr auto texture_count_limit  = 20000;
     constexpr auto material_count_limit = 20001;
 
-    constexpr auto scene_desc_bind_id          = 0;
-    constexpr auto vertex_buff_desc_bind_id    = 1;
-    constexpr auto index_buff_bind_id          = 2;
-    constexpr auto texture_desc_bind_id        = 3;
-    constexpr auto material_buff_bind_id       = 4;
-    constexpr auto materials_bind_id           = 5;
-    constexpr auto materials_idx_remap_bind_id = 6;
+    constexpr auto scene_desc_bind_id       = 0;
+    constexpr auto vertex_buff_desc_bind_id = 1;
+    constexpr auto index_buff_bind_id       = 2;
+    constexpr auto texture_desc_bind_id     = 3;
+    constexpr auto material_buff_bind_id    = 4;
 
     mSceneDesc.resize( draw_count_limit );
     mSceneMaterials.resize( material_count_limit );

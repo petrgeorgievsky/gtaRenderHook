@@ -28,7 +28,7 @@ uint64_t GPUTexturePool::StoreTexture( rh::engine::IImageView *image,
         id++;
 
     std::array<ImageUpdateInfo, 1> img_upd_list = {
-        { ImageLayout::ShaderReadOnly, image, nullptr } };
+        { { ImageLayout::ShaderReadOnly, image, nullptr } } };
 
     DescriptorSetUpdateInfo imgUpdateInfo{};
     imgUpdateInfo.mSet             = mGPUPool;
