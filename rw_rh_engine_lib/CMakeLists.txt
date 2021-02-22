@@ -75,6 +75,8 @@ set(SOURCES
         rendering_loop/ray_tracing/debug_pipeline.cpp
         rendering_loop/DescriptorUpdater.cpp
 
+        rw_engine/rp_geometry_rw36.cpp
+        rw_engine/anim_hierarcy_rw36.cpp
         rw_engine/rh_backend/im3d_backend.cpp
         rw_engine/rh_backend/im3d_renderer.cpp
         rw_engine/system_funcs/raster_lock_cmd.cpp
@@ -116,7 +118,7 @@ set(SOURCES
         render_client/mesh_instance_state_recorder.cpp
         render_client/skin_instance_state_recorder.cpp
 
-        material_storage.cpp rw_engine/rp_geometry_rw36.cpp rw_engine/rp_geometry_rw36.h rw_engine/i_rp_geometry.h rw_engine/i_anim_hierarcy.h rw_engine/anim_hierarcy_rw36.cpp rw_engine/anim_hierarcy_rw36.h)
+        material_storage.cpp)
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

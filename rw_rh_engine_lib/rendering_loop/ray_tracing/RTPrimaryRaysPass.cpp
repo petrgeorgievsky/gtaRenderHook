@@ -99,7 +99,7 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
                                .mShaderStage = ShaderStage::RayMiss } );
 
     // create rt buffers
-    mAlbedoBuffer = Create2DRenderTargetBuffer( mWidth, mHeight,
+    mAlbedoBuffer = Create2DRenderTargetBuffer( Device, mWidth, mHeight,
                                                 ImageBufferFormat::RGBA16 );
     mAlbedoBufferView =
         device.CreateImageView( { mAlbedoBuffer, ImageBufferFormat::RGBA16,
@@ -107,7 +107,7 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
     for ( auto i = 0; i < 2; i++ )
     {
         mNormalsBuffer[i] = Create2DRenderTargetBuffer(
-            mWidth, mHeight, ImageBufferFormat::RGBA16,
+            Device, mWidth, mHeight, ImageBufferFormat::RGBA16,
             ImageBufferUsage::Storage | ImageBufferUsage::Sampled |
                 ImageBufferUsage::TransferDst | ImageBufferUsage::TransferSrc );
         mNormalsBufferView[i] = device.CreateImageView(
@@ -115,12 +115,12 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
               ImageViewUsage::RWTexture } );
     }
 
-    mMotionBuffer =
-        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::RG16 );
+    mMotionBuffer     = Create2DRenderTargetBuffer( Device, mWidth, mHeight,
+                                                ImageBufferFormat::RG16 );
     mMotionBufferView = device.CreateImageView(
         { mMotionBuffer, ImageBufferFormat::RG16, ImageViewUsage::RWTexture } );
 
-    mMaterialsBuffer = Create2DRenderTargetBuffer( mWidth, mHeight,
+    mMaterialsBuffer = Create2DRenderTargetBuffer( Device, mWidth, mHeight,
                                                    ImageBufferFormat::RGBA16 );
     mMaterialsBufferView =
         device.CreateImageView( { mMaterialsBuffer, ImageBufferFormat::RGBA16,

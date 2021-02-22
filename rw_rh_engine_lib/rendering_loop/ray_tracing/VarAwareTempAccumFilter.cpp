@@ -141,20 +141,20 @@ VATAFilterPass::VATAFilterPass( VarAwareTempAccumFilterPipe *pipeline,
               ImageViewUsage::RWTexture } );
     }
 
-    mAccumulateValueBuffer =
-        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::RG16 );
+    mAccumulateValueBuffer = Create2DRenderTargetBuffer(
+        device, mWidth, mHeight, ImageBufferFormat::RG16 );
     mAccumulateValueView = device.CreateImageView(
         { mAccumulateValueBuffer, ImageBufferFormat::RG16,
           ImageViewUsage::RWTexture } );
 
-    mReProjectValueBuffer =
-        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::RG16 );
+    mReProjectValueBuffer = Create2DRenderTargetBuffer(
+        device, mWidth, mHeight, ImageBufferFormat::RG16 );
     mReProjectValueView = device.CreateImageView(
         { mReProjectValueBuffer, ImageBufferFormat::RG16,
           ImageViewUsage::RWTexture } );
 
-    mBlurStrengthBuffer =
-        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::R16 );
+    mBlurStrengthBuffer = Create2DRenderTargetBuffer( device, mWidth, mHeight,
+                                                      ImageBufferFormat::R16 );
     mBlurStrengthValueView =
         device.CreateImageView( { mBlurStrengthBuffer, ImageBufferFormat::R16,
                                   ImageViewUsage::RWTexture } );

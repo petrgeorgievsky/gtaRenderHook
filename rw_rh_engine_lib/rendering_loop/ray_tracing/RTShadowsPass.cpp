@@ -111,18 +111,18 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
           .mShaderStage = ShaderStage::RayMiss } );
 
     // create rt buffers
-    mShadowsBuffer = Create2DRenderTargetBuffer( params.mWidth, params.mHeight,
-                                                 ImageBufferFormat::RGBA16 );
+    mShadowsBuffer = Create2DRenderTargetBuffer(
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
     mShadowsBufferView =
         Device.CreateImageView( { mShadowsBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );
     mTempBlurShadowsBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
     mTempBlurShadowsBufferView = Device.CreateImageView(
         { mTempBlurShadowsBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
     mBlurredShadowsBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
     mBlurredShadowsBufferView = Device.CreateImageView(
         { mBlurredShadowsBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
@@ -283,7 +283,7 @@ void RTShadowsPass::Execute( void *                      tlas,
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
     std::array<AccelStructUpdateInfo, 1> accel_ui = { { tlas } };
-    gRenderDriver->GetDeviceState().UpdateDescriptorSets(
+    Device.UpdateDescriptorSets(
         { .mSet            = mRayTraceSet,
           .mBinding        = 0,
           .mDescriptorType = DescriptorType::RTAccelerationStruct,

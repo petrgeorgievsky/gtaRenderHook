@@ -104,19 +104,19 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
     for ( auto i = 0; i < 2; i++ )
     {
         mAOBuffer[i] = Create2DRenderTargetBuffer(
-            params.mWidth, params.mHeight, ImageBufferFormat::RG16 );
+            Device, params.mWidth, params.mHeight, ImageBufferFormat::RG16 );
         mAOBufferView[i] =
             Device.CreateImageView( { mAOBuffer[i], ImageBufferFormat::RG16,
                                       ImageViewUsage::RWTexture } );
     }
 
     mTempBlurAOBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::R16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::R16 );
     mTempBlurAOBufferView =
         Device.CreateImageView( { mTempBlurAOBuffer, ImageBufferFormat::R16,
                                   ImageViewUsage::RWTexture } );
     mBlurredAOBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::R16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::R16 );
     mBlurredAOBufferView =
         Device.CreateImageView( { mBlurredAOBuffer, ImageBufferFormat::R16,
                                   ImageViewUsage::RWTexture } );

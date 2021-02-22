@@ -158,31 +158,31 @@ VATAColorFilterPass::VATAColorFilterPass(
     }
 
     mAccumulateValueBuffer = Create2DRenderTargetBuffer(
-        mWidth, mHeight, ImageBufferFormat::RGBA16 );
+        device, mWidth, mHeight, ImageBufferFormat::RGBA16 );
     mAccumulateValueView = device.CreateImageView(
         { mAccumulateValueBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
 
     mReProjectValueBuffer = Create2DRenderTargetBuffer(
-        mWidth, mHeight, ImageBufferFormat::RGBA16 );
+        device, mWidth, mHeight, ImageBufferFormat::RGBA16 );
     mReProjectValueView = device.CreateImageView(
         { mReProjectValueBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
 
-    mAccumulateMomentsBuffer =
-        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::RG16 );
+    mAccumulateMomentsBuffer = Create2DRenderTargetBuffer(
+        device, mWidth, mHeight, ImageBufferFormat::RG16 );
     mAccumulateMomentsView = device.CreateImageView(
         { mAccumulateMomentsBuffer, ImageBufferFormat::RG16,
           ImageViewUsage::RWTexture } );
 
-    mReProjectMomentsBuffer =
-        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::RG16 );
+    mReProjectMomentsBuffer = Create2DRenderTargetBuffer(
+        device, mWidth, mHeight, ImageBufferFormat::RG16 );
     mReProjectMomentsView = device.CreateImageView(
         { mReProjectMomentsBuffer, ImageBufferFormat::RG16,
           ImageViewUsage::RWTexture } );
 
-    mBlurStrengthBuffer =
-        Create2DRenderTargetBuffer( mWidth, mHeight, ImageBufferFormat::R16 );
+    mBlurStrengthBuffer = Create2DRenderTargetBuffer( device, mWidth, mHeight,
+                                                      ImageBufferFormat::R16 );
     mBlurStrengthValueView =
         device.CreateImageView( { mBlurStrengthBuffer, ImageBufferFormat::R16,
                                   ImageViewUsage::RWTexture } );

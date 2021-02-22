@@ -47,8 +47,8 @@ DebugPipeline::DebugPipeline( const DebugPipelineInitParams &params )
                             .mShader     = mCompositionShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mOutputBuffer =
-        Create2DRenderTargetBuffer( 1920, 1080, ImageBufferFormat::RGBA16 );
+    mOutputBuffer = Create2DRenderTargetBuffer( Device, mWidth, mHeight,
+                                                ImageBufferFormat::RGBA16 );
     mOutputBufferView =
         device.CreateImageView( { mOutputBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );

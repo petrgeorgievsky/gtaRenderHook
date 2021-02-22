@@ -106,23 +106,23 @@ RTReflectionRaysPass::RTReflectionRaysPass(
 
     // create rt buffers
     mReflectionBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
     mReflectionBufferView =
         device.CreateImageView( { mReflectionBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );
     mTempBlurReflectionBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
     mTempBlurReflectionBufferView = device.CreateImageView(
         { mTempBlurReflectionBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
     mFilteredReflectionBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::RGBA16 );
     mFilteredReflectionBufferView = device.CreateImageView(
         { mFilteredReflectionBuffer, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
 
     mReflectionBlurStrBuffer = Create2DRenderTargetBuffer(
-        params.mWidth, params.mHeight, ImageBufferFormat::R16 );
+        Device, params.mWidth, params.mHeight, ImageBufferFormat::R16 );
     mReflectionBlurStrBufferView = device.CreateImageView(
         { mReflectionBlurStrBuffer, ImageBufferFormat::R16,
           ImageViewUsage::RWTexture } );

@@ -62,8 +62,9 @@ DeferredCompositionPass::DeferredCompositionPass(
                             .mShader     = mCompositionShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mOutputBuffer = Create2DRenderTargetBuffer(
-        mPassParams.mWidth, mPassParams.mHeight, ImageBufferFormat::RGBA16 );
+    mOutputBuffer = Create2DRenderTargetBuffer( device, mPassParams.mWidth,
+                                                mPassParams.mHeight,
+                                                ImageBufferFormat::RGBA16 );
     mOutputBufferView =
         device.CreateImageView( { mOutputBuffer, ImageBufferFormat::RGBA16,
                                   ImageViewUsage::RWTexture } );

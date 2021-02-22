@@ -24,16 +24,16 @@ ImageMemoryBarrierInfo GetLayoutTransformBarrier( IImageBuffer *buffer,
              .mDstMemoryAccess = MemoryAccessFlags::MemoryWrite,
              .mSubresRange     = { 0, 1, 0, 1 } };
 }
-IImageBuffer *Create2DRenderTargetBuffer( uint32_t w, uint32_t h,
+IImageBuffer *Create2DRenderTargetBuffer( rh::engine::IDeviceState &device,
+                                          uint32_t w, uint32_t h,
                                           ImageBufferFormat f, uint32_t usage )
 {
     using namespace rh::engine;
-    return gRenderDriver->GetDeviceState().CreateImageBuffer(
-        { .mDimension = ImageDimensions::d2D,
-          .mFormat    = f,
-          .mUsage     = usage,
-          .mHeight    = h,
-          .mWidth     = w } );
+    return device.CreateImageBuffer( { .mDimension = ImageDimensions::d2D,
+                                       .mFormat    = f,
+                                       .mUsage     = usage,
+                                       .mHeight    = h,
+                                       .mWidth     = w } );
 }
 
 RasterData ReadBMP( const std::string &path )
