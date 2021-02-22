@@ -46,6 +46,14 @@ struct TiledLightCullingParams
     rh::engine::IImageView *mCurrentDepth;
 };
 
+struct TileConfig
+{
+    uint32_t max_light_count;
+    uint32_t max_light_in_tile;
+    uint32_t min_depth;
+    uint32_t max_depth;
+};
+
 class TiledLightCulling
 {
   public:
@@ -61,6 +69,7 @@ class TiledLightCulling
     CameraDescription *mCameraDesc;
     uint32_t           mWidth{};
     uint32_t           mHeight{};
+    TileConfig         Config{};
 
     SPtr<rh::engine::IDescriptorSetAllocator> mDescSetAlloc;
 

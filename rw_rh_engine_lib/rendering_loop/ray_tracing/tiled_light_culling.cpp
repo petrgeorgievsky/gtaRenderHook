@@ -20,13 +20,6 @@ struct TileData
     uint32_t light_count;
     uint32_t light_offset;
 };
-struct TileConfig
-{
-    uint32_t max_light_count;
-    uint32_t max_light_in_tile;
-    uint32_t min_depth;
-    uint32_t max_depth;
-};
 enum tile_build_slot_ids
 {
     tb_Depth        = 0,
@@ -136,6 +129,10 @@ void TiledLightCulling::Execute( rh::engine::ICommandBuffer *dest,
         mLightBuffer->Update( info.PointLights.Data(),
                               min( 1024u, info.PointLights.Size() ) *
                                   sizeof( PointLight ) );
+    Config.max_light_count   = info.PointLights.Size();
+    Config.max_light_in_tile = 32;
+    mTileConfigBuffer->Update( &Config, sizeof( TileConfig ) );
+
     vk_cmd_buff->BindComputePipeline( mBuildTilesPipeline );
 
     vk_cmd_buff->BindDescriptorSets(

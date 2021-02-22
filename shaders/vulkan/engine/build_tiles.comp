@@ -18,7 +18,7 @@ struct Tile
 };
 
 layout(binding = 0, set = 0, rgba16f) uniform image2D tx_normal_depth;
-layout(binding = 1, set = 0) buffer TiledConfig
+layout(binding = 1, set = 0) uniform TiledConfig
 {
     uint max_light_count;
     uint max_light_in_tile;
@@ -142,25 +142,23 @@ void main()
 
     barrier();
 
-    for (uint i = gl_LocalInvocationIndex; i < 1024; i+=8*8)
+    for (uint i = gl_LocalInvocationIndex; i < tiled_config.max_light_count; i+=gl_WorkGroupSize.x*gl_WorkGroupSize.y)
     {
         PointLight pl = point_lights.i[i];
-        if (pl.posAndRadius.w > 0.01){
-            vec3 position = (vec4(pl.posAndRadius.xyz, 1.0) * cam.view).xyz;
-            float radius = pl.posAndRadius.w;
-            bool inFrustum = true;
-            for (uint i = 0; i < 6; i++)
-            {
-                float distance = dot(frustum.plane[i], vec4(position, 1.0f));
-                inFrustum = inFrustum && (distance >= -radius);
-            }
+        vec3 position = (vec4(pl.posAndRadius.xyz, 1.0) * cam.view).xyz;
+        float radius = pl.posAndRadius.w;
+        bool inFrustum = true;
+        for (uint i = 0; i < 6; i++)
+        {
+            float distance = dot(frustum.plane[i], vec4(position, 1.0f));
+            inFrustum = inFrustum && (distance >= -radius);
+        }
 
-            if (inFrustum)
-            {
-                uint light_idx = atomicAdd(tile_light_count, uint(1));
-                if (light_idx < max_lights_per_tile)
-                light_id_list.light_ids[tile_light_offset + light_idx] = i;
-            }
+        if (inFrustum)
+        {
+            uint light_idx = atomicAdd(tile_light_count, uint(1));
+            if (light_idx < max_lights_per_tile)
+            light_id_list.light_ids[tile_light_offset + light_idx] = i;
         }
     }
 
