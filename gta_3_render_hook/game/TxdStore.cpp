@@ -4,6 +4,8 @@
 
 #include "TxdStore.h"
 #include "../call_redirection_util.h"
+#include <injection_utils/InjectorHelpers.h>
+
 int32_t TxdStore::FindTxdSlot( const char *name )
 {
     return InMemoryFuncCall<int32_t>(

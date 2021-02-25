@@ -5,8 +5,8 @@
 #include "material_system_patches.h"
 #include "../call_redirection_util.h"
 #include "../game/TxdStore.h"
-#include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <common_headers.h>
+#include <injection_utils/InjectorHelpers.h>
 #include <material_storage.h>
 #include <rw_engine/rh_backend/material_backend.h>
 

@@ -8,9 +8,8 @@
 #include "Clock.h"
 #include "ModelInfo.h"
 #include "Streaming.h"
-#include <MemoryInjectionUtils/InjectorHelpers.h>
-#include <algorithm>
 #include <cmath>
+#include <injection_utils/InjectorHelpers.h>
 #include <render_client/render_client.h>
 #include <span>
 

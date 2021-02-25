@@ -4,6 +4,7 @@
 
 #include "World.h"
 #include "../call_redirection_util.h"
+#include <injection_utils/InjectorHelpers.h>
 
 uint16_t &World::mCurrentScanCode = *reinterpret_cast<uint16_t *>(
     GetAddressByGame( 0x95CC64, 0x95CE1C, 0x96CF5C ) );

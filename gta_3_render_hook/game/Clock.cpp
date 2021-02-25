@@ -4,6 +4,7 @@
 
 #include "Clock.h"
 #include "../call_redirection_util.h"
+#include <injection_utils/InjectorHelpers.h>
 bool Clock::GetIsTimeInRange( unsigned char from, unsigned char to )
 {
     return InMemoryFuncCall<bool>(

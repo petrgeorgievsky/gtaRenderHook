@@ -5,14 +5,13 @@
 #include "skin_model_pipeline.h"
 #include "../call_redirection_util.h"
 #include "../gta3_geometry_proxy.h"
-#include <MemoryInjectionUtils/InjectorHelpers.h>
+#include <injection_utils/InjectorHelpers.h>
 #include <render_client/render_client.h>
 #include <rw_engine/i_anim_hierarcy.h>
 #include <rw_engine/rw_frame/rw_frame.h>
 #include <rw_engine/rw_macro_constexpr.h>
 #include <rw_engine/rw_rh_skin_pipeline.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
-#include <rw_game_hooks.h>
 
 using namespace rh::rw::engine;
 

@@ -4,7 +4,7 @@
 
 #include "PointLights.h"
 #include "../call_redirection_util.h"
-#include <MemoryInjectionUtils/InjectorHelpers.h>
+#include <injection_utils/InjectorHelpers.h>
 #include <render_client/render_client.h>
 
 int32_t PointLights::AddLight( char a1, float x, float y, float z, float dx,

@@ -4,7 +4,7 @@
 #include "rwd3d8_patches.h"
 #include "../call_redirection_util.h"
 
-#include <MemoryInjectionUtils/InjectorHelpers.h>
+#include <injection_utils/InjectorHelpers.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 #include <vector>
 

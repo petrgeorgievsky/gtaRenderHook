@@ -92,11 +92,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         UNITY_BUILD TRUE
         )
 
-if (MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /EHs-c-)
-else ()
-    target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)
-endif ()
+#if (MSVC)
+#    target_compile_options(${PROJECT_NAME} PRIVATE /EHs-c-)
+#else ()
+#    target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)
+#endif ()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DANDROID_BUILD -DVK_USE_PLATFORM_ANDROID_KHR)
 else ()
@@ -105,7 +105,7 @@ else ()
 endif ()
 
 if (USE_VULKAN_API)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API -DVULKAN_HPP_NO_EXCEPTIONS -DJSON_NOEXCEPTION)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API -DVULKAN_HPP_NO_EXCEPTIONS)
 endif ()
 
 

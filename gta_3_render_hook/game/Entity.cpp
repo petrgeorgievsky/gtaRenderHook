@@ -3,7 +3,7 @@
 //
 
 #include "Entity.h"
-#include "../call_redirection_util.h"
+#include <injection_utils/InjectorHelpers.h>
 
 void Entity::CreateRwObject() { InMemoryVirtualFunc<void, 5>( this ); }
 
