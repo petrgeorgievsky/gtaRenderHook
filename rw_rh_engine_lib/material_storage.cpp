@@ -52,16 +52,24 @@ void MaterialExtensionSystem::ParseMaterialDesc(
         return;
     }
     auto &desc = mMaterials[mat_desc.stem().generic_string()];
+    try
+    {
+        nlohmann::json desc_json{};
+        filestream >> desc_json;
 
-    nlohmann::json desc_json{};
-    filestream >> desc_json;
+        auto tex_name = desc_json["spec_tex"].get<std::string>();
+        desc.mSpecularTextureName.fill( 0 );
+        std::copy( tex_name.begin(), tex_name.end(),
+                   desc.mSpecularTextureName.begin() );
 
-    auto tex_name = desc_json["spec_tex"].get<std::string>();
-    desc.mSpecularTextureName.fill( 0 );
-    std::copy( tex_name.begin(), tex_name.end(),
-               desc.mSpecularTextureName.begin() );
-
-    desc.mTextureDictName = desc_json["tex_dict_slot_name"].get<std::string>();
+        desc.mTextureDictName =
+            desc_json["tex_dict_slot_name"].get<std::string>();
+    }
+    catch ( const std::exception &ex )
+    {
+        rh::debug::DebugLogger::ErrorFmt(
+            "Failed to parse material description %s", ex.what() );
+    }
 }
 
 RwTexture *MaterialExtensionSystem::ReadTexture( std::string_view dictionary,
