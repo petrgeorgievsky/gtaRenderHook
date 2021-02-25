@@ -7,7 +7,6 @@
 #include <DirectXMathConvert.inl>
 #include <DirectXMathMatrix.inl>
 #include <Engine/Common/types/primitive_type.h>
-#include <rw_engine/rh_backend/material_backend.h>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rh_backend/skinned_mesh_backend.h>
@@ -75,7 +74,7 @@ void GenerateSkinNormals( VertexDescPosColorUVNormals *verticles,
 
 RwResEntry *RHInstanceSkinAtomicGeometry( RpGeometryInterface *geom_io,
                                           void *               owner,
-                                          RwResEntry *&        resEntryPointer,
+                                          RwResEntry **        resEntryPointer,
                                           const RpMeshHeader * meshHeader,
                                           RpHAnimHierarchy *   pHierarchy,
                                           RwFrame *            pFrame )
@@ -84,14 +83,14 @@ RwResEntry *RHInstanceSkinAtomicGeometry( RpGeometryInterface *geom_io,
 
     resEntry = reinterpret_cast<ResEnty *>(
         gRwDeviceGlobals.ResourceFuncs.AllocateResourceEntry(
-            owner, &resEntryPointer, sizeof( ResEnty ) - sizeof( RwResEntry ),
+            owner, resEntryPointer, sizeof( ResEnty ) - sizeof( RwResEntry ),
             []( RwResEntry *resEntry ) noexcept {
                 auto *entry = reinterpret_cast<ResEnty *>( resEntry );
                 if ( entry != nullptr )
                     DestroySkinMesh( entry->meshData );
             } ) );
 
-    resEntryPointer = resEntry;
+    *resEntryPointer = resEntry;
     if ( resEntry == nullptr )
         return nullptr;
 
@@ -433,27 +432,26 @@ RenderStatus InstanceSkinAtomic( RpAtomic *           atomic,
         }
         if ( resEntry != nullptr )
             return RenderStatus::Instanced;
-        RwResEntry *&resEntryPointer = geom_io->GetResEntryRef();
+        RwResEntry **resEntryPointer = &geom_io->GetResEntryRef();
         void *       owner;
         meshHeader = geom_io->GetMeshHeader();
         if ( geom_io->GetMorphTargetCount() != 1 )
         {
             owner           = atomic;
-            resEntryPointer = atomic->repEntry;
+            resEntryPointer = &atomic->repEntry;
         }
         else
         {
             owner           = atomic->geometry;
-            resEntryPointer = geom_io->GetResEntryRef();
+            resEntryPointer = &geom_io->GetResEntryRef();
         }
 
         auto anim_hier =
             gRwDeviceGlobals.SkinFuncs.AtomicGetHAnimHierarchy( atomic );
         auto frame = static_cast<RwFrame *>( rwObject::GetParent( atomic ) );
 
-        resEntry = RHInstanceSkinAtomicGeometry( geom_io, owner,
-                                                 geom_io->GetResEntryRef(),
-                                                 meshHeader, anim_hier, frame );
+        resEntry = RHInstanceSkinAtomicGeometry(
+            geom_io, owner, resEntryPointer, meshHeader, anim_hier, frame );
         if ( resEntry == nullptr )
             return RenderStatus::Failure;
         geom_io->Unlock();

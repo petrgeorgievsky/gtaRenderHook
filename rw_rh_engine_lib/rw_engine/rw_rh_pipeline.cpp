@@ -127,7 +127,7 @@ void GenerateNormals( VertexDescPosColorUVNormals *verticles,
 }
 
 RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
-                                    RwResEntry *&       resEntryPointer,
+                                    RwResEntry **       resEntryPointer,
                                     const RpMeshHeader *meshHeader )
 {
     using namespace rh::engine;
@@ -135,14 +135,14 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
 
     resEntry = reinterpret_cast<ResEnty *>(
         gRwDeviceGlobals.ResourceFuncs.AllocateResourceEntry(
-            owner, &resEntryPointer, sizeof( ResEnty ) - sizeof( RwResEntry ),
+            owner, resEntryPointer, sizeof( ResEnty ) - sizeof( RwResEntry ),
             []( RwResEntry *resEntry ) noexcept {
                 auto *entry = reinterpret_cast<ResEnty *>( resEntry );
                 if ( entry != nullptr )
                     DestroyBackendMesh( entry->meshData );
             } ) );
 
-    resEntryPointer = resEntry;
+    *resEntryPointer = resEntry;
     if ( resEntry == nullptr )
         return nullptr;
 
@@ -179,12 +179,7 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         material.mDiffuseColor     = mesh_material->color;
         material.mSpecular         = mesh_material->surfaceProps.specular;
         material.mDiffuseRasterIdx = -1;
-        if ( mesh_material->texture && mesh_material->texture->raster )
-        {
-            auto &raster =
-                BackendRasterPlugin::GetData( mesh_material->texture->raster );
-            material.mDiffuseRasterIdx = raster.mImageId;
-        }
+
         geometry_mats.push_back( material );
 
         if ( convert_to_list )
@@ -370,21 +365,21 @@ RenderStatus InstanceAtomic( RpAtomic *atomic, RpGeometryInterface *geom_io )
         }
         if ( resEntry != nullptr )
             return RenderStatus::Instanced;
-        RwResEntry *&resEntryPointer = geom_io->GetResEntryRef();
+        RwResEntry **resEntryPointer = &geom_io->GetResEntryRef();
         void *       owner;
         meshHeader = geom_io->GetMeshHeader();
         if ( geom_io->GetMorphTargetCount() != 1 )
         {
             owner           = atomic;
-            resEntryPointer = atomic->repEntry;
+            resEntryPointer = &atomic->repEntry;
         }
         else
         {
             owner           = atomic->geometry;
-            resEntryPointer = geom_io->GetResEntryRef();
+            resEntryPointer = &geom_io->GetResEntryRef();
         }
-        resEntry = InstanceAtomicGeometry(
-            geom_io, owner, geom_io->GetResEntryRef(), meshHeader );
+        resEntry = InstanceAtomicGeometry( geom_io, owner, resEntryPointer,
+                                           meshHeader );
         if ( resEntry == nullptr )
             return RenderStatus::Failure;
         geom_io->Unlock();
@@ -423,9 +418,13 @@ void DrawAtomic( RpAtomic *atomic, RpGeometryInterface *geom_io,
                  const std::function<void( ResEnty * )> &render_callback )
 {
     geom_io->Init( atomic->geometry );
-    auto *resEntry = reinterpret_cast<ResEnty *>( geom_io->GetResEntry() );
+    ResEnty *entry;
+    if ( geom_io->GetMorphTargetCount() != 1 )
+        entry = reinterpret_cast<ResEnty *>( atomic->repEntry );
+    else
+        entry = reinterpret_cast<ResEnty *>( geom_io->GetResEntry() );
     if ( render_callback )
-        render_callback( resEntry );
+        render_callback( entry );
     // if ( resEntry && resEntry->modelInstance )
     //    pipeline->DrawMesh( context, resEntry->modelInstance );
 }
