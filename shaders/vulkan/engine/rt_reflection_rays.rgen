@@ -62,10 +62,12 @@ void main()
     vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDNV.xy));
     vec4 mat_params =  imageLoad(material_params, ivec2(gl_LaunchIDNV.xy));
     normals_d.xyz = normalize(normals_d.xyz);
+    vec3 hitValue = vec3(0);
+    float roughness = (1 - mat_params.g);
     float refl_int = MicrofacetFresnel(-direction.xyz, normals_d.xyz, 0);
 
     vec4 world_pos = vec4(origin.xyz + direction.xyz * normals_d.w, 1);
-    if (normals_d.w > 1000.0f || mat_params.r * refl_int< 0.01f){
+    if (normals_d.w > 1000.0f || mat_params.r * refl_int< 0.01f || roughness > 0.65f){
         imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(0.0, 0.0, 0.0, 0));
         return;
     }
@@ -75,8 +77,6 @@ void main()
 
     vec3 random_s_dir = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64+ jitter.xy * (refl_params.time_stamp%64))/64.0f).xyz * 2.0f - 1.0f.xxx;
 
-    vec3 hitValue = vec3(0);
-    float roughness = (1 - mat_params.g);
     roughness*=roughness;
     vec3 ref_dir = normalize(reflect(direction.xyz, normals_d.xyz) + random_s_dir * roughness * 0.5f);
     traceNV(topLevelAS, rayFlags,
