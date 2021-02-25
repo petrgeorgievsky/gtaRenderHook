@@ -1,3 +1,9 @@
+#include "game/Renderer.h"
+#include "game_patches/base_model_pipeline.h"
+#include "game_patches/material_system_patches.h"
+#include "game_patches/rwd3d8_patches.h"
+#include "game_patches/skin_model_pipeline.h"
+#include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/IDeviceState.h>
 #include <Windows.h>
@@ -6,12 +12,7 @@
 #include <render_client/render_client.h>
 #include <rw_engine/anim_hierarcy_rw36.h>
 #include <rw_engine/rh_backend/raster_backend.h>
-#include <rw_engine/rp_geometry_rw36.h>
 #include <rw_engine/rw_api_injectors.h>
-#include <rw_engine/rw_frame/rw_frame.h>
-#include <rw_engine/rw_macro_constexpr.h>
-#include <rw_engine/rw_rh_pipeline.h>
-#include <rw_engine/rw_rh_skin_pipeline.h>
 #include <rw_engine/system_funcs/rw_device_system_globals.h>
 #include <rw_game_hooks.h>
 
@@ -28,106 +29,6 @@ RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
     reinterpret_cast<RwTextureSetName_FN>( 0x64DF40 ),
     reinterpret_cast<RwTextureSetName_FN>( 0x64DFB0 ) };
 
-struct RwVideoModeVice
-{
-    int32_t  width;
-    int32_t  height;
-    int32_t  depth;
-    uint32_t flags;
-};
-
-RwVideoModeVice *MyRwEngineGetVideoModeInfo( RwVideoModeVice *modeinfo,
-                                             int32_t          modeIndex )
-{
-
-    RwVideoMode videoMode{};
-    if ( !SystemHandler( rwDEVICESYSTEMGETMODEINFO, &videoMode, nullptr,
-                         modeIndex ) )
-        return nullptr;
-    modeinfo->width  = videoMode.width;
-    modeinfo->height = videoMode.height;
-    modeinfo->depth  = videoMode.depth;
-    modeinfo->flags  = videoMode.flags;
-    return modeinfo;
-}
-
-static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
-                                       const RxPipelineNodeParam *params )
-{
-    static RpGeometryRw36 geometry_interface_35{};
-    RpAtomic *            atomic;
-
-    atomic           = static_cast<RpAtomic *>( params->dataParam );
-    RpGeometry *geom = atomic->geometry;
-    geometry_interface_35.Init( geom );
-    if ( InstanceAtomic( atomic, &geometry_interface_35 ) !=
-         RenderStatus::Instanced )
-        return 0;
-
-    auto ltm = RwFrameGetLTM(
-        static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
-    DrawAtomic(
-        atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
-            auto &       renderer = gRenderClient->RenderState.MeshDrawCalls;
-            DrawCallInfo info{};
-            info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
-            info.MeshId         = res_entry->meshData;
-            info.WorldTransform = DirectX::XMFLOAT4X3{
-                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
-                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
-                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
-            };
-            auto mesh_list = geometry_interface_35.GetMeshList();
-            auto materials =
-                renderer.AllocateDrawCallMaterials( mesh_list.size() );
-            for ( auto i = 0; i < mesh_list.size(); i++ )
-                materials[i] = ConvertMaterialData( mesh_list[i].material );
-            renderer.RecordDrawCall( info );
-        } );
-    return 1;
-}
-
-static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
-                                           const RxPipelineNodeParam *params )
-{
-    static RpGeometryRw36 geometry_interface_35{};
-    RpAtomic *            atomic;
-
-    atomic           = static_cast<RpAtomic *>( params->dataParam );
-    RpGeometry *geom = atomic->geometry;
-    // RpMeshHeader *meshHeader = geom->mesh;
-
-    geometry_interface_35.Init( geom );
-    if ( InstanceSkinAtomic( atomic, &geometry_interface_35 ) !=
-         RenderStatus::Instanced )
-        return 0;
-
-    auto ltm = RwFrameGetLTM(
-        static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
-    rh::rw::engine::DrawAtomic(
-        atomic, &geometry_interface_35,
-        [&ltm, atomic]( rh::rw::engine::ResEnty *res_entry ) {
-            auto &renderer = gRenderClient->RenderState.SkinMeshDrawCalls;
-            SkinDrawCallInfo info{};
-            info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
-            info.MeshId         = res_entry->meshData;
-            info.WorldTransform = DirectX::XMFLOAT4X3{
-                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
-                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
-                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
-            };
-            auto mesh_list = geometry_interface_35.GetMeshList();
-            auto materials =
-                renderer.AllocateDrawCallMaterials( mesh_list.size() );
-            for ( auto i = 0; i < mesh_list.size(); i++ )
-                materials[i] = ConvertMaterialData( mesh_list[i].material );
-            static AnimHierarcyRw36 g_anim{};
-            PrepareBoneMatrices( info.BoneTransform, atomic, g_anim );
-            renderer.RecordDrawCall( info );
-        } );
-
-    return 1;
-}
 int32_t true_hook() { return 1; }
 struct CVector
 {
@@ -212,71 +113,6 @@ int32_t water_render()
     return 1;
 }
 
-RpMaterial *RpMaterialStreamReadImpl( void *stream )
-{
-    return ( reinterpret_cast<RpMaterial *(__cdecl *)( void * )>( 0x655920 ) )(
-        stream );
-}
-
-RwTexture *RwTextureRead( const char *name, const char *maskName )
-{
-    return (
-        reinterpret_cast<RwTexture *(__cdecl *)( const char *, const char * )>(
-            0x64E110 ) )( name, maskName );
-}
-
-std::unordered_map<std::string, std::string> g_specular_storage{};
-
-void InitSpecStorage()
-{
-    static bool is_initialized = false;
-    if ( is_initialized )
-        return;
-    namespace fs  = std::filesystem;
-    auto dir_path = fs::current_path() / "materials";
-    if ( !fs::exists( dir_path ) )
-        return;
-    for ( auto &p : fs::directory_iterator( dir_path ) )
-    {
-        const fs::path &file_path = p.path();
-
-        if ( file_path.extension() == ".mat" )
-        {
-            auto file = fopen( file_path.generic_string().c_str(), "rt" );
-            char specFileName[80];
-            char normalFileName[80];
-            if ( file )
-            {
-                auto res = fscanf( file, "%79s\n", specFileName );
-                if ( res == EOF )
-                    fclose( file );
-                fclose( file );
-
-                g_specular_storage[file_path.stem().generic_string()] =
-                    std::string( specFileName );
-            }
-        }
-    }
-    is_initialized = true;
-}
-
-RpMaterial *RpMaterialStreamRead( void *stream )
-{
-    auto material = RpMaterialStreamReadImpl( stream );
-    if ( material == nullptr )
-        return nullptr;
-    auto &mat_ext = BackendMaterialPlugin::GetData( material );
-    if ( material->texture )
-    {
-        InitSpecStorage();
-        auto string_s_name  = std::string( material->texture->name );
-        auto spec_name_iter = g_specular_storage.find( string_s_name );
-        if ( spec_name_iter != g_specular_storage.end() )
-            mat_ext.mSpecTex =
-                RwTextureRead( spec_name_iter->second.c_str(), nullptr );
-    }
-    return material;
-}
 BOOL emptystuff() { return false; }
 
 BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
@@ -316,32 +152,31 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
 
         RwGameHooks::Patch( gtavc_ptr_table );
         //
-
-        SetPointer( 0x6DF9AC,
-                    reinterpret_cast<void *>( D3D8AtomicAllInOneNode ) );
-        SetPointer(
-            0x6DF8EC,
-            reinterpret_cast<void *>( D3D8SkinAtomicAllInOneNode ) ); // skin
         // Hide default sky
         RedirectJump( 0x53F650, reinterpret_cast<void *>( true_hook ) );
         RedirectJump( 0x53F380, reinterpret_cast<void *>( true_hook ) );
         // Enable Z-Test for clouds
         uint8_t ztest = 1;
         Patch( 0x53FCD3, &ztest, sizeof( ztest ) );
+        // RedirectJump( 0x401000, reinterpret_cast<void *>( logstuff ) );
+        BaseModelPipeline::Patch();
+        SkinModelPipeline::Patch();
+        PatchMaterialSystem();
+        RwD3D8Patches::Patch();
+        Renderer::Patch();
 
-        /// PBR tests
-        RedirectCall( 0x66DD06,
-                      reinterpret_cast<void *>( RpMaterialStreamRead ) );
-
-        RedirectJump( 0x642B70,
-                      reinterpret_cast<void *>( MyRwEngineGetVideoModeInfo ) );
         // Im3D
         // SetPointer( 0x6DF754, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
 
         // check dxt support
         RedirectJump( 0x61E310, reinterpret_cast<void *>( true_hook ) );
+        // matfx disable
+        // RedirectJump( 0x655EB0, reinterpret_cast<void *>( true_hook ) );
+
         // Transparent water is buggy with RTX
-        RedirectCall( 0x4A65AE, reinterpret_cast<void *>( water_render ) );
+        // RedirectCall( 0x4A65AE, reinterpret_cast<void *>( water_render ) );
+
+        // RedirectCall( 0x4CA267, reinterpret_cast<void *>( emptystuff ) );
         // Buggy cutscene shadows
         RedirectJump( 0x625D80, reinterpret_cast<void *>( emptystuff ) );
         // Lights

@@ -11,6 +11,18 @@ include_directories(
 
 set(SOURCES
         dllmain.cpp
+        game/TxdStore.cpp
+        game/World.cpp
+        game/Renderer.cpp
+        game/Entity.cpp
+        game/Streaming.cpp
+        game/ModelInfo.cpp
+        game/Clock.cpp
+        game/Vector.cpp
+        game_patches/material_system_patches.cpp
+        game_patches/rwd3d8_patches.cpp
+        game_patches/base_model_pipeline.cpp
+        game_patches/skin_model_pipeline.cpp
         )
 
 #set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
