@@ -127,6 +127,12 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         rh::rw::engine::IPCSettings::mMode =
             rh::rw::engine::IPCRenderMode::CrossProcessClient;
         rh::rw::engine::IPCSettings::mProcessName = "gta_vc_render_driver.exe";
+        /// Init config
+        auto       cfg_mgr  = rh::engine::ConfigurationManager::Instance();
+        const auto cfg_path = "rh_config.cfg";
+        if ( !cfg_mgr.LoadFromFile( cfg_path ) )
+            cfg_mgr.SaveToFile( cfg_path );
+
         RwPointerTable gtavc_ptr_table{};
         gtavc_ptr_table.mRwDevicePtr                  = 0x6DDE3C;
         gtavc_ptr_table.mRwRwDeviceGlobalsPtr         = 0x7DD708;
