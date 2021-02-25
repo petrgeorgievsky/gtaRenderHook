@@ -32,6 +32,7 @@ SkinInstanceStateRecorder::AllocateDrawCallMaterials( uint64_t count )
 
 void SkinInstanceStateRecorder::RecordDrawCall( const SkinDrawCallInfo &info )
 {
+    assert( DrawCallCount < 100 );
     auto mat_count          = MeshData[DrawCallCount].MaterialListCount;
     MeshData[DrawCallCount] = info;
     MeshData[DrawCallCount].MaterialListStart = MaterialCount;

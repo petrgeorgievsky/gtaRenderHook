@@ -2,7 +2,6 @@
 // Created by peter on 19.01.2021.
 //
 #include "start_cmd.h"
-#include "rw_device_system_globals.h"
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/IDeviceState.h>
 #include <ipc/shared_memory_queue_client.h>

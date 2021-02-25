@@ -30,11 +30,14 @@ class BackendRasterPlugin
 
 struct BackendRasterExt
 {
-    uint64_t mImageId = BackendRasterPlugin::NullRasterId;
+    uint64_t mImageId;
 
     ~BackendRasterExt();
-    BackendRasterExt()                           = default;
-    BackendRasterExt( const BackendRasterExt & ) = delete;
+    BackendRasterExt();
+    BackendRasterExt( const BackendRasterExt & )          = delete;
+    BackendRasterExt( BackendRasterExt &&other ) noexcept = delete;
+    BackendRasterExt &operator=( const BackendRasterExt &other ) = delete;
+    BackendRasterExt &operator=( BackendRasterExt &&other ) = delete;
 };
 
 struct RasterHeader

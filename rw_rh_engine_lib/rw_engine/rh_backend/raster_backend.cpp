@@ -58,4 +58,8 @@ BackendRasterExt::~BackendRasterExt()
 
     mImageId = BackendRasterPlugin::NullRasterId;
 }
+BackendRasterExt::BackendRasterExt()
+{
+    mImageId = BackendRasterPlugin::NullRasterId;
+}
 } // namespace rh::rw::engine
