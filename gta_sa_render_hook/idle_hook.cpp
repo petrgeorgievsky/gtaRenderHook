@@ -13,8 +13,8 @@
 #include "renderloop.h"
 #include <Engine/IRenderer.h>
 
-#include <MemoryInjectionUtils/InjectorHelpers.h>
 #include <common_headers.h>
+#include <injection_utils/InjectorHelpers.h>
 #include <render_client/render_client.h>
 
 // static RwRGBA gColourTop = *reinterpret_cast<RwRGBA *>( 0xB72CA0 );

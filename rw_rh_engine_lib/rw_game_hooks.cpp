@@ -1,6 +1,6 @@
 #include "rw_game_hooks.h"
 #include <DebugUtils/DebugLogger.h>
-#include <MemoryInjectionUtils/InjectorHelpers.h>
+#include <injection_utils/InjectorHelpers.h>
 #include <render_client/render_client.h>
 #include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rh_backend/im3d_backend.h>
