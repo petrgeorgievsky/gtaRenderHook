@@ -10,6 +10,7 @@ namespace rh::rw::engine
 FrameState FrameState::Deserialize( MemoryReader &reader )
 {
     FrameState state{};
+    state.ImGuiInput    = reader.Read<ImGuiInputState>();
     state.Viewport      = reader.Read<MainViewportState>();
     state.Sky           = reader.Read<SkyState>();
     state.Lights        = AnalyticLightsState::Deserialize( reader );

@@ -52,6 +52,7 @@ class RTAOPass
     rh::engine::IImageView *GetAOView();
 
     void Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer );
+    void UpdateUI();
 
   private:
     rh::engine::IDeviceState &         Device;

@@ -4,6 +4,7 @@
 
 #pragma once
 #include <Engine/Common/ArrayProxy.h>
+#include <data_desc/imgui_input_state.h>
 #include <data_desc/light_system/lighting_state.h>
 #include <data_desc/sky_state.h>
 #include <data_desc/viewport_state.h>
@@ -19,6 +20,7 @@ struct FrameState
 {
     MainViewportState * Viewport;
     SkyState *          Sky;
+    ImGuiInputState *   ImGuiInput;
     AnalyticLightsState Lights;
     Im2DRenderState     Im2D;
     Im3DRenderState     Im3D;

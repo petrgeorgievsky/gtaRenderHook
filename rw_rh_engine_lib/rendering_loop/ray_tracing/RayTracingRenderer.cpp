@@ -22,6 +22,7 @@
 #include <Engine/EngineConfigBlock.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <Engine/VulkanImpl/VulkanWin32Window.h>
 #include <data_desc/frame_info.h>
 #include <imgui.h>
 #include <ipc/MemoryReader.h>
@@ -215,8 +216,9 @@ RayTracingRenderer::Render( const FrameState &                state,
 
     if ( imgui )
     {
+        ImGuiDriver->NewFrame( *state.ImGuiInput );
         imgui->BeginFrame();
-        DrawGUI();
+        DrawGUI( state );
         imgui->DrawGui( dest );
     }
     dest->EndRenderPass();
@@ -343,7 +345,7 @@ RayTracingRenderer::~RayTracingRenderer()
         delete fb;
 }
 
-void RayTracingRenderer::DrawGUI()
+void RayTracingRenderer::DrawGUI( const FrameState &scene )
 {
     static auto last_frame_time = std::chrono::high_resolution_clock::now();
     auto        ms_from_lf =
@@ -351,7 +353,6 @@ void RayTracingRenderer::DrawGUI()
             std::chrono::high_resolution_clock::now() - last_frame_time )
             .count() /
         1000.0f;
-    return;
     ImGui::Begin( "Info" );
 
     ImGui::BeginGroup();
@@ -368,7 +369,80 @@ void RayTracingRenderer::DrawGUI()
                               mFrameTimeGraph.size();
     ImGui::Text( "Avg CPU record time:%.3f ms.", avg_frame_rec_time );
     ImGui::Text( "FPS:%.1f", 1000.0f / ( ms_from_lf + 0.0001f ) );
+    mRTAOPass->UpdateUI();
     ImGui::EndGroup();
+
+    if ( ImGui::CollapsingHeader( "Im2DCalls" ) )
+    {
+        ImGui::Text( "Im2DCall count: %llu",
+                     static_cast<uint64_t>( scene.Im2D.DrawCalls.Size() ) );
+        int id = 0;
+        for ( const auto &im2d_call : scene.Im2D.DrawCalls )
+        {
+            ImGui::PushID( id );
+            if ( ImGui::CollapsingHeader( "Im2DCall" ) )
+            {
+                ImGui::Text( "RasterId : %llu", im2d_call.mRasterId );
+                ImGui::Text( "Index count : %u", im2d_call.mVertexCount );
+                ImGui::Text( "Vertex count : %u", im2d_call.mIndexCount );
+            }
+            ImGui::PopID();
+            id++;
+        }
+    }
+
+    if ( ImGui::CollapsingHeader( "AnimatedDrawCalls" ) )
+    {
+        ImGui::Text(
+            "AnimatedInstances count: %llu",
+            static_cast<uint64_t>( scene.SkinInstances.DrawCalls.Size() ) );
+        int id     = 0;
+        int mtx_id = 0;
+        for ( const auto &instance : scene.SkinInstances.DrawCalls )
+        {
+            ImGui::PushID( id );
+            if ( ImGui::CollapsingHeader( "AnimatedInstance" ) )
+            {
+                ImGui::Text( "Instance Id : %llu", instance.DrawCallId );
+                ImGui::Text( "Mesh id : %llu", instance.MeshId );
+                ImGui::Text(
+                    "World Transform\n "
+                    "row_0 - x:%f; y:%f; z:%f;\n"
+                    "row_1 - x:%f; y:%f; z:%f;\n"
+                    "row_2 - x:%f; y:%f; z:%f;\n"
+                    "row_3 - x:%f; y:%f; z:%f;",
+                    instance.WorldTransform._11, instance.WorldTransform._12,
+                    instance.WorldTransform._13, instance.WorldTransform._21,
+                    instance.WorldTransform._22, instance.WorldTransform._23,
+                    instance.WorldTransform._31, instance.WorldTransform._32,
+                    instance.WorldTransform._33, instance.WorldTransform._41,
+                    instance.WorldTransform._42, instance.WorldTransform._43 );
+
+                if ( ImGui::CollapsingHeader( "Matrices" ) )
+                {
+                    for ( const auto &bone_mtx : instance.BoneTransform )
+                    {
+                        ImGui::PushID( mtx_id );
+                        ImGui::Text( "Matrix %u\n "
+                                     "row_0 - x:%f; y:%f; z:%f;\n"
+                                     "row_1 - x:%f; y:%f; z:%f;\n"
+                                     "row_2 - x:%f; y:%f; z:%f;\n"
+                                     "row_3 - x:%f; y:%f; z:%f;",
+                                     mtx_id, bone_mtx._11, bone_mtx._12,
+                                     bone_mtx._13, bone_mtx._21, bone_mtx._22,
+                                     bone_mtx._23, bone_mtx._31, bone_mtx._32,
+                                     bone_mtx._33, bone_mtx._41, bone_mtx._42,
+                                     bone_mtx._43 );
+                        ImGui::PopID();
+                        mtx_id++;
+                    }
+                }
+            }
+            ImGui::PopID();
+            id++;
+        }
+    }
+
     ImGui::End();
     last_frame_time = std::chrono::high_resolution_clock::now();
 }
@@ -406,11 +480,12 @@ RayTracingRenderer::GetImGui( rh::engine::IRenderPass *pass )
     using namespace rh::engine;
     if ( mImGUI )
         return mImGUI;
-
+    ImGuiDriver = new ImGuiWin32DriverHandler();
     mImGUI = dynamic_cast<VulkanDeviceState &>( Device ).CreateImGUI( &Window );
 
     mImGUI->Init( { pass } );
-
+    ImGuiDriver->Init(
+        dynamic_cast<VulkanWin32Window &>( Window ).GetHandle() );
     ScopedPointer cmd_buffer = Device.CreateCommandBuffer();
 
     cmd_buffer->BeginRecord();

@@ -13,6 +13,7 @@
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <imgui.h>
 #include <render_driver/gpu_resources/raster_pool.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_macro_constexpr.h>
@@ -271,5 +272,10 @@ void RTAOPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer )
     mBilFil0->Execute( vk_cmd_buff );
 }
 rh::engine::IImageView *RTAOPass::GetAOView() { return mBlurredAOBufferView; }
+void                    RTAOPass::UpdateUI()
+{
+    ImGui::DragFloat( "AO radius:", &mParams.max_distance, 0.5f, 0.5f,
+                      10000.0f );
+}
 
 } // namespace rh::rw::engine

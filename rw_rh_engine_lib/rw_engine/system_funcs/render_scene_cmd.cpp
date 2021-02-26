@@ -8,6 +8,7 @@
 #include <Engine/Common/ISwapchain.h>
 #include <data_desc/frame_info.h>
 #include <ipc/shared_memory_queue_client.h>
+#include <render_client/imgui_state_recorder.h>
 #include <render_client/render_client.h>
 #include <render_driver/gpu_resources/resource_mgr.h>
 #include <render_driver/render_driver.h>
@@ -44,6 +45,8 @@ T ReadChainBlock( MemoryReader &reader )
 void SerializeDrawCalls( MemoryWriter &&writer )
 {
     auto &state = gRenderClient->RenderState;
+
+    writer.Write( &state.ImGuiInputState );
     writer.Write( &state.ViewportState );
     writer.Write( &state.SkyState );
     state.Lights.Serialize( writer );
@@ -55,7 +58,62 @@ void SerializeDrawCalls( MemoryWriter &&writer )
 
 bool RenderSceneCmd::Invoke()
 {
-    TaskQueue.ExecuteTask( SharedMemoryTaskType::RENDER, SerializeDrawCalls );
+
+    auto &      state          = gRenderClient->RenderState;
+    static auto key_ctrl_state = 0;
+    bool        was_paused     = false;
+
+    /// Debug Pause Loop, allows to stop execution for a moment and change some
+    /// values
+    do
+    {
+        UpdateStateClient( state.ImGuiInputState );
+
+        // TODO: Replace with something more flexible
+        key_ctrl_state += ( state.ImGuiInputState.KeyAlt &&
+                            state.ImGuiInputState.KeysDown['1'] )
+                              ? 1
+                              : -1;
+        if ( key_ctrl_state > 3 )
+            state.ImGuiInputState.EnablePause =
+                !state.ImGuiInputState.EnablePause;
+        if ( key_ctrl_state < 0 )
+            key_ctrl_state = 0;
+
+        TaskQueue.ExecuteTask( SharedMemoryTaskType::RENDER,
+                               SerializeDrawCalls );
+        if ( state.ImGuiInputState.EnablePause )
+        {
+            MSG msg;
+
+            // Read pending messages
+            while (
+                PeekMessageA( &msg, nullptr, 0, 0, PM_NOYIELD | PM_REMOVE ) )
+            {
+                TranslateMessage( &msg );
+                DispatchMessageA( &msg );
+            }
+
+            // Show cursor on pause
+            {
+                auto result = ::ShowCursor( true );
+                while ( result < 0 )
+                    result = ::ShowCursor( true );
+            }
+            was_paused = true;
+        }
+
+    } while ( state.ImGuiInputState.EnablePause );
+
+    // Hide cursor if game was paused
+    if ( was_paused )
+    {
+        {
+            auto result = ::ShowCursor( false );
+            while ( result >= 0 )
+                result = ::ShowCursor( false );
+        }
+    }
     gRenderClient->RenderState.Im2D.Flush();
     gRenderClient->RenderState.Im3D.Flush();
     gRenderClient->RenderState.MeshDrawCalls.Flush();

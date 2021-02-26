@@ -137,20 +137,19 @@ bool VulkanImGUI::UploadFonts( ICommandBuffer *cmd_buff )
         ImGui_ImplVulkan_CreateFontsTexture( command_buffer->GetBuffer() );
     return mFontsUploaded;
 }
-void VulkanImGUI::DrawGui( ICommandBuffer * /*cmd_buff */ )
+void VulkanImGUI::DrawGui( ICommandBuffer *cmd_buff )
 {
-    // ImGui::Render();
+    ImGui::Render();
 
-    // auto command_buffer = reinterpret_cast<VulkanCommandBuffer *>( cmd_buff
-    // );
-    // ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(),
-    //                                  command_buffer->GetBuffer() );
+    auto command_buffer = reinterpret_cast<VulkanCommandBuffer *>( cmd_buff );
+    ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(),
+                                     command_buffer->GetBuffer() );
 }
 void VulkanImGUI::BeginFrame()
 {
     ImGui_ImplVulkan_NewFrame();
     // ImGui_ImplWin32_NewFrame();
-    // ImGui::NewFrame();
+    ImGui::NewFrame();
 }
 VulkanImGUI::~VulkanImGUI()
 {

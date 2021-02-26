@@ -5,6 +5,7 @@
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/IDeviceState.h>
 #include <ipc/shared_memory_queue_client.h>
+#include <render_client/imgui_state_recorder.h>
 #include <render_driver/render_driver.h>
 
 namespace rh::rw::engine
@@ -22,6 +23,7 @@ bool StartSystemCmdImpl::Invoke( HWND window )
                                // serialize
                                memory_writer.Write( &window );
                            } );
+    InstallWinProcHook();
     return true;
 }
 

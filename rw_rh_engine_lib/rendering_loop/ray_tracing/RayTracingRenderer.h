@@ -10,6 +10,7 @@
 #include <array>
 #include <render_client/mesh_instance_state_recorder.h>
 #include <render_driver/frame_renderer.h>
+#include <render_driver/imgui_win32_driver_handler.h>
 #include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rh_backend/im2d_renderer.h>
 #include <rw_engine/rh_backend/im3d_renderer.h>
@@ -75,7 +76,7 @@ class RayTracingRenderer : public IFrameRenderer
     std::vector<rh::engine::CommandBufferSubmitInfo>
          Render( const FrameState &scene, rh::engine::ICommandBuffer *dest,
                  const rh::engine::SwapchainFrame &frame ) override;
-    void DrawGUI();
+    void DrawGUI( const FrameState &scene );
 
     rh::engine::IRenderPass *GetForwardPass();
     rh::engine::VulkanImGUI *GetImGui( rh::engine::IRenderPass *pass );
@@ -115,6 +116,7 @@ class RayTracingRenderer : public IFrameRenderer
     ScopedPointer<DeferredCompositionPass> mDeferredComposePass;
     ScopedPointer<TiledLightCulling>       mTiledLightCulling;
     ScopedPointer<rh::engine::VulkanImGUI> mImGUI;
+    ScopedPointer<ImGuiWin32DriverHandler> ImGuiDriver;
     float                                  mCPURecordTime    = 0;
     uint64_t                               mGameViewRasterId = 0;
     uint64_t                               mBlasBuilt        = 0;

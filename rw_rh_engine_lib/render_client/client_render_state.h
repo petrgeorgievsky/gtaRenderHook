@@ -2,6 +2,7 @@
 // Created by peter on 10.02.2021.
 //
 #pragma once
+#include "data_desc/imgui_input_state.h"
 #include "data_desc/immediate_mode/im_state.h"
 #include "data_desc/sky_state.h"
 #include "data_desc/viewport_state.h"
@@ -17,6 +18,7 @@ namespace rh::rw::engine
 class ClientRenderState
 {
   public:
+    ImGuiInputState           ImGuiInputState{};
     MainViewportState         ViewportState;
     SkyState                  SkyState;
     ImmediateState            ImState;

@@ -107,6 +107,7 @@ set(SOURCES
         render_driver/render_driver.cpp
         render_driver/framebuffer_loop.cpp
         render_driver/framebuffer_state.cpp
+        render_driver/imgui_win32_driver_handler.cpp
         render_driver/gpu_resources/resource_mgr.cpp
         render_driver/gpu_resources/raster_pool.cpp
 
@@ -117,8 +118,10 @@ set(SOURCES
         render_client/im3d_state_recorder.cpp
         render_client/mesh_instance_state_recorder.cpp
         render_client/skin_instance_state_recorder.cpp
+        render_client/imgui_state_recorder.cpp
 
-        material_storage.cpp)
+        material_storage.cpp
+        )
 add_library(rw_rh_engine_lib STATIC ${SOURCES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
