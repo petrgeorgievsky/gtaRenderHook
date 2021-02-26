@@ -14,31 +14,31 @@ namespace rh::rw::engine
 {
 using namespace rh::engine;
 
-enum reproject_slot_ids
+namespace color_reproject_slot_ids
 {
-    r_OldMoments         = 0,
-    r_ReprojectedMoments = 1,
-    r_OldColor           = 2,
-    r_ReprojectedColor   = 3,
-    r_OldNormalDepth     = 4,
-    r_NewNormalDepth     = 5,
-    r_MotionVectors      = 6,
-    r_OldTSPPCache       = 7,
-    r_NewTSPPCache       = 8,
-};
+constexpr uint32_t r_OldMoments         = 0;
+constexpr uint32_t r_ReprojectedMoments = 1;
+constexpr uint32_t r_OldColor           = 2;
+constexpr uint32_t r_ReprojectedColor   = 3;
+constexpr uint32_t r_OldNormalDepth     = 4;
+constexpr uint32_t r_NewNormalDepth     = 5;
+constexpr uint32_t r_MotionVectors      = 6;
+constexpr uint32_t r_OldTSPPCache       = 7;
+constexpr uint32_t r_NewTSPPCache       = 8;
+}; // namespace color_reproject_slot_ids
 
-enum accum_slot_ids
+namespace color_accum_slot_ids
 {
-    a_NewColor           = 0,
-    a_ReprojectedColor   = 1,
-    a_ResultColor        = 2,
-    a_ReprojectedMoments = 3,
-    a_ResultMoments      = 4,
-    a_Params             = 5,
-    a_BlurStrength       = 6,
-    a_CurrentTSPP        = 7,
-    a_NewTSPP            = 8
-};
+constexpr uint32_t a_NewColor           = 0;
+constexpr uint32_t a_ReprojectedColor   = 1;
+constexpr uint32_t a_ResultColor        = 2;
+constexpr uint32_t a_ReprojectedMoments = 3;
+constexpr uint32_t a_ResultMoments      = 4;
+constexpr uint32_t a_Params             = 5;
+constexpr uint32_t a_BlurStrength       = 6;
+constexpr uint32_t a_CurrentTSPP        = 7;
+constexpr uint32_t a_NewTSPP            = 8;
+}; // namespace color_accum_slot_ids
 
 VarAwareTempAccumColorFilterPipe::VarAwareTempAccumColorFilterPipe(
     rh::engine::IDeviceState &device )
@@ -58,7 +58,8 @@ VarAwareTempAccumColorFilterPipe::VarAwareTempAccumColorFilterPipe(
           .mShaderStage = ShaderStage::Compute } );
 
     /// Descriptor layouts
-
+    using namespace color_reproject_slot_ids;
+    using namespace color_accum_slot_ids;
     DescriptorGenerator desc_gen{ Device };
     desc_gen
         .AddDescriptor( 0, r_OldColor, 0, DescriptorType::StorageTexture, 1,
@@ -189,6 +190,8 @@ VATAColorFilterPass::VATAColorFilterPass(
 
     /// Bind descriptors
 
+    using namespace color_reproject_slot_ids;
+    using namespace color_accum_slot_ids;
     DescSetUpdateBatch descBatch{ device };
     descBatch.Begin( mReprojDescSet )
         .UpdateImage( r_OldColor, DescriptorType::StorageTexture,

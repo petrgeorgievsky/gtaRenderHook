@@ -1,6 +1,7 @@
 //
 // Created by peter on 30.06.2020.
 //
+#pragma once
 #include <Engine/Common/ScopedPtr.h>
 #include <vector>
 namespace rh::engine

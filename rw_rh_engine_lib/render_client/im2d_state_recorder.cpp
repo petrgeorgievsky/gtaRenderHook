@@ -9,15 +9,16 @@
 
 namespace rh::rw::engine
 {
-
-constexpr auto VERTEX_COUNT_LIMIT = 100000;
-constexpr auto INDEX_COUNT_LIMIT  = 100000;
-
+namespace
+{
+constexpr auto IM2D_VERTEX_COUNT_LIMIT = 100000;
+constexpr auto IM2D_INDEX_COUNT_LIMIT  = 100000;
+} // namespace
 Im2DStateRecorder::Im2DStateRecorder( ImmediateState &im_state ) noexcept
     : ImState{ im_state }
 {
-    VertexBuffer.resize( VERTEX_COUNT_LIMIT );
-    IndexBuffer.resize( INDEX_COUNT_LIMIT );
+    VertexBuffer.resize( IM2D_VERTEX_COUNT_LIMIT );
+    IndexBuffer.resize( IM2D_INDEX_COUNT_LIMIT );
     DrawCalls.resize( 4000 );
     DrawCallCount = 0;
     VertexCount   = 0;

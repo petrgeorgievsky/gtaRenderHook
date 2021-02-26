@@ -10,14 +10,14 @@
 namespace rh::rw::engine
 {
 
-constexpr auto VERTEX_COUNT_LIMIT = 100000;
-constexpr auto INDEX_COUNT_LIMIT  = 100000;
+constexpr auto IM3D_VERTEX_COUNT_LIMIT = 100000;
+constexpr auto IM3D_INDEX_COUNT_LIMIT  = 100000;
 
 Im3DStateRecorder::Im3DStateRecorder( ImmediateState &im_state ) noexcept
     : ImState( im_state )
 {
-    VertexBuffer.resize( VERTEX_COUNT_LIMIT );
-    IndexBuffer.resize( INDEX_COUNT_LIMIT );
+    VertexBuffer.resize( IM3D_VERTEX_COUNT_LIMIT );
+    IndexBuffer.resize( IM3D_INDEX_COUNT_LIMIT );
     DrawCalls.resize( 4000 );
 }
 

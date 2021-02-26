@@ -14,27 +14,27 @@ namespace rh::rw::engine
 {
 using namespace rh::engine;
 
-enum reproject_slot_ids
+namespace reproject_slot_ids
 {
-    r_OldFrame         = 0,
-    r_ReprojectedFrame = 1,
-    r_OldNormalDepth   = 2,
-    r_NewNormalDepth   = 3,
-    r_MotionVectors    = 4,
-    r_OldTSPPCache     = 5,
-    r_NewTSPPCache     = 6,
-};
+constexpr uint32_t r_OldFrame         = 0;
+constexpr uint32_t r_ReprojectedFrame = 1;
+constexpr uint32_t r_OldNormalDepth   = 2;
+constexpr uint32_t r_NewNormalDepth   = 3;
+constexpr uint32_t r_MotionVectors    = 4;
+constexpr uint32_t r_OldTSPPCache     = 5;
+constexpr uint32_t r_NewTSPPCache     = 6;
+}; // namespace reproject_slot_ids
 
-enum accum_slot_ids
+namespace accum_slot_ids
 {
-    a_NewFrame         = 0,
-    a_ReprojectedFrame = 1,
-    a_ResultFrame      = 2,
-    a_Params           = 3,
-    a_BlurStrength     = 4,
-    a_CurrentTSPP      = 5,
-    a_NewTSPP          = 6
-};
+constexpr uint32_t a_NewFrame         = 0;
+constexpr uint32_t a_ReprojectedFrame = 1;
+constexpr uint32_t a_ResultFrame      = 2;
+constexpr uint32_t a_Params           = 3;
+constexpr uint32_t a_BlurStrength     = 4;
+constexpr uint32_t a_CurrentTSPP      = 5;
+constexpr uint32_t a_NewTSPP          = 6;
+}; // namespace accum_slot_ids
 
 VarAwareTempAccumFilterPipe::VarAwareTempAccumFilterPipe(
     rh::engine::IDeviceState &device )
@@ -53,39 +53,49 @@ VarAwareTempAccumFilterPipe::VarAwareTempAccumFilterPipe(
           .mShaderStage = ShaderStage::Compute } );
 
     /// Descriptor layouts
-
     DescriptorGenerator desc_gen{ Device };
     desc_gen
-        .AddDescriptor( 0, r_OldFrame, 0, DescriptorType::StorageTexture, 1,
-                        ShaderStage::Compute )
-        .AddDescriptor( 0, r_ReprojectedFrame, 0,
+        .AddDescriptor( 0, reproject_slot_ids::r_OldFrame, 0,
                         DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
-        .AddDescriptor( 0, r_OldNormalDepth, 0, DescriptorType::StorageTexture,
-                        1, ShaderStage::Compute )
-        .AddDescriptor( 0, r_NewNormalDepth, 0, DescriptorType::StorageTexture,
-                        1, ShaderStage::Compute )
-        .AddDescriptor( 0, r_MotionVectors, 0, DescriptorType::StorageTexture,
-                        1, ShaderStage::Compute )
-        .AddDescriptor( 0, r_OldTSPPCache, 0, DescriptorType::StorageTexture, 1,
+        .AddDescriptor( 0, reproject_slot_ids::r_ReprojectedFrame, 0,
+                        DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
-        .AddDescriptor( 0, r_NewTSPPCache, 0, DescriptorType::StorageTexture, 1,
+        .AddDescriptor( 0, reproject_slot_ids::r_OldNormalDepth, 0,
+                        DescriptorType::StorageTexture, 1,
+                        ShaderStage::Compute )
+        .AddDescriptor( 0, reproject_slot_ids::r_NewNormalDepth, 0,
+                        DescriptorType::StorageTexture, 1,
+                        ShaderStage::Compute )
+        .AddDescriptor( 0, reproject_slot_ids::r_MotionVectors, 0,
+                        DescriptorType::StorageTexture, 1,
+                        ShaderStage::Compute )
+        .AddDescriptor( 0, reproject_slot_ids::r_OldTSPPCache, 0,
+                        DescriptorType::StorageTexture, 1,
+                        ShaderStage::Compute )
+        .AddDescriptor( 0, reproject_slot_ids::r_NewTSPPCache, 0,
+                        DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
         //
-        .AddDescriptor( 1, a_NewFrame, 0, DescriptorType::StorageTexture, 1,
-                        ShaderStage::Compute )
-        .AddDescriptor( 1, a_ReprojectedFrame, 0,
+        .AddDescriptor( 1, accum_slot_ids::a_NewFrame, 0,
                         DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
-        .AddDescriptor( 1, a_ResultFrame, 0, DescriptorType::StorageTexture, 1,
+        .AddDescriptor( 1, accum_slot_ids::a_ReprojectedFrame, 0,
+                        DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
-        .AddDescriptor( 1, a_Params, 0, DescriptorType::ROBuffer, 1,
+        .AddDescriptor( 1, accum_slot_ids::a_ResultFrame, 0,
+                        DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
-        .AddDescriptor( 1, a_BlurStrength, 0, DescriptorType::StorageTexture, 1,
+        .AddDescriptor( 1, accum_slot_ids::a_Params, 0,
+                        DescriptorType::ROBuffer, 1, ShaderStage::Compute )
+        .AddDescriptor( 1, accum_slot_ids::a_BlurStrength, 0,
+                        DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
-        .AddDescriptor( 1, a_CurrentTSPP, 0, DescriptorType::StorageTexture, 1,
+        .AddDescriptor( 1, accum_slot_ids::a_CurrentTSPP, 0,
+                        DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
-        .AddDescriptor( 1, a_NewTSPP, 0, DescriptorType::StorageTexture, 1,
+        .AddDescriptor( 1, accum_slot_ids::a_NewTSPP, 0,
+                        DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute );
 
     mReProjectDescSetLayout  = desc_gen.FinalizeDescriptorSet( 0, 2 );
@@ -163,43 +173,52 @@ VATAFilterPass::VATAFilterPass( VarAwareTempAccumFilterPipe *pipeline,
 
     DescSetUpdateBatch descBatch{ device };
     descBatch.Begin( mReprojDescSet )
-        .UpdateImage( r_OldFrame, DescriptorType::StorageTexture,
+        .UpdateImage( reproject_slot_ids::r_OldFrame,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, mAccumulateValueView } } )
-        .UpdateImage( r_ReprojectedFrame, DescriptorType::StorageTexture,
+        .UpdateImage( reproject_slot_ids::r_ReprojectedFrame,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, mReProjectValueView } } )
-        .UpdateImage( r_OldNormalDepth, DescriptorType::StorageTexture,
+        .UpdateImage( reproject_slot_ids::r_OldNormalDepth,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, params.mPrevDepth } } )
-        .UpdateImage( r_NewNormalDepth, DescriptorType::StorageTexture,
+        .UpdateImage( reproject_slot_ids::r_NewNormalDepth,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, params.mCurrentDepth } } )
-        .UpdateImage( r_MotionVectors, DescriptorType::StorageTexture,
+        .UpdateImage( reproject_slot_ids::r_MotionVectors,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, params.mMotionVectors } } )
         .UpdateImage(
-            r_OldTSPPCache, DescriptorType::StorageTexture,
+            reproject_slot_ids::r_OldTSPPCache, DescriptorType::StorageTexture,
             { { ImageLayout::General, mTemporalSamplePerPixelView[0] } } )
         .UpdateImage(
-            r_NewTSPPCache, DescriptorType::StorageTexture,
+            reproject_slot_ids::r_NewTSPPCache, DescriptorType::StorageTexture,
             { { ImageLayout::General, mTemporalSamplePerPixelView[1] } } )
         .End()
         // Accumulation descset
         .Begin( mAccumDescSet )
-        .UpdateImage( a_ReprojectedFrame, DescriptorType::StorageTexture,
+        .UpdateImage( accum_slot_ids::a_ReprojectedFrame,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General,
                           static_cast<IImageView *>( mReProjectValueView ) } } )
         .UpdateBuffer(
-            a_Params, DescriptorType::ROBuffer,
+            accum_slot_ids::a_Params, DescriptorType::ROBuffer,
             { BufferUpdateInfo{ 0, sizeof( TAParams ),
                                 static_cast<IBuffer *>( mParamsBuffer ) } } )
-        .UpdateImage( a_NewFrame, DescriptorType::StorageTexture,
+        .UpdateImage( accum_slot_ids::a_NewFrame,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, params.mInputValue } } )
-        .UpdateImage( a_ResultFrame, DescriptorType::StorageTexture,
+        .UpdateImage( accum_slot_ids::a_ResultFrame,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, mAccumulateValueView } } )
-        .UpdateImage( a_BlurStrength, DescriptorType::StorageTexture,
+        .UpdateImage( accum_slot_ids::a_BlurStrength,
+                      DescriptorType::StorageTexture,
                       { { ImageLayout::General, mBlurStrengthValueView } } )
         .UpdateImage(
-            a_CurrentTSPP, DescriptorType::StorageTexture,
+            accum_slot_ids::a_CurrentTSPP, DescriptorType::StorageTexture,
             { { ImageLayout::General, mTemporalSamplePerPixelView[1] } } )
         .UpdateImage(
-            a_NewTSPP, DescriptorType::StorageTexture,
+            accum_slot_ids::a_NewTSPP, DescriptorType::StorageTexture,
             { { ImageLayout::General, mTemporalSamplePerPixelView[0] } } )
         .End();
     ;

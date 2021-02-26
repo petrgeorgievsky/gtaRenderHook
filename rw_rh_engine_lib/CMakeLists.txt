@@ -126,7 +126,7 @@ add_library(rw_rh_engine_lib STATIC ${SOURCES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 20
-        #UNITY_BUILD TRUE
+        UNITY_BUILD TRUE
         )
 
 #set_property(TARGET rw_rh_engine_lib PROPERTY

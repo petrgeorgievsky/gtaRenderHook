@@ -18,40 +18,7 @@
 
 using namespace rh::rw::engine;
 
-RwIOPointerTable rh::rw::engine::g_pIO_API = {
-    reinterpret_cast<RwStreamFindChunk_FN>( 0x64FAC0 ),
-    reinterpret_cast<RwStreamRead_FN>( 0x6454B0 ) };
-RwRasterPointerTable rh::rw::engine::g_pRaster_API = {
-    reinterpret_cast<RwRasterCreate_FN>( 0x655490 ),
-    reinterpret_cast<RwRasterDestroy_FN>( 0x6552E0 ) };
-RwTexturePointerTable rh::rw::engine::g_pTexture_API = {
-    reinterpret_cast<RwTextureCreate_FN>( 0x64DE60 ),
-    reinterpret_cast<RwTextureSetName_FN>( 0x64DF40 ),
-    reinterpret_cast<RwTextureSetName_FN>( 0x64DFB0 ) };
-
 int32_t true_hook() { return 1; }
-struct CVector
-{
-    float x, y, z;
-};
-class CPointLight
-{
-  public:
-    CVector       m_vecPosn;
-    CVector       m_vecDirection;
-    float         m_fRange;
-    float         m_fColorRed;
-    float         m_fColorGreen;
-    float         m_fColorBlue;
-    unsigned char m_nType;
-    unsigned char m_nFogType;
-    bool          m_bGenerateShadows;
-
-  private:
-    char _pad2B;
-
-  public:
-};
 
 int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
                     int dz, float rad, float r, float g, float b, char fogtype,
@@ -75,44 +42,6 @@ int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
     return 1;
 }
 
-int32_t water_render()
-{
-    // TODO: MOVE OUT OF HERE
-
-    // Setup timecycle(move out of here)
-    auto &sky_state = rh::rw::engine::gRenderClient->RenderState.SkyState;
-    int & m_nCurrentSkyBottomBlue  = *(int *)0x9B6DF4;
-    int & m_nCurrentSkyBottomGreen = *(int *)0x97F208;
-    int & m_nCurrentSkyBottomRed   = *(int *)0xA0D958;
-    int & m_nCurrentSkyTopBlue     = *(int *)0x978D1C;
-    int & m_nCurrentSkyTopGreen    = *(int *)0xA0FD70;
-    int & m_nCurrentSkyTopRed      = *(int *)0xA0CE98;
-
-    auto *vec_to_sun_arr   = (RwV3d *)0x792C70;
-    int & current_tc_value = *(int *)0xA0CFF8;
-
-    sky_state.mSkyTopColor[0]    = float( m_nCurrentSkyTopRed ) / 255.0f;
-    sky_state.mSkyTopColor[1]    = float( m_nCurrentSkyTopGreen ) / 255.0f;
-    sky_state.mSkyTopColor[2]    = float( m_nCurrentSkyTopBlue ) / 255.0f;
-    sky_state.mSkyTopColor[3]    = 1.0f;
-    sky_state.mSkyBottomColor[0] = float( m_nCurrentSkyBottomRed ) / 255.0f;
-    sky_state.mSkyBottomColor[1] = float( m_nCurrentSkyBottomGreen ) / 255.0f;
-    sky_state.mSkyBottomColor[2] = float( m_nCurrentSkyBottomBlue ) / 255.0f;
-    sky_state.mSkyBottomColor[3] = 1.0f;
-    // TODO: Use original ambient color
-    sky_state.mAmbientColor[0] = float( m_nCurrentSkyTopRed ) / 255.0f;
-    sky_state.mAmbientColor[1] = float( m_nCurrentSkyTopGreen ) / 255.0f;
-    sky_state.mAmbientColor[2] = float( m_nCurrentSkyTopBlue ) / 255.0f;
-    sky_state.mAmbientColor[3] = 1.0f;
-
-    sky_state.mSunDir[0] = vec_to_sun_arr[current_tc_value].x;
-    sky_state.mSunDir[1] = vec_to_sun_arr[current_tc_value].y;
-    sky_state.mSunDir[2] = vec_to_sun_arr[current_tc_value].z;
-    sky_state.mSunDir[3] = 1.0f;
-
-    return 1;
-}
-
 BOOL emptystuff() { return false; }
 
 BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
@@ -132,6 +61,18 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         const auto cfg_path = "rh_config.cfg";
         if ( !cfg_mgr.LoadFromFile( cfg_path ) )
             cfg_mgr.SaveToFile( cfg_path );
+
+        // setup pointers
+        rh::rw::engine::g_pIO_API = {
+            reinterpret_cast<RwStreamFindChunk_FN>( 0x64FAC0 ),
+            reinterpret_cast<RwStreamRead_FN>( 0x6454B0 ) };
+        rh::rw::engine::g_pRaster_API = {
+            reinterpret_cast<RwRasterCreate_FN>( 0x655490 ),
+            reinterpret_cast<RwRasterDestroy_FN>( 0x6552E0 ) };
+        rh::rw::engine::g_pTexture_API = {
+            reinterpret_cast<RwTextureCreate_FN>( 0x64DE60 ),
+            reinterpret_cast<RwTextureSetName_FN>( 0x64DF40 ),
+            reinterpret_cast<RwTextureSetName_FN>( 0x64DFB0 ) };
 
         RwPointerTable gtavc_ptr_table{};
         gtavc_ptr_table.mRwDevicePtr                  = 0x6DDE3C;
