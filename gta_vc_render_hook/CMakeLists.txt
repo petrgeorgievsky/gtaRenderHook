@@ -19,11 +19,12 @@ set(SOURCES
         game/ModelInfo.cpp
         game/Clock.cpp
         game/Vector.cpp
+        game/Game.cpp
+        game/Shadows.cpp
         game_patches/material_system_patches.cpp
         game_patches/rwd3d8_patches.cpp
         game_patches/base_model_pipeline.cpp
-        game_patches/skin_model_pipeline.cpp
-        )
+        game_patches/skin_model_pipeline.cpp)
 
 #set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
 

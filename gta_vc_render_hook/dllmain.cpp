@@ -1,4 +1,5 @@
 #include "game/Renderer.h"
+#include "game/Shadows.h"
 #include "game_patches/base_model_pipeline.h"
 #include "game_patches/material_system_patches.h"
 #include "game_patches/rwd3d8_patches.h"
@@ -41,8 +42,6 @@ int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
     light_state.RecordPointLight( std::move( l ) );
     return 1;
 }
-
-BOOL emptystuff() { return false; }
 
 BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
                      LPVOID lpReserved )
@@ -111,6 +110,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         PatchMaterialSystem();
         RwD3D8Patches::Patch();
         Renderer::Patch();
+        Shadows::Patch();
 
         // Im3D
         // SetPointer( 0x6DF754, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
@@ -124,8 +124,6 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         // RedirectCall( 0x4A65AE, reinterpret_cast<void *>( water_render ) );
 
         // RedirectCall( 0x4CA267, reinterpret_cast<void *>( emptystuff ) );
-        // Buggy cutscene shadows
-        RedirectJump( 0x625D80, reinterpret_cast<void *>( emptystuff ) );
         // Lights
         RedirectJump( 0x567700, reinterpret_cast<void *>( AddPtLight ) );
 
