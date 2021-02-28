@@ -93,7 +93,7 @@ class RTAOPass
     struct AOParams
     {
         float    min_distance  = 0.001f;
-        float    max_distance  = 10.0f;
+        float    max_distance  = 1.5f;
         float    max_draw_dist = 1000.0f;
         uint32_t time_stamp    = 0;
     } mParams;
