@@ -108,7 +108,7 @@ void main()
     const float depth_eps = FloatPrecision(depth, 10);
 
     // TODO: Allow threshold adjustment
-    bool reject_sample = abs(depth - dot(_depth, _weights)) > 0.5 || dot(normals_diff, _weights) > 0.1f;
+    bool reject_sample = abs(depth - dot(_depth, _weights)) > 2.0 || dot(normals_diff, _weights) > 0.1f;
 
     uint _tspp = imageLoad(tx_old_tspp_cache, _pos).r;
 

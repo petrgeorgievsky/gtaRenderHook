@@ -48,9 +48,35 @@ void main()
     {
         accum = pass_args.accumulation;
         // high velocity reduce sample count, to avoid overblurring of moving objects
-        tspp = min(tspp + 1,  uint(float(max_tspp) * max(1 - velocity, 0)) + 1);
+        tspp = min(tspp + 1,  uint(float(max_tspp) * max(1 - velocity/2, 0)) + 1);
+
         float max_value = min(_moments.x + _moments.y, 1.0f);
         float min_value = max(_moments.x - _moments.y, 0.0f);
+
+        if(min_tspp_for_temp_var <= min_tspp_for_temp_var)
+        {
+            vec2 spatial_moments = moments;
+            float spatial_weight = 1;
+            // compute spatial variance
+            for(int x =-2; x <=2; x++)
+            for(int y =-2; y <=2; y++)
+            {
+                if(x == 0 && y == 0)
+                    continue;
+                vec4 value_s = imageLoad(tx_new_frame, pos + ivec2(x,y));
+                float current_luma_s = dot(value.xyz,g_luma);
+                float sq_mean_luma_s = current_luma*current_luma;
+
+                spatial_moments += vec2(current_luma_s, sq_mean_luma_s);
+                spatial_weight += 1;
+            }
+            spatial_moments /= spatial_weight;
+            float spatial_variance = spatial_moments.y - spatial_moments.x*spatial_moments.x;
+            max_value = min(spatial_moments.x + spatial_variance, 1.0f);
+            min_value = max(spatial_moments.x - spatial_variance, 0.0f);
+        }
+        if(current_luma > max_value || current_luma < min_value)
+            tspp = 1;
 
         float inv_tspp = 1.0f/float(tspp);
 
