@@ -4,6 +4,7 @@
 
 #include "Renderer.h"
 #include "Clock.h"
+#include "Game.h"
 #include "ModelInfo.h"
 #include "Streaming.h"
 #include <cmath>
@@ -116,32 +117,104 @@ void Renderer::ScanSectorList( const WorldSector &sector )
     }
 }
 
+int32_t Renderer::SetupSimpleModelVisibility( Entity &         entity,
+                                              SimpleModelInfo &model_info )
+{
+
+    if ( !( entity.mArea == Game::CurrentArea || entity.mArea == 13 ) )
+        return VIS_INVISIBLE;
+
+    float dist = length( entity.mMatrix.m_matrix.pos - mCameraPosition );
+
+    if ( RpAtomic *atomic = model_info.GetAtomicFromDistance( dist ); atomic )
+    {
+        model_info.mIsDamaged = false;
+
+        if ( entity.mRwObject == nullptr )
+            entity.CreateRwObject();
+        assert( entity.mRwObject );
+
+        auto *rwobj = (RpAtomic *)entity.mRwObject;
+
+        // Make sure our atomic uses the right geometry and not
+        // that of an atomic for another draw distance.
+        if ( atomic->geometry != rwobj->geometry )
+            RpAtomicSetGeometry( rwobj, atomic->geometry,
+                                 /*rpATOMICSAMEBOUNDINGSPHERE*/ 0x1 );
+
+        model_info.IncreaseAlpha();
+
+        if ( entity.mRwObject == nullptr || !entity.bIsVisible )
+            return VIS_INVISIBLE;
+
+        if ( model_info.mAlpha != 0xFF )
+        {
+            entity.bDistanceFade = true;
+            return VIS_INVISIBLE;
+        }
+
+        return VIS_VISIBLE;
+    }
+
+    // Object is not loaded, figure out what to do
+
+    if ( model_info.mNoFade )
+    {
+        model_info.mIsDamaged = false;
+        return VIS_STREAMME;
+    }
+
+    // We might be fading
+
+    model_info.mIsDamaged = false;
+    if ( model_info.GetAtomicFromDistance( dist /*- FADE_DISTANCE*/ ) ==
+         nullptr )
+    {
+        return VIS_STREAMME;
+    }
+
+    if ( entity.mRwObject == nullptr )
+        entity.CreateRwObject();
+    assert( entity.mRwObject );
+
+    model_info.IncreaseAlpha();
+
+    if ( entity.mRwObject == nullptr || !entity.bIsVisible )
+        return VIS_INVISIBLE;
+    return VIS_OFFSCREEN;
+}
+
 int32_t Renderer::SetupEntityVisibility( Entity *ent )
 {
     auto *base_mi = ModelInfo::GetModelInfo( ent->mModelIndex );
-    if ( ent->bDrawLast )
-        return VIS_INVISIBLE;
-    if ( base_mi->mType != MITYPE_SIMPLE && base_mi->mType != MITYPE_TIME )
+
+    switch ( base_mi->mType )
     {
-        if ( ent->mRwObject == nullptr )
-            return VIS_STREAMME;
-        return ent->bIsVisible ? VIS_VISIBLE : VIS_INVISIBLE;
+    case MITYPE_WEAPON:
+    case MITYPE_SIMPLE:
+    {
+        if ( ent->bDontStream )
+        {
+            if ( ent->mRwObject != nullptr && ent->bIsVisible )
+                return VIS_VISIBLE;
+            else
+                return VIS_INVISIBLE;
+        }
+        return SetupSimpleModelVisibility(
+            *ent, *static_cast<SimpleModelInfo *>( base_mi ) );
     }
-    auto *           mi = static_cast<SimpleModelInfo *>( base_mi );
-    TimeModelInfo *  ti;
-    SimpleModelInfo *other;
-    float            dist;
-
-    // bool request = true;
-
-    if ( mi->mType == MITYPE_TIME )
+    case MITYPE_TIME:
     {
-        ti    = static_cast<TimeModelInfo *>( mi );
-        other = ti->mOtherTimeModel;
+        TimeModelInfo *ti;
+        ti         = static_cast<TimeModelInfo *>( base_mi );
+        auto other = ti->mOtherTimeModel;
+
         if ( Clock::GetIsTimeInRange( ti->mTimeOn, ti->mTimeOff ) )
         {
             // don't fade in, or between time objects
             ti->mAlpha = 255;
+            return SetupSimpleModelVisibility(
+                *ent, *static_cast<SimpleModelInfo *>( base_mi ) );
         }
         else
         {
@@ -149,170 +222,81 @@ int32_t Renderer::SetupEntityVisibility( Entity *ent )
             return VIS_INVISIBLE;
         }
     }
-    else
+
+    default:
+        if ( ent->mRwObject == nullptr )
+            return VIS_STREAMME;
+        return ent->bIsVisible ? VIS_VISIBLE : VIS_INVISIBLE;
+    }
+}
+
+int32_t
+Renderer::SetupBigBuildingSimpleVisibility( Entity &         entity,
+                                            SimpleModelInfo &model_info )
+{
+    if ( !entity.bIsVisible )
+        return VIS_INVISIBLE;
+    auto dist = length( entity.mMatrix.m_matrix.pos - mCameraPosition );
+
+    SimpleModelInfo *nonLOD = model_info.GetRelatedModel();
+    // Find out whether to draw below near distance.
+    // This is only the case if there is a non-LOD which is either not
+    // loaded or not completely faded in yet.
+    if ( dist < model_info.GetNearDistance() &&
+         dist < 300.0f * /*GameRendererConfigBlock::It.LodMultiplier*/ 4.0f )
     {
-        /*if ( mi->m_type != MITYPE_SIMPLE )
-        {
-            if ( FindPlayerVehicle() == ent &&
-                 TheCamera.Cams[TheCamera.ActiveCam].Mode ==
-                     CCam::MODE_1STPERSON )
-            {
-                // Player's vehicle in first person mode
-                if ( TheCamera.Cams[TheCamera.ActiveCam].DirectionWasLooking ==
-                         LOOKING_FORWARD ||
-                     ent->GetModelIndex() == MI_RHINO ||
-                     ent->GetModelIndex() == MI_COACH ||
-                     TheCamera.m_bInATunnelAndABigVehicle )
-                {
-                    ent->bNoBrightHeadLights = true;
-                }
-                else
-                {
-                    m_pFirstPersonVehicle    = (CVehicle *)ent;
-                    ent->bNoBrightHeadLights = false;
-                }
-                return VIS_OFFSCREEN;
-            }
-            else
-            {
-                // All sorts of Clumps
-                if ( ent->m_rwObject == nil || !ent->bIsVisible )
-                    return VIS_INVISIBLE;
-                if ( !ent->GetIsOnScreen() )
-                    return VIS_OFFSCREEN;
-                if ( ent->bDrawLast )
-                {
-                    dist = ( ent->GetPosition() - ms_vecCameraPosition )
-                               .Magnitude();
-                    CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
-                    ent->bDistanceFade = false;
-                    return VIS_INVISIBLE;
-                }
-                else
-                    return VIS_VISIBLE;
-            }
+        // No non-LOD or non-LOD is completely visible.
+        if ( nonLOD == nullptr ||
+             ( nonLOD->mAtomics[0] && nonLOD->mAlpha == 255 ) )
             return VIS_INVISIBLE;
-        }*/
-        /*if ( ent->m_type == ENTITY_TYPE_OBJECT &&
-             ( (CObject *)ent )->ObjectCreatedBy == TEMP_OBJECT )
-        {
-            if ( ent->mRwObject == nullptr || !ent->bIsVisible )
-                return VIS_INVISIBLE;
-            return ent->GetIsOnScreen() ? VIS_VISIBLE : VIS_OFFSCREEN;
-        }*/
-        if ( ent->bDontStream )
-        {
-            if ( ent->mRwObject == nullptr || !ent->bIsVisible )
-                return VIS_INVISIBLE;
-            return VIS_VISIBLE;
-        }
     }
 
-    // Simple ModelInfo
-
-    dist = length( ent->mMatrix.m_matrix.pos - mCameraPosition );
-
-    // This can only happen with multi-atomic models (e.g. railtracks)
-    // but why do we bump up the distance? can only be fading...
-    /*if ( LOD_DISTANCE + STREAM_DISTANCE < dist &&
-         dist < mi->GetLargestLodDistance() )
-        dist = mi->GetLargestLodDistance();*/
-
-    // if ( ent->mType == ENTITY_TYPE_OBJECT && ent->bRenderDamaged )
-    //    mi->mIsDamaged = true;
-
-    RpAtomic *a = mi->GetAtomicFromDistance( dist );
-    if ( a )
+    if ( RpAtomic *a = model_info.GetFirstAtomicFromDistance( dist ); a )
     {
-        mi->mIsDamaged = false;
-        if ( ent->mRwObject == nullptr )
-            ent->CreateRwObject();
-        assert( ent->mRwObject );
-        auto *rwobj = (RpAtomic *)ent->mRwObject;
-        // Make sure our atomic uses the right geometry and not
-        // that of an atomic for another draw distance.
-        if ( a->geometry != rwobj->geometry )
-            RpAtomicSetGeometry( rwobj, a->geometry,
-                                 /*rpATOMICSAMEBOUNDINGSPHERE*/ 0x1 );
-        mi->IncreaseAlpha();
-
-        if ( ent->mRwObject == nullptr || !ent->bIsVisible )
-            return VIS_INVISIBLE;
-
-        /*if ( !ent->GetIsOnScreen() )
-        {
-            mi->m_alpha = 255;
-            return VIS_OFFSCREEN;
-        }*/
-
-        if ( mi->mAlpha != 255 )
-        {
-            // CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
-            ent->bDistanceFade = true;
-            // return VIS_INVISIBLE;
-        }
-
-        /*if ( mi->m_drawLast || ent->bDrawLast )
-        {
-            CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
-            ent->bDistanceFade = false;
-            return VIS_INVISIBLE;
-        }*/
+        if ( entity.mRwObject == nullptr )
+            entity.CreateRwObject();
+        assert( entity.mRwObject );
         return VIS_VISIBLE;
     }
+    return VIS_INVISIBLE;
+}
 
-    // Object is not loaded, figure out what to do
+int32_t Renderer::SetupBigBuildingVisibility( Entity *ent )
+{
+    auto *base_mi = ModelInfo::GetModelInfo( ent->mModelIndex );
 
-    if ( mi->mNoFade )
+    switch ( base_mi->mType )
     {
-        mi->mIsDamaged = false;
-        // request model
-        // if ( dist - STREAM_DISTANCE < mi->GetLargestLodDistance() &&
-        // request
-        // )
-        return VIS_STREAMME;
-        // return VIS_INVISIBLE;
-    }
-
-    // We might be fading
-
-    a              = mi->GetAtomicFromDistance( dist /*- FADE_DISTANCE*/ );
-    mi->mIsDamaged = false;
-    if ( a == nullptr )
+    case MITYPE_TIME:
     {
-        // request model
-        // if ( dist - FADE_DISTANCE - STREAM_DISTANCE <
-        //           mi->GetLargestLodDistance() &&
-        //      request )
-        return VIS_STREAMME;
-        // return VIS_INVISIBLE;
-    }
-
-    if ( ent->mRwObject == nullptr )
-        ent->CreateRwObject();
-    assert( ent->mRwObject );
-    // RpAtomic *rwobj = (RpAtomic *)ent->mRwObject;
-    /*if ( RpAtomicGetGeometry( a ) != RpAtomicGetGeometry( rwobj ) )
-        RpAtomicSetGeometry(
-            rwobj, RpAtomicGetGeometry( a ),
-            rpATOMICSAMEBOUNDINGSPHERE ); */
-    mi->IncreaseAlpha();
-    if ( ent->mRwObject == nullptr || !ent->bIsVisible )
-        return VIS_INVISIBLE;
-    return VIS_OFFSCREEN;
-
-    /*
-        if ( !ent->GetIsOnScreen() )
-        {
-            mi->m_alpha = 255;
-            return VIS_OFFSCREEN;
-        }
+        // TODO: account for timed objects
+        // Hide if possible
+        TimeModelInfo *ti;
+        ti = static_cast<TimeModelInfo *>( base_mi );
+        if ( !Clock::GetIsTimeInRange( ti->mTimeOn, ti->mTimeOff ) )
+            return VIS_INVISIBLE;
         else
         {
-            CVisibilityPlugins::InsertEntityIntoSortedList( ent, dist );
-            ent->bDistanceFade = true;
-            return VIS_OFFSCREEN; // Why this?
-        }*/
+            // don't fade in, or between time objects
+            ti->mAlpha = 255;
+            return SetupBigBuildingSimpleVisibility(
+                *ent, *static_cast<SimpleModelInfo *>( base_mi ) );
+        }
+    }
+    case MITYPE_VEHICLE:
+        if ( ent->mRwObject == nullptr )
+            return VIS_STREAMME;
+        return ent->bIsVisible ? VIS_VISIBLE : VIS_INVISIBLE;
+    default:
+    case MITYPE_SIMPLE:
+    {
+        if ( ent->mArea != Game::CurrentArea && ent->mArea != 13 )
+            return VIS_INVISIBLE;
+
+        return SetupBigBuildingSimpleVisibility(
+            *ent, *static_cast<SimpleModelInfo *>( base_mi ) );
+    }
+    }
 }
 
 void Renderer::PreRender()
@@ -392,38 +376,6 @@ void Renderer::Render()
     RenderWater();
     // Render rain
     InMemoryFuncCall<void>( 0x57BF40 );
-}
-
-int32_t Renderer::SetupBigBuildingVisibility( Entity *ent )
-{
-    auto *base_mi = ModelInfo::GetModelInfo( ent->mModelIndex );
-    if ( base_mi->mType != MITYPE_SIMPLE )
-        return ent->bIsVisible ? VIS_VISIBLE : VIS_INVISIBLE;
-    auto *mi   = static_cast<SimpleModelInfo *>( base_mi );
-    auto  dist = length( ent->mMatrix.m_matrix.pos - mCameraPosition );
-    SimpleModelInfo *nonLOD = mi->GetRelatedModel();
-    // Find out whether to draw below near distance.
-    // This is only the case if there is a non-LOD which is either not
-    // loaded or not completely faded in yet.
-    if ( dist < mi->GetNearDistance() &&
-         dist < 300.0f * /*GameRendererConfigBlock::It.LodMultiplier*/ 4.0f )
-    {
-        // No non-LOD or non-LOD is completely visible.
-        if ( nonLOD == nullptr || nonLOD->mAtomics[0] && nonLOD->mAlpha == 255 )
-            return VIS_INVISIBLE;
-    }
-    RpAtomic *a = mi->GetAtomicFromDistance( dist );
-    if ( a )
-    {
-        if ( ent->mRwObject == nullptr )
-            ent->CreateRwObject();
-        assert( ent->mRwObject );
-        // RpAtomic *rwobj = (RpAtomic *)ent->mRwObject;
-        if ( !ent->bIsVisible )
-            return VIS_INVISIBLE;
-        return VIS_VISIBLE;
-    }
-    return VIS_INVISIBLE;
 }
 
 void Renderer::Patch()

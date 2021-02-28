@@ -13,10 +13,11 @@ enum ModeInfoType : uint8_t
     MITYPE_SIMPLE    = 1,
     MITYPE_MLO       = 2,
     MITYPE_TIME      = 3,
-    MITYPE_CLUMP     = 4,
-    MITYPE_VEHICLE   = 5,
-    MITYPE_PED       = 6,
-    MITYPE_XTRACOMPS = 7,
+    MITYPE_WEAPON    = 4,
+    MITYPE_CLUMP     = 5,
+    MITYPE_VEHICLE   = 6,
+    MITYPE_PED       = 7,
+    MITYPE_XTRACOMPS = 8,
 };
 
 class BaseModelInfo
@@ -57,7 +58,8 @@ class SimpleModelInfo : public BaseModelInfo
     uint16_t         mIsSubway : 1;
     uint16_t         mIgnoreLight : 1;
     uint16_t         mNoZWrite : 1;
-    RpAtomic *       GetAtomicFromDistance( float d );
+    RpAtomic *       GetAtomicFromDistance( float d ) const;
+    RpAtomic *       GetFirstAtomicFromDistance( float d ) const;
     SimpleModelInfo *GetRelatedModel( void )
     {
         return (SimpleModelInfo *)mAtomics[2];

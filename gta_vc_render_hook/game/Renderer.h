@@ -7,14 +7,21 @@
 #include <ConfigUtils/ConfigBlock.h>
 #include <array>
 
+class SimpleModelInfo;
 class Renderer
 {
   public:
-    static void     ScanWorld();
-    static void     PreRender();
-    static void     Render();
-    static void     ScanSectorList( const WorldSector &sector );
-    static int32_t  SetupEntityVisibility( Entity *ent );
+    static void    ScanWorld();
+    static void    PreRender();
+    static void    Render();
+    static void    ScanSectorList( const WorldSector &sector );
+    static int32_t SetupEntityVisibility( Entity *ent );
+    static int32_t SetupSimpleModelVisibility( Entity &         entity,
+                                               SimpleModelInfo &model_info );
+
+    static int32_t
+                    SetupBigBuildingSimpleVisibility( Entity &         entity,
+                                                      SimpleModelInfo &model_info );
     static int32_t  SetupBigBuildingVisibility( Entity *ent );
     static uint32_t mLightCount;
 
