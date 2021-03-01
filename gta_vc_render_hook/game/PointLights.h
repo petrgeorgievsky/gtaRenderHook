@@ -1,8 +1,6 @@
 //
-// Created by peter on 28.10.2020.
+// Created by peter on 01.03.2021.
 //
-#pragma once
-
 #include <cstdint>
 class PointLights
 {

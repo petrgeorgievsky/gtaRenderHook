@@ -21,6 +21,7 @@ set(SOURCES
         game/Vector.cpp
         game/Game.cpp
         game/Shadows.cpp
+        game/PointLights.cpp
         game_patches/material_system_patches.cpp
         game_patches/rwd3d8_patches.cpp
         game_patches/base_model_pipeline.cpp

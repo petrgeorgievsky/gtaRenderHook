@@ -1,9 +1,8 @@
 //
-// Created by peter on 28.10.2020.
+// Created by peter on 01.03.2021.
 //
 
 #include "PointLights.h"
-#include "../call_redirection_util.h"
 #include <injection_utils/InjectorHelpers.h>
 #include <render_client/render_client.h>
 
@@ -36,8 +35,17 @@ int32_t PointLights::AddLight( char a1, float x, float y, float z, float dx,
     return 1;
 }
 
+int32_t AddBikeHeadLight( char a1, float x, float y, float z, float dx,
+                          float dy, float dz, float rad, float r, float g,
+                          float b, char fogtype, char extrashadows )
+{
+    // Move light along direction to fix bike headlights
+    return PointLights::AddLight( a1, x + dx, y + dy, z + dz, dx, dy, dz, 40.0f,
+                                  r, g, b, fogtype, extrashadows );
+}
+
 void PointLights::Patch()
 {
-    RedirectJump( GetAddressByGame( 0x510790, 0x510980, 0x510910 ),
-                  reinterpret_cast<void *>( PointLights::AddLight ) );
+    RedirectJump( 0x567700, reinterpret_cast<void *>( PointLights::AddLight ) );
+    RedirectCall( 0x60BE6E, reinterpret_cast<void *>( AddBikeHeadLight ) );
 }

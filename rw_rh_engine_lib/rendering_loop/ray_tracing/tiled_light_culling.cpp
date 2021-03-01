@@ -97,9 +97,9 @@ TiledLightCulling::TiledLightCulling( const TiledLightCullingParams &params )
                                                       tile_count *
                                                       max_lights_per_tile );
     mLightBuffer = device.CreateBuffer( BufferCreateInfo{
-        .mSize        = static_cast<uint32_t>( sizeof( Light ) * max_lights ),
-        .mUsage       = BufferUsage::StorageBuffer,
-        .mFlags       = BufferFlags::Dynamic,
+        .mSize  = static_cast<uint32_t>( sizeof( PointLight ) * max_lights ),
+        .mUsage = BufferUsage::StorageBuffer,
+        .mFlags = BufferFlags::Dynamic,
         .mInitDataPtr = nullptr } );
 
     // tb_Depth = 0, tb_TileCfg = 1, tb_Lights = 2, tb_LightsIdList = 3,

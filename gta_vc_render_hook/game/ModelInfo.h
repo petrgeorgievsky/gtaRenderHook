@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Vector.h"
 #include <common_headers.h>
 #include <cstdint>
 constexpr auto MAX_MODEL_NAME = 21;
@@ -92,3 +93,65 @@ class TimeModelInfo : public SimpleModelInfo
     SimpleModelInfo *mOtherTimeModel;
 };
 static_assert( sizeof( TimeModelInfo ) == 0x50, "TimeModelInfo: error" );
+
+class ClumpModelInfo : public BaseModelInfo
+{
+  public:
+    RpClump *mClump;
+    union
+    {
+        char *m_pszAnimFileName;
+        int   m_nAnimFileIndex;
+    };
+};
+
+static_assert( sizeof( ClumpModelInfo ) == 0x30, "ClumpModelInfo: error" );
+
+struct CarGizmoPosIds
+{
+    static constexpr size_t HeadLights = 0;
+    static constexpr size_t TailLights = 1;
+    static constexpr size_t FrontSeat  = 2;
+    static constexpr size_t BackSeat   = 3;
+    static constexpr size_t Exhaust    = 4;
+};
+
+class VehicleModelInfo : public ClumpModelInfo
+{
+    static constexpr size_t NUM_VEHICLE_POSITIONS = 5;
+
+    static constexpr size_t NUM_FIRST_MATERIALS  = 24;
+    static constexpr size_t NUM_SECOND_MATERIALS = 20;
+    static constexpr size_t NUM_VEHICLE_COLOURS  = 8;
+    static constexpr size_t NUM_VEHICLE_ENVMAPS  = 1;
+
+  public:
+    uint8_t     mLastColour1;
+    uint8_t     mLastColour2;
+    char        mName[10];
+    int32_t     mVehicleType;
+    float       mWheelScale;
+    int16_t     mWheelId;
+    int16_t     mHandlingId;
+    uint8_t     mNumDoors;
+    uint8_t     mVehicleClass;
+    uint8_t     mLevel;
+    uint8_t     mNumExtras;
+    uint16_t    mFrq;
+    uint16_t    _padding;
+    Vector      mPositions[NUM_VEHICLE_POSITIONS];
+    uint32_t    mCompRules;
+    float       mBikeSteerAngle;
+    RpMaterial *mMaterials1[NUM_FIRST_MATERIALS];
+    RpMaterial *mMaterials2[NUM_SECOND_MATERIALS];
+    uint8_t     mColours1[NUM_VEHICLE_COLOURS];
+    uint8_t     mColours2[NUM_VEHICLE_COLOURS];
+    uint8_t     mNumColours;
+    uint8_t     mLastColorVariation;
+    uint8_t     mCurrentColour1;
+    uint8_t     mCurrentColour2;
+    RpAtomic *  mComps[6];
+    int32_t     m_numComps;
+};
+
+static_assert( sizeof( VehicleModelInfo ) == 0x174, "VehicleModelInfo: error" );

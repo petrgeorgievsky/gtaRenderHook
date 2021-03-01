@@ -166,10 +166,17 @@ int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
     auto &light_state = gRenderClient->RenderState.Lights;
 
     PointLight l{};
-    l.mPos[0]   = x;
-    l.mPos[1]   = y;
-    l.mPos[2]   = z;
-    l.mRadius   = rad;
+    l.mPos[0] = x;
+    l.mPos[1] = y;
+    l.mPos[2] = z;
+    l.mRadius = rad;
+    l.mDir[0] = dx;
+    l.mDir[1] = dy;
+    l.mDir[2] = dz;
+    if ( a1 == 1 )
+        l.mSpotCutoff = 0.7f;
+    else
+        l.mSpotCutoff = -0.5f;
     l.mColor[0] = r;
     l.mColor[1] = g;
     l.mColor[2] = b;

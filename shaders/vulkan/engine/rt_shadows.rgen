@@ -31,6 +31,7 @@ layout(binding = 6, set = 0) uniform ShadowParams
 struct PointLight
 {
     vec4 posAndRadius;
+    vec4 dirAndAttenuation;
     vec4 color;
 };
 
@@ -223,15 +224,27 @@ void main()
         float light_rad = pl.posAndRadius.w;
         float distance_to_light = distance(pl.posAndRadius.xyz, world_pos.xyz);
         if (light_rad <= 0.0f)
-        continue;
+            continue;
         vec3 pl_dir = normalize(pl.posAndRadius.xyz - world_pos.xyz);
         float ndotl = max(0, dot(normals_d.xyz, pl_dir));
         if (ndotl <= 0.0f)
-        continue;
+            continue;
         float lr_sq = 1/(light_rad*light_rad);
         float attenuation = 1.0f - pow(min(max(distance_to_light / light_rad, 0.0f), 1.0f), 2);//= 2*(1-(distance_to_light/sqrt(distance_to_light*distance_to_light + lr_sq)))/(lr_sq);
         attenuation*=attenuation;
-        if (i > 8)
+        // Compute spot contrib
+        float spot_cutoff = pl.dirAndAttenuation.w;
+        if( spot_cutoff > 0 )
+        {
+            float spot_angle = dot(-pl_dir.xyz, pl.dirAndAttenuation.xyz);
+            float spot_attenuation = 0.0f;
+            if (spot_angle >= spot_cutoff)
+                spot_attenuation = clamp((spot_angle - spot_cutoff)/0.1f, 0.0f, 1.0f);
+
+            attenuation*=spot_attenuation;
+        }
+
+        if (i > 8 || attenuation <= 0.001f)
         {
             res_color += ndotl * attenuation * pl.color.rgb;
             continue;

@@ -32,12 +32,6 @@ class VarAwareTempAccumColorFilterPipe;
 class VATAColorFilterPass;
 class BilateralFilterPipeline;
 class BilateralFilterPass;
-struct Light
-{
-    float mPos[3];
-    float mRadius;
-    float mColor[4];
-};
 
 struct RTShadowsInitParams
 {

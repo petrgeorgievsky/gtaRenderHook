@@ -1,3 +1,4 @@
+#include "game/PointLights.h"
 #include "game/Renderer.h"
 #include "game/Shadows.h"
 #include "game_patches/base_model_pipeline.h"
@@ -7,41 +8,15 @@
 #include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
 #include <Engine/Common/IDeviceState.h>
-#include <Windows.h>
 #include <injection_utils/InjectorHelpers.h>
 #include <ipc/ipc_utils.h>
 #include <render_client/render_client.h>
-#include <rw_engine/anim_hierarcy_rw36.h>
-#include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_api_injectors.h>
-#include <rw_engine/system_funcs/rw_device_system_globals.h>
 #include <rw_game_hooks.h>
 
 using namespace rh::rw::engine;
 
 int32_t true_hook() { return 1; }
-
-int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
-                    int dz, float rad, float r, float g, float b, char fogtype,
-                    char extrashadows )
-{
-    using namespace rh::rw::engine;
-    assert( gRenderClient );
-    auto &light_state = gRenderClient->RenderState.Lights;
-
-    PointLight l{};
-    l.mPos[0]   = x;
-    l.mPos[1]   = y;
-    l.mPos[2]   = z;
-    l.mRadius   = rad;
-    l.mColor[0] = r;
-    l.mColor[1] = g;
-    l.mColor[2] = b;
-    l.mColor[3] = 1;
-
-    light_state.RecordPointLight( std::move( l ) );
-    return 1;
-}
 
 BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
                      LPVOID lpReserved )
@@ -111,6 +86,7 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         RwD3D8Patches::Patch();
         Renderer::Patch();
         Shadows::Patch();
+        PointLights::Patch();
 
         // Im3D
         // SetPointer( 0x6DF754, reinterpret_cast<void *>( rxD3D8SubmitNode ) );
@@ -124,8 +100,6 @@ BOOL WINAPI DllMain( HINSTANCE hModule, DWORD ul_reason_for_call,
         // RedirectCall( 0x4A65AE, reinterpret_cast<void *>( water_render ) );
 
         // RedirectCall( 0x4CA267, reinterpret_cast<void *>( emptystuff ) );
-        // Lights
-        RedirectJump( 0x567700, reinterpret_cast<void *>( AddPtLight ) );
 
         InitClient();
     }
