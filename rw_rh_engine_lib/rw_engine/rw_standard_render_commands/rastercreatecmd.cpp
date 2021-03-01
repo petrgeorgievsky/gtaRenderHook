@@ -26,6 +26,10 @@ bool RwRasterCreateCmd::Execute()
     m_pRaster->cpPixels = nullptr;
     m_pRaster->palette  = nullptr;
 
+    // Save just in case someone relies on it(e.g. wsfix)
+    m_pRaster->originalWidth  = m_pRaster->width;
+    m_pRaster->originalHeight = m_pRaster->height;
+
     /* Retrieve a pointer to internal raster */
     auto &internalRaster    = BackendRasterPlugin::GetData( m_pRaster );
     internalRaster.mImageId = BackendRasterPlugin::NullRasterId;
