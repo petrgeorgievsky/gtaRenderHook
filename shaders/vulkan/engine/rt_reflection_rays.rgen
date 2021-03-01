@@ -61,7 +61,6 @@ void main()
 
     vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDNV.xy));
     vec4 mat_params =  imageLoad(material_params, ivec2(gl_LaunchIDNV.xy));
-    normals_d.xyz = normalize(normals_d.xyz);
     vec3 hitValue = vec3(0);
     float roughness = (1 - mat_params.g);
     float refl_int = MicrofacetFresnel(-direction.xyz, normals_d.xyz, 0);
