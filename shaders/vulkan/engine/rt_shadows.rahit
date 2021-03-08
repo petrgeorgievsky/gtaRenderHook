@@ -43,11 +43,11 @@ void main()
 
     vec2 tc = v0.uv.xy * barycentrics.x + v1.uv.xy * barycentrics.y + v2.uv.xy * barycentrics.z;
 
-    if (material.txd_id > 0) {
+    if (material.txd_id >= 0) {
         vec4 tex_color =texture(sampler2D(textures[material.txd_id], baseSampler), tc);
         if (tex_color.a < 0.5)
         ignoreIntersectionNV();
     }
     else if (unpackUnorm4x8(material.color).a  < 0.5)
-    ignoreIntersectionNV();
+        ignoreIntersectionNV();
 }

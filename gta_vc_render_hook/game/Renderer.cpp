@@ -356,20 +356,10 @@ void Renderer::Render()
 
     // For no obvious reason rendering non-buildings before buildings "fixes"
     // some bugs, e.g. lack of textures on palms
-    // TODO: Investigate why some textures reset rasters after loading
     for ( uint32_t id = 0; id < mNoOfVisibleEntities; id++ )
     {
         assert( mVisibleEntities[id] != nullptr );
-        // InMemoryFuncCall<void>( 0x4C9DA0, mVisibleEntities[id] );
-        if ( mVisibleEntities[id]->mType != 1 )
-            mVisibleEntities[id]->Render();
-    }
-    for ( uint32_t id = 0; id < mNoOfVisibleEntities; id++ )
-    {
-        assert( mVisibleEntities[id] != nullptr );
-        // InMemoryFuncCall<void>( 0x4C9DA0, mVisibleEntities[id] );
-        if ( mVisibleEntities[id]->mType == 1 )
-            mVisibleEntities[id]->Render();
+        mVisibleEntities[id]->Render();
     }
     // Render clouds
     InMemoryFuncCall<void>( 0x53FC50 );
