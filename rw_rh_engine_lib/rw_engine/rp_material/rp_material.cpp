@@ -72,7 +72,7 @@ RpMaterial *RpMaterialStreamRead( void *stream )
 RpMaterial *RpMaterialCreate()
 {
     RpMaterial *material;
-    RwRGBA      color;
+    RwRGBA      color{};
 
     material = static_cast<RpMaterial *>(
         malloc( sizeof( RpMaterial ) + sizeof( BackendMaterialExt ) ) );

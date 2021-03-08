@@ -107,9 +107,12 @@ void GenerateNormals( VertexDescPosColorUVNormals *verticles,
     // normalize normals
     for ( uint32_t i = 0; i < vertexCount; i++ )
     {
+        assert( !( isnan( verticles[i].nx ) || isnan( verticles[i].ny ) ||
+                   isnan( verticles[i].nx ) ) );
         float length = sqrt( verticles[i].nx * verticles[i].nx +
                              verticles[i].ny * verticles[i].ny +
                              verticles[i].nz * verticles[i].nz );
+        assert( !isnan( length ) );
         if ( length > 0.0f )
         {
             verticles[i].nx = verticles[i].nx / length;

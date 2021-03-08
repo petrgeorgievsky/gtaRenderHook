@@ -75,7 +75,7 @@ rpGeometryList *GeometryListStreamRead( void *stream, rpGeometryList *geomList )
 RpGeometry *RpGeometryStreamRead( void *stream )
 {
     RpGeometry *        geometry;
-    RpGeometryChunkInfo geom;
+    RpGeometryChunkInfo geom{};
     uint32_t            version;
 
     struct _rpGeometry_Rw_3_0_ext
@@ -83,7 +83,7 @@ RpGeometry *RpGeometryStreamRead( void *stream )
         float ambient;
         float diffuse;
         float specular;
-    } geom_ext;
+    } geom_ext{};
 
     if ( !RwStreamFindChunk( stream, rwID_STRUCT, nullptr, &version ) )
         return nullptr;
