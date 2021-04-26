@@ -107,7 +107,7 @@ void DebugLogger::Log( const engine::String &msg, LogLevel logLevel )
 
         *m_pLogStream << TEXT( "LOG: " ) << msg << TEXT( "\n" );
 
-        m_pLogStream->close();
+        m_pLogStream->flush();
     }
 
     OutputDebugString( ( msg + TEXT( "\n" ) ).c_str() );
@@ -123,7 +123,7 @@ void DebugLogger::Error( const engine::String &msg )
 
         *m_pLogStream << TEXT( "ERROR: " ) << msg << TEXT( "\n" );
 
-        m_pLogStream->close();
+        m_pLogStream->flush();
     }
 
     OutputDebugString( ( msg + TEXT( "\n" ) ).c_str() );
