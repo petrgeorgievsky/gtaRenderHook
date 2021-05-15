@@ -59,17 +59,10 @@ struct MeshInstanceState;
 
 using rh::engine::ScopedPointer;
 
-struct RendererCreateInfo
-{
-    rh::engine::IDeviceState &Device;
-    rh::engine::IWindow &     Window;
-    EngineResourceHolder &    Resources;
-};
-
 class RayTracingRenderer : public IFrameRenderer
 {
   public:
-    RayTracingRenderer( const RendererCreateInfo &info );
+    RayTracingRenderer( const RendererBase &info );
     ~RayTracingRenderer() override;
 
     void OnResize( const rh::engine::WindowParams &window ) override;

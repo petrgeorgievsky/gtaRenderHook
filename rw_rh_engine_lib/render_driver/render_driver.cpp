@@ -92,7 +92,7 @@ bool RenderDriver::OpenMainWindow( HWND window )
     if ( Resources == nullptr )
         return false;
 
-    RendererCreateInfo renderer_info{ *DeviceState, *MainWindow, *Resources };
+    RendererBase renderer_info{ *DeviceState, *MainWindow, *Resources };
     Renderer = std::make_unique<RayTracingRenderer>( renderer_info );
 
     FramebufferLoopCreateInfo fb_info{ *DeviceState, *MainWindow, *Renderer };

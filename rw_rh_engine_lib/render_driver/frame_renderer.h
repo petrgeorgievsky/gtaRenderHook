@@ -13,6 +13,13 @@ struct SwapchainFrame;
 
 namespace rh::rw::engine
 {
+class EngineResourceHolder;
+struct RendererBase
+{
+    rh::engine::IDeviceState &Device;
+    rh::engine::IWindow &     Window;
+    EngineResourceHolder &    Resources;
+};
 struct FrameState;
 class IFrameRenderer
 {

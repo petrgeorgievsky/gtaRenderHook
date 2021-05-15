@@ -34,7 +34,7 @@
 namespace rh::rw::engine
 {
 
-RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
+RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
     : Device( info.Device ), Window( info.Window ), Resources( info.Resources )
 {
     const uint32_t rtx_resolution_w =
