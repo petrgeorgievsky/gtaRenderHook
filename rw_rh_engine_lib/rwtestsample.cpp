@@ -183,8 +183,15 @@ DeviceSettingsDialog::DialogProc) <= 0) { TCHAR errormsg[4096];
         return false;
     }
     // rh::engine::g_pRHRenderer->InitImGUI();
+    if ( !CustomInitialize() )
+    {
+        debug::DebugLogger::Error( TEXT( "Failed to initialize sample!" ) );
+        SystemHandler( rwDEVICESYSTEMSTOP, nullptr, nullptr, 0 );
+        SystemHandler( rwDEVICESYSTEMCLOSE, nullptr, nullptr, 0 );
+        return false;
+    }
 
-    return CustomInitialize();
+    return true;
 }
 
 bool RwTestSample::CustomInitialize()
