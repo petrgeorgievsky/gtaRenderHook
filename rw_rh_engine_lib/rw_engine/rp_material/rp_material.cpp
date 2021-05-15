@@ -74,8 +74,8 @@ RpMaterial *RpMaterialCreate()
     RpMaterial *material;
     RwRGBA      color{};
 
-    material = static_cast<RpMaterial *>(
-        malloc( sizeof( RpMaterial ) + sizeof( BackendMaterialExt ) ) );
+    material = hAlloc<RpMaterial>(
+        "Material", sizeof( RpMaterial ) + sizeof( BackendMaterialExt ) );
     if ( !material )
         return nullptr;
 
@@ -118,9 +118,9 @@ int32_t RpMaterialDestroy( RpMaterial *material )
         /* Decreases the reference count on the texture too */
         // RpMaterialSetTexture( material, (RwTexture *)NULL );
 
-        free( material ); // RwFreeListFree( RWMATERIALGLOBAL( matFreeList ),
-                          // material
-                          // );
+        hFree( material ); // RwFreeListFree( RWMATERIALGLOBAL( matFreeList ),
+                           // material
+                           // );
     }
     else
     {

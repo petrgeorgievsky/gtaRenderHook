@@ -1,5 +1,6 @@
 #pragma once
 #include "../../common_headers.h"
+#include <rw_engine/test_heap_allocator.h>
 
 using RwSystemFunc = int32_t ( * )( int32_t nOption, void *pOut, void *pInOut,
                                     int32_t nIn );
@@ -218,16 +219,18 @@ struct ResourcePtrTable
 {
     RwResourcesAllocateResEntry AllocateResourceEntry =
         []( void *o, RwResEntry **, int32_t s,
-            RwResEntryDestroyNotify destroyNotify ) {
-            RwResEntry *res_entry =
-                static_cast<RwResEntry *>( malloc( sizeof( RwResEntry ) + s ) );
-            res_entry->owner         = o;
-            res_entry->destroyNotify = destroyNotify;
-            return res_entry;
-        };
-    RwResourcesFreeResEntry FreeResourceEntry = []( RwResEntry *entry ) {
+            RwResEntryDestroyNotify destroyNotify )
+    {
+        RwResEntry *res_entry =
+            hAlloc<RwResEntry>( "ResourceEntry", sizeof( RwResEntry ) + s );
+        res_entry->owner         = o;
+        res_entry->destroyNotify = destroyNotify;
+        return res_entry;
+    };
+    RwResourcesFreeResEntry FreeResourceEntry = []( RwResEntry *entry )
+    {
         entry->destroyNotify( entry );
-        free( entry );
+        hFree( entry );
         return 1;
     };
 };

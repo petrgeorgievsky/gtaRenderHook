@@ -6,6 +6,7 @@
 #include <rw_engine/system_funcs/raster_lock_cmd.h>
 
 #include <DebugUtils/DebugLogger.h>
+#include <rw_engine/test_heap_allocator.h>
 
 namespace rh::rw::engine
 {
@@ -50,8 +51,10 @@ bool RwRasterLockCmd::Execute( void *&res_data_ptr )
               .mLockMode = RasterLockParams::LockRead,
               .mMipLevel = mip_level } );
 
-        mRaster->cpPixels = static_cast<uint8_t *>( malloc( static_cast<size_t>(
-            lock_result.mLockDataHeight * lock_result.mLockDataStride ) ) );
+        mRaster->cpPixels = hAllocArray<uint8_t>(
+            "RasterLockedPixels",
+            static_cast<size_t>( lock_result.mLockDataHeight *
+                                 lock_result.mLockDataStride ) );
 
         if ( lock_result.mData )
             std::memcpy( mRaster->cpPixels, lock_result.mData,
@@ -70,8 +73,9 @@ bool RwRasterLockCmd::Execute( void *&res_data_ptr )
         /* Set the stride */
         mRaster->stride = pixel_size * mRaster->width;
 
-        mRaster->cpPixels = static_cast<uint8_t *>( malloc(
-            static_cast<size_t>( mRaster->height * mRaster->stride ) ) );
+        mRaster->cpPixels = hAllocArray<uint8_t>(
+            "RasterLockedPixels",
+            static_cast<size_t>( mRaster->height * mRaster->stride ) );
     }
     if ( ( ( mAccessMode & rwRASTERLOCKWRITE ) != 0 ) )
         mRaster->privateFlags = 0x4;

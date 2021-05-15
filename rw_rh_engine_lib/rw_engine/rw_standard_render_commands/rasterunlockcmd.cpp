@@ -35,7 +35,9 @@ bool RwRasterUnlockCmd::Execute()
             .mMipLevelCount = 1 };
 
         internalRaster.mImageId = load_texture_cmd.Invoke(
-            header, [this]( MemoryWriter &writer, MipLevelHeader &mip_header ) {
+            header,
+            [this]( MemoryWriter &writer, MipLevelHeader &mip_header )
+            {
                 mip_header.mSize   = m_pRaster->width * m_pRaster->height * 4;
                 mip_header.mStride = m_pRaster->stride;
                 writer.Skip( sizeof( MipLevelHeader ) );
@@ -57,7 +59,7 @@ bool RwRasterUnlockCmd::Execute()
 
     m_pRaster->stride = 0;
 
-    free( m_pRaster->cpPixels );
+    hFree( m_pRaster->cpPixels );
     m_pRaster->cpPixels = nullptr;
     return true;
 }

@@ -88,7 +88,7 @@ RpMeshHeader *rpMeshRead( void *stream, const RpGeometry *geometry,
 
     /* Allocate memory for the mesh */
     // RHDebug::DebugLogger::Log( "mesh sz:" + std::to_string( size ) );
-    meshHeader = static_cast<RpMeshHeader *>( malloc( size ) );
+    meshHeader = hAlloc<RpMeshHeader>( "MeshHeader", size );
     if ( !meshHeader )
         return nullptr;
     memset( meshHeader, 0, size );

@@ -29,7 +29,7 @@ void rh::rw::engine::_rpMaterialListDeinitialize( RpMaterialList &matList )
             materialArray[nI] = nullptr;
         }
 
-        free( materialArray );
+        hFree( materialArray );
         materialArray     = nullptr;
         matList.materials = materialArray;
     }
@@ -54,7 +54,7 @@ bool rh::rw::engine::_rpMaterialListSetSize( RpMaterialList &matList,
         }
         else
         {
-            materials = static_cast<RpMaterial **>( malloc( memSize ) );
+            materials = hAllocArray<RpMaterial *>( "MaterialList", size );
         }
 
         if ( !materials )
@@ -105,8 +105,8 @@ int32_t rh::rw::engine::_rpMaterialListAppendMaterial( RpMaterialList &matList,
     }
     else
     {
-        materials = static_cast<RpMaterial **>( malloc(
-            count * sizeof( RpMaterial * ) ) ); //_rpMaterialListAlloc( count );
+        materials = hAllocArray<RpMaterial *>(
+            "MaterialList", count ); //_rpMaterialListAlloc( count );
     }
 
     if ( !materials )
@@ -160,8 +160,7 @@ matList we've created */
         return false;
     }
 
-    matindex = static_cast<int32_t *>(
-        malloc( sizeof( int32_t ) * static_cast<uint32_t>( len ) ) );
+    matindex = hAllocArray<int32_t>( "MaterialIdxList", len );
 
     status = ( NULL != RwStreamRead( stream, matindex,
                                      sizeof( uint32_t ) *
@@ -169,7 +168,7 @@ matList we've created */
 
     if ( !status )
     {
-        free( matindex );
+        hFree( matindex );
         _rpMaterialListDeinitialize( matList );
         return false;
     }
@@ -184,14 +183,14 @@ matList we've created */
             if ( !RwStreamFindChunk( stream, rwID_MATERIAL, nullptr,
                                      &version ) )
             {
-                free( matindex );
+                hFree( matindex );
                 _rpMaterialListDeinitialize( matList );
                 return false;
             }
             material = RpMaterialStreamRead( stream );
             if ( !material )
             {
-                free( matindex );
+                hFree( matindex );
                 _rpMaterialListDeinitialize( matList );
                 return false;
             }
@@ -215,6 +214,6 @@ matList we've created */
         rh::rw::engine::RpMaterialDestroy( material );
     }
 
-    free( matindex );
+    hFree( matindex );
     return true;
 }

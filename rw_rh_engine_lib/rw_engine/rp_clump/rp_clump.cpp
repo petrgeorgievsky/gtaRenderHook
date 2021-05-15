@@ -10,6 +10,7 @@
 #include <DebugUtils/DebugLogger.h>
 
 #include <fstream>
+#include <rw_engine/test_heap_allocator.h>
 
 bool rh::rw::engine::LoadClump( RpClump *&clump, const std::string &dff_path )
 {
@@ -82,7 +83,7 @@ RpClump *rh::rw::engine::RpClumpStreamRead( void *stream )
     if ( !status )
     {
         if ( fl.numFrames )
-            free( fl.frames );
+            hFree( fl.frames );
         rh::rw::engine::RpClumpDestroy( clump );
         logger::Error( "RpClumpStreamRead: failed to read geometry list!" );
         return nullptr;
@@ -101,7 +102,7 @@ RpClump *rh::rw::engine::RpClumpStreamRead( void *stream )
         {
             GeometryListDeinitialize( &gl );
             if ( fl.numFrames )
-                free( fl.frames );
+                hFree( fl.frames );
             rh::rw::engine::RpClumpDestroy( clump );
             logger::Error( "RpClumpStreamRead: failed to read atomic!" );
             return nullptr;
@@ -116,7 +117,7 @@ RpClump *rh::rw::engine::RpClumpStreamRead( void *stream )
 
     /* Dont need the frame list anymore */
     if ( fl.numFrames )
-        free( fl.frames );
+        hFree( fl.frames );
 
     return clump;
 }
@@ -125,7 +126,7 @@ RpClump *rh::rw::engine::RpClumpCreate() noexcept
 {
     RpClump *clump;
 
-    clump = static_cast<RpClump *>( malloc( sizeof( RpClump ) ) );
+    clump = hAlloc<RpClump>( "Clump" );
 
     if ( !clump )
     {
@@ -159,20 +160,27 @@ int32_t rh::rw::engine::RpClumpDestroy( RpClump *clump )
 
     /* De-init the clump plugin registered memory */
     // rwPluginRegistryDeInitObject( &clumpTKList, clump );
-
+    auto atomic_list = rwLinkList::Iterator<RpAtomic>( clump->atomicList );
+    for ( auto iter = atomic_list.begin(); iter != atomic_list.end(); )
+    {
+        auto *atomic = *iter;
+        iter++;
+        if ( atomic )
+            RpAtomicDestroy( atomic );
+    }
     // RpClumpForAllAtomics( clump, DestroyClumpAtomic, NULL );
     // RpClumpForAllLights( clump, DestroyClumpLight, NULL );
     // RpClumpForAllCameras( clump, DestroyClumpCamera, NULL );
 
     /* Destroy the frame hierarchy if one exists */
-    // frame = RpClumpGetFrame( clump );
-    /*if( frame )
-{
-RwFrameDestroyHierarchy( frame );
-}*/
+    auto frame = (RwFrame *)rwObject::GetParent( clump );
+    if ( frame )
+    {
+        hFree( frame ); // RwFrameDestroy( frame );
+    }
 
     /* Destroy the clump */
-    free( clump );
+    hFree( clump );
 
     return ( TRUE );
 }

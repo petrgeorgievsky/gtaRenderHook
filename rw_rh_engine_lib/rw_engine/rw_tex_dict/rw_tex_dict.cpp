@@ -5,6 +5,7 @@
 #include "rw_engine/system_funcs/rw_device_system_globals.h"
 #include <fstream>
 #include <rw_engine/system_funcs/rw_device_standards.h>
+#include <rw_engine/test_heap_allocator.h>
 
 struct _rwStreamTexDictionary
 {
@@ -16,8 +17,7 @@ RwTexDictionary *rh::rw::engine::RwTexDictionaryCreate()
 {
     RwTexDictionary *dict;
 
-    dict =
-        static_cast<RwTexDictionary *>( malloc( sizeof( RwTexDictionary ) ) );
+    dict = hAlloc<RwTexDictionary>( "TextureDict" );
     if ( !dict )
         return nullptr;
 
@@ -40,7 +40,7 @@ int32_t rh::rw::engine::RwTexDictionaryDestroy( RwTexDictionary *dict )
     /* Remove from the free list */
     // rwLinkListRemoveLLLink( &dict->lInInstance );
 
-    free( dict );
+    hFree( dict );
 
     /* Success */
     return TRUE;

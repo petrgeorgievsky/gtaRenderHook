@@ -10,8 +10,8 @@ namespace rh::rw::engine
 RwRaster *RwRasterCreate( int32_t width, int32_t height, int32_t depth,
                           int32_t flags )
 {
-    auto *raster = static_cast<RwRaster *>(
-        malloc( sizeof( RwRaster ) + sizeof( BackendRasterExt ) ) );
+    auto *raster = hAlloc<RwRaster>(
+        "RwRaster", sizeof( RwRaster ) + sizeof( BackendRasterExt ) );
     new ( raster ) RwRaster{};
 
     if ( raster == nullptr )
@@ -32,7 +32,7 @@ RwRaster *RwRasterCreate( int32_t width, int32_t height, int32_t depth,
 
     if ( !RasterCreateFunc( nullptr, raster, flags ) )
     {
-        free( raster );
+        hFree( raster );
 
         return nullptr;
     }
@@ -49,7 +49,7 @@ int32_t RwRasterDestroy( RwRaster *raster )
         gRwDeviceGlobals.Standards[rwSTANDARDRASTERDESTROY];
     RasterDestroyFunc( nullptr, raster, 0 );
 
-    free( raster );
+    hFree( raster );
     return true;
 }
 

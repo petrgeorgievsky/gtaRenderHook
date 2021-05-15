@@ -15,10 +15,10 @@ static void rwFrameInternalInit( RwFrame *frame )
     rwLinkList::Initialize( &frame->objectList ); /* No objects attached here */
 
     /* Set up the structure */
-    frame->modelling = {{1, 0, 0}, 0, {0, 1, 0}, 0,
-                        {0, 0, 1}, 0, {0, 0, 0}, 0x3F800000};
-    frame->ltm       = {{1, 0, 0}, 0, {0, 1, 0}, 0,
-                  {0, 0, 1}, 0, {0, 0, 0}, 0x3F800000};
+    frame->modelling = { { 1, 0, 0 }, 0, { 0, 1, 0 }, 0,
+                         { 0, 0, 1 }, 0, { 0, 0, 0 }, 0x3F800000 };
+    frame->ltm       = { { 1, 0, 0 }, 0, { 0, 1, 0 }, 0,
+                   { 0, 0, 1 }, 0, { 0, 0, 0 }, 0x3F800000 };
     // rwMatrixInitializeIdentity( &frame->modelling, rwMATRIXTYPEORTHONORMAL );
     // rwMatrixInitializeIdentity( &frame->ltm, rwMATRIXTYPEORTHONORMAL );
 
@@ -34,7 +34,7 @@ RwFrame *RwFrameCreate()
 {
     RwFrame *frame;
 
-    frame = static_cast<RwFrame *>( malloc( sizeof( RwFrame ) ) );
+    frame = hAlloc<RwFrame>( "Frame" );
     if ( !frame )
     {
         return nullptr;
@@ -78,7 +78,8 @@ void RwFrameAddChild( RwFrame *parent, RwFrame *child )
     {
         rwLinkList::RemoveLLLink( &child->inDirtyListLink );
         /* clear flag */
-        rwObject::SetPrivateFlags( child,
+        rwObject::SetPrivateFlags(
+            child,
             static_cast<uint8_t>( rwObject::GetPrivateFlags( child ) &
                                   ~( rwFRAMEPRIVATEHIERARCHYSYNCLTM |
                                      rwFRAMEPRIVATEHIERARCHYSYNCOBJ ) ) );
@@ -139,12 +140,14 @@ void RwFrameUpdateObjects( RwFrame *frame ) noexcept
     //}
 
     /* whole hierarchy needs resync */
-    rwObject::SetPrivateFlags( frame->root,
+    rwObject::SetPrivateFlags(
+        frame->root,
         static_cast<uint8_t>( oldFlags | ( rwFRAMEPRIVATEHIERARCHYSYNCLTM |
                                            rwFRAMEPRIVATEHIERARCHYSYNCOBJ ) ) );
 
     /* this frame in particular */
-    rwObject::SetPrivateFlags( frame, static_cast<uint8_t>( rwObject::GetPrivateFlags( frame ) |
+    rwObject::SetPrivateFlags(
+        frame, static_cast<uint8_t>( rwObject::GetPrivateFlags( frame ) |
                                      ( rwFRAMEPRIVATESUBTREESYNCLTM |
                                        rwFRAMEPRIVATESUBTREESYNCOBJ ) ) );
 }
@@ -178,7 +181,7 @@ static void FrameSyncHierarchyLTMRecurse( RwFrame *frame, int32_t flags )
                 local_ltm->right.x, local_ltm->right.y, local_ltm->right.z, 0,
                 local_ltm->up.x,    local_ltm->up.y,    local_ltm->up.z,    0,
                 local_ltm->at.x,    local_ltm->at.y,    local_ltm->at.z,    0,
-                local_ltm->pos.x,   local_ltm->pos.y,   local_ltm->pos.z,   1};
+                local_ltm->pos.x,   local_ltm->pos.y,   local_ltm->pos.z,   1 };
             DirectX::XMMATRIX parent = {
                 parent_ltm->right.x, parent_ltm->right.y,
                 parent_ltm->right.z, 0,
@@ -187,25 +190,26 @@ static void FrameSyncHierarchyLTMRecurse( RwFrame *frame, int32_t flags )
                 parent_ltm->at.x,    parent_ltm->at.y,
                 parent_ltm->at.z,    0,
                 parent_ltm->pos.x,   parent_ltm->pos.y,
-                parent_ltm->pos.z,   1};
+                parent_ltm->pos.z,   1 };
             DirectX::XMMATRIX res_transform = local * parent;
-            frame->ltm.right = {DirectX::XMVectorGetX( res_transform.r[0] ),
-                                DirectX::XMVectorGetY( res_transform.r[0] ),
-                                DirectX::XMVectorGetZ( res_transform.r[0] )};
-            frame->ltm.up    = {DirectX::XMVectorGetX( res_transform.r[1] ),
-                             DirectX::XMVectorGetY( res_transform.r[1] ),
-                             DirectX::XMVectorGetZ( res_transform.r[1] )};
-            frame->ltm.at    = {DirectX::XMVectorGetX( res_transform.r[2] ),
-                             DirectX::XMVectorGetY( res_transform.r[2] ),
-                             DirectX::XMVectorGetZ( res_transform.r[2] )};
-            frame->ltm.pos   = {DirectX::XMVectorGetX( res_transform.r[3] ),
-                              DirectX::XMVectorGetY( res_transform.r[3] ),
-                              DirectX::XMVectorGetZ( res_transform.r[3] )};
+            frame->ltm.right = { DirectX::XMVectorGetX( res_transform.r[0] ),
+                                 DirectX::XMVectorGetY( res_transform.r[0] ),
+                                 DirectX::XMVectorGetZ( res_transform.r[0] ) };
+            frame->ltm.up    = { DirectX::XMVectorGetX( res_transform.r[1] ),
+                              DirectX::XMVectorGetY( res_transform.r[1] ),
+                              DirectX::XMVectorGetZ( res_transform.r[1] ) };
+            frame->ltm.at    = { DirectX::XMVectorGetX( res_transform.r[2] ),
+                              DirectX::XMVectorGetY( res_transform.r[2] ),
+                              DirectX::XMVectorGetZ( res_transform.r[2] ) };
+            frame->ltm.pos   = { DirectX::XMVectorGetX( res_transform.r[3] ),
+                               DirectX::XMVectorGetY( res_transform.r[3] ),
+                               DirectX::XMVectorGetZ( res_transform.r[3] ) };
             /*RwMatrixMultiply( &frame->ltm,
 &frame->modelling,
 &( ( RwFrameGetParent( frame ) )->ltm ) );*/
             /* clear flag */
-            rwObject::SetPrivateFlags( frame,
+            rwObject::SetPrivateFlags(
+                frame,
                 static_cast<uint8_t>( rwObject::GetPrivateFlags( frame ) &
                                       ~( rwFRAMEPRIVATESUBTREESYNCLTM ) ) );
         }
@@ -243,7 +247,8 @@ void _rwFrameSyncHierarchyLTM( RwFrame *frame )
     FrameSyncHierarchyLTMRecurse( frame->child, oldFlags );
 
     /* clear flag */
-    rwObject::SetPrivateFlags( frame,
+    rwObject::SetPrivateFlags(
+        frame,
         static_cast<uint8_t>( oldFlags & ~( rwFRAMEPRIVATEHIERARCHYSYNCLTM |
                                             rwFRAMEPRIVATESUBTREESYNCLTM ) ) );
 }

@@ -40,8 +40,8 @@ rpGeometryList *GeometryListStreamRead( void *stream, rpGeometryList *geomList )
 
     if ( gl > 0 )
     {
-        geomList->geometries = static_cast<RpGeometry **>(
-            malloc( sizeof( RpGeometry * ) * static_cast<size_t>( gl ) ) );
+        geomList->geometries = hAlloc<RpGeometry *>(
+            "GeometryList", sizeof( void * ) * static_cast<size_t>( gl ) );
         if ( !geomList->geometries )
         {
             return nullptr;
@@ -337,7 +337,7 @@ RpGeometry *RpGeometryCreate( int32_t numVerts, int32_t numTriangles,
                   ? rpGEOMETRYTEXTURED
                   : ( ( numTexCoordSets > 1 ) ? rpGEOMETRYTEXTURED2 : 0 ) );
 
-    /*if ( !( rpGEOMETRYNATIVE & format ) )
+    if ( !( rpGEOMETRYNATIVE & format ) )
     {
         if ( flags & static_cast<int32_t>( rpGEOMETRYPRELIT ) )
         {
@@ -346,15 +346,15 @@ RpGeometry *RpGeometryCreate( int32_t numVerts, int32_t numTriangles,
 
         if ( numTexCoordSets > 0 )
         {
-            //Include space for tex coords
+            // Include space for tex coords
             gsize += sizeof( RwTexCoords ) * static_cast<size_t>( numVerts ) *
                      numTexCoordSets;
         }
 
         gsize += sizeof( RpTriangle ) * static_cast<size_t>( numTriangles );
-    }*/
+    }
 
-    geometry = static_cast<RpGeometry *>( malloc( gsize ) );
+    geometry = hAlloc<RpGeometry>( "Geometry", gsize );
 
     if ( !geometry )
         return nullptr;
@@ -408,10 +408,7 @@ RpGeometry *RpGeometryCreate( int32_t numVerts, int32_t numTriangles,
         /* Create prelight values if necessary */
         if ( ( flags & rpGEOMETRYPRELIT ) && numVerts )
         {
-            geometry->preLitLum = static_cast<RwRGBA *>( malloc(
-                sizeof( RwRGBA ) *
-                static_cast<size_t>(
-                    numVerts ) ) ); // reinterpret_cast<RwRGBA *>( goffset );
+            geometry->preLitLum = (RwRGBA *)goffset;
             goffset += sizeof( RwRGBA ) * static_cast<size_t>( numVerts );
         }
 
@@ -422,8 +419,9 @@ RpGeometry *RpGeometryCreate( int32_t numVerts, int32_t numTriangles,
 
             for ( i = 0; i < numTexCoordSets; i++ )
             {
-                geometry->texCoords[i] = static_cast<RwTexCoords *>( malloc(
-                    sizeof( RwTexCoords ) * static_cast<size_t>( numVerts ) ) );
+                geometry->texCoords[i] = (RwTexCoords *)
+                    goffset; // hAllocArray<RwTexCoords>(
+                             //"PerVertexTC", static_cast<size_t>( numVerts ) );
                 // reinterpret_cast<RwTexCoords *>( goffset );
                 goffset +=
                     sizeof( RwTexCoords ) * static_cast<size_t>( numVerts );
@@ -433,8 +431,9 @@ RpGeometry *RpGeometryCreate( int32_t numVerts, int32_t numTriangles,
         /* Set up the triangles */
         if ( numTriangles )
         {
-            geometry->triangles = static_cast<RpTriangle *>( malloc(
-                sizeof( RpTriangle ) * static_cast<size_t>( numTriangles ) ) );
+            geometry->triangles = (RpTriangle *)goffset;
+            // hAllocArray<RpTriangle>(
+            //   "Triangles", static_cast<size_t>( numTriangles ) );
             goffset +=
                 sizeof( RpTriangle ) * static_cast<size_t>( numTriangles );
 
@@ -450,7 +449,7 @@ RpGeometry *RpGeometryCreate( int32_t numVerts, int32_t numTriangles,
     if ( rh::rw::engine::RpGeometryAddMorphTarget( geometry ) < 0 )
     {
         _rpMaterialListDeinitialize( geometry->matList );
-        free( geometry );
+        hFree( geometry );
         return nullptr;
     }
 
@@ -520,7 +519,7 @@ open a gap for mtcount MorphTargets */
     }
     else
     {
-        morphTarget = static_cast<RpMorphTarget *>( malloc( bytes ) );
+        morphTarget = hAlloc<RpMorphTarget>( "MorphTarget", bytes );
         if ( !morphTarget )
         {
             /* Failed to allocate memory for the new morph target array */
@@ -600,7 +599,7 @@ rpGeometryList *GeometryListDeinitialize( rpGeometryList *geomList )
 
     if ( geomList->geometries )
     {
-        free( geomList->geometries );
+        hFree( geomList->geometries );
         geomList->geometries = nullptr;
     }
 
@@ -614,6 +613,8 @@ static int32_t GeometryAnnihilate( RpGeometry *geometry )
 
     /* Lock it so it can be destroyed */
     // RpGeometryLock( geometry, ( rpGEOMETRYLOCKALL ) );
+    // Free "mesh header"
+    hFree( geometry->mesh );
 
     /* DeInitialize the plugin memory */
     // rwPluginRegistryDeInitObject( &geometryTKList, geometry );
@@ -621,7 +622,7 @@ static int32_t GeometryAnnihilate( RpGeometry *geometry )
     /* destroy morphTargets */
     if ( geometry->morphTarget )
     {
-        free( geometry->morphTarget );
+        hFree( geometry->morphTarget );
         geometry->morphTarget = nullptr;
     }
 
@@ -630,7 +631,7 @@ static int32_t GeometryAnnihilate( RpGeometry *geometry )
     /* Reinstate reference count */
     --geometry->refCount;
 
-    free( geometry );
+    hFree( geometry );
 
     return ( TRUE );
 }
@@ -647,11 +648,11 @@ int32_t RpGeometryDestroy( RpGeometry *geometry )
         {
             if ( geometry->repEntry->destroyNotify )
                 geometry->repEntry->destroyNotify( geometry->repEntry );
-            if ( geometry->repEntry->ownerRef )
-            {
-                *( geometry->repEntry->ownerRef ) = nullptr;
-            }
-            free( geometry->repEntry );
+            // if ( geometry->repEntry->ownerRef )
+            // {
+            //    *( geometry->repEntry->ownerRef ) = nullptr;
+            //}
+            hFree( geometry->repEntry );
             // RwResourcesFreeResEntry( geometry->repEntry );
         }
 

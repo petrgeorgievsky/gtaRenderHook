@@ -4,6 +4,7 @@
 #include <rw_engine/rw_macro_constexpr.h>
 
 #include <common_headers.h>
+#include <rw_engine/test_heap_allocator.h>
 namespace rh::rw::engine
 {
 enum RpAtomicPrivateFlag
@@ -58,7 +59,7 @@ RpAtomic *RpAtomicCreate()
 {
     RpAtomic *atomic;
 
-    atomic = static_cast<RpAtomic *>( malloc( sizeof( RpAtomic ) ) );
+    atomic = hAlloc<RpAtomic>( "Atomic" );
     if ( !atomic )
     {
         return nullptr;
@@ -137,13 +138,13 @@ void RpAtomicDestroy( RpAtomic *atomic )
         {
             *( atomic->repEntry->ownerRef ) = nullptr;
         }
-        free( atomic->repEntry );
+        hFree( atomic->repEntry );
     }
     if ( atomic->geometry )
     {
         rh::rw::engine::RpGeometryDestroy( atomic->geometry );
     }
-    free( atomic );
+    hFree( atomic );
 }
 
 void __rwObjectHasFrameSetFrame( void *object, RwFrame *frame )

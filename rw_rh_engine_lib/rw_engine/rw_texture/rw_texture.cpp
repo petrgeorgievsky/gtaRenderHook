@@ -14,7 +14,7 @@
 
 RwTexture *rh::rw::engine::RwTextureCreate( RwRaster *raster )
 {
-    auto *texture = static_cast<RwTexture *>( malloc( sizeof( RwTexture ) ) );
+    auto *texture = hAlloc<RwTexture>( "Texture" );
 
     if ( texture == nullptr )
         return nullptr;

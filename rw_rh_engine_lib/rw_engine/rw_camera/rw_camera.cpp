@@ -3,13 +3,14 @@
 #include "rw_engine/system_funcs/rw_device_system_globals.h"
 #include <common_headers.h>
 #include <rw_engine/system_funcs/rw_device_standards.h>
+#include <rw_engine/test_heap_allocator.h>
 
 namespace rh::rw::engine
 {
 
 RwCamera *RwCameraCreate()
 {
-    auto *camera = static_cast<RwCamera *>( malloc( sizeof( RwCamera ) ) );
+    auto *camera = hAlloc<RwCamera>( "Camera" );
 
     if ( camera == nullptr )
         return nullptr;
@@ -38,7 +39,7 @@ RwCamera *RwCameraCreate()
 void RwCameraDestroy( RwCamera *camera )
 {
     if ( camera )
-        free( camera );
+        hFree( camera );
 }
 
 RwCamera *RwCameraClear( RwCamera *camera, RwRGBA *color, int32_t clearMode )

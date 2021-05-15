@@ -35,8 +35,8 @@ rwFrameList *rh::rw::engine::_rwFrameListStreamRead( void *       stream,
 
     frameList->numFrames = fl.numFrames;
 
-    frameList->frames = static_cast<RwFrame **>(
-        malloc( sizeof( RwFrame * ) * static_cast<size_t>( fl.numFrames ) ) );
+    frameList->frames = hAllocArray<RwFrame *>(
+        "FrameList", static_cast<size_t>( fl.numFrames ) );
 
     for ( i = 0; i < fl.numFrames; i++ )
     {
@@ -46,7 +46,7 @@ rwFrameList *rh::rw::engine::_rwFrameListStreamRead( void *       stream,
 
         if ( RwStreamRead( stream, &f, sizeof( f ) ) != sizeof( f ) )
         {
-            free( frameList->frames );
+            hFree( frameList->frames );
             return nullptr;
         }
 
@@ -55,7 +55,7 @@ rwFrameList *rh::rw::engine::_rwFrameListStreamRead( void *       stream,
 
         if ( !frame )
         {
-            free( frameList->frames );
+            hFree( frameList->frames );
             return nullptr;
         }
 
