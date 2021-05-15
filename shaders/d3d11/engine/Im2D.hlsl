@@ -82,12 +82,13 @@ float4 TexPS( PS_IM2D_IN i ) : SV_Target
 
 float DepthMaskPS( PS_IM2D_IN i ) : SV_Depth
 {
-    float  lin_z             = t0.Sample( s0, i.vTexCoord ).w;
-    float4 clipSpacePosition = float4( i.vTexCoord.xy * 2.0 - 1.0, 1, 1.0 );
-    float4 viewSpacePosition = mul( projInverse, clipSpacePosition );
-    viewSpacePosition /= viewSpacePosition.w;
-    viewSpacePosition.z = lin_z;
-    clipSpacePosition   = mul( proj, viewSpacePosition );
+    float lin_z = t0.Sample( s0, i.vTexCoord ).w;
 
-    return max( clipSpacePosition.z / clipSpacePosition.w, 0.001f );
+    float2 d        = i.vTexCoord * 2.0f - 1.0f;
+    float4 v_target = mul( projInverse, float4( d.x, d.y, 1.0f, 1.0f ) );
+    float3 viewSpacePosition = normalize( v_target.xyz ) * lin_z;
+    float4 clipSpacePosition = mul( proj, float4( viewSpacePosition, 1.0f ) );
+    float  ndc_depth         = clipSpacePosition.z / clipSpacePosition.w;
+
+    return ndc_depth;
 }
