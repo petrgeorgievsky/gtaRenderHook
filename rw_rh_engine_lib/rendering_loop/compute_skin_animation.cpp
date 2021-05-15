@@ -6,7 +6,9 @@
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDebugUtils.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <data_desc/frame_info.h>
 #include <render_client/skin_instance_state_recorder.h>
+#include <render_driver/frame_renderer.h>
 #include <render_driver/gpu_resources/resource_mgr.h>
 #include <span>
 
@@ -143,38 +145,46 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
     std::vector<AnimatedMeshDrawCall> result_drawcalls{};
     result_drawcalls.reserve( draw_calls.Size() );
 
-    mCmdBuffer->BeginRecord();
-
-    mCmdBuffer->BindComputePipeline( mPipeline );
-
-    /// Animate meshes
-    uint64_t idx = 0;
-    for ( auto &skin_dc : draw_calls )
+    // update buffers
+    struct AnimDispatch
     {
-        const auto &mesh_info = skin_mesh_pool.GetResource( skin_dc.MeshId );
+        IDescriptorSet *DescSet;
+        uint32_t        ThreadCount;
+    };
+
+    std::vector<AnimDispatch> dispatch_list;
+    dispatch_list.reserve( draw_calls.Size() );
+    uint64_t idx = 0;
+    for ( auto &dc : draw_calls )
+    {
+        const auto &mesh_info = skin_mesh_pool.GetResource( dc.MeshId );
+
+        // Create temporary buffers
+        BufferCreateInfo vb_info{
+            .mSize =
+                static_cast<uint32_t>( mesh_info.mVertexCount *
+                                       sizeof( VertexDescPosColorUVNormals ) ),
+            .mUsage = BufferUsage::VertexBuffer | BufferUsage::StorageBuffer };
 
         AnimatedMeshDrawCall anim_dc{};
-        anim_dc.mInstanceId        = skin_dc.DrawCallId;
-        anim_dc.mMaterialListStart = skin_dc.MaterialListStart;
-        anim_dc.mMaterialListCount = skin_dc.MaterialListCount;
+        anim_dc.mInstanceId        = dc.DrawCallId;
+        anim_dc.mMaterialListStart = dc.MaterialListStart;
+        anim_dc.mMaterialListCount = dc.MaterialListCount;
         anim_dc.mData.mVertexCount = mesh_info.mVertexCount;
         anim_dc.mData.mIndexCount  = mesh_info.mIndexCount;
         anim_dc.mData.mIndexBuffer = mesh_info.mIndexBuffer;
-
-        rh::engine::BufferCreateInfo vb_info{};
-        vb_info.mSize =
-            mesh_info.mVertexCount * sizeof( VertexDescPosColorUVNormals );
-        vb_info.mUsage = rh::engine::BufferUsage::VertexBuffer |
-                         rh::engine::BufferUsage::StorageBuffer;
         anim_dc.mData.mVertexBuffer =
             new RefCountedBuffer( dev_state.CreateBuffer( vb_info ) );
+        anim_dc.mTransform = dc.WorldTransform;
+        result_drawcalls.push_back( anim_dc );
 
         // update buffers
 
-        mBoneMatrixPool[idx]->Update( &skin_dc.BoneTransform->f[0],
+        mBoneMatrixPool[idx]->Update( &dc.BoneTransform->f[0],
                                       sizeof( DirectX::XMFLOAT4X3 ) * 256 );
-        auto it = mAnimationCache.find( anim_dc.mInstanceId );
-        if ( it != mAnimationCache.end() )
+
+        if ( auto it = mAnimationCache.find( anim_dc.mInstanceId );
+             it != mAnimationCache.end() )
         {
             mBoneMatrixPool[idx + mMaxAnims]->Update(
                 it->second.data(), sizeof( DirectX::XMFLOAT4X3 ) * 256 );
@@ -182,36 +192,51 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
         else
         {
             mBoneMatrixPool[idx + mMaxAnims]->Update(
-                &skin_dc.BoneTransform->f[0],
-                sizeof( DirectX::XMFLOAT4X3 ) * 256 );
+                &dc.BoneTransform->f[0], sizeof( DirectX::XMFLOAT4X3 ) * 256 );
         }
-        std::copy( std::begin( skin_dc.BoneTransform ),
-                   std::end( skin_dc.BoneTransform ),
+        std::copy( std::begin( dc.BoneTransform ), std::end( dc.BoneTransform ),
                    std::begin( mAnimationCache[anim_dc.mInstanceId] ) );
 
-        std::array in_buffer_update  = { BufferUpdateInfo{
-            0, VK_WHOLE_SIZE, mesh_info.mVertexBuffer->Get() } };
-        std::array out_buffer_update = { BufferUpdateInfo{
-            0, VK_WHOLE_SIZE, anim_dc.mData.mVertexBuffer->Get() } };
+        auto desc_set = mDescSetPool[idx];
+        {
+            std::array in_buffer_update  = { BufferUpdateInfo{
+                0, VK_WHOLE_SIZE, mesh_info.mVertexBuffer->Get() } };
+            std::array out_buffer_update = { BufferUpdateInfo{
+                0, VK_WHOLE_SIZE, anim_dc.mData.mVertexBuffer->Get() } };
 
-        DescriptorSetUpdateInfo in_updateInfo{};
-        in_updateInfo.mBufferUpdateInfo = in_buffer_update;
-        in_updateInfo.mBinding          = 0;
-        in_updateInfo.mSet              = mDescSetPool[idx];
-        in_updateInfo.mDescriptorType   = DescriptorType::RWBuffer;
+            DescriptorSetUpdateInfo in_updateInfo{};
+            in_updateInfo.mBufferUpdateInfo = in_buffer_update;
+            in_updateInfo.mBinding          = 0;
+            in_updateInfo.mSet              = desc_set;
+            in_updateInfo.mDescriptorType   = DescriptorType::RWBuffer;
 
-        DescriptorSetUpdateInfo out_updateInfo{};
-        out_updateInfo.mBufferUpdateInfo = out_buffer_update;
-        out_updateInfo.mBinding          = 1;
-        out_updateInfo.mSet              = mDescSetPool[idx];
-        out_updateInfo.mDescriptorType   = DescriptorType::RWBuffer;
+            DescriptorSetUpdateInfo out_updateInfo{};
+            out_updateInfo.mBufferUpdateInfo = out_buffer_update;
+            out_updateInfo.mBinding          = 1;
+            out_updateInfo.mSet              = desc_set;
+            out_updateInfo.mDescriptorType   = DescriptorType::RWBuffer;
 
-        // TODO: Merge via ArrayProxy if possible
-        dev_state.UpdateDescriptorSets( in_updateInfo );
-        dev_state.UpdateDescriptorSets( out_updateInfo );
+            // TODO: Merge via ArrayProxy if possible
+            dev_state.UpdateDescriptorSets( in_updateInfo );
+            dev_state.UpdateDescriptorSets( out_updateInfo );
+        }
 
+        idx++;
+
+        dispatch_list.push_back(
+            { desc_set, static_cast<uint32_t>(
+                            ( mesh_info.mVertexCount + 256 - 1 ) / 256u ) } );
+    }
+
+    mCmdBuffer->BeginRecord();
+
+    mCmdBuffer->BindComputePipeline( mPipeline );
+
+    /// Animate meshes
+    for ( auto [desc_set, thread_count] : dispatch_list )
+    {
         // bind descriptors
-        std::array desc_sets = { mDescSetPool[idx] };
+        std::array desc_sets = { desc_set };
 
         DescriptorSetBindInfo bindInfo{};
         bindInfo.mPipelineBindPoint = PipelineBindPoint::Compute;
@@ -219,14 +244,7 @@ std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
         bindInfo.mPipelineLayout    = mPipelineLayout;
         mCmdBuffer->BindDescriptorSets( bindInfo );
 
-        mCmdBuffer->DispatchCompute(
-            { static_cast<uint32_t>( ceil( mesh_info.mVertexCount / 256.0f ) ),
-              1, 1 } );
-        idx++;
-
-        anim_dc.mTransform = skin_dc.WorldTransform;
-
-        result_drawcalls.push_back( anim_dc );
+        mCmdBuffer->DispatchCompute( { thread_count, 1, 1 } );
     }
 
     mCmdBuffer->EndRecord();
@@ -252,5 +270,44 @@ SkinAnimationPipeline::~SkinAnimationPipeline()
         delete buffer;
     for ( auto dset : mDescSetPool )
         delete dset;
+}
+
+void SkinAnimationPipeline::Update( const FrameState &state )
+{
+    using namespace rh::engine;
+
+    auto &mesh_pool = Resources.GetMeshPool();
+    for ( const auto &item : DrawCallList )
+        mesh_pool.FreeResource( item.MeshId );
+    DrawCallList.clear();
+
+    if ( state.SkinInstances.DrawCalls.Size() <= 0 )
+        return;
+
+    // Generate Skin Meshes
+    auto animated_meshes =
+        AnimateSkinnedMeshes( state.SkinInstances.DrawCalls );
+    if ( animated_meshes.empty() )
+        return;
+
+    // Generate dynamic geometry transforms
+    for ( const auto &dc : animated_meshes )
+    {
+        BackendMeshData backendMeshData{};
+        backendMeshData.mIndexBuffer  = dc.mData.mIndexBuffer;
+        backendMeshData.mVertexBuffer = dc.mData.mVertexBuffer;
+        backendMeshData.mVertexCount  = dc.mData.mVertexCount;
+        backendMeshData.mIndexCount   = dc.mData.mIndexCount;
+        backendMeshData.mIndexBuffer->AddRef();
+
+        DrawCallInfo sdc{};
+        sdc.DrawCallId = dc.mInstanceId;
+        sdc.MeshId = mesh_pool.RequestResource( std::move( backendMeshData ) );
+        sdc.WorldTransform    = dc.mTransform;
+        sdc.MaterialListStart = dc.mMaterialListStart;
+        sdc.MaterialListCount = dc.mMaterialListCount;
+
+        DrawCallList.push_back( sdc );
+    }
 }
 } // namespace rh::rw::engine

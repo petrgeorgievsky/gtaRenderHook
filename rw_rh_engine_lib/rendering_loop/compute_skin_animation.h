@@ -43,6 +43,7 @@ struct SkinAnimationPipelineCreateInfo
 };
 struct SkinDrawCallInfo;
 using rh::engine::ScopedPointer;
+struct FrameState;
 class SkinAnimationPipeline
 {
   public:
@@ -51,8 +52,12 @@ class SkinAnimationPipeline
 
     std::vector<AnimatedMeshDrawCall> AnimateSkinnedMeshes(
         const rh::engine::ArrayProxy<SkinDrawCallInfo> &draw_calls );
+    void Update( const FrameState &state );
+
     rh::engine::CommandBufferSubmitInfo
     GetAnimateSubmitInfo( rh::engine::ISyncPrimitive *dependency );
+
+    std::vector<DrawCallInfo> DrawCallList{};
 
   private:
     rh::engine::IDeviceState &                         Device;

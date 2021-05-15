@@ -140,6 +140,9 @@ RayTracingRenderer::Render( const FrameState &                state,
 {
     using namespace rh::engine;
 
+    using namespace std::chrono;
+    using f_mcs = duration<float, std::milli>;
+
     auto forward_pass = GetForwardPass();
     auto framebuffer  = GetFrameBuffer( frame, forward_pass );
     auto im2d         = GetIm2DRenderer( forward_pass );
@@ -150,12 +153,14 @@ RayTracingRenderer::Render( const FrameState &                state,
     rgResourcePool.Update( state );
 
     auto &mesh_pool = Resources.GetMeshPool();
-    for ( const auto &item : mSkinDrawCallList )
-        mesh_pool.FreeResource( item.MeshId );
-    mSkinDrawCallList.clear();
     mRenderDispatchList.clear();
 
-    ProcessDynamicGeometry( state.SkinInstances );
+    mSkinAnimationPipe->Update( state );
+    if ( !mSkinAnimationPipe->DrawCallList.empty() )
+        mRenderDispatchList.push_back( mSkinAnimationPipe->GetAnimateSubmitInfo(
+            !mRenderDispatchList.empty()
+                ? mRenderDispatchList.back().mToSignalDep
+                : nullptr ) );
 
     mBlasBuildPass->Execute();
     if ( mBlasBuildPass->Completed() )
@@ -225,8 +230,7 @@ RayTracingRenderer::Render( const FrameState &                state,
     dest->EndRenderPass();
     dest->EndRecord();
     mCPURecordTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::high_resolution_clock::now() - record_start )
+        duration_cast<f_mcs>( high_resolution_clock::now() - record_start )
             .count();
     return mRenderDispatchList;
 }
@@ -241,54 +245,64 @@ bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
     if ( draw_call_count <= 0 )
         return false;
 
-    // Build TLAS
+    // Fill scene description
+    for ( const auto &dc : mesh_data.DrawCalls )
+    {
+        mSceneDescription->RecordDrawCall(
+            dc, &mesh_data.Materials[dc.MaterialListStart],
+            dc.MaterialListCount );
+    }
+    for ( const auto &dc : mSkinAnimationPipe->DrawCallList )
+    {
+        mSceneDescription->RecordDrawCall(
+            dc, &skin_data.Materials[dc.MaterialListStart],
+            dc.MaterialListCount );
+    }
+
+    auto &blas_resource = *mBlasBuildPass;
+
+    // Build TLAS instance buffer
     std::vector<VkAccelerationStructureInstanceNV> instance_buffer{};
     instance_buffer.reserve( draw_call_count );
     uint64_t i = 0;
 
     for ( const auto &dc : mesh_data.DrawCalls )
     {
-        const auto &mesh = mBlasBuildPass->GetBlas( dc.MeshId );
-        if ( !mesh.mBlasBuilt )
-            continue;
+        const auto &mesh = blas_resource.GetBlas( dc.MeshId );
+        if ( mesh.mBlasBuilt )
+        {
+            auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
 
-        mSceneDescription->RecordDrawCall(
-            dc, &mesh_data.Materials[dc.MaterialListStart],
-            dc.MaterialListCount );
-
-        auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
-
-        VkAccelerationStructureInstanceNV instance{};
-        std::copy( &dc.WorldTransform.m[0][0],
-                   &dc.WorldTransform.m[0][0] + 3 * 4,
-                   &instance.transform.matrix[0][0] );
-        instance.mask                           = 0xFF;
-        instance.accelerationStructureReference = blas->GetAddress();
-        instance.instanceCustomIndex            = i;
-        instance_buffer.push_back( instance );
+            VkAccelerationStructureInstanceNV instance{};
+            std::copy( &dc.WorldTransform.m[0][0],
+                       &dc.WorldTransform.m[0][0] + 3 * 4,
+                       &instance.transform.matrix[0][0] );
+            instance.mask                           = 0xFF;
+            instance.accelerationStructureReference = blas->GetAddress();
+            instance.instanceCustomIndex            = i;
+            instance_buffer.push_back( instance );
+        }
 
         i++;
     }
 
-    for ( const auto &skindc : mSkinDrawCallList )
+    for ( const auto &dc : mSkinAnimationPipe->DrawCallList )
     {
-        const auto &mesh = mBlasBuildPass->GetBlas( skindc.MeshId );
-        if ( !mesh.mBlasBuilt )
-            continue;
-        mSceneDescription->RecordDrawCall(
-            skindc, &skin_data.Materials[skindc.MaterialListStart],
-            skindc.MaterialListCount );
+        const auto &mesh = blas_resource.GetBlas( dc.MeshId );
+        if ( mesh.mBlasBuilt )
+        {
+            auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
 
-        auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
+            VkAccelerationStructureInstanceNV instance{};
+            std::copy( &dc.WorldTransform.m[0][0],
+                       &dc.WorldTransform.m[0][0] + 3 * 4,
+                       &instance.transform.matrix[0][0] );
+            instance.mask                           = 0xFF;
+            instance.accelerationStructureReference = blas->GetAddress();
+            instance.instanceCustomIndex            = i;
+            instance_buffer.push_back( instance );
+        }
 
-        VkAccelerationStructureInstanceNV instance{};
-        std::copy( &skindc.WorldTransform.m[0][0],
-                   &skindc.WorldTransform.m[0][0] + 3 * 4,
-                   &instance.transform.matrix[0][0] );
-        instance.mask                           = 0xFF;
-        instance.accelerationStructureReference = blas->GetAddress();
-        instance.instanceCustomIndex            = i;
-        instance_buffer.push_back( instance );
         i++;
     }
 
@@ -300,60 +314,20 @@ bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
     return true;
 }
 
-void RayTracingRenderer::ProcessDynamicGeometry(
-    const SkinInstanceState &state )
-{
-    using namespace rh::engine;
-    if ( state.DrawCalls.Size() <= 0 )
-        return;
-
-    // Generate Skin Meshes
-    auto animated_meshes =
-        mSkinAnimationPipe->AnimateSkinnedMeshes( state.DrawCalls );
-    if ( animated_meshes.empty() )
-        return;
-
-    auto &mesh_pool = Resources.GetMeshPool();
-
-    // Generate dynamic geometry transforms
-    for ( auto &dc : animated_meshes )
-    {
-        BackendMeshData backendMeshData{};
-        backendMeshData.mIndexBuffer  = dc.mData.mIndexBuffer;
-        backendMeshData.mVertexBuffer = dc.mData.mVertexBuffer;
-        backendMeshData.mVertexCount  = dc.mData.mVertexCount;
-        backendMeshData.mIndexCount   = dc.mData.mIndexCount;
-        dc.mData.mIndexBuffer->AddRef();
-
-        DrawCallInfo sdc{};
-        sdc.DrawCallId = dc.mInstanceId;
-        sdc.MeshId = mesh_pool.RequestResource( std::move( backendMeshData ) );
-        sdc.WorldTransform    = dc.mTransform;
-        sdc.MaterialListStart = dc.mMaterialListStart;
-        sdc.MaterialListCount = dc.mMaterialListCount;
-
-        mSkinDrawCallList.push_back( sdc );
-    }
-
-    mRenderDispatchList.push_back( mSkinAnimationPipe->GetAnimateSubmitInfo(
-        !mRenderDispatchList.empty() ? mRenderDispatchList.back().mToSignalDep
-                                     : nullptr ) );
-}
-
 RayTracingRenderer::~RayTracingRenderer()
 {
-    for ( auto fb : mFramebufferCache )
+    for ( auto &fb : mFramebufferCache )
         delete fb;
 }
 
 void RayTracingRenderer::DrawGUI( const FrameState &scene )
 {
-    static auto last_frame_time = std::chrono::high_resolution_clock::now();
+    using namespace std::chrono;
+    using f_mcs                 = duration<float, std::milli>;
+    static auto last_frame_time = high_resolution_clock::now();
     auto        ms_from_lf =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::high_resolution_clock::now() - last_frame_time )
-            .count() /
-        1000.0f;
+        duration_cast<f_mcs>( high_resolution_clock::now() - last_frame_time )
+            .count();
     ImGui::Begin( "Info" );
 
     ImGui::BeginGroup();
@@ -362,9 +336,10 @@ void RayTracingRenderer::DrawGUI( const FrameState &scene )
 
     std::rotate( mFrameTimeGraph.begin(), mFrameTimeGraph.begin() + 1,
                  mFrameTimeGraph.end() );
-    mFrameTimeGraph[mFrameTimeGraph.size() - 1] = mCPURecordTime / 1000.0f;
+    mFrameTimeGraph[mFrameTimeGraph.size() - 1] = mCPURecordTime;
     ImGui::PlotLines( "Frame Times", mFrameTimeGraph.data(),
-                      mFrameTimeGraph.size() );
+                      static_cast<int>( mFrameTimeGraph.size() ) );
+
     auto avg_frame_rec_time = std::accumulate( mFrameTimeGraph.begin(),
                                                mFrameTimeGraph.end(), 0.0f ) /
                               mFrameTimeGraph.size();

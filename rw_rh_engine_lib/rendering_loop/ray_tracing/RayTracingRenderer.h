@@ -97,7 +97,6 @@ class RayTracingRenderer : public IFrameRenderer
                                            mVarTempAccumColorFilterPipe;
     ScopedPointer<BilateralFilterPipeline> mBilPipe;
     ScopedPointer<rh::engine::VulkanTopLevelAccelerationStructure> mTLAS;
-    std::vector<DrawCallInfo>              mSkinDrawCallList;
     ScopedPointer<DebugPipeline>           mDebugPipeline;
     ScopedPointer<SkinAnimationPipeline>   mSkinAnimationPipe;
     ScopedPointer<RTSceneDescription>      mSceneDescription;
@@ -119,7 +118,6 @@ class RayTracingRenderer : public IFrameRenderer
 
     bool RenderPrimaryRays( const MeshInstanceState &mesh_data,
                             const SkinInstanceState &skin_data );
-    void ProcessDynamicGeometry( const SkinInstanceState &scene );
     friend class RayTracingTestPipe;
     std::vector<rh::engine::CommandBufferSubmitInfo> mRenderDispatchList;
     std::vector<float>                               mFrameTimeGraph;
