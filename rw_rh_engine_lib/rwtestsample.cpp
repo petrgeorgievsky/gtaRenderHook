@@ -72,24 +72,22 @@ bool RwTestSample::Initialize( void *wnd )
         .MaterialRegisterPlugin = []( int32_t size, uint32_t pluginID,
                                       RwPluginObjectConstructor constructCB,
                                       RwPluginObjectDestructor  destructCB,
-                                      RwPluginObjectCopy copyCB ) -> int32_t {
-            return sizeof( RpMaterial );
-        },
+                                      RwPluginObjectCopy copyCB ) -> int32_t
+        { return sizeof( RpMaterial ); },
         .MaterialSetStreamAlwaysCallBack =
-            []( uint32_t pluginID, RwPluginDataChunkAlwaysCallBack alwaysCB )
-            -> int32_t { return 1; },
+            []( uint32_t                        pluginID,
+                RwPluginDataChunkAlwaysCallBack alwaysCB ) -> int32_t
+        { return 1; },
         .RasterRegisterPlugin = []( int32_t size, uint32_t pluginID,
                                     RwPluginObjectConstructor constructCB,
                                     RwPluginObjectDestructor  destructCB,
-                                    RwPluginObjectCopy copyCB ) -> int32_t {
-            return sizeof( RwRaster );
-        },
+                                    RwPluginObjectCopy copyCB ) -> int32_t
+        { return sizeof( RwRaster ); },
         .CameraRegisterPlugin = []( int32_t size, uint32_t pluginID,
                                     RwPluginObjectConstructor constructCB,
                                     RwPluginObjectDestructor  destructCB,
-                                    RwPluginObjectCopy copyCB ) -> int32_t {
-            return sizeof( RwCamera );
-        } };
+                                    RwPluginObjectCopy copyCB ) -> int32_t
+        { return sizeof( RwCamera ); } };
 
     auto devptr = static_cast<RwDevice *>( malloc( sizeof( RwDevice ) ) );
     new ( devptr ) RwDevice{};
