@@ -139,7 +139,8 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
     resEntry = reinterpret_cast<ResEnty *>(
         gRwDeviceGlobals.ResourceFuncs.AllocateResourceEntry(
             owner, resEntryPointer, sizeof( ResEnty ) - sizeof( RwResEntry ),
-            []( RwResEntry *resEntry ) noexcept {
+            []( RwResEntry *resEntry ) noexcept
+            {
                 auto *entry = reinterpret_cast<ResEnty *>( resEntry );
                 if ( entry != nullptr )
                     DestroyBackendMesh( entry->meshData );
@@ -403,8 +404,8 @@ void MeshGetNumVerticesMinIndex( const uint16_t *indices, uint32_t size,
         /* Find min and max vertex index */
         for ( size_t i = 0; i < size; i++ )
         {
-            minVert = ( std::min )( minVert, indices[i] );
-            maxVert = ( std::max )( maxVert, indices[i] );
+            minVert = (std::min)( minVert, indices[i] );
+            maxVert = (std::max)( maxVert, indices[i] );
         }
 
         numVertices = static_cast<uint32_t>( ( maxVert - minVert ) + 1 );

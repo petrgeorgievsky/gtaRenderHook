@@ -51,10 +51,12 @@ RenderDriver::RenderDriver()
             .mOwner =
                 IPCSettings::mMode == IPCRenderMode::MultiThreadedRenderer } );
 
-    TaskQueueThread = std::make_unique<std::thread>( [this]() {
-        while ( IsRunning )
-            TaskQueue->TaskLoop();
-    } );
+    TaskQueueThread = std::make_unique<std::thread>(
+        [this]()
+        {
+            while ( IsRunning )
+                TaskQueue->TaskLoop();
+        } );
 }
 
 RenderDriver::~RenderDriver()

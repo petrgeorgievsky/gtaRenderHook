@@ -61,7 +61,8 @@ void ModelLoadingTest::CustomRender()
                 static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
             DrawAtomic(
                 atomic, &geometry_interface_36,
-                [&ltm, atomic]( ResEnty *res_entry ) {
+                [&ltm, atomic]( ResEnty *res_entry )
+                {
                     auto &renderer = gRenderClient->RenderState.MeshDrawCalls;
                     DrawCallInfo info{};
                     info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );

@@ -105,7 +105,7 @@ SkinAnimationPipeline::SkinAnimationPipeline(
         device.UpdateDescriptorSets( mtx_updateInfo );
     }
 
-    for ( int idx = mMaxAnims; idx < mMaxAnims * 2; idx++ )
+    for ( uint32_t idx = mMaxAnims; idx < mMaxAnims * 2; idx++ )
     {
         mBoneMatrixPool[idx] = device.CreateBuffer( bone_buff_ci );
 #ifdef _DEBUG
@@ -130,6 +130,7 @@ SkinAnimationPipeline::SkinAnimationPipeline(
         mCmdBuffer, std::string( "skin_animation_cmd_buffer" ) );
 #endif
 }
+
 std::vector<AnimatedMeshDrawCall> SkinAnimationPipeline::AnimateSkinnedMeshes(
     const rh::engine::ArrayProxy<SkinDrawCallInfo> &draw_calls )
 {
@@ -244,6 +245,7 @@ rh::engine::CommandBufferSubmitInfo SkinAnimationPipeline::GetAnimateSubmitInfo(
                    : std::vector<rh::engine::ISyncPrimitive *>{},
         mAnimateFinish };
 }
+
 SkinAnimationPipeline::~SkinAnimationPipeline()
 {
     for ( auto buffer : mBoneMatrixPool )

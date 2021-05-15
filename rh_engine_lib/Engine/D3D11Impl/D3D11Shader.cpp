@@ -10,7 +10,7 @@
 using namespace rh::engine;
 
 HRESULT rh::engine::CompileShaderFromFile( const std::string &fileName,
-                               const std::string &entryPoint,
+                                           const std::string &entryPoint,
                                            const std::string &shaderModel,
                                            ID3DBlob **        blobOut )
 {
@@ -66,16 +66,14 @@ D3D11Shader::D3D11Shader( const D3D11ShaderDesc &desc )
     // Generate shader model string
     switch ( desc.mDesc.mShaderStage )
     {
-    case ShaderStage::Vertex: shader_model = "vs_";
-        break;
-    case ShaderStage::Pixel: shader_model = "ps_";
-        break;
-    default: break;// throw std::runtime_error( "not implemented" );
+    case ShaderStage::Vertex: shader_model = "vs_"; break;
+    case ShaderStage::Pixel: shader_model = "ps_"; break;
+    default: break; // throw std::runtime_error( "not implemented" );
     }
     shader_model += desc.mShaderModel;
 
     // Try to compile shader
-    // TODO: Add ability to preload shaders from compiled binary, 
+    // TODO: Add ability to preload shaders from compiled binary,
     // perhaps a packed representation
     std::stringstream error_msg;
     error_msg << "Failed to compile shader from " << desc.mDesc.mShaderPath
@@ -102,8 +100,7 @@ D3D11Shader::D3D11Shader( const D3D11ShaderDesc &desc )
             mShaderBlob->GetBufferPointer(), mShaderBlob->GetBufferSize(),
             nullptr, reinterpret_cast<ID3D11PixelShader **>( &mShaderImpl ) );
         break;
-    default:
-        break;//throw std::runtime_error( "not implemented" );
+    default: break; // throw std::runtime_error( "not implemented" );
     }
 }
 

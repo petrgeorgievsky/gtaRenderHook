@@ -45,7 +45,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
     // Non-RT stuff:
     for ( auto &fb : mFramebufferCache )
         fb = nullptr;
-    mCameraDescription = new CameraDescription( Device );
+
     mSkinAnimationPipe =
         new SkinAnimationPipeline( { Device, Resources, 110 } );
 
@@ -121,12 +121,6 @@ RayTracingRenderer::RayTracingRenderer( const RendererCreateInfo &info )
             mPrimaryRaysPass->GetSkyCfg(), rtx_resolution_w,
             rtx_resolution_h } );
 
-    // Utility TODO: Make it less painful
-    /*mDebugPipeline = new DebugPipeline( DebugPipelineInitParams{
-        .mWidth           = rtx_resolution_w,
-        .mHeight          = rtx_resolution_h,
-        .mTiledLightsList = mTiledLightCulling->GetTileListBuffer() } );
-*/
     mFrameTimeGraph.resize( 100, 0.00f );
 }
 

@@ -8,6 +8,7 @@ option(USE_VULKAN_API "Add RenderHook Vulkan API implementation" ON)
 option(BUILD_TESTS "Compile tests" OFF)
 option(ARCH_64BIT "Compile tests with x64 architecture" OFF)
 option(BUILD_32BIT_LIBS "Compile libs with x86 architecture" OFF)
+option(USE_SANITIZERS "Use sanitizers" OFF)
 
 set(CLANG_ANALYSER_PATH CACHE PATH "Clang analyser path")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

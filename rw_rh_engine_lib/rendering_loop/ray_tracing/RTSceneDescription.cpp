@@ -116,7 +116,8 @@ RTSceneDescription::RTSceneDescription(
     auto &mesh_pool   = Resources.GetMeshPool();
 
     mesh_pool.AddOnRequestCallback(
-        [this]( BackendMeshData &data, uint64_t id ) {
+        [this]( BackendMeshData &data, uint64_t id )
+        {
             // Update global vb/ib descriptor set
 
             mModelBuffersPool->StoreModel( data, id );
@@ -124,15 +125,12 @@ RTSceneDescription::RTSceneDescription(
         SceneDescCallbacksId );
 
     mesh_pool.AddOnDestructCallback(
-        [this]( BackendMeshData &data, uint64_t id ) {
-            mModelBuffersPool->RemoveModel( id );
-        },
+        [this]( BackendMeshData &data, uint64_t id )
+        { mModelBuffersPool->RemoveModel( id ); },
         SceneDescCallbacksId );
-    raster_pool.AddOnDestructCallback(
-        [this]( RasterData &data, uint64_t id ) {
-            mTexturePool->RemoveTexture( id );
-        },
-        SceneDescCallbacksId );
+    raster_pool.AddOnDestructCallback( [this]( RasterData &data, uint64_t id )
+                                       { mTexturePool->RemoveTexture( id ); },
+                                       SceneDescCallbacksId );
 }
 
 RTSceneDescription::~RTSceneDescription()
@@ -173,7 +171,8 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
     for ( auto i = 0; i < material_count; i++ )
     {
         mSceneMaterials[i + mMaterials] = materials[i];
-        auto get_pool_id = [this, &raster_pool]( auto orig_tex_id ) {
+        auto get_pool_id = [this, &raster_pool]( auto orig_tex_id )
+        {
             if ( orig_tex_id == BackendRasterPlugin::NullRasterId )
                 return -1;
             auto tex_pool_id = mTexturePool->GetTexId( orig_tex_id );
@@ -221,9 +220,8 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
         mPrevTransformMap[dc.DrawCallId] = obj_desc.transform;
     }
     else
-    {
-        rh::debug::DebugLogger::Error( "bug" );
-    }
+        assert( "draw call id is not set!" );
+
     mDrawCalls++;
     mMaterials += material_count;
 }
