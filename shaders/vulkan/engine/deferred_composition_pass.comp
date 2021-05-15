@@ -20,12 +20,51 @@ layout(binding = 7, set = 0) uniform SkyCfg
     vec4 skyColor;
     vec4 ambientColor;
 }sky_cfg;
+layout(binding = 0, set = 1) uniform CameraProperties
+{
+    mat4 view;
+    mat4 proj;
+    mat4 viewInverse;
+    mat4 projInverse;
+    mat4 viewProjInverse;
+    mat4 viewProjInversePrev;
+} cam;
+
+vec3 LinDepthToViewPos(float  lin_z, vec2 tc)
+{
+    vec2 d = tc * 2.0 - 1.0;
+    vec4 v_target    = cam.projInverse* vec4(d.x, d.y, 1, 1);
+    vec4 direction = cam.viewInverse * vec4(normalize(v_target.xyz), 0);
+    return normalize(v_target.xyz);
+}
+
+vec3 LinDepthToViewDir(float  lin_z, vec2 tc)
+{
+    vec2 d = tc * 2.0 - 1.0;
+    vec4 v_target    = cam.projInverse* vec4(d.x, d.y, 1, 1);
+    vec4 direction = cam.viewInverse * vec4(normalize(v_target.xyz), 0);
+
+    return direction.xyz;
+}
+float pow5(float v) {
+    return v*v*v*v*v;
+}
+
+float MicrofacetFresnel(in vec3 LightDir, in vec3 Normal, in float fRoughness) {
+    float IOR = 1.1f;
+    float f0 = (1 - IOR) / (1 + IOR);
+    f0 *= f0;
+    // Cosine between light and normal
+    float CosPhi = max(dot(LightDir, Normal), 0);
+
+    return f0 + (1 - f0) * pow5(1 - CosPhi);
+}
 
 void main()
 {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
     vec4 OutLighting;
-    // const float3 ViewPos = mViewInv[3].xyz;
+    const vec3 ViewPos = cam.viewInverse[3].xyz;
 
     vec4 AlbedoColor = imageLoad(tx_albedo, pos);
     //float4 Parameters = txGB2.Sample(samLinear, i.vTexCoord.xy);
@@ -36,9 +75,10 @@ void main()
     vec4 normals_depth = imageLoad(tx_normal_depth, pos);
     Normals = normalize(normals_depth.xyz);
 
-    //float3 WorldPos = DepthToWorldPos(ViewZ, i.vTexCoord.xy).xyz;
+    ivec2 tex_res = imageSize(tx_normal_depth);
 
-    //float3 ViewDir = normalize(WorldPos.xyz - ViewPos);
+    vec3 ViewDir = LinDepthToViewDir(normals_depth.w, vec2(pos.xy)/vec2(tex_res.xy));
+    vec3 WorldPos = ViewPos + ViewDir * normals_depth.w;
     //uint MaterialType = ConvertToMatType(Parameters.w);
 
     // float Metallness = Parameters.x;
@@ -61,11 +101,22 @@ void main()
         // Reflection term is computed before deferred
         vec4 ref_params = imageLoad(tx_refl, pos);
         vec4 mat_params = imageLoad(tx_material_params, pos);
-        vec3 ReflectionTerm = mix(vec3(1), AlbedoColor.rgb, mat_params.b) * ref_params.rgb;//txReflections.Sample(samLinear, i.vTexCoord.xy).rgb;
+
+		float specular = mat_params.r;
+		float roughness = mat_params.g;
+		float metallness = mat_params.b;
+
+		float k_s = MicrofacetFresnel(-ViewDir,Normals, roughness) * specular;
+
+		vec3 specular_base = mix(vec3(specular)*.08, AlbedoColor.rgb, metallness);
+
+		float r_cutoff = 0.65f;
+		// ref_params.rgb = mix(ref_params.rgb, sky_cfg.skyColor.rgb, max( roughness - r_cutoff, 0.0f));
+        vec3 ReflectionTerm = mix(specular_base, vec3(1), k_s) * ref_params.rgb;//txReflections.Sample(samLinear, i.vTexCoord.xy).rgb;
 
 
         // Add atmospheric scattering to result
-        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb * (1 - mat_params.b) + ReflectionTerm;//+ SpecularTerm * Parameters.x + ReflectionTerm * FresnelCoeff * Parameters.x;
+        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb * (1 - metallness) * (1 - k_s)  + ReflectionTerm;//+ SpecularTerm * Parameters.x + ReflectionTerm * FresnelCoeff * Parameters.x;
         OutLighting.a = 1;
     }
     imageStore(output_image, pos, OutLighting);

@@ -30,20 +30,6 @@ layout(binding = 0, set = 1) uniform CameraProperties
 layout(location = 0) rayPayloadNV ReflectionRaysPayload pay_load;
 layout(location = 1) rayPayloadNV ShadowHitPayload shad_pld;
 
-float pow5(float v) {
-    return v*v*v*v*v;
-}
-
-float MicrofacetFresnel(in vec3 LightDir, in vec3 Normal, in float fRoughness) {
-    float IOR = 1.5f;
-    float f0 = (1 - IOR) / (1 + IOR);
-    f0 *= f0;
-    // Cosine between light and normal
-    float CosPhi = max(dot(LightDir, Normal), 0);
-
-    return f0 + (1 - f0) * pow5(1 - CosPhi);
-}
-
 void main()
 {
     const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
@@ -63,10 +49,9 @@ void main()
     vec4 mat_params =  imageLoad(material_params, ivec2(gl_LaunchIDNV.xy));
     vec3 hitValue = vec3(0);
     float roughness = (1 - mat_params.g);
-    float refl_int = MicrofacetFresnel(-direction.xyz, normals_d.xyz, 0);
 
     vec4 world_pos = vec4(origin.xyz + direction.xyz * normals_d.w, 1);
-    if (normals_d.w > 1000.0f || mat_params.r * refl_int< 0.01f || roughness > 0.65f){
+    if (normals_d.w > 3000.0f){
         imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(0.0, 0.0, 0.0, 0));
         return;
     }
@@ -89,5 +74,5 @@ void main()
     tMax, // ray max range
     0// payload (location = 0)
     );
-    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(pay_load.reflection_color.rgb * mat_params.r * refl_int, max(1.0 - roughness, 0.0f)));
+    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(pay_load.reflection_color.rgb, max(1.0 - roughness, 0.0f)));
 }
