@@ -20,8 +20,7 @@ class RenderGraphResourcePool
         if ( Resource::CanCreate( renderer ) )
         {
             Resource::Id = ResourceMap.size();
-            ResourceMap.template emplace_back(
-                std::make_unique<Resource>( renderer ) );
+            ResourceMap.emplace_back( std::make_unique<Resource>( renderer ) );
         }
         return *this;
     }
