@@ -5,14 +5,16 @@
 #include "CameraDescription.h"
 #include "rendering_loop/DescriptorGenerator.h"
 #include <Engine/Common/IDeviceState.h>
-#include <data_desc/viewport_state.h>
+#include <data_desc/frame_info.h>
 
 namespace rh::rw::engine
 {
 using namespace rh::engine;
 
-CameraDescription::CameraDescription( rh::engine::IDeviceState &device )
-    : Device( device )
+uint64_t CameraDescription::Id = UninitializedId;
+
+CameraDescription::CameraDescription( const RendererBase &renderer )
+    : Device( renderer.Device )
 {
     DescriptorGenerator descriptorGenerator{ Device };
     descriptorGenerator.AddDescriptor(
@@ -51,9 +53,9 @@ CameraDescription::~CameraDescription()
     delete mDescSetAlloc;
 }
 
-void CameraDescription::Update( const CameraState &state )
+void CameraDescription::Update( const FrameState &state )
 {
-    mCameraBuffer->Update( &state, sizeof( CameraState ) );
+    mCameraBuffer->Update( &state.Viewport->Camera, sizeof( CameraState ) );
 }
 
 } // namespace rh::rw::engine

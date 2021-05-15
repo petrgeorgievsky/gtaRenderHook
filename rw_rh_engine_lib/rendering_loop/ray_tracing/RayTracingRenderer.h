@@ -11,6 +11,7 @@
 #include <render_client/mesh_instance_state_recorder.h>
 #include <render_driver/frame_renderer.h>
 #include <render_driver/imgui_win32_driver_handler.h>
+#include <render_driver/render_graph/RenderGraphResourcePool.h>
 #include <rw_engine/rh_backend/im2d_backend.h>
 #include <rw_engine/rh_backend/im2d_renderer.h>
 #include <rw_engine/rh_backend/im3d_renderer.h>
@@ -83,6 +84,7 @@ class RayTracingRenderer : public IFrameRenderer
     rh::engine::IDeviceState &  Device;
     rh::engine::IWindow &       Window;
     EngineResourceHolder &      Resources;
+    RenderGraphResourcePool     rgResourcePool;
     ScopedPointer<Im2DRenderer> im2DRendererGlobals;
     ScopedPointer<Im3DRenderer> im3DRenderer;
     rh::engine::IFrameBuffer *  mFramebufferCache[gFramebufferCacheSize]{};
@@ -99,7 +101,6 @@ class RayTracingRenderer : public IFrameRenderer
     ScopedPointer<DebugPipeline>           mDebugPipeline;
     ScopedPointer<SkinAnimationPipeline>   mSkinAnimationPipe;
     ScopedPointer<RTSceneDescription>      mSceneDescription;
-    ScopedPointer<CameraDescription>       mCameraDescription;
     ScopedPointer<RTBlasBuildPass>         mBlasBuildPass;
     ScopedPointer<RTTlasBuildPass>         mTlasBuildPass;
     ScopedPointer<RTPrimaryRaysPass>       mPrimaryRaysPass;

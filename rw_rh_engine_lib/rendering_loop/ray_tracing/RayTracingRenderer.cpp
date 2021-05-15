@@ -42,6 +42,11 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
     const uint32_t rtx_resolution_h =
         rh::engine::EngineConfigBlock::It.RendererHeight;
 
+    // Populate resource pool
+    {
+        rgResourcePool.Create<CameraDescription>( info );
+    }
+
     // Non-RT stuff:
     for ( auto &fb : mFramebufferCache )
         fb = nullptr;
@@ -60,22 +65,23 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
     mTlasBuildPass    = new RTTlasBuildPass( Device );
     mSceneDescription = new RTSceneDescription( { Device, Resources } );
 
-    mPrimaryRaysPass = new RTPrimaryRaysPass( { .Device  = Device,
-                                                .mScene  = mSceneDescription,
-                                                .mCamera = mCameraDescription,
-                                                .mWidth  = rtx_resolution_w,
-                                                .mHeight = rtx_resolution_h } );
+    mPrimaryRaysPass = new RTPrimaryRaysPass(
+        { .Device  = Device,
+          .mScene  = mSceneDescription,
+          .mCamera = rgResourcePool.Get<CameraDescription>(),
+          .mWidth  = rtx_resolution_w,
+          .mHeight = rtx_resolution_h } );
 
     mTiledLightCulling = new TiledLightCulling( TiledLightCullingParams{
         .mDevice       = Device,
-        .mCameraDesc   = mCameraDescription,
+        .mCameraDesc   = rgResourcePool.Get<CameraDescription>(),
         .mWidth        = rtx_resolution_w,
         .mHeight       = rtx_resolution_h,
         .mCurrentDepth = mPrimaryRaysPass->GetNormalsView() } );
 
     mRTAOPass = new RTAOPass( RTAOInitParams{
-        Device, mSceneDescription, mCameraDescription, mVarTempAcummFilterPipe,
-        mBilPipe, mPrimaryRaysPass->GetNormalsView(),
+        Device, mSceneDescription, rgResourcePool.Get<CameraDescription>(),
+        mVarTempAcummFilterPipe, mBilPipe, mPrimaryRaysPass->GetNormalsView(),
         mPrimaryRaysPass->GetPrevNormalsView(),
         mPrimaryRaysPass->GetMotionView(), rtx_resolution_w,
         rtx_resolution_h } );
@@ -85,7 +91,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
         rtx_resolution_w,
         rtx_resolution_h,
         mSceneDescription,
-        mCameraDescription,
+        rgResourcePool.Get<CameraDescription>(),
         mVarTempAccumColorFilterPipe,
         mBilPipe,
         mTiledLightCulling->GetTileListBuffer(),
@@ -101,7 +107,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
         .mWidth                = rtx_resolution_w,
         .mHeight               = rtx_resolution_h,
         .mScene                = mSceneDescription,
-        .mCamera               = mCameraDescription,
+        .mCamera               = rgResourcePool.Get<CameraDescription>(),
         .mVarTAColorFilterPipe = mVarTempAccumColorFilterPipe,
         .mBilateralFilterPipe  = mBilPipe,
         .mNormalsView          = mPrimaryRaysPass->GetNormalsView(),
@@ -140,6 +146,7 @@ RayTracingRenderer::Render( const FrameState &                state,
     auto imgui        = GetImGui( forward_pass );
 
     auto record_start = std::chrono::high_resolution_clock::now();
+    rgResourcePool.Update( state );
 
     auto &mesh_pool = Resources.GetMeshPool();
     for ( const auto &item : mSkinDrawCallList )
@@ -170,7 +177,6 @@ RayTracingRenderer::Render( const FrameState &                state,
                        .maxDepth = 1.0 } } );
     dest->SetScissors( 0, { Scissor{ 0, 0, frame.mWidth, frame.mHeight } } );
 
-    mCameraDescription->Update( state.Viewport->Camera );
     if ( raytraced )
     {
         mSceneDescription->Update();
@@ -497,8 +503,9 @@ RayTracingRenderer::GetIm2DRenderer( rh::engine::IRenderPass *pass )
 {
     if ( im2DRendererGlobals != nullptr )
         return im2DRendererGlobals;
-    im2DRendererGlobals = new Im2DRenderer( Device, Resources.GetRasterPool(),
-                                            mCameraDescription, pass );
+    im2DRendererGlobals =
+        new Im2DRenderer( Device, Resources.GetRasterPool(),
+                          rgResourcePool.Get<CameraDescription>(), pass );
     return im2DRendererGlobals;
 }
 
@@ -507,8 +514,9 @@ RayTracingRenderer::GetIm3DRenderer( rh::engine::IRenderPass *pass )
 {
     if ( im3DRenderer != nullptr )
         return im3DRenderer;
-    im3DRenderer = new Im3DRenderer( Device, Resources.GetRasterPool(),
-                                     mCameraDescription, pass );
+    im3DRenderer =
+        new Im3DRenderer( Device, Resources.GetRasterPool(),
+                          rgResourcePool.Get<CameraDescription>(), pass );
     return im3DRenderer;
 }
 
