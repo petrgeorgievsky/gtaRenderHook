@@ -119,7 +119,8 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
     // Opaque object composition:
     mDeferredComposePass =
         new DeferredCompositionPass( DeferredCompositionPassParams{
-            Device, mPrimaryRaysPass->GetAlbedoView(),
+            Device, rgResourcePool.Get<CameraDescription>(),
+            mPrimaryRaysPass->GetAlbedoView(),
             mPrimaryRaysPass->GetNormalsView(),
             mPrimaryRaysPass->GetMaterialsView(), mRTAOPass->GetAOView(),
             mRTShadowsPass->GetShadowsView(),

@@ -5,6 +5,7 @@
 #include "DeferredCompositionPass.h"
 #include "rendering_loop/DescriptorGenerator.h"
 #include "rendering_loop/DescriptorUpdater.h"
+#include "rendering_loop/ray_tracing/CameraDescription.h"
 #include "utils.h"
 
 #include <Engine/Common/IDeviceState.h>
@@ -45,7 +46,8 @@ DeferredCompositionPass::DeferredCompositionPass(
     mDescAllocator = descriptorGenerator.FinalizeAllocator();
 
     std::array layouts = {
-        static_cast<IDescriptorSetLayout *>( mDescSetLayout ) };
+        static_cast<IDescriptorSetLayout *>( mDescSetLayout ),
+        mPassParams.Camera->GetSetLayout() };
     mDescSet = mDescAllocator->AllocateDescriptorSets( { layouts } )[0];
 
     mPipelineLayout = device.CreatePipelineLayout( { .mSetLayouts = layouts } );
@@ -119,7 +121,8 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
     vk_cmd->BindDescriptorSets(
         { .mPipelineBindPoint = PipelineBindPoint::Compute,
           .mPipelineLayout    = mPipelineLayout,
-          .mDescriptorSets = { static_cast<IDescriptorSet *>( mDescSet ) } } );
+          .mDescriptorSets    = { static_cast<IDescriptorSet *>( mDescSet ),
+                               mPassParams.Camera->GetDescSet() } } );
 
     vk_cmd->DispatchCompute(
         { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );

@@ -21,9 +21,11 @@ class IDeviceState;
 namespace rh::rw::engine
 {
 using rh::engine::ScopedPointer;
+class CameraDescription;
 struct DeferredCompositionPassParams
 {
     rh::engine::IDeviceState &Device;
+    CameraDescription *       Camera;
 
     rh::engine::IImageView *mAlbedoBuffer;
     rh::engine::IImageView *mNormalDepthBuffer;
