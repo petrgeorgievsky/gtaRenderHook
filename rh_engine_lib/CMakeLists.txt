@@ -122,12 +122,24 @@ set(RH_LINK_OPTIONS "")
 #endif ()
 
 if (USE_SANITIZERS)
-    set(RH_COMPILE_OPTIONS "${RH_COMPILE_OPTIONS} -fno-omit-frame-pointer -fsanitize=address")
-    set(RH_LINK_OPTIONS "${RH_LINK_OPTIONS} -fsanitize=address")
+    set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -fsanitize=address)
+    set(RH_LINK_OPTIONS ${RH_LINK_OPTIONS} -fsanitize=address)
+
+    if (ARCH_64BIT)
+        target_link_libraries(${PROJECT_NAME}
+                clang_rt.asan_dbg_dynamic-x86_64
+                clang_rt.asan_dbg_dynamic_runtime_thunk-x86_64
+                )
+    else ()
+        target_link_libraries(${PROJECT_NAME}
+                clang_rt.asan_dbg_dynamic-i386
+                clang_rt.asan_dbg_dynamic_runtime_thunk-i386
+                )
+    endif ()
 endif ()
 
 set(RH_DEBUG_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -D_DEBUG -ftime-trace)
-set(RH_DEBUG_LINK_OPTIONS "${RH_LINK_OPTIONS}")
+set(RH_DEBUG_LINK_OPTIONS ${RH_LINK_OPTIONS})
 
 set(RH_RELEASE_COMPILE_OPTIONS "${RH_COMPILE_OPTIONS}")
 set(RH_RELEASE_LINK_OPTIONS "${RH_LINK_OPTIONS}")

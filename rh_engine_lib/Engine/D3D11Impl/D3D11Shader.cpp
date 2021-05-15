@@ -1,10 +1,11 @@
 #include "D3D11Shader.h"
-#include "DebugUtils/DebugLogger.h"
 #include "D3D11Common.h"
-#include <filesystem>
+#include "DebugUtils/DebugLogger.h"
+#include <Engine/Definitions.h>
 #include <array>
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include <filesystem>
 
 using namespace rh::engine;
 
@@ -18,24 +19,25 @@ HRESULT rh::engine::CompileShaderFromFile( const std::string &fileName,
     DWORD     shaderFlags = 0;
     ID3DBlob *errorBlob   = nullptr;
 
-#ifdef _DEBUG
-    // Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
-    // Setting this flag improves the shader debugging experience, but still
-    // allows the shaders to be optimized and to run exactly the way they will
-    // run in the release configuration of this program.
-    shaderFlags |= D3DCOMPILE_DEBUG;
+    if constexpr ( gDebugEnabled )
+    {
+        // Set the D3DCOMPILE_DEBUG flag to embed debug information in the
+        // shaders. Setting this flag improves the shader debugging experience,
+        // but still allows the shaders to be optimized and to run exactly the
+        // way they will run in the release configuration of this program.
+        shaderFlags |= D3DCOMPILE_DEBUG;
 
-    // Disable optimizations to further improve shader debugging
-    // shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-    // shaderFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
-    // shaderFlags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
-#endif
-    std::array macros   = {D3D_SHADER_MACRO{"D3D11_API", "1"},
-                         D3D_SHADER_MACRO{}};
-    auto filePath = std::filesystem::canonical( fileName );
-    auto stemp    = filePath.generic_wstring();
-    auto ep       = entryPoint;
-    auto sm       = shaderModel;
+        // Disable optimizations to further improve shader debugging
+        // shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+        // shaderFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
+        // shaderFlags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
+    }
+    std::array macros   = { D3D_SHADER_MACRO{ "D3D11_API", "1" },
+                          D3D_SHADER_MACRO{} };
+    auto       filePath = std::filesystem::canonical( fileName );
+    auto       stemp    = filePath.generic_wstring();
+    auto       ep       = entryPoint;
+    auto       sm       = shaderModel;
     hr                  = D3DCompileFromFile( stemp.c_str(), macros.data(),
                              D3D_COMPILE_STANDARD_FILE_INCLUDE, ep.c_str(),
                              sm.c_str(), shaderFlags, 0, blobOut, &errorBlob );

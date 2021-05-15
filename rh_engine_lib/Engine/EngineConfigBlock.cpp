@@ -51,11 +51,7 @@ void EngineConfigBlock::Deserialize( Serializable *serializable )
 }
 void EngineConfigBlock::Reset()
 {
-#ifdef _DEBUG
-    IsWindowed = true;
-#else
-    IsWindowed = false;
-#endif
+    IsWindowed         = gDebugEnabled;
     RendererWidth      = 1920;
     RendererHeight     = 1080;
     SharedMemorySizeMB = 32;

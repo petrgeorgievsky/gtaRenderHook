@@ -13,6 +13,7 @@
 #include "D3D11Sampler.h"
 #include "D3D11Shader.h"
 #include "D3D11Window.h"
+#include <Engine/Definitions.h>
 #include <cassert>
 #include <d3d11.h>
 
@@ -81,9 +82,8 @@ bool D3D11DeviceState::Init()
     // initialize device creation flags
     // TODO: add ability to set some custom flags
     UINT createDeviceFlags = 0;
-#ifdef _DEBUG
-    createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
+    if constexpr ( gDebugEnabled )
+        createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
     // createDeviceFlags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
     size_t numFeatureLevels = m_vFeatureLevels.size();

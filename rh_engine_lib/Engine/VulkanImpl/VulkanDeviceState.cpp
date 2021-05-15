@@ -77,12 +77,13 @@ VulkanDeviceState::VulkanDeviceState()
     m_aExtensions.emplace_back(
         VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME );
 
-#ifdef _DEBUG
-    m_aExtensions.emplace_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
+    if constexpr ( gDebugEnabled )
+    {
+        m_aExtensions.emplace_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
-    m_aLayers.emplace_back( "VK_LAYER_KHRONOS_validation" );
-    m_aLayers.emplace_back( "VK_LAYER_LUNARG_monitor" );
-#endif
+        m_aLayers.emplace_back( "VK_LAYER_KHRONOS_validation" );
+        m_aLayers.emplace_back( "VK_LAYER_LUNARG_monitor" );
+    }
     // Validate layer support
     {
         auto layer_properties = vk::enumerateInstanceLayerProperties();
@@ -175,32 +176,27 @@ VulkanDeviceState::VulkanDeviceState()
     // TODO: Move to constexpr debug checks
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-#ifdef _DEBUG
-                             | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
-#endif
-        ;
-    createInfo.messageSeverity =
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-#ifdef _DEBUG
-        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-#endif
-        ;
-
+    createInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     createInfo.pfnUserCallback = VkDebugCallback;
 
-#ifdef _DEBUG
-    if ( !CALL_VK_API(
-             CreateDebugUtilsMessengerEXT( m_vkInstance, &createInfo,
-                                           &m_debugCallback ),
-             TEXT( "VulkanRenderer failed to initialize: Failed to create "
-                   "debug utils messenger!" ) ) )
-        return;
+    if constexpr ( gDebugEnabled )
+    {
+        createInfo.messageType |=
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        createInfo.messageSeverity |=
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+        if ( !CALL_VK_API(
+                 CreateDebugUtilsMessengerEXT( m_vkInstance, &createInfo,
+                                               &m_debugCallback ),
+                 TEXT( "VulkanRenderer failed to initialize: Failed to create "
+                       "debug utils messenger!" ) ) )
+            return;
+    }
 
-#endif
     DISPLAY_DEVICE display_device{};
     display_device.cb = sizeof( DISPLAY_DEVICE );
 
@@ -616,7 +612,8 @@ VulkanDeviceState::CreateFrameBuffer( const FrameBufferCreateParams &params )
 
     std::ranges::transform(
         params.imageViews, std::back_inserter( image_views ),
-        []( IImageView *img_view_ptr ) {
+        []( IImageView *img_view_ptr )
+        {
             auto impl_img_view =
                 dynamic_cast<VulkanImageView *>( img_view_ptr );
             return static_cast<vk::ImageView>( *impl_img_view );
@@ -665,8 +662,8 @@ VulkanDeviceState::CreateImageBuffer( const ImageBufferCreateParams &params )
     for ( uint32_t offset = 0, i = 0; i < params.mMipLevels; i++ )
     {
         const auto &pre_init_data = params.mPreinitData[i];
-        auto        mip_w         = ( std::max )( params.mWidth >> i, 1u );
-        auto        mip_h         = ( std::max )( params.mHeight >> i, 1u );
+        auto        mip_w         = (std::max)( params.mWidth >> i, 1u );
+        auto        mip_h         = (std::max)( params.mHeight >> i, 1u );
 
         // Ignore zero sized mipmaps, can happen on some textures due to some
         // error in mip-map generation software
@@ -748,7 +745,8 @@ void VulkanDeviceState::Wait(
 
     std::ranges::transform(
         primitiveList, std::back_inserter( fence_list ),
-        []( ISyncPrimitive *fence ) -> vk::Fence {
+        []( ISyncPrimitive *fence ) -> vk::Fence
+        {
             auto fence_impl = dynamic_cast<VulkanCPUSyncPrimitive *>( fence );
             return *fence_impl;
         } );
@@ -785,14 +783,16 @@ void VulkanDeviceState::UpdateDescriptorSets(
     write_desc_set.dstSet = *dynamic_cast<VulkanDescriptorSet *>( params.mSet );
     write_desc_set.dstBinding      = params.mBinding;
     write_desc_set.descriptorType  = Convert( params.mDescriptorType );
-    write_desc_set.descriptorCount = static_cast<uint32_t>( ( std::max )(
-        { params.mBufferUpdateInfo.Size(), params.mASUpdateInfo.Size(),
-          params.mImageUpdateInfo.Size() } ) );
+    write_desc_set.descriptorCount = static_cast<uint32_t>(
+        (std::max)( { params.mBufferUpdateInfo.Size(),
+                      params.mASUpdateInfo.Size(),
+                      params.mImageUpdateInfo.Size() } ) );
 
     std::vector<vk::DescriptorBufferInfo> buffer_list;
     std::ranges::transform(
         params.mBufferUpdateInfo, std::back_inserter( buffer_list ),
-        []( const BufferUpdateInfo &info ) -> vk::DescriptorBufferInfo {
+        []( const BufferUpdateInfo &info ) -> vk::DescriptorBufferInfo
+        {
             vk::DescriptorBufferInfo buffer_info{};
             buffer_info.buffer = *dynamic_cast<VulkanBuffer *>( info.mBuffer );
             buffer_info.offset = info.mOffset;
@@ -803,7 +803,8 @@ void VulkanDeviceState::UpdateDescriptorSets(
     std::vector<vk::DescriptorImageInfo> image_list{};
     std::ranges::transform(
         params.mImageUpdateInfo, std::back_inserter( image_list ),
-        []( const ImageUpdateInfo &info ) -> vk::DescriptorImageInfo {
+        []( const ImageUpdateInfo &info ) -> vk::DescriptorImageInfo
+        {
             vk::DescriptorImageInfo image_info{};
             if ( info.mSampler )
                 image_info.sampler =
@@ -828,7 +829,8 @@ void VulkanDeviceState::UpdateDescriptorSets(
 
         std::ranges::transform(
             params.mASUpdateInfo, std::back_inserter( as_list ),
-            []( const AccelStructUpdateInfo &info ) {
+            []( const AccelStructUpdateInfo &info )
+            {
                 return static_cast<VulkanTopLevelAccelerationStructure *>(
                            info.mTLAS )
                     ->GetImpl();
@@ -883,7 +885,8 @@ void VulkanDeviceState::DispatchToGPU(
     std::ranges::transform(
         buffers, std::back_inserter( queue_submit_info_vec ),
         [&q_sm_waitable_vec, &q_sm_stage_flags_vec](
-            const CommandBufferSubmitInfo &submitInfo ) -> vk::SubmitInfo {
+            const CommandBufferSubmitInfo &submitInfo ) -> vk::SubmitInfo
+        {
             q_sm_waitable_vec.emplace_back();
             q_sm_stage_flags_vec.emplace_back();
 
@@ -907,9 +910,8 @@ void VulkanDeviceState::DispatchToGPU(
                 std::ranges::transform(
                     submitInfo.mWaitForDep,
                     std::back_inserter( q_sm_stage_flags_vec.back() ),
-                    []( ISyncPrimitive * /*s*/ ) {
-                        return vk::PipelineStageFlagBits::eTopOfPipe;
-                    } );
+                    []( ISyncPrimitive * /*s*/ )
+                    { return vk::PipelineStageFlagBits::eTopOfPipe; } );
             }
             if ( !q_sm_waitable_vec.back().empty() )
             {
