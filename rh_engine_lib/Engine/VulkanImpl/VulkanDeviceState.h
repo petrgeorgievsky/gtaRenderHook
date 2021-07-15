@@ -60,7 +60,6 @@ class VulkanDeviceState : public IDeviceState
 
     ISyncPrimitive *CreateSyncPrimitive( SyncPrimitiveType type ) override;
 
-    // TODODO: ADD PARAMS!!!!
     IRenderPass *
     CreateRenderPass( const RenderPassCreateParams &params ) override;
 

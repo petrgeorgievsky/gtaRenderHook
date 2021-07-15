@@ -23,19 +23,29 @@ enum ClearValueType
     Color,
     Depth
 };
+struct ClearDepthStencil
+{
+    float   depth;
+    uint8_t stencil;
+};
+
+struct ClearColor
+{
+    unsigned char r, g, b, a;
+};
+
 struct ClearValue
 {
-    ClearValueType type;
-    struct ClearColor
-    {
-        unsigned char r, g, b, a;
-    } color;
+    ClearValue( ClearColor c ) : type( ClearValueType::Color ), color( c ) {}
 
-    struct ClearDepthStencil
+    ClearValue( ClearDepthStencil ds )
+        : type( ClearValueType::Depth ), depthStencil( ds )
     {
-        float   depth;
-        uint8_t stencil;
-    } depthStencil;
+    }
+    ClearValueType type;
+    ClearColor     color;
+
+    ClearDepthStencil depthStencil;
 };
 
 struct RenderPassBeginInfo

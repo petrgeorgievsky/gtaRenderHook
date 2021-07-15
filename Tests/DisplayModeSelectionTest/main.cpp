@@ -298,11 +298,10 @@ void DisplayModeTest::CustomRender()
         cmdbuffer->EndRecord();
     };
 
-    auto record_render_pass = [&]( auto record_call ) {
+    auto record_render_pass = [&]( auto record_call )
+    {
         std::array                      clear_values = { rh::engine::ClearValue{
-            rh::engine::ClearValueType::Color,
-            rh::engine::ClearValue::ClearColor{ 0, 0, 128, 0xFF },
-            {} } };
+            rh::engine::ClearColor{ 0, 0, 128, 0xFF } } };
         rh::engine::RenderPassBeginInfo info{};
         info.m_pRenderPass  = mRenderPass;
         info.m_pFrameBuffer = GetFramebufferForFrame( frame );

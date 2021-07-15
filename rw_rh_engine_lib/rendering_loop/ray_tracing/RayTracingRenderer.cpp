@@ -197,15 +197,11 @@ RayTracingRenderer::Render( const FrameState &                state,
     }
 
     std::array clear_values = {
-        ClearValue{ ClearValueType::Color,
-                    ClearValue::ClearColor{ state.Viewport->ClearColor.red,
-                                            state.Viewport->ClearColor.green,
-                                            state.Viewport->ClearColor.blue,
-                                            state.Viewport->ClearColor.alpha },
-                    {} },
-        ClearValue{ ClearValueType::Depth,
-                    {},
-                    ClearValue::ClearDepthStencil{ 1.0f, 0 } } };
+        ClearValue{ ClearColor{ state.Viewport->ClearColor.red,
+                                state.Viewport->ClearColor.green,
+                                state.Viewport->ClearColor.blue,
+                                state.Viewport->ClearColor.alpha } },
+        ClearValue{ ClearDepthStencil{ 1.0f, 0 } } };
 
     dest->BeginRenderPass( { .m_pRenderPass  = forward_pass,
                              .m_pFrameBuffer = framebuffer,
