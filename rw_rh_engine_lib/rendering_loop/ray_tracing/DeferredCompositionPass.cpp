@@ -21,7 +21,7 @@ DeferredCompositionPass::DeferredCompositionPass(
     : mPassParams( params )
 {
     using namespace rh::engine;
-    auto &              device = (VulkanDeviceState &)mPassParams.Device;
+    auto               &device = (VulkanDeviceState &)mPassParams.Device;
     DescriptorGenerator descriptorGenerator{ device };
 
     // Main Descriptor Set layout
@@ -64,12 +64,12 @@ DeferredCompositionPass::DeferredCompositionPass(
                             .mShader     = mCompositionShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mOutputBuffer = Create2DRenderTargetBuffer( device, mPassParams.mWidth,
-                                                mPassParams.mHeight,
-                                                ImageBufferFormat::RGBA16 );
-    mOutputBufferView =
-        device.CreateImageView( { mOutputBuffer, ImageBufferFormat::RGBA16,
-                                  ImageViewUsage::RWTexture } );
+    mOutputBuffer.Image = Create2DRenderTargetBuffer(
+        device, mPassParams.mWidth, mPassParams.mHeight,
+        ImageBufferFormat::RGBA16 );
+    mOutputBuffer.View = device.CreateImageView(
+        { mOutputBuffer.Image, ImageBufferFormat::RGBA16,
+          ImageViewUsage::RWTexture } );
 
     /// Generate descriptors
     DescSetUpdateBatch{ device }
@@ -92,8 +92,9 @@ DeferredCompositionPass::DeferredCompositionPass(
         .UpdateImage( 5, DescriptorType::StorageTexture,
                       { { ImageLayout::General,
                           mPassParams.mMaterialParamsBuffer, nullptr } } )
-        .UpdateImage( 6, DescriptorType::StorageTexture,
-                      { { ImageLayout::General, mOutputBufferView, nullptr } } )
+        .UpdateImage(
+            6, DescriptorType::StorageTexture,
+            { { ImageLayout::General, mOutputBuffer.View, nullptr } } )
         .UpdateBuffer( 7, DescriptorType::ROBuffer,
                        { { 0, VK_WHOLE_SIZE, params.mSkyCfg } } )
         .End();
@@ -107,9 +108,8 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
     vk_cmd->PipelineBarrier(
         { .mSrcStage            = PipelineStage::RayTracing,
           .mDstStage            = PipelineStage::ComputeShader,
-          .mImageMemoryBarriers = { GetLayoutTransformBarrier(
-              (rh::engine::IImageBuffer *)mOutputBuffer, ImageLayout::Undefined,
-              ImageLayout::General ) } } );
+          .mImageMemoryBarriers = {
+              mOutputBuffer.SetLayout( ImageLayout::General ) } } );
 
     vk_cmd->PipelineBarrier(
         { .mSrcStage       = PipelineStage::RayTracing,
@@ -127,9 +127,8 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
     vk_cmd->DispatchCompute(
         { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
 
-    ImageMemoryBarrierInfo shader_ro_barrier = GetLayoutTransformBarrier(
-        (rh::engine::IImageBuffer *)mOutputBuffer, ImageLayout::General,
-        ImageLayout::ShaderReadOnly );
+    ImageMemoryBarrierInfo shader_ro_barrier =
+        mOutputBuffer.SetLayout( ImageLayout::ShaderReadOnly );
     shader_ro_barrier.mDstMemoryAccess = MemoryAccessFlags::ShaderRead;
 
     dest->PipelineBarrier( { .mSrcStage = PipelineStage::ComputeShader,

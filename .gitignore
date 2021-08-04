@@ -255,3 +255,9 @@ ModelManifest.xml
 /Tests/TextureLoadingTest/textures
 /Tests/TextureLoadingTest/dump.bin
 /Tests/TextureLoadingTest/dump_orig.bin
+/cmake-build-debug/
+/cmake-build-debug-visual-studio-x64-llvm12/
+/cmake-build-debug-x86/
+/cmake-build-release-x86/
+/cmake-build-relwithdebinfo-visual-studio-x64-llvm12/
+/.idea/

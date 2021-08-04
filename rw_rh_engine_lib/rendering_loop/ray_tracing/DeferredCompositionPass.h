@@ -4,6 +4,7 @@
 #pragma once
 #include <Engine/Common/ScopedPtr.h>
 #include <cstdint>
+#include <rendering_loop/render_texture_buffer.h>
 namespace rh::engine
 {
 class IImageView;
@@ -43,12 +44,11 @@ class DeferredCompositionPass
     DeferredCompositionPass( const DeferredCompositionPassParams &params );
 
     void                    Execute( rh::engine::ICommandBuffer *dest );
-    rh::engine::IImageView *GetResultView() { return mOutputBufferView; }
+    rh::engine::IImageView *GetResultView() { return mOutputBuffer.View; }
 
   private:
     DeferredCompositionPassParams                      mPassParams;
-    ScopedPointer<rh::engine::IImageBuffer>            mOutputBuffer;
-    ScopedPointer<rh::engine::IImageView>              mOutputBufferView;
+    RenderTextureBuffer                                mOutputBuffer;
     ScopedPointer<rh::engine::IShader>                 mCompositionShader;
     ScopedPointer<rh::engine::VulkanComputePipeline>   mPipeline;
     ScopedPointer<rh::engine::IPipelineLayout>         mPipelineLayout;
