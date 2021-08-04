@@ -4,6 +4,7 @@
 #include <common_headers.h>
 #include <dinput.h>
 #include <filesystem>
+#include <imgui.h>
 #include <render_client/render_client.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rp_clump/rp_clump.h>
@@ -43,6 +44,8 @@ void ModelLoadingTest::CustomShutdown()
     rh::rw::engine::RwTestSample::CustomShutdown();
 }
 
+float la_y_offset = 10;
+
 void ModelLoadingTest::CustomRender()
 {
     using namespace rw::engine;
@@ -50,6 +53,34 @@ void ModelLoadingTest::CustomRender()
 
     RwCameraClear( m_pMainCamera, &clearColor,
                    rwCAMERACLEARIMAGE | rwCAMERACLEARZ );
+
+    /*ImGui::Begin( "Lights" );
+
+    ImGui::DragFloat( "Light array Y offset:", &la_y_offset, 0.5f, -100.0f,
+                      100.0f );
+    ImGui::End();*/
+
+    auto &light_state = gRenderClient->RenderState.Lights;
+    for ( auto x = 0; x < 8; x++ )
+        for ( auto y = 0; y < 8; y++ )
+            for ( auto z = 0; z < 8; z++ )
+            {
+                PointLight l{};
+                l.mPos[0]   = -100.0f + ( x / 8.0f ) * 200.0f;
+                l.mPos[1]   = -100.0f + ( y / 8.0f ) * 200.0f;
+                l.mPos[2]   = -100.0f + ( z / 8.0f ) * 200.0f;
+                l.mRadius   = 50;
+                l.mDir[0]   = 0;
+                l.mDir[1]   = 0;
+                l.mDir[2]   = 0;
+                l.mColor[0] = 1;
+                l.mColor[1] = 1;
+                l.mColor[2] = 1;
+                l.mColor[3] = 1;
+
+                light_state.RecordPointLight( std::move( l ) );
+            }
+
     for ( auto clump : m_vClumpList )
     {
         for ( auto *atomic :

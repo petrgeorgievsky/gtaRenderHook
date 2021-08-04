@@ -1,0 +1,128 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+#extension GL_EXT_shader_16bit_storage : require
+#include "../raycommon.glsl"
+
+#include "restir_structs.glsl"
+#include "restir_common.glsl"
+
+//--------------------------------------------- Layout ---------------------------------------
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0, set = 0, rgba16f) uniform image2D tx_normal_depth;
+
+layout(binding = 1, set = 0) buffer AnalyticLights
+{
+    AnalyticLight SceneLights[];
+};
+
+layout(binding = 2, set = 0) uniform ReservoirPopulationPassParams
+{
+    int LightsCount;
+    uint ReservoirSize;
+    uint Timestamp;
+    uint FirstTime;
+};
+
+layout(std140,binding = 3, set = 0) buffer ReservoirBuffer
+{
+	Reservoir reservoirs[];
+};
+
+layout(std140,binding = 4, set = 0) buffer PrevReservoirBuffer
+{
+	Reservoir prev_reservoirs[];
+};
+
+layout(binding = 5, set = 0) uniform SkyCfg
+{
+    vec4 SunDir;
+    vec4 SunColor;
+    vec4 HorizonColor;
+    vec4 SkyColor;
+};
+
+layout(binding = 0, set = 1) uniform CameraProperties
+{
+    mat4 view;
+    mat4 proj;
+    mat4 viewInverse;
+    mat4 projInverse;
+    mat4 viewProjInverse;
+    mat4 viewProjInversePrev;
+};
+
+// Scene descriptors
+// TODO: Move to include
+layout(binding = 0, set = 2, scalar) buffer ScnDesc{ sceneDesc i[]; } scnDesc;
+layout(binding = 1, set = 2, scalar) buffer Vertices { Vertex v[]; } vertices[];
+layout(binding = 2, set = 2) buffer Indices { uint16_t i[]; } indices[];
+layout(binding = 3, set = 2) uniform texture2D textures[];
+layout(binding = 4, set = 2, scalar) buffer MatDesc{ MaterialDesc i[]; } matDesc;
+
+vec3 LinDepthToViewPos(float  lin_z, vec2 tc)
+{
+    vec2 d = tc * 2.0 - 1.0;
+    vec4 v_target    = projInverse* vec4(d.x, d.y, 1, 1);
+    vec4 direction = viewInverse * vec4(normalize(v_target.xyz), 0);
+    return normalize(v_target.xyz);
+}
+
+vec3 LinDepthToViewDir(float  lin_z, vec2 tc)
+{
+    vec2 d = tc * 2.0 - 1.0;
+    vec4 v_target    = projInverse* vec4(d.x, d.y, 1, 1);
+    vec4 direction = viewInverse * vec4(normalize(v_target.xyz), 0);
+
+    return direction.xyz;
+}
+
+#include "evaluate_pdf.glsl"
+#include "combine_reservoirs.glsl"
+
+void main()
+{
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+    const vec3 ViewPos = viewInverse[3].xyz;
+
+    vec4 normals_depth = imageLoad(tx_normal_depth, pos);
+    vec3 Normals = normalize(normals_depth.xyz);
+
+    ivec2 tex_res = imageSize(tx_normal_depth);
+
+    vec3 ViewDir = LinDepthToViewDir(normals_depth.w, vec2(pos.xy)/vec2(tex_res.xy));
+    vec3 WorldPos = ViewPos + ViewDir * normals_depth.w;
+
+    uint resIndex = gl_GlobalInvocationID.x * tex_res.y + gl_GlobalInvocationID.y;
+    uint randSeed = initRand(resIndex, Timestamp, 16);
+
+    SurfacePoint surface = SurfacePoint(WorldPos,normals_depth.xyz);
+
+    Reservoir reservoir = Reservoir(0,0,0,0);
+
+    // Perform resampled importance sampling
+    for (int i = 0; i < min(LightsCount+1, ReservoirSize); i++) {
+        // Select random light between -1...LightsCount, -1 is main directional light
+        int lightToSample = min(int(nextRand(randSeed) * (LightsCount+1)) - 1, LightsCount - 1 + 1);
+
+        float p_hat = EvaluatePDF(lightToSample, surface);
+
+        reservoir = updateReservoir(reservoir, lightToSample, p_hat, randSeed);
+    }
+
+    // Calculate resulting reservoir weight
+    reservoir = updateReservoirWeight(reservoir, surface);
+
+    // Temporal reuse TODO: Add proper reuse with motion vectors
+    //Reservoir prevReservoir = prev_reservoirs[resIndex];
+    //if(FirstTime == 0 && prevReservoir.selectedLightWeight > 0){
+        // Store resulting reservoir
+     //   reservoirs[resIndex] = combineReservoirs(reservoir, prevReservoir, surface, randSeed);
+    //}
+   // else
+        reservoirs[resIndex] = reservoir;
+}

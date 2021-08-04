@@ -1,0 +1,115 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+#extension GL_GOOGLE_include_directive : enable
+#include "../raycommon.glsl"
+
+#include "restir_structs.glsl"
+#include "restir_common.glsl"
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0, set = 0) uniform SpatialReusePassParams
+{
+    uint NeighbourCount;
+    float SpatialRadius;
+    uint ScreenWidth;
+    uint ScreenHeight;
+    uint Timestamp;
+    uint LightsCount;
+    uint padd[2];
+};
+
+layout(std140,binding = 1, set = 0) readonly buffer ReservoirBuffer
+{
+	Reservoir reservoirs[];
+};
+
+layout(std140,binding = 2, set = 0) buffer ResultReservoirBuffer
+{
+	Reservoir result_reservoirs[];
+};
+
+layout(binding = 3, set = 0, rgba16f) uniform image2D tx_normal_depth;
+
+layout(binding = 4, set = 0) buffer AnalyticLights
+{
+    AnalyticLight SceneLights[];
+};
+
+layout(binding = 5, set = 0) uniform SkyCfg
+{
+    vec4 SunDir;
+    vec4 SunColor;
+    vec4 HorizonColor;
+    vec4 SkyColor;
+};
+
+layout(binding = 0, set = 1) uniform CameraProperties
+{
+    mat4 view;
+    mat4 proj;
+    mat4 viewInverse;
+    mat4 projInverse;
+    mat4 viewProjInverse;
+    mat4 viewProjInversePrev;
+};
+
+vec3 LinDepthToViewPos(float  lin_z, vec2 tc)
+{
+    vec2 d = tc * 2.0 - 1.0;
+    vec4 v_target    = projInverse* vec4(d.x, d.y, 1, 1);
+    vec4 direction = viewInverse * vec4(normalize(v_target.xyz), 0);
+    return normalize(v_target.xyz);
+}
+
+vec3 LinDepthToViewDir(float  lin_z, vec2 tc)
+{
+    vec2 d = tc * 2.0 - 1.0;
+    vec4 v_target    = projInverse* vec4(d.x, d.y, 1, 1);
+    vec4 direction = viewInverse * vec4(normalize(v_target.xyz), 0);
+
+    return direction.xyz;
+}
+
+#include "evaluate_pdf.glsl"
+#include "combine_reservoirs.glsl"
+
+
+void main()
+{
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+    const vec3 ViewPos = viewInverse[3].xyz;
+
+    vec4 normals_depth = imageLoad(tx_normal_depth, pos);
+    vec3 Normals = normalize(normals_depth.xyz);
+
+    ivec2 tex_res = imageSize(tx_normal_depth);
+
+    vec3 ViewDir = LinDepthToViewDir(normals_depth.w, vec2(pos.xy)/vec2(tex_res.xy));
+    vec3 WorldPos = ViewPos + ViewDir * normals_depth.w;
+
+    SurfacePoint surface = SurfacePoint(WorldPos,normals_depth.xyz);
+
+    uint randSeed = initRand(gl_GlobalInvocationID.x * ScreenHeight + gl_GlobalInvocationID.y, Timestamp, 16);
+    int lightToSample = 0;
+
+    Reservoir reservoir = reservoirs[pos.x * ScreenHeight + pos.y];
+
+    for (int i = 0; i < min(NeighbourCount, 32); i++) {
+        // Select random neighbour
+        ivec2 neighborPos = ivec2(0, 0);
+        float angle = nextRand(randSeed) * 2.0 * 3.14;
+        float radius = sqrt(nextRand(randSeed)) * SpatialRadius;
+
+        ivec2 neighborOffset = ivec2(floor(cos(angle) * radius), floor(sin(angle) * radius));
+        neighborPos.x = clamp(int(pos.x) + neighborOffset.x, 0, int(ScreenWidth) - 1);
+        neighborPos.y = clamp(int(pos.y) + neighborOffset.y, 0, int(ScreenHeight) - 1);
+
+        uint resIndex = neighborPos.x * ScreenHeight + neighborPos.y;
+
+        Reservoir nearReservoir = reservoirs[resIndex];
+        reservoir = combineReservoirs(reservoir, nearReservoir, surface, randSeed);
+    }
+    result_reservoirs[pos.x * ScreenHeight + pos.y] = reservoir;
+}

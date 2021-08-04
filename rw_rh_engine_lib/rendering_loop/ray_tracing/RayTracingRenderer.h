@@ -47,6 +47,10 @@ class RTPrimaryRaysPass;
 class CameraDescription;
 class RTAOPass;
 class RTShadowsPass;
+namespace restir
+{
+class ShadowsPass;
+}
 class DeferredCompositionPass;
 class VarAwareTempAccumFilterPipe;
 class VarAwareTempAccumColorFilterPipe;
@@ -105,6 +109,7 @@ class RayTracingRenderer : public IFrameRenderer
     ScopedPointer<RTPrimaryRaysPass>       mPrimaryRaysPass;
     ScopedPointer<RTAOPass>                mRTAOPass;
     ScopedPointer<RTShadowsPass>           mRTShadowsPass;
+    ScopedPointer<restir::ShadowsPass>     mRestirShadowsPass;
     ScopedPointer<RTReflectionRaysPass>    mRTReflectionPass;
     ScopedPointer<DeferredCompositionPass> mDeferredComposePass;
     ScopedPointer<TiledLightCulling>       mTiledLightCulling;

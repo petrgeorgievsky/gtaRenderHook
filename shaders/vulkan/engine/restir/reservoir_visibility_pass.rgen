@@ -1,0 +1,187 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+#extension GL_EXT_shader_16bit_storage : require
+#include "../raycommon.glsl"
+#include "restir_structs.glsl"
+#include "restir_common.glsl"
+
+layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 1, set = 0, rgba16f) uniform image2D result;
+layout(binding = 2, set = 0, rgba16f) uniform image2D normals;
+layout(binding = 3, set = 0) uniform sampler baseSampler;
+
+layout(binding = 4, set = 0) buffer AnalyticLights
+{
+    AnalyticLight SceneLights[];
+};
+
+layout(std140,binding = 5, set = 0) readonly buffer ReservoirBuffer
+{
+	Reservoir reservoirs[];
+};
+
+layout(std140,binding = 6, set = 0) buffer PrevReservoirBuffer
+{
+	Reservoir prev_reservoirs[];
+};
+
+layout(binding = 7, set = 0) uniform ShadowsProperties
+{
+    float LightRadius;
+    float LightPenumbra;
+    uint  Timestamp;
+    float  LightIntensityBoost;
+    uint LightsCount;
+    float padd[3];
+};
+
+layout(binding = 8, set = 0) uniform SkyCfg
+{
+    vec4 SunDir;
+    vec4 SunColor;
+    vec4 HorizonColor;
+    vec4 SkyColor;
+};
+
+layout(binding = 0, set = 1) uniform CameraProperties
+{
+    mat4 view;
+    mat4 proj;
+    mat4 viewInverse;
+    mat4 projInverse;
+    mat4 viewProjInverse;
+    mat4 viewProjInversePrev;
+} cam;
+
+// Scene descriptors
+// TODO: Move to include
+layout(binding = 0, set = 2, scalar) buffer ScnDesc{ sceneDesc i[]; } scnDesc;
+layout(binding = 1, set = 2, scalar) buffer Vertices { Vertex v[]; } vertices[];
+layout(binding = 2, set = 2) buffer Indices { uint16_t i[]; } indices[];
+layout(binding = 3, set = 2) uniform texture2D textures[];
+layout(binding = 4, set = 2, scalar) buffer MatDesc{ MaterialDesc i[]; } matDesc;
+
+layout(location = 0) rayPayloadNV ShadowHitPayload payload;
+
+uint SmallestPowerOf2GreaterThan(in uint x)
+{
+    // Set all the bits behind the most significant non-zero bit in x to 1.
+    // Essentially giving us the largest value that is smaller than the
+    // next power of 2 we're looking for.
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+
+    // Return the next power of two value.
+    return x + 1;
+}
+
+float FloatPrecision(in float x, in uint NumMantissaBits)
+{
+    // Find the exponent range the value is in.
+    uint nextPowerOfTwo = SmallestPowerOf2GreaterThan(uint(x));
+    float exponentRange = nextPowerOfTwo - (nextPowerOfTwo >> 1);
+
+    float MaxMantissaValue = 1 << NumMantissaBits;
+
+    return exponentRange / MaxMantissaValue;
+}
+
+#include "evaluate_pdf.glsl"
+
+// For each pixel,
+// compute reservoir of random sample of size M from N lights
+
+void main()
+{
+    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
+    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+    vec2 d = inUV * 2.0 - 1.0;
+    vec4 origin    = cam.viewInverse * vec4(0, 0, 0, 1);
+    vec4 target    = cam.projInverse * vec4(d.x, d.y, 1, 1);
+    vec4 direction = cam.viewInverse * vec4(normalize(target.xyz), 0);
+
+    uint  rayFlags = gl_RayFlagsNoneNV;
+    float tMin     = 0.001;
+    float tMax     = 5000.0;
+
+    vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDNV.xy));
+    normals_d.xyz = normalize(normals_d.xyz);
+    ivec2 tex_res = imageSize(normals);
+
+    SurfacePoint surface;
+    surface.worldPos = origin.xyz + direction.xyz * normals_d.w;
+    surface.normal   = normals_d.xyz;
+
+    Reservoir r = reservoirs[gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y];
+    prev_reservoirs[gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y] = r;
+
+    vec3 shadow = vec3(0.0f);
+
+    float distToLight;
+    vec3 lightDir;
+    float lightIntensity;
+    float brdf; // lambertian term
+    float g = 1.0f;
+    vec3 pl_color;
+    if(r.selectedLightId >= 0){
+        AnalyticLight pl = SceneLights[r.selectedLightId];
+
+        lightDir         = (pl.posAndRadius.xyz - surface.worldPos.xyz);
+        distToLight      = length(lightDir);
+        lightDir        /= distToLight;
+        lightIntensity   = LightIntensityBoost;
+
+        brdf = EvaluateLambertBrdf(surface, lightDir);
+        g = PointLightGeometryTerm(surface, pl);
+        pl_color = pl.color.rgb * lightIntensity;
+    }
+    else
+    {
+        // Sun
+        lightDir = SunDir.xyz;
+        lightIntensity = 1.0f;
+        if (lightDir.z < 0) {
+            lightDir.z = -lightDir.z;
+            lightIntensity = 0.15f;
+        }
+
+        lightDir = normalize(lightDir.xyz);
+        distToLight = 5000.0f;
+
+        brdf = EvaluateLambertBrdf(surface, lightDir); // lambertian term
+        pl_color = vec3(lightIntensity);
+    }
+
+    payload.hitDistance = 0.0f;
+    payload.velocity = 0.0f;
+    payload.x = 0.0f;
+    payload.y = 0.0f;
+
+    uint randSeed = initRand(gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y, Timestamp, 16);
+
+    const float depth_eps = FloatPrecision(normals_d.w, 10);
+
+    traceNV(topLevelAS, rayFlags,
+    0xFF, // cullMask
+    0, // sbtRecordOffset
+    0, // sbtRecordStride
+    0, // missIndex
+    surface.worldPos + depth_eps * surface.normal, // ray origin
+    tMin, // ray min range
+    normalize(lightDir * distToLight + vec3(nextRand(randSeed),nextRand(randSeed),nextRand(randSeed)) * LightRadius), // ray direction
+    max(distToLight - LightRadius, 0.0f), // ray max range
+    0// payload (location = 0)
+    );
+
+    // TODO: Use actual sampled light weight to account for the fact that we approximate unknown distribution,
+    // for some reason right now it is very low which results in very dark image
+    shadow = (payload.hitDistance > 0 ? 1.0f: 0.0f) *
+                    g * brdf * pl_color;
+
+    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(shadow, payload.velocity* 100.0f));
+}

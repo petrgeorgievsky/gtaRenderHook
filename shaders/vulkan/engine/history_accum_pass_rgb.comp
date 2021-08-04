@@ -75,8 +75,9 @@ void main()
             max_value = min(spatial_moments.x + spatial_variance, 1.0f);
             min_value = max(spatial_moments.x - spatial_variance, 0.0f);
         }
-        if(current_luma > max_value || current_luma < min_value)
-            tspp = 1;
+        // TODO: At the moment this generates random circles around light sources, for no reason
+        //if(current_luma > max_value || current_luma < min_value)
+        //    tspp = 1;
 
         float inv_tspp = 1.0f/float(tspp);
 

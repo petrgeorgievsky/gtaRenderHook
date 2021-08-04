@@ -15,6 +15,7 @@
 #include "VarAwareTempAccumFilter.h"
 #include "VarAwareTempAccumFilterColor.h"
 #include "debug_pipeline.h"
+#include "restir/restir_shadow_pass.h"
 #include "scene_description/gpu_mesh_buffer_pool.h"
 #include "scene_description/gpu_texture_pool.h"
 #include "tiled_light_culling.h"
@@ -86,7 +87,22 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
         mPrimaryRaysPass->GetMotionView(), rtx_resolution_w,
         rtx_resolution_h } );
 
-    mRTShadowsPass    = new RTShadowsPass( RTShadowsInitParams{
+    //
+    mRestirShadowsPass = new restir::ShadowsPass( restir::ShadowsInitParams{
+        Device,
+        rtx_resolution_w,
+        rtx_resolution_h,
+        mSceneDescription,
+        rgResourcePool.Get<CameraDescription>(),
+        mPrimaryRaysPass->GetSkyCfg(),
+        mPrimaryRaysPass->GetNormalsView(),
+        mTiledLightCulling->GetLightBuffer(),
+        mPrimaryRaysPass->GetPrevNormalsView(),
+        mPrimaryRaysPass->GetMotionView(),
+        mVarTempAccumColorFilterPipe,
+        mBilPipe,
+    } );
+    /*mRTShadowsPass     = new RTShadowsPass( RTShadowsInitParams{
         Device,
         rtx_resolution_w,
         rtx_resolution_h,
@@ -101,7 +117,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
         mPrimaryRaysPass->GetPrevNormalsView(),
         mPrimaryRaysPass->GetMotionView(),
         mPrimaryRaysPass->GetSkyCfg(),
-    } );
+    } );*/
     mRTReflectionPass = new RTReflectionRaysPass( RTReflectionInitParams{
         .Device                = Device,
         .mWidth                = rtx_resolution_w,
@@ -123,7 +139,7 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
             mPrimaryRaysPass->GetAlbedoView(),
             mPrimaryRaysPass->GetNormalsView(),
             mPrimaryRaysPass->GetMaterialsView(), mRTAOPass->GetAOView(),
-            mRTShadowsPass->GetShadowsView(),
+            mRestirShadowsPass->GetShadowsView(),
             mRTReflectionPass->GetReflectionView(),
             mPrimaryRaysPass->GetSkyCfg(), rtx_resolution_w,
             rtx_resolution_h } );
@@ -189,7 +205,8 @@ RayTracingRenderer::Render( const FrameState &                state,
         mPrimaryRaysPass->Execute( mTLAS, dest, *state.Sky );
         mTiledLightCulling->Execute( dest, state.Lights );
         mRTAOPass->Execute( mTLAS, dest );
-        mRTShadowsPass->Execute( mTLAS, dest );
+        mRestirShadowsPass->Execute( mTLAS, state.Lights.PointLights.Size(),
+                                     dest );
         mRTReflectionPass->Execute( mTLAS, dest );
         mDeferredComposePass->Execute( dest );
         mPrimaryRaysPass->ConvertNormalsToShaderRO( dest );
@@ -342,6 +359,7 @@ void RayTracingRenderer::DrawGUI( const FrameState &scene )
     ImGui::Text( "Avg CPU record time:%.3f ms.", avg_frame_rec_time );
     ImGui::Text( "FPS:%.1f", 1000.0f / ( ms_from_lf + 0.0001f ) );
     mRTAOPass->UpdateUI();
+    mRestirShadowsPass->UpdateUI();
     ImGui::EndGroup();
 
     if ( ImGui::CollapsingHeader( "Im2DCalls" ) )
