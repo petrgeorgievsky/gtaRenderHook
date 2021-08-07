@@ -1,4 +1,5 @@
-﻿#include "gta_sa_internal_classes/CColorSet.h"
+﻿#include "game_patches/material_system_patches.h"
+#include "gta_sa_internal_classes/CColorSet.h"
 #include "idle_hook.h"
 #include <DebugUtils/DebugLogger.h>
 #include <algorithm>
@@ -40,7 +41,8 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
         rh::rw::engine::RwFrameGetLTM( rwFrame::GetParent( atomic ) );
     rh::rw::engine::DrawAtomic(
         atomic, &geometry_interface_35,
-        [&ltm, atomic]( rh::rw::engine::ResEnty *res_entry ) {
+        [&ltm, atomic]( rh::rw::engine::ResEnty *res_entry )
+        {
             auto &renderer  = gRenderClient->RenderState.MeshDrawCalls;
             auto  mesh_list = geometry_interface_35.GetMeshList();
             auto  materials =
@@ -79,28 +81,31 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
 
     const RwMatrix *ltm = ::RwFrameGetLTM(
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
-    DrawAtomic(
-        atomic, &geometry_interface_35, [&ltm, atomic]( ResEnty *res_entry ) {
-            auto &renderer  = gRenderClient->RenderState.SkinMeshDrawCalls;
-            auto  mesh_list = geometry_interface_35.GetMeshList();
-            auto  materials =
-                renderer.AllocateDrawCallMaterials( mesh_list.size() );
+    DrawAtomic( atomic, &geometry_interface_35,
+                [&ltm, atomic]( ResEnty *res_entry )
+                {
+                    auto &renderer =
+                        gRenderClient->RenderState.SkinMeshDrawCalls;
+                    auto mesh_list = geometry_interface_35.GetMeshList();
+                    auto materials =
+                        renderer.AllocateDrawCallMaterials( mesh_list.size() );
 
-            for ( auto i = 0; i < mesh_list.size(); i++ )
-                materials[i] = ConvertMaterialData( mesh_list[i].material );
+                    for ( auto i = 0; i < mesh_list.size(); i++ )
+                        materials[i] =
+                            ConvertMaterialData( mesh_list[i].material );
 
-            SkinDrawCallInfo info{};
-            info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
-            info.MeshId         = res_entry->meshData;
-            info.WorldTransform = DirectX::XMFLOAT4X3{
-                ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
-                ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
-                ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
-            };
-            static AnimHierarcyRw36 g_anim{};
-            PrepareBoneMatrices( info.BoneTransform, atomic, g_anim );
-            renderer.RecordDrawCall( info );
-        } );
+                    SkinDrawCallInfo info{};
+                    info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
+                    info.MeshId         = res_entry->meshData;
+                    info.WorldTransform = DirectX::XMFLOAT4X3{
+                        ltm->right.x, ltm->up.x, ltm->at.x, ltm->pos.x,
+                        ltm->right.y, ltm->up.y, ltm->at.y, ltm->pos.y,
+                        ltm->right.z, ltm->up.z, ltm->at.z, ltm->pos.z,
+                    };
+                    static AnimHierarcyRw36 g_anim{};
+                    PrepareBoneMatrices( info.BoneTransform, atomic, g_anim );
+                    renderer.RecordDrawCall( info );
+                } );
     return 1;
 }
 
@@ -110,21 +115,6 @@ struct CVector
     float x, y, z;
 };
 
-struct CPointLight
-{
-    CVector         m_vecPosn;
-    CVector         m_vecDirection;
-    float           m_fRange;
-    float           m_fColorRed;
-    float           m_fColorGreen;
-    float           m_fColorBlue;
-    void *          m_pEntityToLight;
-    unsigned __int8 m_nType;
-    unsigned __int8 m_nFogType;
-    char            m_bGenerateShadows;
-    char            _pad0;
-};
-
 void prepare_timecyc()
 {
 
@@ -132,7 +122,7 @@ void prepare_timecyc()
     auto &cur_cs    = *(CColourSet *)0xB7C4A0;
 
     auto *vec_to_sun_arr   = (RwV3d *)0xB7CA50;
-    int & current_tc_value = *(int *)0xB79FD0;
+    int  &current_tc_value = *(int *)0xB79FD0;
 
     sky_state.mSkyTopColor[0]    = float( cur_cs.m_nSkyTopRed ) / 255.0f;
     sky_state.mSkyTopColor[1]    = float( cur_cs.m_nSkyTopGreen ) / 255.0f;
@@ -157,9 +147,9 @@ void prepare_timecyc()
 }
 void *rwD3D9RasterDtor( void *object ) { return object; }
 
-int32_t AddPtLight( char a1, float x, float y, float z, float dx, int dy,
-                    int dz, float rad, float r, float g, float b, char fogtype,
-                    char extrashadows )
+int32_t AddPtLight( char a1, float x, float y, float z, float dx, float dy,
+                    float dz, float rad, float r, float g, float b,
+                    char fogtype, char extrashadows )
 {
     using namespace rh::rw::engine;
     assert( gRenderClient );
@@ -279,6 +269,10 @@ BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
             RedirectCall( 0x53E0B9, reinterpret_cast<void *>( empty_void ) );
             RedirectCall( 0x53E0D3, reinterpret_cast<void *>( empty_void ) );
             RedirectCall( 0x53E0EF, reinterpret_cast<void *>( empty_void ) );
+            // Static shadows
+            RedirectCall( 0x53E0BE, reinterpret_cast<void *>( empty_void ) );
+            RedirectCall( 0x53E0C3, reinterpret_cast<void *>( empty_void ) );
+            RedirectCall( 0x53E0C8, reinterpret_cast<void *>( empty_void ) );
 
             RedirectCall(
                 0x53EAC4,
@@ -305,7 +299,7 @@ BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
             Patch( 0x71397E, &ztest, sizeof( ztest ) );
             /* SetPointer( 0x8E297C,
                          reinterpret_cast<void *>( rxD3D8SubmitNode ) );*/
-
+            PatchMaterialSystem();
             InitClient();
         }
         break;

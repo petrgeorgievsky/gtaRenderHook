@@ -23,7 +23,10 @@ set(SOURCES
         gta_sa_internal_classes/hud.cpp
         gta_sa_internal_classes/menumanager.cpp
         gta_sa_internal_classes/rw_func_ptrs.cpp
-        gta_sa_internal_classes/CColorSet.cpp)
+        gta_sa_internal_classes/CColorSet.cpp
+        game_patches/material_system_patches.cpp
+        game/TxdStore.cpp
+        )
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
