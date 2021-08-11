@@ -49,7 +49,12 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
                 renderer.AllocateDrawCallMaterials( mesh_list.size() );
 
             for ( auto i = 0; i < mesh_list.size(); i++ )
+            {
                 materials[i] = ConvertMaterialData( mesh_list[i].material );
+                materials[i].specular =
+                    1.0f -
+                    InMemoryFuncCall<float>( 0x5D70D0, mesh_list[i].material );
+            }
             DrawCallInfo info{};
             info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
             info.MeshId         = res_entry->meshData;
@@ -91,8 +96,11 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
                         renderer.AllocateDrawCallMaterials( mesh_list.size() );
 
                     for ( auto i = 0; i < mesh_list.size(); i++ )
+                    {
                         materials[i] =
                             ConvertMaterialData( mesh_list[i].material );
+                        materials[i].specular = 0.0f;
+                    }
 
                     SkinDrawCallInfo info{};
                     info.DrawCallId     = reinterpret_cast<uint64_t>( atomic );
