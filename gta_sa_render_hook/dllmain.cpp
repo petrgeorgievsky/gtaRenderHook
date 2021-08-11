@@ -1,6 +1,7 @@
 ﻿#include "game_patches/material_system_patches.h"
 #include "gta_sa_internal_classes/CColorSet.h"
 #include "idle_hook.h"
+#include <ConfigUtils/ConfigurationManager.h>
 #include <DebugUtils/DebugLogger.h>
 #include <algorithm>
 #include <injection_utils/InjectorHelpers.h>
@@ -212,6 +213,11 @@ BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
         rh::rw::engine::IPCSettings::mMode =
             rh::rw::engine::IPCRenderMode::CrossProcessClient;
         rh::rw::engine::IPCSettings::mProcessName = "gta_sa_render_driver.exe";
+        /// Init config
+        auto       cfg_mgr  = rh::engine::ConfigurationManager::Instance();
+        const auto cfg_path = "rh_config.cfg";
+        if ( !cfg_mgr.LoadFromFile( cfg_path ) )
+            cfg_mgr.SaveToFile( cfg_path );
 
         {
             RwPointerTable gtasa_ptr_table{};
