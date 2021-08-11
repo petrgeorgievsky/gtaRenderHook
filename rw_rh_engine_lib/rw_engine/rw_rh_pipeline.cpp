@@ -169,7 +169,10 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
     // Index data
     std::vector<GeometrySplit>    geometry_splits;
     std::vector<GeometryMaterial> geometry_mats;
-    for ( auto &mesh : std::span( mesh_start, meshHeader->numMeshes ) )
+    geometry_splits.reserve( meshHeader->numMeshes );
+    geometry_mats.reserve( meshHeader->numMeshes );
+    auto meshes = std::span( mesh_start, meshHeader->numMeshes );
+    for ( auto &mesh : meshes )
     {
         auto          mesh_material = mesh.material;
         GeometrySplit meshData{};
