@@ -111,6 +111,7 @@ void main()
         );
         ndotl *= (shad_pld.hitDistance > 0 ? 1.0f: 0.0f);
     }
+    float intensity_coeff = min((v0.emission + v1.emission + v2.emission)/3, 2.0f);
     vec3 lighting = vec3(ndotl) + sky_cfg.skyColor.rgb * 0.3f;
     if (material.txd_id >= 0) {
         vec4 tex_color = texture(sampler2D(textures[material.txd_id], baseSampler), tc);
@@ -118,5 +119,5 @@ void main()
     }
     else
         pay_load.reflection_color = vec4(unpackUnorm4x8(material.color));
-    pay_load.reflection_color.rgb *= lighting;
+    pay_load.reflection_color.rgb *= (lighting + vec3(intensity_coeff));
 }

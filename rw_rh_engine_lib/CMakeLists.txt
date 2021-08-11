@@ -70,6 +70,7 @@ set(SOURCES
         rendering_loop/ray_tracing/restir/restir_shadow_pass.cpp
         rendering_loop/ray_tracing/restir/light_sampling_pass.cpp
         rendering_loop/ray_tracing/restir/spatial_reuse_pass.cpp
+        rendering_loop/ray_tracing/restir/visibility_reuse_pass.cpp
         rendering_loop/ray_tracing/VarAwareTempAccumFilter.cpp
         rendering_loop/ray_tracing/VarAwareTempAccumFilterColor.cpp
         rendering_loop/ray_tracing/scene_description/gpu_scene_materials_pool.cpp

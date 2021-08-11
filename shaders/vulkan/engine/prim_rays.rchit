@@ -77,11 +77,12 @@ void main()
     vec4 world_pos_prev = cam.projPrev * ((vec4(prev_obj_pos, 1.0) * scnDesc.i[gl_InstanceID].prevTransfo) * cam.viewPrev);
     world_pos_current.xy = world_pos_current.xy/world_pos_current.w * 0.5 + 0.5;
     world_pos_prev.xy = world_pos_prev.xy/world_pos_prev.w * 0.5 + 0.5;
-    pay_load.motionVectors = vec4(world_pos_current.xy - world_pos_prev.xy, 0, 0);
-    pay_load.materialParams= vec4(1.0f, material.specular, 0.0f, 0.0f);
+    pay_load.motionVectors  = vec4(world_pos_current.xy - world_pos_prev.xy, 0, 0);
+    pay_load.materialParams = vec4(1.0f, material.specular, 0.0f,(v0.emission + v1.emission + v2.emission)/3);
     if (material.spec_id >= 0){
         vec4 spec_color = texture(sampler2D(textures[material.spec_id], baseSampler), tc);
         pay_load.materialParams = spec_color;
+        pay_load.materialParams.a *= (v0.emission + v1.emission + v2.emission)/3;
     }
     if (material.txd_id >= 0) {
         vec4 tex_color = texture(sampler2D(textures[material.txd_id], baseSampler), tc);

@@ -16,6 +16,7 @@ struct ShadowHitPayload
     float velocity;
     float x;
     float y;
+    vec4 emission;
 };
 
 struct PrimRaysPayload
@@ -42,7 +43,7 @@ struct Vertex
     uint indices;
     uint color;
     uint material;
-    uint padd;
+    float emission;
 };
 
 
@@ -50,7 +51,7 @@ struct sceneDesc
 {
     int  objId;
     int  txtOffset;
-    int  align_a;
+    int  triCount;
     int  align_b;
     mat4 transfo;
     mat4 transfoIT;

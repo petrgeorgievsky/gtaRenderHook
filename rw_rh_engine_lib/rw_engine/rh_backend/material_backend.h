@@ -38,6 +38,7 @@ class BackendMaterialPlugin
 struct BackendMaterialExt
 {
     RwTexture *mSpecTex = nullptr;
+    float      Emission = 0.0f;
 };
 
 struct MaterialData

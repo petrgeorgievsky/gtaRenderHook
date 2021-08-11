@@ -34,13 +34,14 @@ namespace restir
 
 struct SpatialReusePassParams
 {
-    int32_t  NeighbourCount = 32;
-    float    SpatialRadius  = 8.0f;
+    int32_t  NeighbourCount = 5;
+    float    SpatialRadius  = 20.0f;
     uint32_t ScreenWidth;
     uint32_t ScreenHeight;
-    uint32_t Timestamp   = 0;
-    uint32_t LightsCount = 0;
-    uint32_t padd[2];
+    uint32_t Timestamp     = 0;
+    uint32_t LightsCount   = 0;
+    uint32_t TriLightCount = 0;
+    uint32_t padd;
 };
 
 struct SpatialReusePassBase
@@ -53,6 +54,9 @@ struct SpatialReusePassBase
     rh::engine::IBuffer      *mLightBuffer;
     rh::engine::IBuffer      *mSkyCfg;
     CameraDescription        *mCamera;
+    RTSceneDescription       *Scene; //
+    rh::engine::IBuffer      *TempReservoirBuffer;
+    rh::engine::IBuffer      *TriLights;
 };
 
 //
@@ -78,9 +82,6 @@ class SpatialReusePass : public SpatialReusePassBase
     ScopedPointer<rh::engine::IPipelineLayout>         mPipeLayout;
     ScopedPointer<rh::engine::VulkanComputePipeline>   mPipeline;
     ScopedPointer<rh::engine::IShader>                 mShader;
-
-    // Stores resulting samples from
-    ScopedPointer<rh::engine::IBuffer> mResultReservoirBuffer;
 
     ScopedPointer<rh::engine::IBuffer> mParamsBuffer;
 };

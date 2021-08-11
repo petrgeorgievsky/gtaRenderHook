@@ -23,7 +23,7 @@ struct SceneObjDesc
 {
     uint32_t            objId;
     uint32_t            txtOffset;
-    uint32_t            align_a;
+    uint32_t            triangleCount;
     uint32_t            align_b;
     DirectX::XMFLOAT4X4 transform;
     DirectX::XMFLOAT4X4 transfomIT;

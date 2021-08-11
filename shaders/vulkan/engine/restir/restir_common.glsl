@@ -24,7 +24,7 @@ Reservoir newReservoir() {
     Reservoir reservoir;
 
 	reservoir.totalWeight = 0;
-	reservoir.selectedLightWeight = 0;
+	reservoir.selectedLightWeight = 0.0f;
 	reservoir.visitedSampleCount = 0;
 	reservoir.selectedLightId = 0;
 
@@ -36,6 +36,8 @@ Reservoir updateReservoir(Reservoir reservoir, int lightId, float weight, inout 
 	// Algorithm 2 of ReSTIR paper
 	//if(isnan(reservoir.totalWeight))
 	//    reservoir.totalWeight = 0;
+	//if(weight <= 0) return reservoir;
+
 	reservoir.totalWeight = reservoir.totalWeight + weight;
 	reservoir.visitedSampleCount = reservoir.visitedSampleCount + 1;
 

@@ -103,6 +103,32 @@ void LoadMeshTaskImpl( void *memory )
     backend_mesh_data.mSplits      = std::move( init_data.mSplits );
     backend_mesh_data.mMaterials   = std::move( init_data.mMaterials );
 
+    backend_mesh_data.EmissiveTriangles.reserve( init_data.mIndexCount / 3 );
+    for ( auto tri_id = 0; tri_id < init_data.mIndexCount / 3; tri_id++ )
+    {
+        auto idx_a = init_data.mIndexData[tri_id * 3 + 0],
+             idx_b = init_data.mIndexData[tri_id * 3 + 1],
+             idx_c = init_data.mIndexData[tri_id * 3 + 2];
+
+        PackedLight tri_light{};
+        tri_light.Triangle.V0[0] = init_data.mVertexData[idx_a].x;
+        tri_light.Triangle.V0[1] = init_data.mVertexData[idx_a].y;
+        tri_light.Triangle.V0[2] = init_data.mVertexData[idx_a].z;
+
+        tri_light.Triangle.V1[0] = init_data.mVertexData[idx_b].x;
+        tri_light.Triangle.V1[1] = init_data.mVertexData[idx_b].y;
+        tri_light.Triangle.V1[2] = init_data.mVertexData[idx_b].z;
+
+        tri_light.Triangle.V2[0] = init_data.mVertexData[idx_c].x;
+        tri_light.Triangle.V2[1] = init_data.mVertexData[idx_c].y;
+        tri_light.Triangle.V2[2] = init_data.mVertexData[idx_c].z;
+
+        tri_light.Triangle.Intensity = init_data.mVertexData[idx_a].emissive;
+        //
+        if ( init_data.mVertexData[idx_a].emissive > 0 )
+            backend_mesh_data.EmissiveTriangles.push_back( tri_light );
+    }
+
     mesh_id = mesh_pool.RequestResource( std::move( backend_mesh_data ) );
 
     writer.Write( &mesh_id );

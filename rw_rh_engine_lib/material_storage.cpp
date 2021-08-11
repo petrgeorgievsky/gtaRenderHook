@@ -57,13 +57,24 @@ void MaterialExtensionSystem::ParseMaterialDesc(
         nlohmann::json desc_json{};
         filestream >> desc_json;
 
-        auto tex_name = desc_json["spec_tex"].get<std::string>();
+        auto tex_name = desc_json.contains( "spec_tex" )
+                            ? desc_json["spec_tex"].get<std::string>()
+                            : "";
+
         desc.mSpecularTextureName.fill( 0 );
         std::copy( tex_name.begin(), tex_name.end(),
                    desc.mSpecularTextureName.begin() );
 
         desc.mTextureDictName =
-            desc_json["tex_dict_slot_name"].get<std::string>();
+            desc_json.contains( "tex_dict_slot_name" )
+                ? desc_json["tex_dict_slot_name"].get<std::string>()
+                : "";
+        desc.IsEmissive    = desc_json.contains( "emissive" )
+                                 ? desc_json["emissive"].get<bool>()
+                                 : false;
+        desc.EmissionValue = desc_json.contains( "emission" )
+                                 ? desc_json["emission"].get<float>()
+                                 : 1.0f;
     }
     catch ( const std::exception &ex )
     {

@@ -3,6 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
+#extension GL_EXT_nonuniform_qualifier : enable
 #include "../raycommon.glsl"
 
 #include "restir_structs.glsl"
@@ -16,7 +17,7 @@ layout(binding = 0, set = 0, rgba16f) uniform image2D tx_normal_depth;
 
 layout(binding = 1, set = 0) buffer AnalyticLights
 {
-    AnalyticLight SceneLights[];
+    PackedLight SceneLights[];
 };
 
 layout(binding = 2, set = 0) uniform ReservoirPopulationPassParams
@@ -44,6 +45,14 @@ layout(binding = 5, set = 0) uniform SkyCfg
     vec4 HorizonColor;
     vec4 SkyColor;
 };
+
+layout(binding = 6, set = 0) buffer TriangleLights
+{
+    int TriLightsCount;
+    int padd_2[4*3-1];
+    PackedLight SceneTriLights[];
+};
+layout(binding = 7, set = 0, rg16f) uniform image2D tx_motion;
 
 layout(binding = 0, set = 1) uniform CameraProperties
 {
@@ -83,8 +92,25 @@ vec3 LinDepthToViewDir(float  lin_z, vec2 tc)
 #include "evaluate_pdf.glsl"
 #include "combine_reservoirs.glsl"
 
+shared ivec2 tex_res;
+bool TexBoundsCheck(in ivec2 tc)
+{
+    return tc.x > tex_res.x || tc.y > tex_res.y || tc.x < 0 || tc.y < 0;
+}
+
 void main()
 {
+    if(gl_LocalInvocationIndex == 0)
+        tex_res = imageSize(tx_normal_depth);
+    barrier();
+
+    uint resIndex = gl_GlobalInvocationID.x * tex_res.y + gl_GlobalInvocationID.y;
+    //int tile[32];
+    //uint randS = initRand(resIndex, Timestamp, 16);
+    //for(uint i = 0; i < 32; i++)
+    //    tile[i] = min(int(nextRand(randS) * (LightsCount+1+TriLightsCount)) - 1, LightsCount - 1 + 1+TriLightsCount);
+
+    int lightCountFull = LightsCount + TriLightsCount + 1;
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
     const vec3 ViewPos = viewInverse[3].xyz;
@@ -92,12 +118,9 @@ void main()
     vec4 normals_depth = imageLoad(tx_normal_depth, pos);
     vec3 Normals = normalize(normals_depth.xyz);
 
-    ivec2 tex_res = imageSize(tx_normal_depth);
-
     vec3 ViewDir = LinDepthToViewDir(normals_depth.w, vec2(pos.xy)/vec2(tex_res.xy));
     vec3 WorldPos = ViewPos + ViewDir * normals_depth.w;
 
-    uint resIndex = gl_GlobalInvocationID.x * tex_res.y + gl_GlobalInvocationID.y;
     uint randSeed = initRand(resIndex, Timestamp, 16);
 
     SurfacePoint surface = SurfacePoint(WorldPos,normals_depth.xyz);
@@ -105,24 +128,34 @@ void main()
     Reservoir reservoir = Reservoir(0,0,0,0);
 
     // Perform resampled importance sampling
-    for (int i = 0; i < min(LightsCount+1, ReservoirSize); i++) {
+  for (int i = 0; i < min(lightCountFull, ReservoirSize); i++) {
         // Select random light between -1...LightsCount, -1 is main directional light
-        int lightToSample = min(int(nextRand(randSeed) * (LightsCount+1)) - 1, LightsCount - 1 + 1);
+        int lightToSample =  min(int(nextRand(randSeed) * (lightCountFull)) - 1, lightCountFull - 1);
+        int sampleId = lightToSample;//tile[lightToSample];
+		float lightSampleP = 1.0f / (lightCountFull);
 
-        float p_hat = EvaluatePDF(lightToSample, surface);
+        float p_hat = EvaluatePDF(sampleId, surface, randSeed);
 
-        reservoir = updateReservoir(reservoir, lightToSample, p_hat, randSeed);
+        reservoir = updateReservoir(reservoir, sampleId, p_hat/lightSampleP, randSeed);
     }
 
     // Calculate resulting reservoir weight
-    reservoir = updateReservoirWeight(reservoir, surface);
+    reservoir = updateReservoirWeight(reservoir, surface, randSeed);
 
-    // Temporal reuse TODO: Add proper reuse with motion vectors
-    //Reservoir prevReservoir = prev_reservoirs[resIndex];
-    //if(FirstTime == 0 && prevReservoir.selectedLightWeight > 0){
+    const vec2 velocity = imageLoad(tx_motion, pos).rg;
+    const vec2 pixelCenter = vec2(pos.xy) + vec2(0.5);
+    const vec2 uv = pixelCenter/vec2(tex_res);
+
+    vec2 _uv = uv - velocity;
+
+    ivec2 _pos = ivec2(floor(_uv * tex_res - 0.5));
+    // Temporal reuse TODO: Add sample rejection for occluded reservoirs
+
+    if(FirstTime == 0 && TexBoundsCheck(_pos)){
+        Reservoir prevReservoir = prev_reservoirs[_pos.x * tex_res.y + _pos.y];
         // Store resulting reservoir
-     //   reservoirs[resIndex] = combineReservoirs(reservoir, prevReservoir, surface, randSeed);
-    //}
-   // else
+        reservoirs[resIndex] = combineReservoirs(reservoir, prevReservoir, surface, randSeed);
+    }
+    else
         reservoirs[resIndex] = reservoir;
 }

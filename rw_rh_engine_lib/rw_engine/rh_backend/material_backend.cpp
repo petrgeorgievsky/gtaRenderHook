@@ -94,6 +94,8 @@ int32_t BackendMaterialPlugin::StreamAlwaysCallback(
     if ( !mat_desc )
         return 1;
 
+    if ( mat_desc->IsEmissive )
+        ext.Emission = mat_desc->EmissionValue;
     ext.mSpecTex = m_ext_sys.ReadTexture(
         mat_desc->mTextureDictName,
         std::string_view( mat_desc->mSpecularTextureName.data() ) );

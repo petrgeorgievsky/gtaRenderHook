@@ -94,8 +94,6 @@ void main()
     {
         vec3 vSkyLightCol = sky_cfg.ambientColor.xyz;//vec3(90.0/255.0, 205.0/255.0, 255.0/255.0);
         float AmbientOcclusion = imageLoad(tx_ao, pos).r;
-        // Diffuse term consists of diffuse lighting, and sky ambient
-        vec3 DiffuseTerm = ((Lighting.rgb) + AmbientOcclusion * vSkyLightCol.rgb);
         // Specular term consists of specular highlights
         // vec3 SpecularTerm = (Lighting.w * Lighting.xyz) * AmbientOcclusion;
         // Reflection term is computed before deferred
@@ -105,18 +103,20 @@ void main()
 		float specular = mat_params.r;
 		float roughness = mat_params.g;
 		float metallness = mat_params.b;
+        // Diffuse term consists of diffuse lighting, and sky ambient
+        vec3 DiffuseTerm = ((Lighting.rgb) + AmbientOcclusion * vSkyLightCol.rgb + vec3(mat_params.a));
 
 		float k_s = MicrofacetFresnel(-ViewDir,Normals, roughness) * specular;
 
 		vec3 specular_base = mix(vec3(specular)*.08, AlbedoColor.rgb, metallness);
 
 		float r_cutoff = 0.65f;
-		// ref_params.rgb = mix(ref_params.rgb, sky_cfg.skyColor.rgb, max( roughness - r_cutoff, 0.0f));
+		ref_params.rgb = mix(ref_params.rgb, sky_cfg.skyColor.rgb, max( roughness - r_cutoff, 0.0f));
         vec3 ReflectionTerm = mix(specular_base, vec3(1), k_s) * ref_params.rgb;//txReflections.Sample(samLinear, i.vTexCoord.xy).rgb;
 
 
         // Add atmospheric scattering to result
-        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb * (1 - metallness) * (1 - k_s)  + ReflectionTerm;//+ SpecularTerm * Parameters.x + ReflectionTerm * FresnelCoeff * Parameters.x;
+        OutLighting.xyz = DiffuseTerm * AlbedoColor.rgb * (1 - metallness) * (1 - k_s) + ReflectionTerm;//+ SpecularTerm * Parameters.x + ReflectionTerm * FresnelCoeff * Parameters.x;
         OutLighting.a = 1;
     }
     imageStore(output_image, pos, OutLighting);

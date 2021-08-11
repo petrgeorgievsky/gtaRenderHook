@@ -1,6 +1,9 @@
 #version 460
 #extension GL_NV_ray_tracing : require
 #extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+#extension GL_EXT_shader_16bit_storage : require
+#extension GL_EXT_nonuniform_qualifier : enable
 #include "../raycommon.glsl"
 
 #include "restir_structs.glsl"
@@ -33,7 +36,7 @@ layout(binding = 3, set = 0, rgba16f) uniform image2D tx_normal_depth;
 
 layout(binding = 4, set = 0) buffer AnalyticLights
 {
-    AnalyticLight SceneLights[];
+    PackedLight SceneLights[];
 };
 
 layout(binding = 5, set = 0) uniform SkyCfg
@@ -42,6 +45,13 @@ layout(binding = 5, set = 0) uniform SkyCfg
     vec4 SunColor;
     vec4 HorizonColor;
     vec4 SkyColor;
+};
+
+layout(binding = 6, set = 0) buffer TriangleLights
+{
+    int TriLightsCount;
+    int padd_2[4*3-1];
+    PackedLight SceneTriLights[];
 };
 
 layout(binding = 0, set = 1) uniform CameraProperties
@@ -53,6 +63,14 @@ layout(binding = 0, set = 1) uniform CameraProperties
     mat4 viewProjInverse;
     mat4 viewProjInversePrev;
 };
+
+// Scene descriptors
+// TODO: Move to include
+layout(binding = 0, set = 2, scalar) buffer ScnDesc{ sceneDesc i[]; } scnDesc;
+layout(binding = 1, set = 2, scalar) buffer Vertices { Vertex v[]; } vertices[];
+layout(binding = 2, set = 2) buffer Indices { uint16_t i[]; } indices[];
+layout(binding = 3, set = 2) uniform texture2D textures[];
+layout(binding = 4, set = 2, scalar) buffer MatDesc{ MaterialDesc i[]; } matDesc;
 
 vec3 LinDepthToViewPos(float  lin_z, vec2 tc)
 {

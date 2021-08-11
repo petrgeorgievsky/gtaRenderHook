@@ -51,6 +51,8 @@ struct LightPopulationPassBase
     rh::engine::IImageView   *Normals;
     rh::engine::IBuffer      *Lights;
     rh::engine::IBuffer      *Sky;
+    rh::engine::IBuffer      *TriLights;
+    rh::engine::IImageView   *MotionVectors;
 };
 
 //

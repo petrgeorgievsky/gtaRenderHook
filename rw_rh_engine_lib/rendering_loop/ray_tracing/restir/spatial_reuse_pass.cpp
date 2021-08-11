@@ -9,6 +9,7 @@
 #include <rendering_loop/DescriptorGenerator.h>
 #include <rendering_loop/DescriptorUpdater.h>
 #include <rendering_loop/ray_tracing/CameraDescription.h>
+#include <rendering_loop/ray_tracing/RTSceneDescription.h>
 
 using namespace rh::engine;
 namespace rh::rw::engine::restir
@@ -22,6 +23,7 @@ struct SpatialReusePassBind
     constexpr static auto NormalDepth     = 3;
     constexpr static auto Lights          = 4;
     constexpr static auto Sky             = 5;
+    constexpr static auto TriLights       = 6;
 };
 
 SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
@@ -45,7 +47,9 @@ SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
         .AddDescriptor( 0, SpatialReusePassBind::Lights, 2,
                         DescriptorType::RWBuffer, 1, ShaderStage::Compute )
         .AddDescriptor( 0, SpatialReusePassBind::Sky, 2,
-                        DescriptorType::ROBuffer, 1, ShaderStage::Compute );
+                        DescriptorType::ROBuffer, 1, ShaderStage::Compute )
+        .AddDescriptor( 0, SpatialReusePassBind::TriLights, 2,
+                        DescriptorType::RWBuffer, 1, ShaderStage::Compute );
 
     mDescSetLayout = descriptor_generator.FinalizeDescriptorSet( 0, 1 );
     mDescSetAlloc  = descriptor_generator.FinalizeAllocator();
@@ -55,7 +59,7 @@ SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
 
     std::array layouts = {
         static_cast<IDescriptorSetLayout *>( mDescSetLayout ),
-        mCamera->GetSetLayout() };
+        mCamera->GetSetLayout(), Scene->DescLayout() };
     mPipeLayout = device.CreatePipelineLayout( { .mSetLayouts = layouts } );
 
     ShaderDesc shader_desc{
@@ -71,13 +75,6 @@ SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
                             .mShader     = mShader,
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
-    mResultReservoirBuffer = device.CreateBuffer( BufferCreateInfo{
-        .mSize =
-            static_cast<uint32_t>( sizeof( float ) * 4 * mWidth * mHeight ),
-        .mUsage       = BufferUsage::StorageBuffer,
-        .mFlags       = BufferFlags::Dynamic,
-        .mInitDataPtr = nullptr } );
-
     mParamsBuffer =
         Device.CreateBuffer( { .mSize  = sizeof( SpatialReusePassParams ),
                                .mUsage = BufferUsage::ConstantBuffer } );
@@ -91,7 +88,7 @@ SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
             { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, mReservoirBuffer } } )
         .UpdateBuffer(
             SpatialReusePassBind::ResultReservoir, DescriptorType::RWBuffer,
-            { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, mResultReservoirBuffer } } )
+            { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, TempReservoirBuffer } } )
         .UpdateImage( SpatialReusePassBind::NormalDepth,
                       DescriptorType::StorageTexture,
                       { { ImageLayout::General, mNormalsView, nullptr } } )
@@ -99,6 +96,9 @@ SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
                        { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, mLightBuffer } } )
         .UpdateBuffer( SpatialReusePassBind::Sky, DescriptorType::ROBuffer,
                        { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, mSkyCfg } } )
+        .UpdateBuffer( SpatialReusePassBind::TriLights,
+                       DescriptorType::RWBuffer,
+                       { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, TriLights } } )
         .End();
 }
 
@@ -115,10 +115,11 @@ void SpatialReusePass::Execute( uint32_t                    light_count,
 
     vk_cmd_buff->BindComputePipeline( mPipeline );
 
-    vk_cmd_buff->BindDescriptorSets( { PipelineBindPoint::Compute,
-                                       mPipeLayout,
-                                       0,
-                                       { mDescSet, mCamera->GetDescSet() } } );
+    vk_cmd_buff->BindDescriptorSets(
+        { PipelineBindPoint::Compute,
+          mPipeLayout,
+          0,
+          { mDescSet, mCamera->GetDescSet(), Scene->DescSet() } } );
 
     vk_cmd_buff->DispatchCompute(
         { .mX = mWidth / 8, .mY = mHeight / 8, .mZ = 1 } );
@@ -126,7 +127,7 @@ void SpatialReusePass::Execute( uint32_t                    light_count,
 
 rh::engine::IBuffer *SpatialReusePass::GetResult()
 {
-    return mResultReservoirBuffer;
+    return TempReservoirBuffer;
 }
 
 void SpatialReusePass::UpdateUI()

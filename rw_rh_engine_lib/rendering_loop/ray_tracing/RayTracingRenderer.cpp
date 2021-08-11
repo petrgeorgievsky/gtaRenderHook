@@ -171,6 +171,7 @@ RayTracingRenderer::Render( const FrameState &                state,
     auto &mesh_pool = Resources.GetMeshPool();
     mRenderDispatchList.clear();
 
+    mRestirShadowsPass->Reset();
     mSkinAnimationPipe->Update( state );
     if ( !mSkinAnimationPipe->DrawCallList.empty() )
         mRenderDispatchList.push_back( mSkinAnimationPipe->GetAnimateSubmitInfo(
@@ -205,6 +206,7 @@ RayTracingRenderer::Render( const FrameState &                state,
         mPrimaryRaysPass->Execute( mTLAS, dest, *state.Sky );
         mTiledLightCulling->Execute( dest, state.Lights );
         mRTAOPass->Execute( mTLAS, dest );
+        // mRTShadowsPass->Execute( mTLAS, dest );
         mRestirShadowsPass->Execute( mTLAS, state.Lights.PointLights.Size(),
                                      dest );
         mRTReflectionPass->Execute( mTLAS, dest );
@@ -258,12 +260,17 @@ bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
     if ( draw_call_count <= 0 )
         return false;
 
+    uint64_t i = 0;
     // Fill scene description
     for ( const auto &dc : mesh_data.DrawCalls )
     {
         mSceneDescription->RecordDrawCall(
             dc, &mesh_data.Materials[dc.MaterialListStart],
             dc.MaterialListCount );
+        mRestirShadowsPass->RecordTriLights(
+            Resources.GetMeshPool().GetResource( dc.MeshId ).EmissiveTriangles,
+            dc.WorldTransform, i );
+        i++;
     }
     for ( const auto &dc : mSkinAnimationPipe->DrawCallList )
     {
@@ -277,7 +284,7 @@ bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
     // Build TLAS instance buffer
     std::vector<VkAccelerationStructureInstanceNV> instance_buffer{};
     instance_buffer.reserve( draw_call_count );
-    uint64_t i = 0;
+    i = 0;
 
     for ( const auto &dc : mesh_data.DrawCalls )
     {

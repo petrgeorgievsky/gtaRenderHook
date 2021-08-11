@@ -9,6 +9,7 @@
 #include <rendering_loop/DescriptorGenerator.h>
 #include <rendering_loop/DescriptorUpdater.h>
 #include <rendering_loop/ray_tracing/CameraDescription.h>
+#include <rendering_loop/ray_tracing/RTSceneDescription.h>
 
 using namespace rh::engine;
 namespace rh::rw::engine::restir
@@ -22,6 +23,8 @@ struct LightPopulationPassBind
     constexpr static auto Reservoir     = 3;
     constexpr static auto PrevReservoir = 4;
     constexpr static auto SkyCfg        = 5;
+    constexpr static auto TriLights     = 6;
+    constexpr static auto MotionVectors = 7;
 };
 
 LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
@@ -33,7 +36,8 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
 
     // Main Descriptor Set layout
     descriptor_generator
-        .AddDescriptor( 0, LightPopulationPassBind::NormalDepth, 0,
+        .AddDescriptor( 0, LightPopulationPassBind::NormalDepth,
+                        LightPopulationPassBind::NormalDepth,
                         DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute )
         .AddDescriptor( 0, LightPopulationPassBind::Lights,
@@ -50,7 +54,14 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
                         DescriptorType::RWBuffer, 1, ShaderStage::Compute )
         .AddDescriptor( 0, LightPopulationPassBind::SkyCfg,
                         LightPopulationPassBind::SkyCfg,
-                        DescriptorType::ROBuffer, 1, ShaderStage::Compute );
+                        DescriptorType::ROBuffer, 1, ShaderStage::Compute )
+        .AddDescriptor( 0, LightPopulationPassBind::TriLights,
+                        LightPopulationPassBind::TriLights,
+                        DescriptorType::RWBuffer, 1, ShaderStage::Compute )
+        .AddDescriptor( 0, LightPopulationPassBind::MotionVectors,
+                        LightPopulationPassBind::MotionVectors,
+                        DescriptorType::StorageTexture, 1,
+                        ShaderStage::Compute );
 
     DescSetLayout = descriptor_generator.FinalizeDescriptorSet( 0, 1 );
     DescSetAlloc  = descriptor_generator.FinalizeAllocator();
@@ -58,7 +69,7 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
     DescSet = DescSetAlloc->AllocateDescriptorSets( { { DescSetLayout } } )[0];
 
     std::array layouts = { static_cast<IDescriptorSetLayout *>( DescSetLayout ),
-                           Camera->GetSetLayout() };
+                           Camera->GetSetLayout(), Scene->DescLayout() };
     PipeLayout = device.CreatePipelineLayout( { .mSetLayouts = layouts } );
 
     ShaderDesc shader_desc{
@@ -95,6 +106,9 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
         .UpdateImage( LightPopulationPassBind::NormalDepth,
                       DescriptorType::StorageTexture,
                       { { ImageLayout::General, Normals, nullptr } } )
+        .UpdateImage( LightPopulationPassBind::MotionVectors,
+                      DescriptorType::StorageTexture,
+                      { { ImageLayout::General, MotionVectors, nullptr } } )
         .UpdateBuffer( LightPopulationPassBind::Lights,
                        DescriptorType::RWBuffer,
                        { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, Lights } } )
@@ -110,6 +124,9 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
         .UpdateBuffer( LightPopulationPassBind::SkyCfg,
                        DescriptorType::ROBuffer,
                        { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, Sky } } )
+        .UpdateBuffer( LightPopulationPassBind::TriLights,
+                       DescriptorType::RWBuffer,
+                       { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, TriLights } } )
         .End();
 }
 
@@ -124,10 +141,11 @@ void LightSamplingPass::Execute( uint32_t                    light_count,
 
     vk_cmd_buff->BindComputePipeline( Pipeline );
 
-    vk_cmd_buff->BindDescriptorSets( { PipelineBindPoint::Compute,
-                                       PipeLayout,
-                                       0,
-                                       { DescSet, Camera->GetDescSet() } } );
+    vk_cmd_buff->BindDescriptorSets(
+        { PipelineBindPoint::Compute,
+          PipeLayout,
+          0,
+          { DescSet, Camera->GetDescSet(), Scene->DescSet() } } );
 
     vk_cmd_buff->DispatchCompute(
         { .mX = Width / 8, .mY = Height / 8, .mZ = 1 } );

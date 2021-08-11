@@ -301,7 +301,11 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
     {
         for ( int i = split.mIndexOffset;
               i < split.mIndexOffset + split.mIndexCount; i++ )
+        {
+            auto &m_b = BackendMaterialPlugin::GetData( meshes[j].material );
             vertexData[indexBuffer[i]].material_idx = j;
+            vertexData[indexBuffer[i]].emissive     = m_b.Emission;
+        }
         j++;
     }
 

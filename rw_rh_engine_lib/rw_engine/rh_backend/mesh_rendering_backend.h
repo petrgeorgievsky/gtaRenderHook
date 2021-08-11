@@ -2,6 +2,7 @@
 // Created by peter on 24.04.2020.
 //
 #pragma once
+#include "data_desc/light_system/packed_light.h"
 #include "material_backend.h"
 #include <Engine/ResourcePool.h>
 #include <common.h>
@@ -63,6 +64,7 @@ struct BackendMeshData
     uint64_t                      mVertexCount;
     std::vector<GeometrySplit>    mSplits;
     std::vector<GeometryMaterial> mMaterials;
+    std::vector<PackedLight>      EmissiveTriangles;
     uint32_t                      mMaterialOffset;
 };
 
@@ -91,7 +93,7 @@ struct VertexDescPosColorUVNormals
     uint32_t bone_indices;
     uint8_t  color[4];
     uint32_t material_idx;
-    uint32_t padd;
+    float    emissive = 0.0f;
 };
 
 struct BackendMeshInitData

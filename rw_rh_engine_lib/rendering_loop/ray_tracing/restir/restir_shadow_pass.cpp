@@ -5,6 +5,7 @@
 #include "restir_shadow_pass.h"
 #include "light_sampling_pass.h"
 #include "spatial_reuse_pass.h"
+#include "visibility_reuse_pass.h"
 #include <imgui.h>
 
 namespace rh::rw::engine::restir
@@ -20,6 +21,7 @@ struct ShadowsPassBind
     constexpr static auto PrevReservoir = 6;
     constexpr static auto Params        = 7;
     constexpr static auto SkyCfg        = 8;
+    constexpr static auto TriLights     = 9;
 };
 
 ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
@@ -27,13 +29,45 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
       mCamera( params.mCamera ), mWidth( params.mWidth ),
       mHeight( params.mHeight )
 {
+    TriangleLights = Device.CreateBuffer( BufferCreateInfo{
+        .mSize        = static_cast<uint32_t>( sizeof( PackedLight ) *
+                                        ( TriLightsCpuBuffer.max_size() + 1 ) ),
+        .mUsage       = BufferUsage::StorageBuffer,
+        .mFlags       = BufferFlags::Dynamic,
+        .mInitDataPtr = nullptr } );
+
     mLightPopulationPass = new LightSamplingPass( LightPopulationPassBase{
         Device, mScene, mCamera, params.mWidth, params.mHeight,
-        params.mNormalsView, params.mLightBuffer, params.mSkyCfg } );
-    mSpatialReusePass    = new SpatialReusePass( SpatialReusePassBase{
+        params.mNormalsView, params.mLightBuffer, params.mSkyCfg,
+        TriangleLights, params.mMotionVectorsView } );
+
+    TempReservoirBuffer = Device.CreateBuffer( BufferCreateInfo{
+        .mSize =
+            static_cast<uint32_t>( sizeof( float ) * 4 * mWidth * mHeight ),
+        .mUsage       = BufferUsage::StorageBuffer,
+        .mFlags       = BufferFlags::Dynamic,
+        .mInitDataPtr = nullptr } );
+
+    ResultReservoirBuffer = Device.CreateBuffer( BufferCreateInfo{
+        .mSize =
+            static_cast<uint32_t>( sizeof( float ) * 4 * mWidth * mHeight ),
+        .mUsage       = BufferUsage::StorageBuffer,
+        .mFlags       = BufferFlags::Dynamic,
+        .mInitDataPtr = nullptr } );
+    //
+    /*mVisibilityReusePass  = new VisibilityReusePass(
+       VisibilityReuseInitParams{ Device, params.mWidth, params.mHeight, mScene,
+       mCamera, params.mSkyCfg, params.mNormalsView, params.mLightBuffer,
+        mLightPopulationPass->GetResult(), TempReservoirBuffer } );*/
+    mSpatialReusePass = new SpatialReusePass( SpatialReusePassBase{
         Device, params.mWidth, params.mHeight,
         mLightPopulationPass->GetResult(), params.mNormalsView,
-        params.mLightBuffer, params.mSkyCfg, mCamera } );
+        params.mLightBuffer, params.mSkyCfg, mCamera, mScene,
+        TempReservoirBuffer, TriangleLights } );
+    /*mSpatialReusePass2 = new SpatialReusePass( SpatialReusePassBase{
+        Device, params.mWidth, params.mHeight, TempReservoirBuffer,
+        params.mNormalsView, params.mLightBuffer, params.mSkyCfg, mCamera,
+        mScene, ResultReservoirBuffer, TriangleLights } );*/
 
     DescriptorGenerator descriptor_generator{ Device };
 
@@ -57,7 +91,9 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
         .AddDescriptor( 0, ShadowsPassBind::Params, 0, DescriptorType::ROBuffer,
                         1, ShaderStage::RayGen )
         .AddDescriptor( 0, ShadowsPassBind::SkyCfg, 0, DescriptorType::ROBuffer,
-                        1, ShaderStage::RayGen );
+                        1, ShaderStage::RayGen )
+        .AddDescriptor( 0, ShadowsPassBind::TriLights, 0,
+                        DescriptorType::RWBuffer, 1, ShaderStage::RayGen );
 
     // Create Layouts
     mRayTraceSetLayout = descriptor_generator.FinalizeDescriptorSet( 0, 1 );
@@ -148,6 +184,8 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
                        { { 0, VK_WHOLE_SIZE, mParamsBuffer } } )
         .UpdateBuffer( ShadowsPassBind::SkyCfg, DescriptorType::ROBuffer,
                        { { 0, VK_WHOLE_SIZE, params.mSkyCfg } } )
+        .UpdateBuffer( ShadowsPassBind::TriLights, DescriptorType::RWBuffer,
+                       { { 0, VK_WHOLE_SIZE, TriangleLights } } )
         .End();
 
     /// TODO: Make it easier to create raytracing hitgroups/sbt's
@@ -220,11 +258,26 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
 void ShadowsPass::Execute( void *tlas, uint32_t light_count,
                            rh::engine::ICommandBuffer *cmd_buffer )
 {
-    mLightPopulationPass->Execute( light_count, cmd_buffer );
-    mSpatialReusePass->Execute( light_count, cmd_buffer );
+    auto l                        = TriangleLights->Lock();
+    *static_cast<uint32_t *>( l ) = TriLightsCpuBufferCount;
+    PackedLight *triangle_light =
+        reinterpret_cast<PackedLight *>( static_cast<PackedLight *>( l ) + 1 );
+    std::memcpy( triangle_light, TriLightsCpuBuffer.data(),
+                 TriLightsCpuBuffer.size() * sizeof( PackedLight ) );
+    TriangleLights->Unlock();
+
     mPassParams.Timestamp   = ( mPassParams.Timestamp + 1 ) % 100000;
     mPassParams.LightsCount = light_count;
     mParamsBuffer->Update( &mPassParams, sizeof( ShadowsProperties ) );
+
+    mLightPopulationPass->Execute( light_count, cmd_buffer );
+    /*mVisibilityReusePass->Execute(
+        tlas,
+        { mPassParams.Timestamp, light_count, mPassParams.LightRadius, 0 },
+        cmd_buffer );*/
+    mSpatialReusePass->Execute( light_count, cmd_buffer );
+    // mSpatialReusePass2->Execute( light_count, cmd_buffer );
+    //
 
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
@@ -267,20 +320,49 @@ void ShadowsPass::Execute( void *tlas, uint32_t light_count,
                                  sbt_size, sbt_size, mShaderBindTable,
                                  sbt_size * 2, sbt_size, nullptr, 0, 0, mWidth,
                                  mHeight, 1 } );
-
-    mVarianceTAFilter->Execute( vk_cmd_buff );
-    mBilFil0->Execute( vk_cmd_buff );
+    if ( EnableDenoiser )
+    {
+        mVarianceTAFilter->Execute( vk_cmd_buff );
+        // mBilFil0->Execute( vk_cmd_buff );
+    }
 }
 
+void ShadowsPass::Reset() { TriLightsCpuBufferCount = 0; }
+
+void ShadowsPass::RecordTriLights( const std::vector<PackedLight> &lights,
+                                   const DirectX::XMFLOAT4X3      &transform,
+                                   int                             inst_id )
+{
+    auto to_copy = ( std::min )( lights.size(), TriLightsCpuBuffer.max_size() -
+                                                    TriLightsCpuBufferCount );
+    std::copy( lights.begin(), lights.begin() + to_copy,
+               TriLightsCpuBuffer.begin() + TriLightsCpuBufferCount );
+
+    for ( auto it = TriLightsCpuBufferCount;
+          it < TriLightsCpuBufferCount + to_copy; it++ )
+        TriLightsCpuBuffer[it].Triangle.InstanceId = inst_id;
+
+    TriLightsCpuBufferCount += to_copy;
+}
 rh::engine::IImageView *ShadowsPass::GetShadowsView()
 {
-    return mBlurredShadowsBufferView;
+    return EnableDenoiser ? (rh::engine::IImageView *)
+                                mVarianceTAFilter->GetAccumulatedValue()
+                          : (rh::engine::IImageView *)mShadowsBufferView;
 }
 
 void ShadowsPass::UpdateUI()
 {
     if ( !ImGui::CollapsingHeader( "ReSTIR Parameters" ) )
         return;
+    ImGui::Checkbox( "Enable denoiser", &EnableDenoiser );
+    ImGui::LabelText( "TriLightCount", "Triangle light count: %u",
+                      TriLightsCpuBufferCount );
+    ImGui::LabelText( "PointLightCount", "Point light count: %u",
+                      mPassParams.LightsCount );
+    ImGui::LabelText( "TotalLightCount", "Total light count: %u",
+                      mPassParams.LightsCount + TriLightsCpuBufferCount + 1 );
+
     mSpatialReusePass->UpdateUI();
     mLightPopulationPass->UpdateUI();
 
@@ -291,5 +373,6 @@ void ShadowsPass::UpdateUI()
     ImGui::DragFloat( "Light intensity boost", &mPassParams.LightIntensityBoost,
                       0.1f, 0.1f, 100.0f );
 }
+ShadowsPass::~ShadowsPass() = default;
 
 } // namespace rh::rw::engine::restir

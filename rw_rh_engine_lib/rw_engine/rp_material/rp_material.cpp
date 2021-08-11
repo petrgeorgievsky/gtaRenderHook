@@ -98,6 +98,7 @@ RpMaterial *RpMaterialCreate()
     material->surfaceProps = { 1.0F, 1.0F, 1.0F };
     auto &mat_ext          = BackendMaterialPlugin::GetData( material );
     mat_ext.mSpecTex       = nullptr;
+    mat_ext.Emission       = 0.0f;
     // RpMaterialSetSurfaceProperties( material, &defaultSurfaceProperties );
 
     /* Initialize memory allocated to toolkits */

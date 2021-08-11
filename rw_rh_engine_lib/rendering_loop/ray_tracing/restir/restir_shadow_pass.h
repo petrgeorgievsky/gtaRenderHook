@@ -3,12 +3,12 @@
 //
 
 #pragma once
-
-#pragma once
 #include <Engine/Common/ScopedPtr.h>
 
 #include <array>
 #include <cstdint>
+#include <data_desc/light_system/packed_light.h>
+
 namespace rh::engine
 {
 class IImageView;
@@ -40,6 +40,7 @@ namespace restir
 {
 class LightSamplingPass;
 class SpatialReusePass;
+class VisibilityReusePass;
 
 struct ShadowsInitParams
 {
@@ -77,15 +78,26 @@ class ShadowsPass
                   rh::engine::ICommandBuffer *cmd_buffer );
 
     ShadowsPass( const ShadowsInitParams &params );
+    ~ShadowsPass();
 
     void UpdateUI();
+
+    void RecordTriLights( const std::vector<PackedLight> &lights,
+                          const DirectX::XMFLOAT4X3 &transform, int inst_id );
+    void Reset();
 
   private:
     rh::engine::IDeviceState          &Device;
     RTSceneDescription                *mScene;
     CameraDescription                 *mCamera;
     ScopedPointer<LightSamplingPass>   mLightPopulationPass;
+    ScopedPointer<VisibilityReusePass> mVisibilityReusePass;
     ScopedPointer<SpatialReusePass>    mSpatialReusePass;
+    ScopedPointer<SpatialReusePass>    mSpatialReusePass2;
+    ScopedPointer<rh::engine::IBuffer> TempReservoirBuffer;
+    ScopedPointer<rh::engine::IBuffer> ResultReservoirBuffer;
+    ScopedPointer<rh::engine::IBuffer> TriangleLights;
+
     ScopedPointer<BilateralFilterPass> mBilFil0;
     ScopedPointer<VATAColorFilterPass> mVarianceTAFilter;
 
@@ -116,8 +128,11 @@ class ShadowsPass
     ScopedPointer<rh::engine::ISampler> mTextureSampler;
     uint32_t                            mWidth;
     uint32_t                            mHeight;
+    bool                                EnableDenoiser = true;
 
     ScopedPointer<rh::engine::IBuffer> mParamsBuffer;
+    uint32_t                           TriLightsCpuBufferCount{ 0 };
+    std::array<PackedLight, 10240>     TriLightsCpuBuffer{};
 };
 } // namespace restir
 } // namespace rh::rw::engine

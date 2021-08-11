@@ -3,6 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
+#extension GL_EXT_nonuniform_qualifier : enable
 #include "../raycommon.glsl"
 #include "restir_structs.glsl"
 #include "restir_common.glsl"
@@ -14,7 +15,7 @@ layout(binding = 3, set = 0) uniform sampler baseSampler;
 
 layout(binding = 4, set = 0) buffer AnalyticLights
 {
-    AnalyticLight SceneLights[];
+    PackedLight SceneLights[];
 };
 
 layout(std140,binding = 5, set = 0) readonly buffer ReservoirBuffer
@@ -43,6 +44,13 @@ layout(binding = 8, set = 0) uniform SkyCfg
     vec4 SunColor;
     vec4 HorizonColor;
     vec4 SkyColor;
+};
+
+layout(binding = 9, set = 0) buffer TriangleLights
+{
+    int TriLightsCount;
+    int padd_2[4*3-1];
+    PackedLight SceneTriLights[];
 };
 
 layout(binding = 0, set = 1) uniform CameraProperties
@@ -117,8 +125,8 @@ void main()
     surface.worldPos = origin.xyz + direction.xyz * normals_d.w;
     surface.normal   = normals_d.xyz;
 
-    Reservoir r = reservoirs[gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y];
-    prev_reservoirs[gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y] = r;
+    uint resIndex = gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y;
+    Reservoir r = reservoirs[resIndex];
 
     vec3 shadow = vec3(0.0f);
 
@@ -128,19 +136,12 @@ void main()
     float brdf; // lambertian term
     float g = 1.0f;
     vec3 pl_color;
-    if(r.selectedLightId >= 0){
-        AnalyticLight pl = SceneLights[r.selectedLightId];
+    float light_bias = -0.01;
+    float ignore_emissives = 1.0f;
 
-        lightDir         = (pl.posAndRadius.xyz - surface.worldPos.xyz);
-        distToLight      = length(lightDir);
-        lightDir        /= distToLight;
-        lightIntensity   = LightIntensityBoost;
+    uint randSeed = initRand(resIndex, Timestamp, 16);
 
-        brdf = EvaluateLambertBrdf(surface, lightDir);
-        g = PointLightGeometryTerm(surface, pl);
-        pl_color = pl.color.rgb * lightIntensity;
-    }
-    else
+    if(r.selectedLightId < 0)
     {
         // Sun
         lightDir = SunDir.xyz;
@@ -155,14 +156,55 @@ void main()
 
         brdf = EvaluateLambertBrdf(surface, lightDir); // lambertian term
         pl_color = vec3(lightIntensity);
+        light_bias = 5;
+    }
+    else if(r.selectedLightId < LightsCount)
+    {
+        AnalyticLight pl =  UnpackLight(SceneLights[r.selectedLightId]);
+
+        lightDir         = (pl.posAndRadius.xyz - surface.worldPos.xyz);
+        distToLight      = length(lightDir);
+        lightDir        /= distToLight;
+        lightIntensity   = LightIntensityBoost;
+
+        brdf = EvaluateLambertBrdf(surface, lightDir);
+        g = PointLightGeometryTerm(surface, pl);
+        pl_color = pl.color.rgb * lightIntensity;
+        light_bias = LightRadius;
+    }
+    else
+    {
+        int triangleId = (r.selectedLightId-int(LightsCount)) % (TriLightsCount);
+
+        TriangleLight triLight = UnpackTriLight(SceneTriLights[triangleId]);
+
+        vec2 attribs = vec2(nextRand(randSeed),nextRand(randSeed));
+
+        const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
+
+        vec3 obj_pos = triLight.v0.xyz * barycentrics.x +
+                       triLight.v1.xyz * barycentrics.y +
+                       triLight.v2.xyz * barycentrics.z;
+        vec4 world_pos = ((vec4(obj_pos, 1.0) * scnDesc.i[triLight.instanceId].transfo));
+        float tri_area = length(cross(triLight.v1.xyz - triLight.v0.xyz,triLight.v2.xyz - triLight.v0.xyz));
+
+        lightDir         = (world_pos.xyz - surface.worldPos.xyz);
+        distToLight      = length(lightDir);
+        lightDir        /= distToLight;
+        lightIntensity   = LightIntensityBoost;
+
+        brdf = EvaluateLambertBrdf(surface, lightDir);
+        g = min(1.0f/(distToLight * distToLight), 1.0f);
+        pl_color = vec3(lightIntensity);
+		ignore_emissives = -1.0f;
     }
 
     payload.hitDistance = 0.0f;
     payload.velocity = 0.0f;
     payload.x = 0.0f;
     payload.y = 0.0f;
-
-    uint randSeed = initRand(gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y, Timestamp, 16);
+    payload.emission = vec4(0.0f);
+    payload.emission.w = ignore_emissives;
 
     const float depth_eps = FloatPrecision(normals_d.w, 10);
 
@@ -173,15 +215,18 @@ void main()
     0, // missIndex
     surface.worldPos + depth_eps * surface.normal, // ray origin
     tMin, // ray min range
-    normalize(lightDir * distToLight + vec3(nextRand(randSeed),nextRand(randSeed),nextRand(randSeed)) * LightRadius), // ray direction
-    max(distToLight - LightRadius, 0.0f), // ray max range
+    normalize(lightDir * distToLight + vec3(nextRand(randSeed),nextRand(randSeed),nextRand(randSeed)) * max(light_bias,0.0f)), // ray direction
+    max(distToLight - light_bias, 0.0f), // ray max range
     0// payload (location = 0)
     );
 
-    // TODO: Use actual sampled light weight to account for the fact that we approximate unknown distribution,
-    // for some reason right now it is very low which results in very dark image
-    shadow = (payload.hitDistance > 0 ? 1.0f: 0.0f) *
-                    g * brdf * pl_color;
+	vec3 emission_mul = ignore_emissives > 0 ? vec3(1.0f) : payload.emission.xyz;
 
+    // TODO: Make treshold available from UI and a part of denoiser
+    const float fireflyTreshold = 50.0f;
+    shadow = (payload.hitDistance > 0 ? 1.0f: 0.0f) *
+                    /*g * brdf */ pl_color * vec3(min(r.selectedLightWeight * EvaluatePDF(r.selectedLightId, surface, randSeed), fireflyTreshold)) * emission_mul/3.14f;
+    r.selectedLightWeight *= (payload.hitDistance > 0 ? 1.0f: 0.0f);
+    prev_reservoirs[resIndex] = r;
     imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(shadow, payload.velocity* 100.0f));
 }

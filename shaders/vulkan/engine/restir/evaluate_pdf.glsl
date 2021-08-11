@@ -32,8 +32,9 @@ float PointLightGeometryTerm(SurfacePoint surface, AnalyticLight pl)
 }
 
 /// Evaluates approximation of light PDF - p_hat in ReSTIR paper
-float EvaluatePDF(int light_id, SurfacePoint surface)
+float EvaluatePDF(int light_id, SurfacePoint surface, inout uint randSeed)
 {
+	float p_hat = 0.0f;
     // Main directional light
     if(light_id < 0)
     {
@@ -45,12 +46,12 @@ float EvaluatePDF(int light_id, SurfacePoint surface)
         }
         float brdf = EvaluateLambertBrdf(surface, lightDir);
 
-        return (lightIntensity * brdf) * (LightsCount+1);
+        p_hat = (lightIntensity * brdf);
     }
     // Analytic lights
     else if(light_id < LightsCount)
     {
-        AnalyticLight pl = SceneLights[light_id];
+        AnalyticLight pl = UnpackLight(SceneLights[light_id]);
 
         float lightIntensity = length(pl.color.rgb);
         vec3 lightDir = (pl.posAndRadius.xyz - surface.worldPos.xyz);
@@ -59,9 +60,37 @@ float EvaluatePDF(int light_id, SurfacePoint surface)
         float g = PointLightGeometryTerm(surface, pl);
 
         // p_hat of the light is Le * f * G / pdf, pdf is 1 / lights count
-        return (lightIntensity * brdf * g) * (LightsCount+1);
+        p_hat = (lightIntensity * brdf * g);
     }
     // Triangle lights
     else
-        return 0.0f;
+    {
+        int triangleId = (light_id-int(LightsCount)) % (TriLightsCount);
+
+        TriangleLight triLight = UnpackTriLight(SceneTriLights[triangleId]);
+
+        vec2 attribs = vec2(nextRand(randSeed),nextRand(randSeed));
+
+        const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
+
+        vec3 obj_pos = triLight.v0.xyz * barycentrics.x +
+                       triLight.v1.xyz * barycentrics.y +
+                       triLight.v2.xyz * barycentrics.z;
+        vec4 world_pos = ((vec4(obj_pos, 1.0) * scnDesc.i[triLight.instanceId].transfo));
+        vec3 lNormal = cross(triLight.v1.xyz - triLight.v0.xyz,triLight.v2.xyz - triLight.v0.xyz);
+        lNormal = normalize(lNormal);
+        //float tri_area = length();
+
+        vec3 lightDir = (world_pos.xyz - surface.worldPos.xyz);
+        float distToLight = length(lightDir);
+        if(distToLight > 0.001f)
+            lightDir /= distToLight;
+
+        float brdf = EvaluateLambertBrdf(surface, lightDir); // lambertian term
+        float g = (1.0f/(distToLight * distToLight)) * max(dot(lNormal, -lightDir),0.0f);
+
+        // p_hat of the light is Le * f * G / pdf, pdf is 1 / lights count
+        p_hat = (triLight.intensity * brdf * g);
+    }
+	return p_hat;
 }

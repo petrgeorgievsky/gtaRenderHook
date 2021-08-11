@@ -17,6 +17,8 @@ struct MaterialDescription
 {
     std::string          mTextureDictName;
     std::array<char, 32> mSpecularTextureName{};
+    bool                 IsEmissive;
+    float                EmissionValue;
 };
 
 class MaterialExtensionSystem

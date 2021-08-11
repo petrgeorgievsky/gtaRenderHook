@@ -44,27 +44,34 @@ RTSceneDescription::RTSceneDescription(
     // Scene desc
     descriptorGenerator.AddDescriptor(
         0, scene_desc_bind_id, 0, DescriptorType::RWBuffer, 1,
-        ShaderStage::RayHit | ShaderStage::RayAnyHit );
+        ShaderStage::Compute | ShaderStage::RayHit | ShaderStage::RayGen |
+            ShaderStage::RayAnyHit );
     // Materials
     descriptorGenerator.AddDescriptor(
         0, material_buff_bind_id, 0, DescriptorType::RWBuffer, 1,
-        ShaderStage::RayHit | ShaderStage::RayAnyHit );
+        ShaderStage::Compute | ShaderStage::RayHit | ShaderStage::RayGen |
+            ShaderStage::RayAnyHit );
     // Verts
     descriptorGenerator.AddDescriptor(
         0, vertex_buff_desc_bind_id, 0, DescriptorType::RWBuffer,
-        model_count_limit, ShaderStage::RayHit | ShaderStage::RayAnyHit,
+        model_count_limit,
+        ShaderStage::Compute | ShaderStage::RayHit | ShaderStage::RayGen |
+            ShaderStage::RayAnyHit,
         DescriptorFlags::dfPartiallyBound |
             DescriptorFlags::dfUpdateUnusedWhilePending );
     // Indices
     descriptorGenerator.AddDescriptor(
         0, index_buff_bind_id, 0, DescriptorType::RWBuffer, model_count_limit,
-        ShaderStage::RayHit | ShaderStage::RayAnyHit,
+        ShaderStage::Compute | ShaderStage::RayHit | ShaderStage::RayGen |
+            ShaderStage::RayAnyHit,
         DescriptorFlags::dfPartiallyBound |
             DescriptorFlags::dfUpdateUnusedWhilePending );
     // Textures
     descriptorGenerator.AddDescriptor(
         0, texture_desc_bind_id, 0, DescriptorType::ROTexture,
-        texture_count_limit, ShaderStage::RayHit | ShaderStage::RayAnyHit,
+        texture_count_limit,
+        ShaderStage::Compute | ShaderStage::RayHit | ShaderStage::RayGen |
+            ShaderStage::RayAnyHit,
         DescriptorFlags::dfPartiallyBound |
             DescriptorFlags::dfUpdateUnusedWhilePending );
 
@@ -195,8 +202,9 @@ void RTSceneDescription::RecordDrawCall( const DrawCallInfo &dc,
         mSceneMaterials[i + mMaterials].mSpecTexture = spec_tex_pool_id;
     }
 
-    obj_desc.objId     = mModelBuffersPool->GetModelId( dc.MeshId );
-    obj_desc.txtOffset = mMaterials;
+    obj_desc.objId         = mModelBuffersPool->GetModelId( dc.MeshId );
+    obj_desc.txtOffset     = mMaterials;
+    obj_desc.triangleCount = mesh.mIndexCount / 3;
 
     std::copy( &dc.WorldTransform.m[0][0], &dc.WorldTransform.m[0][0] + 3 * 4,
                &obj_desc.transform.m[0][0] );
