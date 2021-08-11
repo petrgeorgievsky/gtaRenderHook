@@ -1,6 +1,7 @@
 #include "VulkanShader.h"
 #include "DebugUtils/DebugLogger.h"
 #include "VulkanCommon.h"
+#include <Engine/Definitions.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -109,6 +110,8 @@ bool rh::engine::TranslateHLSL_to_SPIRV( const std::string &path,
              << " -V100 " // emit SPiR-V
                 "-o "
              << dir_path_ / dest_path << " " << dir_path_ / path;
+    if constexpr ( gDebugEnabled )
+        cmd_args << " -g";
 
     auto cmd_args_str = cmd_args.str();
     char cmd_args_cstr[4096];
