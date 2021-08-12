@@ -14,25 +14,25 @@ namespace rw::engine
 
 struct Im2DState
 {
-    uint8_t mColorBlendSrc;
-    uint8_t mColorBlendDst;
-    uint8_t mColorBlendOp;
-    uint8_t mBlendEnable;
+    uint8_t ColorBlendSrc;
+    uint8_t ColorBlendDst;
+    uint8_t ColorBlendOp;
+    uint8_t BlendEnable;
 
-    uint8_t mZTestEnable;
-    uint8_t mZWriteEnable;
-    uint8_t mStencilEnable;
+    uint8_t ZTestEnable;
+    uint8_t ZWriteEnable;
+    uint8_t StencilEnable;
 };
 
 struct Im2DDrawCall
 {
-    uint64_t mRasterId;
-    uint32_t mVertexBufferOffset;
-    uint32_t mVertexCount;
-    uint32_t mIndexBufferOffset;
-    uint32_t mIndexCount;
+    uint64_t RasterId;
+    uint32_t VertexBufferOffset;
+    uint32_t VertexCount;
+    uint32_t IndexBufferOffset;
+    uint32_t IndexCount;
     // BlendState
-    Im2DState mBlendState;
+    Im2DState BlendState;
 };
 
 struct ImmediateState;
@@ -57,14 +57,14 @@ class Im2DStateRecorder
     Im2DStateRecorder( ImmediateState &im_state ) noexcept;
     ~Im2DStateRecorder() noexcept;
 
-    void     RecordDrawCall( RwIm2DVertex *vertices, int32_t numVertices );
-    void     RecordDrawCall( RwIm2DVertex *vertices, int32_t numVertices,
-                             int16_t *indices, int32_t numIndices );
+    void     RecordDrawCall( RwIm2DVertex *vertices, int32_t num_vertices );
+    void     RecordDrawCall( RwIm2DVertex *vertices, int32_t num_vertices,
+                             int16_t *indices, int32_t num_indices );
     uint64_t Serialize( MemoryWriter &writer );
     void     Flush();
 
   private:
-    ImmediateState &          ImState;
+    ImmediateState           &ImState;
     std::vector<Im2DDrawCall> DrawCalls{};
     std::vector<RwIm2DVertex> VertexBuffer{};
     std::vector<int16_t>      IndexBuffer{};

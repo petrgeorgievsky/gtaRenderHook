@@ -317,35 +317,34 @@ uint64_t Im2DRenderer::Render( const Im2DRenderState &     state,
         // Compute pipeline hash
 
         PackedIm2DState s{};
-        s.s_val.enableBlend = draw_call.mBlendState.mBlendEnable;
+        s.s_val.enableBlend = draw_call.BlendState.BlendEnable;
         s.s_val.hasTexture =
-            draw_call.mRasterId != BackendRasterPlugin::NullRasterId;
-        s.s_val.srcBlendState  = draw_call.mBlendState.mColorBlendSrc;
-        s.s_val.destBlendState = draw_call.mBlendState.mColorBlendDst;
-        s.s_val.zTestEnable    = draw_call.mBlendState.mZTestEnable;
-        s.s_val.zWriteEnable   = draw_call.mBlendState.mZWriteEnable;
-        if ( draw_call.mRasterId != BackendRasterPlugin::NullRasterId )
+            draw_call.RasterId != BackendRasterPlugin::NullRasterId;
+        s.s_val.srcBlendState  = draw_call.BlendState.ColorBlendSrc;
+        s.s_val.destBlendState = draw_call.BlendState.ColorBlendDst;
+        s.s_val.zTestEnable    = draw_call.BlendState.ZTestEnable;
+        s.s_val.zWriteEnable   = draw_call.BlendState.ZWriteEnable;
+        if ( draw_call.RasterId != BackendRasterPlugin::NullRasterId )
         {
             cmd_buffer->BindDescriptorSets(
                 { .mPipelineLayout       = mTexLayout,
                   .mDescriptorSetsOffset = 2,
                   .mDescriptorSets       = {
-                      GetRasterDescSet( draw_call.mRasterId ) } } );
+                      GetRasterDescSet( draw_call.RasterId ) } } );
         }
 
         cmd_buffer->BindPipeline( GetCachedPipeline( s.i_val ) );
-        if ( draw_call.mIndexCount > 0 )
+        if ( draw_call.IndexCount > 0 )
         {
             cmd_buffer->DrawIndexed(
-                draw_call.mIndexCount, 1, draw_call.mIndexBufferOffset,
-                vertex_offset + draw_call.mVertexBufferOffset, 0 );
+                draw_call.IndexCount, 1, draw_call.IndexBufferOffset,
+                vertex_offset + draw_call.VertexBufferOffset, 0 );
         }
         else
         {
 
-            cmd_buffer->Draw( draw_call.mVertexCount, 1,
-                              vertex_offset + draw_call.mVertexBufferOffset,
-                              0 );
+            cmd_buffer->Draw( draw_call.VertexCount, 1,
+                              vertex_offset + draw_call.VertexBufferOffset, 0 );
         }
     }
 

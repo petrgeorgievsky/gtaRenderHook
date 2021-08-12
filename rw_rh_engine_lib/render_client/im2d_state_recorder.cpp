@@ -11,14 +11,14 @@ namespace rh::rw::engine
 {
 namespace
 {
-constexpr auto IM2D_VERTEX_COUNT_LIMIT = 100000;
-constexpr auto IM2D_INDEX_COUNT_LIMIT  = 100000;
+constexpr auto Im2DVertexCountLimit = 100000;
+constexpr auto Im2DIndexCountLimit  = 100000;
 } // namespace
 Im2DStateRecorder::Im2DStateRecorder( ImmediateState &im_state ) noexcept
     : ImState{ im_state }
 {
-    VertexBuffer.resize( IM2D_VERTEX_COUNT_LIMIT );
-    IndexBuffer.resize( IM2D_INDEX_COUNT_LIMIT );
+    VertexBuffer.resize( Im2DVertexCountLimit );
+    IndexBuffer.resize( Im2DIndexCountLimit );
     DrawCalls.resize( 4000 );
     DrawCallCount = 0;
     VertexCount   = 0;
@@ -28,52 +28,52 @@ Im2DStateRecorder::Im2DStateRecorder( ImmediateState &im_state ) noexcept
 Im2DStateRecorder::~Im2DStateRecorder() noexcept = default;
 
 void Im2DStateRecorder::RecordDrawCall( RwIm2DVertex *vertices,
-                                        int32_t       numVertices )
+                                        int32_t       num_vertices )
 {
     auto &result_dc = DrawCalls[DrawCallCount];
     auto &im_state  = ImState;
 
-    result_dc.mVertexBufferOffset = VertexCount;
+    result_dc.VertexBufferOffset = VertexCount;
     CopyMemory( ( VertexBuffer.data() + VertexCount ), vertices,
-                numVertices * sizeof( RwIm2DVertex ) );
-    VertexCount += numVertices;
+                num_vertices * sizeof( RwIm2DVertex ) );
+    VertexCount += num_vertices;
 
-    result_dc.mVertexCount       = numVertices;
-    result_dc.mRasterId          = im_state.Raster;
-    result_dc.mIndexCount        = 0;
-    result_dc.mIndexBufferOffset = 0;
-    result_dc.mBlendState = { im_state.ColorBlendSrc, im_state.ColorBlendDst,
-                              im_state.ColorBlendOp,  im_state.BlendEnable,
-                              im_state.ZTestEnable,   im_state.ZWriteEnable,
-                              im_state.StencilEnable };
+    result_dc.VertexCount       = num_vertices;
+    result_dc.RasterId          = im_state.Raster;
+    result_dc.IndexCount        = 0;
+    result_dc.IndexBufferOffset = 0;
+    result_dc.BlendState = { im_state.ColorBlendSrc, im_state.ColorBlendDst,
+                             im_state.ColorBlendOp,  im_state.BlendEnable,
+                             im_state.ZTestEnable,   im_state.ZWriteEnable,
+                             im_state.StencilEnable };
 
     DrawCallCount++;
 }
 
 void Im2DStateRecorder::RecordDrawCall( RwIm2DVertex *vertices,
-                                        int32_t numVertices, int16_t *indices,
-                                        int32_t numIndices )
+                                        int32_t num_vertices, int16_t *indices,
+                                        int32_t num_indices )
 {
     auto &result_dc = DrawCalls[DrawCallCount];
     auto &im_state  = ImState;
 
-    result_dc.mIndexBufferOffset = IndexCount;
+    result_dc.IndexBufferOffset = IndexCount;
     CopyMemory( ( IndexBuffer.data() + IndexCount ), indices,
-                numIndices * sizeof( int16_t ) );
-    IndexCount += numIndices;
+                num_indices * sizeof( int16_t ) );
+    IndexCount += num_indices;
 
-    result_dc.mVertexBufferOffset = VertexCount;
+    result_dc.VertexBufferOffset = VertexCount;
     CopyMemory( ( VertexBuffer.data() + VertexCount ), vertices,
-                numVertices * sizeof( RwIm2DVertex ) );
-    VertexCount += numVertices;
+                num_vertices * sizeof( RwIm2DVertex ) );
+    VertexCount += num_vertices;
 
-    result_dc.mVertexCount = numVertices;
-    result_dc.mRasterId    = im_state.Raster;
-    result_dc.mIndexCount  = numIndices;
-    result_dc.mBlendState  = { im_state.ColorBlendSrc, im_state.ColorBlendDst,
-                              im_state.ColorBlendOp,  im_state.BlendEnable,
-                              im_state.ZTestEnable,   im_state.ZWriteEnable,
-                              im_state.StencilEnable };
+    result_dc.VertexCount = num_vertices;
+    result_dc.RasterId    = im_state.Raster;
+    result_dc.IndexCount  = num_indices;
+    result_dc.BlendState  = { im_state.ColorBlendSrc, im_state.ColorBlendDst,
+                             im_state.ColorBlendOp,  im_state.BlendEnable,
+                             im_state.ZTestEnable,   im_state.ZWriteEnable,
+                             im_state.StencilEnable };
     DrawCallCount++;
 }
 

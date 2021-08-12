@@ -61,15 +61,15 @@ class Im3DStateRecorder
 
     void Transform( RwIm3DVertex *vertices, uint32_t count, RwMatrix *ltm,
                     [[maybe_unused]] uint32_t flags );
-    void RenderIndexedPrimitive( RwPrimitiveType primType, uint16_t *indices,
-                                 int32_t numIndices );
-    void RenderPrimitive( RwPrimitiveType primType );
+    void RenderIndexedPrimitive( RwPrimitiveType prim_type, uint16_t *indices,
+                                 int32_t num_indices );
+    void RenderPrimitive( RwPrimitiveType prim_type );
     uint64_t Serialize( MemoryWriter &writer );
     void     Flush();
 
   private:
-    ImmediateState &    ImState;
-    RwIm3DVertex *      StashedVertices      = nullptr;
+    ImmediateState     &ImState;
+    RwIm3DVertex       *StashedVertices      = nullptr;
     uint32_t            StashedVerticesCount = 0;
     DirectX::XMFLOAT4X3 StashedWorldTransform{};
 

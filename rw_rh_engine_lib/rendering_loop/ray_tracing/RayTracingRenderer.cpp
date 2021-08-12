@@ -379,9 +379,9 @@ void RayTracingRenderer::DrawGUI( const FrameState &scene )
             ImGui::PushID( id );
             if ( ImGui::CollapsingHeader( "Im2DCall" ) )
             {
-                ImGui::Text( "RasterId : %llu", im2d_call.mRasterId );
-                ImGui::Text( "Index count : %u", im2d_call.mVertexCount );
-                ImGui::Text( "Vertex count : %u", im2d_call.mIndexCount );
+                ImGui::Text( "RasterId : %llu", im2d_call.RasterId );
+                ImGui::Text( "Index count : %u", im2d_call.VertexCount );
+                ImGui::Text( "Vertex count : %u", im2d_call.IndexCount );
             }
             ImGui::PopID();
             id++;

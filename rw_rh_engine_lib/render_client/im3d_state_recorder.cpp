@@ -10,21 +10,21 @@
 namespace rh::rw::engine
 {
 
-constexpr auto IM3D_VERTEX_COUNT_LIMIT = 100000;
-constexpr auto IM3D_INDEX_COUNT_LIMIT  = 100000;
+constexpr auto Im3DVertexCountLimit = 100000;
+constexpr auto Im3DIndexCountLimit  = 100000;
 
 Im3DStateRecorder::Im3DStateRecorder( ImmediateState &im_state ) noexcept
     : ImState( im_state )
 {
-    VertexBuffer.resize( IM3D_VERTEX_COUNT_LIMIT );
-    IndexBuffer.resize( IM3D_INDEX_COUNT_LIMIT );
+    VertexBuffer.resize( Im3DVertexCountLimit );
+    IndexBuffer.resize( Im3DIndexCountLimit );
     DrawCalls.resize( 4000 );
 }
 
 Im3DStateRecorder::~Im3DStateRecorder() noexcept = default;
 
 void Im3DStateRecorder::Transform( RwIm3DVertex *vertices, uint32_t count,
-                                   RwMatrix *                ltm,
+                                   RwMatrix                 *ltm,
                                    [[maybe_unused]] uint32_t flags )
 {
     StashedVertices      = vertices;
@@ -45,7 +45,7 @@ void Im3DStateRecorder::Transform( RwIm3DVertex *vertices, uint32_t count,
     }
 }
 
-void Im3DStateRecorder::RenderPrimitive( RwPrimitiveType primType )
+void Im3DStateRecorder::RenderPrimitive( RwPrimitiveType prim_type )
 {
     auto &result_dc = DrawCalls[DrawCallCount];
 
@@ -62,18 +62,18 @@ void Im3DStateRecorder::RenderPrimitive( RwPrimitiveType primType )
 
     result_dc.RasterId       = ImState.Raster;
     result_dc.WorldTransform = StashedWorldTransform;
-    result_dc.State          = { ImState.ColorBlendSrc, ImState.ColorBlendDst,
-                        ImState.ColorBlendOp,  ImState.BlendEnable,
-                        ImState.ZTestEnable,   ImState.ZWriteEnable,
-                        ImState.StencilEnable };
-    result_dc.State.PrimType = primType;
+    result_dc.State          = {
+        ImState.ColorBlendSrc, ImState.ColorBlendDst,
+        ImState.ColorBlendOp,  ImState.BlendEnable,
+        ImState.ZTestEnable,   ImState.ZWriteEnable,
+        ImState.StencilEnable, static_cast<uint8_t>( prim_type ) };
 
     DrawCallCount++;
 }
 
-void Im3DStateRecorder::RenderIndexedPrimitive( RwPrimitiveType primType,
-                                                uint16_t *      indices,
-                                                int32_t         numIndices )
+void Im3DStateRecorder::RenderIndexedPrimitive( RwPrimitiveType prim_type,
+                                                uint16_t       *indices,
+                                                int32_t         num_indices )
 {
     auto &result_dc = DrawCalls[DrawCallCount];
 
@@ -83,22 +83,22 @@ void Im3DStateRecorder::RenderIndexedPrimitive( RwPrimitiveType primType,
     assert( StashedVertices );
 
     CopyMemory( ( IndexBuffer.data() + IndexCount ), indices,
-                numIndices * sizeof( uint16_t ) );
+                num_indices * sizeof( uint16_t ) );
     CopyMemory( ( VertexBuffer.data() + VertexCount ), StashedVertices,
                 StashedVerticesCount * sizeof( RwIm3DVertex ) );
     VertexCount += StashedVerticesCount;
-    IndexCount += numIndices;
+    IndexCount += num_indices;
 
-    result_dc.IndexCount  = numIndices;
+    result_dc.IndexCount  = num_indices;
     result_dc.VertexCount = StashedVerticesCount;
 
     result_dc.RasterId       = ImState.Raster;
     result_dc.WorldTransform = StashedWorldTransform;
-    result_dc.State          = { ImState.ColorBlendSrc, ImState.ColorBlendDst,
-                        ImState.ColorBlendOp,  ImState.BlendEnable,
-                        ImState.ZTestEnable,   ImState.ZWriteEnable,
-                        ImState.StencilEnable };
-    result_dc.State.PrimType = primType;
+    result_dc.State          = {
+        ImState.ColorBlendSrc, ImState.ColorBlendDst,
+        ImState.ColorBlendOp,  ImState.BlendEnable,
+        ImState.ZTestEnable,   ImState.ZWriteEnable,
+        ImState.StencilEnable, static_cast<uint8_t>( prim_type ) };
 
     DrawCallCount++;
 }
