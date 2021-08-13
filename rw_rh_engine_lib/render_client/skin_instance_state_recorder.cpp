@@ -10,10 +10,13 @@
 namespace rh::rw::engine
 {
 
+constexpr size_t gSkinDrawCallLimit = 100;
+constexpr size_t gSkinMaterialLimit = 2000;
+
 SkinInstanceStateRecorder::SkinInstanceStateRecorder()
 {
-    MeshData.resize( 100 );
-    MaterialsData.resize( 2000 );
+    MeshData.resize( gSkinDrawCallLimit );
+    MaterialsData.resize( gSkinMaterialLimit );
     DrawCallCount = 0;
     MaterialCount = 0;
 }
@@ -73,7 +76,7 @@ SkinInstanceState SkinInstanceState::Deserialize( MemoryReader &reader )
 
     auto material_count = *reader.Read<uint64_t>();
     result.Materials    = rh::engine::ArrayProxy(
-        reader.Read<MaterialData>( material_count ), material_count );
+           reader.Read<MaterialData>( material_count ), material_count );
     result.DrawCalls = rh::engine::ArrayProxy(
         reader.Read<SkinDrawCallInfo>( dc_count ), dc_count );
     return result;

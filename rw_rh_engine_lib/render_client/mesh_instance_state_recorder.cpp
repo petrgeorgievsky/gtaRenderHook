@@ -9,11 +9,14 @@
 namespace rh::rw::engine
 {
 
+constexpr size_t gDrawCallLimit = 10000;
+constexpr size_t gMaterialLimit = 20000;
+
 MeshInstanceStateRecorder::MeshInstanceStateRecorder()
 {
-    MeshData.resize( 10000 );
+    MeshData.resize( gDrawCallLimit );
     DrawCallCount = 0;
-    MaterialsData.resize( 20000 );
+    MaterialsData.resize( gMaterialLimit );
     MaterialCount = 0;
 }
 

@@ -2,7 +2,6 @@
 // Created by peter on 17.02.2021.
 //
 #pragma once
-#include <Engine/Common/ArrayProxy.h>
 #include <data_desc/instances/mesh_instance.h>
 #include <rw_engine/rh_backend/material_backend.h>
 #include <span>

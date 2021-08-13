@@ -3,16 +3,12 @@
 //
 
 #pragma once
-#include "common_headers.h"
 #include <data_desc/light_system/point_light.h>
 #include <vector>
 
 struct RwIm2DVertex;
 
-namespace rh
-{
-
-namespace rw::engine
+namespace rh::rw::engine
 {
 
 class MemoryWriter;
@@ -32,6 +28,4 @@ class LightStateRecorder
     uint32_t                PointLightCount = 0;
 };
 
-} // namespace rw::engine
-
-} // namespace rh
+} // namespace rh::rw::engine

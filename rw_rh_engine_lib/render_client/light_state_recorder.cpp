@@ -7,12 +7,15 @@
 #include <ipc/MemoryWriter.h>
 namespace rh::rw::engine
 {
+constexpr size_t gLightBufferSize = 1024;
+
 LightStateRecorder::LightStateRecorder() noexcept
 {
-    PointLights.resize( 1024 );
+    PointLights.resize( gLightBufferSize );
     PointLightCount = 0;
 }
-LightStateRecorder::~LightStateRecorder() noexcept {}
+
+LightStateRecorder::~LightStateRecorder() noexcept = default;
 
 uint64_t LightStateRecorder::Serialize( MemoryWriter &writer )
 {
@@ -27,7 +30,7 @@ void LightStateRecorder::Flush() { PointLightCount = 0; }
 
 void LightStateRecorder::RecordPointLight( PointLight &&light )
 {
-    if ( PointLightCount >= 1024 )
+    if ( PointLightCount >= gLightBufferSize )
         return;
     PointLights[PointLightCount] = light;
     PointLightCount++;
