@@ -14,8 +14,8 @@
 #include <Windows.h>
 
 // Win32 message handler (process Win32 mouse/keyboard inputs, etc.)
-LRESULT ImGui_ImplWin32_WndProcHandler( HWND hwnd, UINT msg, WPARAM wParam,
-                                        LPARAM lParam )
+LRESULT ImGuiImplWin32WndProcHandler( HWND hwnd, UINT msg, WPARAM w_param,
+                                      [[maybe_unused]] LPARAM l_param )
 {
     if ( !rh::rw::engine::gRenderClient )
         return 0;
@@ -32,7 +32,7 @@ LRESULT ImGui_ImplWin32_WndProcHandler( HWND hwnd, UINT msg, WPARAM wParam,
     case WM_XBUTTONDOWN:
     case WM_XBUTTONDBLCLK:
     {
-        int button = 0;
+        int button;
         if ( msg == WM_LBUTTONDOWN || msg == WM_LBUTTONDBLCLK )
         {
             button = 0;
@@ -47,7 +47,7 @@ LRESULT ImGui_ImplWin32_WndProcHandler( HWND hwnd, UINT msg, WPARAM wParam,
         }
         if ( msg == WM_XBUTTONDOWN || msg == WM_XBUTTONDBLCLK )
         {
-            button = ( GET_XBUTTON_WPARAM( wParam ) == XBUTTON1 ) ? 3 : 4;
+            button = ( GET_XBUTTON_WPARAM( w_param ) == XBUTTON1 ) ? 3 : 4;
         }
         if ( !input_state.IsAnyMouseDown() && ::GetCapture() == nullptr )
             ::SetCapture( hwnd );
@@ -59,7 +59,7 @@ LRESULT ImGui_ImplWin32_WndProcHandler( HWND hwnd, UINT msg, WPARAM wParam,
     case WM_MBUTTONUP:
     case WM_XBUTTONUP:
     {
-        int button = 0;
+        int button;
         if ( msg == WM_LBUTTONUP )
         {
             button = 0;
@@ -74,7 +74,7 @@ LRESULT ImGui_ImplWin32_WndProcHandler( HWND hwnd, UINT msg, WPARAM wParam,
         }
         if ( msg == WM_XBUTTONUP )
         {
-            button = ( GET_XBUTTON_WPARAM( wParam ) == XBUTTON1 ) ? 3 : 4;
+            button = ( GET_XBUTTON_WPARAM( w_param ) == XBUTTON1 ) ? 3 : 4;
         }
         input_state.MouseDown[button] = false;
         if ( !input_state.IsAnyMouseDown() && ::GetCapture() == hwnd )
@@ -83,68 +83,53 @@ LRESULT ImGui_ImplWin32_WndProcHandler( HWND hwnd, UINT msg, WPARAM wParam,
     }
     case WM_MOUSEWHEEL:
         input_state.MouseWheel +=
-            (float)GET_WHEEL_DELTA_WPARAM( wParam ) / (float)WHEEL_DELTA;
+            (float)GET_WHEEL_DELTA_WPARAM( w_param ) / (float)WHEEL_DELTA;
         return 0;
     case WM_MOUSEHWHEEL:
         input_state.MouseWheelH +=
-            (float)GET_WHEEL_DELTA_WPARAM( wParam ) / (float)WHEEL_DELTA;
+            (float)GET_WHEEL_DELTA_WPARAM( w_param ) / (float)WHEEL_DELTA;
         return 0;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        if ( wParam < 256 )
-            input_state.KeysDown[wParam] = true;
+        if ( w_param < 256 )
+            input_state.KeysDown[w_param] = true;
         return 0;
     case WM_KEYUP:
     case WM_SYSKEYUP:
-        if ( wParam < 256 )
-            input_state.KeysDown[wParam] = false;
+        if ( w_param < 256 )
+            input_state.KeysDown[w_param] = false;
         return 0;
-    case WM_CHAR:
-        // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
-        // TODO: decide if needed
-        // if ( wParam > 0 && wParam < 0x10000 )
-        //    io.AddInputCharacterUTF16( (unsigned short)wParam );
-        return 0;
-    case WM_SETCURSOR:
-        // if ( LOWORD( lParam ) == HTCLIENT &&
-        //     ImGui_ImplWin32_UpdateMouseCursor() )
-        //    return 1;
-        return 0;
-    case WM_DEVICECHANGE:
-        // if ( (UINT)wParam == DBT_DEVNODES_CHANGED )
-        //    g_WantUpdateHasGamepad = true;
-        return 0;
+    default: return 0;
     }
-    return 0;
 }
 
-static HHOOK imgui_hook_wndproc;
+static HHOOK gImguiHookWndproc;
 
-LRESULT CALLBACK ImGuiMsgProc( int code, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK ImGuiMsgProc( int code, WPARAM w_param, LPARAM l_param )
 {
     if ( code >= 0 )
     {
-        auto msg = reinterpret_cast<LPMSG>( lParam );
-        if ( ImGui_ImplWin32_WndProcHandler( msg->hwnd, msg->message,
-                                             msg->wParam, msg->lParam ) )
+        auto msg = reinterpret_cast<LPMSG>( l_param );
+        if ( ImGuiImplWin32WndProcHandler( msg->hwnd, msg->message, msg->wParam,
+                                           msg->lParam ) )
         {
-            return CallNextHookEx( imgui_hook_wndproc, code, wParam, lParam );
+            return CallNextHookEx( gImguiHookWndproc, code, w_param, l_param );
         }
     }
-    return CallNextHookEx( imgui_hook_wndproc, code, wParam, lParam );
+    return CallNextHookEx( gImguiHookWndproc, code, w_param, l_param );
 }
 
 void rh::rw::engine::InstallWinProcHook()
 {
-    imgui_hook_wndproc = SetWindowsHookEx( WH_GETMESSAGE, ImGuiMsgProc, nullptr,
-                                           GetCurrentThreadId() );
-    assert( imgui_hook_wndproc != nullptr );
+    gImguiHookWndproc = SetWindowsHookEx( WH_GETMESSAGE, ImGuiMsgProc, nullptr,
+                                         GetCurrentThreadId() );
+    assert( gImguiHookWndproc != nullptr );
 }
 
 void rh::rw::engine::RemoveWinProcHook()
 {
-    assert( imgui_hook_wndproc != nullptr );
-    auto unhook_result = UnhookWindowsHookEx( imgui_hook_wndproc );
+    assert( gImguiHookWndproc != nullptr );
+    auto unhook_result = UnhookWindowsHookEx( gImguiHookWndproc );
     if ( !unhook_result )
         debug::DebugLogger::ErrorFmt( "Failed to uninstall window procedure "
                                       "hook required for imgui! ErrorCode %u",

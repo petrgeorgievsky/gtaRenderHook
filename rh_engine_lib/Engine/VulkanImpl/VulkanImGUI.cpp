@@ -10,8 +10,9 @@
 #include <imgui_impl_vulkan.h>
 //#include <imgui_impl_win32.h>
 
-extern LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg,
-                                               WPARAM wParam, LPARAM lParam );
+extern LRESULT ImGuiImplWin32WndProcHandler( HWND hwnd, UINT msg,
+                                               WPARAM w_param,
+                                             [[maybe_unused]] LPARAM l_param );
 
 namespace rh::engine
 {
