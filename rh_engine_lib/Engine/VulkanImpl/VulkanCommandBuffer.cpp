@@ -8,6 +8,8 @@
 #include "VulkanPipeline.h"
 #include "VulkanPipelineLayout.h"
 #include "VulkanRenderPass.h"
+#include <DebugUtils/DebugLogger.h>
+
 using namespace rh::engine;
 
 VulkanCommandBuffer::VulkanCommandBuffer( vk::Device        device,

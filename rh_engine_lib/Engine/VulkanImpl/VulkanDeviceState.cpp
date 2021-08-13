@@ -24,6 +24,7 @@
 #include <memory_resource>
 #include <numeric>
 #include <ranges>
+#include <Engine/Definitions.h>
 
 using namespace rh;
 using namespace rh::engine;
