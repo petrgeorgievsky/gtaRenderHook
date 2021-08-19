@@ -1,4 +1,5 @@
 #include "call_redirection_util.h"
+#include "compatibility_checks.h"
 #include "game/Clouds.h"
 #include "game/PointLights.h"
 #include "game/Renderer.h"
@@ -24,6 +25,8 @@ BOOL WINAPI DllMain( HINSTANCE, DWORD ul_reason_for_call, LPVOID )
     {
     case DLL_PROCESS_ATTACH:
     {
+        PerformCompatChecks();
+
         /// Init logging
         debug::DebugLogger::Init( "gta3_logs.log", debug::LogLevel::Error );
         debug::InitExceptionHandler();

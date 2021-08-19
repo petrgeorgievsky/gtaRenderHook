@@ -28,7 +28,9 @@ set(SOURCES
         game_patches/skin_model_pipeline.cpp
         game_patches/rwd3d8_patches.cpp
         config/GameRendererConfigBlock.cpp
-        call_redirection_util.cpp)
+        call_redirection_util.cpp
+        compatibility_checks.cpp
+        )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
