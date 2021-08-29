@@ -93,7 +93,7 @@ namespace rpMaterial
 
 constexpr void AddRef( RpMaterial *_material ) { _material->refCount++; }
 
-constexpr void SetSurfaceProperties( RpMaterial *               _material,
+constexpr void SetSurfaceProperties( RpMaterial                *_material,
                                      const RwSurfaceProperties &_surfProps )
 {
     _material->surfaceProps = _surfProps;

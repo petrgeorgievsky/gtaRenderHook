@@ -115,10 +115,12 @@ return RHEngine::RHImageBufferFormat::BC7;
     return rh::engine::ImageBufferFormat::Unknown;
 }
 
-rh::engine::SamplerAddressing rh::rw::engine::RwTextureAddressModeToRHSamplerAddressing(
+rh::engine::SamplerAddressing
+rh::rw::engine::RwTextureAddressModeToRHSamplerAddressing(
     RwTextureAddressMode mode )
 {
-    switch ( mode ) {
+    switch ( mode )
+    {
     case RwTextureAddressMode::rwTEXTUREADDRESSBORDER:
         return rh::engine::SamplerAddressing::Border;
     case RwTextureAddressMode::rwTEXTUREADDRESSCLAMP:
@@ -127,53 +129,39 @@ rh::engine::SamplerAddressing rh::rw::engine::RwTextureAddressModeToRHSamplerAdd
         return rh::engine::SamplerAddressing::Mirror;
     case RwTextureAddressMode::rwTEXTUREADDRESSWRAP:
         return rh::engine::SamplerAddressing::Wrap;
-    default:
-        return rh::engine::SamplerAddressing::Unknown;
+    default: return rh::engine::SamplerAddressing::Unknown;
     }
 }
 
-rh::engine::BlendOp rh::rw::engine::RwBlendFunctionToRHBlendOp( RwBlendFunction func )
+rh::engine::BlendOp
+rh::rw::engine::RwBlendFunctionToRHBlendOp( RwBlendFunction func )
 {
-    switch ( func ) {
-    case rwBLENDZERO:
-        return rh::engine::BlendOp::Zero;
-    case rwBLENDONE:
-        return rh::engine::BlendOp::One;
-    case rwBLENDSRCCOLOR:
-        return rh::engine::BlendOp::SrcColor;
-    case rwBLENDINVSRCCOLOR:
-        return rh::engine::BlendOp::InvSrcColor;
-    case rwBLENDSRCALPHA:
-        return rh::engine::BlendOp::SrcAlpha;
-    case rwBLENDINVSRCALPHA:
-        return rh::engine::BlendOp::InvSrcAlpha;
-    case rwBLENDDESTALPHA:
-        return rh::engine::BlendOp::DestAlpha;
-    case rwBLENDINVDESTALPHA:
-        return rh::engine::BlendOp::InvDestAlpha;
-    case rwBLENDDESTCOLOR:
-        return rh::engine::BlendOp::DestColor;
-    case rwBLENDINVDESTCOLOR:
-        return rh::engine::BlendOp::InvDestColor;
-    case rwBLENDSRCALPHASAT:
-        return rh::engine::BlendOp::SrcAlphaSat;
-    default:
-        break;
+    switch ( func )
+    {
+    case rwBLENDZERO: return rh::engine::BlendOp::Zero;
+    case rwBLENDONE: return rh::engine::BlendOp::One;
+    case rwBLENDSRCCOLOR: return rh::engine::BlendOp::SrcColor;
+    case rwBLENDINVSRCCOLOR: return rh::engine::BlendOp::InvSrcColor;
+    case rwBLENDSRCALPHA: return rh::engine::BlendOp::SrcAlpha;
+    case rwBLENDINVSRCALPHA: return rh::engine::BlendOp::InvSrcAlpha;
+    case rwBLENDDESTALPHA: return rh::engine::BlendOp::DestAlpha;
+    case rwBLENDINVDESTALPHA: return rh::engine::BlendOp::InvDestAlpha;
+    case rwBLENDDESTCOLOR: return rh::engine::BlendOp::DestColor;
+    case rwBLENDINVDESTCOLOR: return rh::engine::BlendOp::InvDestColor;
+    case rwBLENDSRCALPHASAT: return rh::engine::BlendOp::SrcAlphaSat;
+    default: break;
     }
     return rh::engine::BlendOp();
 }
 
 rh::engine::CullMode rh::rw::engine::RwCullModeToRHCullMode( RwCullMode mode )
 {
-    switch ( mode ) {
-    case rwCULLMODECULLNONE:
-        return rh::engine::CullMode::None;
-    case rwCULLMODECULLBACK:
-        return rh::engine::CullMode::Back;
-    case rwCULLMODECULLFRONT:
-        return rh::engine::CullMode::Front;
-    default:
-        break;
+    switch ( mode )
+    {
+    case rwCULLMODECULLNONE: return rh::engine::CullMode::None;
+    case rwCULLMODECULLBACK: return rh::engine::CullMode::Back;
+    case rwCULLMODECULLFRONT: return rh::engine::CullMode::Front;
+    default: break;
     }
     return rh::engine::CullMode::None;
 }

@@ -27,7 +27,7 @@ namespace rh::rw::engine
 
 struct rwNativeTexture
 {
-    friend std::ostream &operator<<( std::ostream &         os,
+    friend std::ostream &operator<<( std::ostream          &os,
                                      const rwNativeTexture &texture )
     {
         os << "NativeTexture data block:\n\tid: " << texture.id
@@ -43,7 +43,7 @@ struct rwNativeTexture
 
 struct rwD3D9NativeRaster
 {
-    friend std::ostream &operator<<( std::ostream &            os,
+    friend std::ostream &operator<<( std::ostream             &os,
                                      const rwD3D9NativeRaster &raster )
     {
         os << "D3D9NativeRaster data block:\n\tformat: " << raster.format
@@ -67,7 +67,7 @@ struct rwD3D9NativeRaster
 
 struct rwD3D8NativeRaster
 {
-    friend std::ostream &operator<<( std::ostream &            os,
+    friend std::ostream &operator<<( std::ostream             &os,
                                      const rwD3D8NativeRaster &raster )
     {
         os << "D3D8NativeRaster data block:\n\tformat: " << raster.format
@@ -95,7 +95,7 @@ union rwD3DNativeRaster
     rwD3D9NativeRaster d3d9_;
 };
 
-RwNativeTextureReadCmd::RwNativeTextureReadCmd( RwStream *  stream,
+RwNativeTextureReadCmd::RwNativeTextureReadCmd( RwStream   *stream,
                                                 RwTexture **texture )
     : m_pStream( stream ), m_pTexture( texture )
 {
@@ -270,20 +270,21 @@ bool RwNativeTextureReadCmd::Execute()
     auto convert_paletted_mip_level =
         [&]( MipLevelHeader &mip_header, uint32_t width, uint32_t height,
              uint32_t size, uint8_t *raw_pixels, uint32_t *result_data,
-             bool has_alpha ) {
-            // Convert paletted raster if needed
-            auto result_size = height * width * sizeof( uint32_t );
+             bool has_alpha )
+    {
+        // Convert paletted raster if needed
+        auto result_size = height * width * sizeof( uint32_t );
 
-            if ( !has_alpha )
-                for ( size_t j = 0; j < size; j++ )
-                    result_data[j] = rwRGBA::Long_RGB( palette[raw_pixels[j]] );
-            else
-                for ( size_t j = 0; j < size; j++ )
-                    result_data[j] = rwRGBA::Long( palette[raw_pixels[j]] );
+        if ( !has_alpha )
+            for ( size_t j = 0; j < size; j++ )
+                result_data[j] = rwRGBA::Long_RGB( palette[raw_pixels[j]] );
+        else
+            for ( size_t j = 0; j < size; j++ )
+                result_data[j] = rwRGBA::Long( palette[raw_pixels[j]] );
 
-            mip_header.mSize   = result_size;
-            mip_header.mStride = bytesPerBlock * ( ( width + 3 ) / blockSize );
-        };
+        mip_header.mSize   = result_size;
+        mip_header.mStride = bytesPerBlock * ( ( width + 3 ) / blockSize );
+    };
 
     // Some txd records can have invalid mip level counter, default it
     // to 1 for now
@@ -325,18 +326,18 @@ bool RwNativeTextureReadCmd::Execute()
             auto *pixels = writer.CurrentPtr<uint8_t>();
             if ( convert_from_pal )
                 writer.SeekFromCurrent(
-                    -static_cast<int64_t>( mip_height * mip_width ) *
-                    sizeof( uint32_t ) );
+                         -static_cast<int64_t>( mip_height * mip_width ) *
+                         sizeof( uint32_t ) );
 
             uint32_t size;
             io.fpRead( m_pStream, reinterpret_cast<char *>( &size ),
-                       sizeof( size ) );
+                            sizeof( size ) );
             io.fpRead( m_pStream, reinterpret_cast<char *>( pixels ), size );
 
             if ( convert_from_pal )
                 convert_paletted_mip_level( mip_header, mip_width, mip_height,
-                                            size, pixels, image_memory,
-                                            has_alpha );
+                                                 size, pixels, image_memory,
+                                                 has_alpha );
             else
             {
                 // Fix rgb8 format "alpha" channel
@@ -344,7 +345,7 @@ bool RwNativeTextureReadCmd::Execute()
                                       rwRASTERFORMAT888 ) == rwRASTERFORMAT888 )
                 {
                     std::span<RwRGBA> rgba_pixels(
-                        reinterpret_cast<RwRGBA *>( pixels ), size / 4 );
+                             reinterpret_cast<RwRGBA *>( pixels ), size / 4 );
                     for ( auto &pix : rgba_pixels )
                         pix.alpha = 0xff;
                 }
