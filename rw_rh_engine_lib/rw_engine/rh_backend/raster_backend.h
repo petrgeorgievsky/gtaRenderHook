@@ -31,6 +31,12 @@ class BackendRasterPlugin
 struct BackendRasterExt
 {
     uint64_t mImageId;
+    uint32_t OriginalFormat;
+    uint8_t  MipCount;
+    uint8_t  BytesPerBlock;
+    uint8_t  BlockSize;
+    bool     HasAlpha;
+    bool     Compressed;
 
     ~BackendRasterExt();
     BackendRasterExt();

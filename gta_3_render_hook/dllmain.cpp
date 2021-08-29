@@ -42,10 +42,16 @@ BOOL WINAPI DllMain( HINSTANCE, DWORD ul_reason_for_call, LPVOID )
 
         /// Populate RW pointer table with rw-specific addresses
 
-        g_pIO_API     = { reinterpret_cast<RwStreamFindChunk_FN>(
-                          GetAddressByGame( 0x5AA540, 0x5AA800, 0x5ACC00 ) ),
-                      reinterpret_cast<RwStreamRead_FN>(
-                          GetAddressByGame( 0x5A3AD0, 0x5A3D90, 0x5A4900 ) ) };
+        g_pIO_API = {
+            reinterpret_cast<RwStreamFindChunk_FN>(
+                GetAddressByGame( 0x5AA540, 0x5AA800, 0x5ACC00 ) ),
+            reinterpret_cast<RwStreamRead_FN>(
+                GetAddressByGame( 0x5A3AD0, 0x5A3D90, 0x5A4900 ) ),
+            reinterpret_cast<RwStreamWriteVersionedChunkHeader_FN>(
+                GetAddressByGame( 0x5AA4E0, 0x5AA7A0, 0x5ACB90 ) ),
+            reinterpret_cast<RwStreamWrite_FN>(
+                GetAddressByGame( 0x5A3C30, 0x5A3EF0, 0x5A4A60 ) ),
+        };
         g_pRaster_API = {
             reinterpret_cast<RwRasterCreate_FN>(
                 GetAddressByGame( 0x5AD930, 0x5ADBF0, 0x5B0580 ) ),

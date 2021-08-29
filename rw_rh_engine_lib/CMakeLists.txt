@@ -35,6 +35,8 @@ set(SOURCES
         rw_engine/rw_standard_render_commands/imagefindrasterformat.cpp
         rw_engine/rw_standard_render_commands/rasterlockcmd.cpp
         rw_engine/rw_standard_render_commands/rasterunlockcmd.cpp
+        rw_engine/rw_standard_render_commands/native_texture_write_cmd.cpp
+        rw_engine/rw_standard_render_commands/native_texture_get_size_cmd.cpp
         rw_engine/rw_rh_convert_funcs.cpp
         rw_engine/rw_api_injectors.cpp
         rw_engine/rw_rh_pipeline.cpp

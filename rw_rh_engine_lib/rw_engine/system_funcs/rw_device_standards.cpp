@@ -175,7 +175,9 @@ std::map<RwDeviceStandardFn, RwStandardFunc> GetStandardMap()
           []( void *pOut, void *pInOut, int32_t nI ) -> int32_t {
               debug::DebugLogger::Log( std::string(
                   "RWGAMEHOOKS_LOG: rwSTANDARDNATIVETEXTUREGETSIZE" ) );
-              return 1;
+              RwNativeTextureGetSizeCmd cmd(
+                  static_cast<RwTexture *>( pInOut ) );
+              return cmd.Execute( *static_cast<uint32_t *>( pOut ) );
           } },
         { rwSTANDARDNATIVETEXTUREREAD,
           []( void *pOut, void *pInOut, int32_t nI ) -> int32_t {
@@ -190,7 +192,9 @@ std::map<RwDeviceStandardFn, RwStandardFunc> GetStandardMap()
           []( void *pOut, void *pInOut, int32_t nI ) -> int32_t {
               debug::DebugLogger::Log( std::string(
                   "RWGAMEHOOKS_LOG: rwSTANDARDNATIVETEXTUREWRITE" ) );
-              return 1;
+              RwNativeTextureWriteCmd cmd( static_cast<RwStream *>( pOut ),
+                                           static_cast<RwTexture *>( pInOut ) );
+              return cmd.Execute();
           } },
         { rwSTANDARDRASTERGETMIPLEVELS,
           []( void *pOut, void *pInOut, int32_t nI ) -> int32_t {

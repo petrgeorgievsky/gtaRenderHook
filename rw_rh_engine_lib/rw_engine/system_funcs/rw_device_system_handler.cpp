@@ -243,7 +243,7 @@ bool SystemClose()
 bool SystemStandards( RwStandardFunc *standards )
 {
     debug::DebugLogger::Log( "Register system standard functions..." );
-    for ( auto i = 0; i < 27; i++ )
+    for ( auto i = 0; i < rwSTANDARDNUMOFSTANDARD; i++ )
     {
         gStandards[i] = standards[i] =
             GetStandardMap()[static_cast<RwDeviceStandardFn>( i )];

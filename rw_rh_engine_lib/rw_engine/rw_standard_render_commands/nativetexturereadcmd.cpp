@@ -116,6 +116,9 @@ bool RwNativeTextureReadCmd::Execute()
 
     if ( !io.fpFindChunk( m_pStream, rwID_STRUCT, &length, &version ) )
         return false;
+    if ( version < 0x31000 || version > 0x38002 )
+        return false;
+
     io.fpRead( m_pStream, reinterpret_cast<void *>( &nativeTexture ),
                sizeof( rwNativeTexture ) );
 
@@ -140,6 +143,7 @@ bool RwNativeTextureReadCmd::Execute()
         isCubemap =
             static_cast<bool>( nativeRaster.d3d9_.flags & ( 1u << 1u ) );
         break;
+    default: return false;
     }
 
     std::string debug_output_str = debug_output.str();
@@ -304,8 +308,15 @@ bool RwNativeTextureReadCmd::Execute()
     uint32_t mip_height = nativeRaster.d3d9_.height;
 
     assert( internalRaster.mImageId == BackendRasterPlugin::NullRasterId );
-    internalRaster.mImageId = load_texture_cmd.Invoke(
-        header, [&]( MemoryWriter &writer, MipLevelHeader &mip_header ) {
+    internalRaster.MipCount      = numMipLevels;
+    internalRaster.BlockSize     = blockSize;
+    internalRaster.BytesPerBlock = bytesPerBlock;
+    internalRaster.Compressed    = compressed;
+    internalRaster.HasAlpha      = has_alpha;
+    internalRaster.mImageId      = load_texture_cmd.Invoke(
+             header,
+             [&]( MemoryWriter &writer, MipLevelHeader &mip_header )
+             {
             writer.Skip( sizeof( MipLevelHeader ) );
 
             auto *image_memory = writer.CurrentPtr<uint32_t>();
@@ -347,8 +358,58 @@ bool RwNativeTextureReadCmd::Execute()
             mip_width  = ( std::max )( mip_width >> 1u, 1u );
             mip_height = ( std::max )( mip_height >> 1u, 1u );
             return true;
-        } );
+             } );
+    if ( nativeTexture.id == rwID_PCD3D8 )
+    {
+        if ( compressed )
+        {
+            switch ( nativeRaster.d3d8_.dxtFormat )
+            {
+            case 1: internalRaster.OriginalFormat = D3DFMT_DXT1;
+            case 2: internalRaster.OriginalFormat = D3DFMT_DXT2;
+            case 3: internalRaster.OriginalFormat = D3DFMT_DXT3;
+            case 4: internalRaster.OriginalFormat = D3DFMT_DXT4;
+            case 5: internalRaster.OriginalFormat = D3DFMT_DXT5;
+            }
+        }
+        else
+        {
+            if ( convert_from_pal )
+            {
+                internalRaster.OriginalFormat = D3DFMT_A8R8G8B8;
+            }
+            else
+            {
+                switch ( nativeRaster.d3d8_.format )
+                {
+                case rwRASTERFORMATDEFAULT:
+                    internalRaster.OriginalFormat = D3DFMT_A8R8G8B8;
+                case rwRASTERFORMAT1555:
+                    internalRaster.OriginalFormat = D3DFMT_A1R5G5B5;
+                case rwRASTERFORMAT565:
+                    internalRaster.OriginalFormat = D3DFMT_R5G6B5;
+                case rwRASTERFORMAT4444:
+                    internalRaster.OriginalFormat = D3DFMT_A4R4G4B4;
+                case rwRASTERFORMATLUM8:
+                    internalRaster.OriginalFormat = D3DFMT_A8;
+                case rwRASTERFORMAT8888:
+                    internalRaster.OriginalFormat = D3DFMT_A8R8G8B8;
+                case rwRASTERFORMAT888:
+                    internalRaster.OriginalFormat = D3DFMT_X8R8G8B8;
+                case rwRASTERFORMAT555:
+                    internalRaster.OriginalFormat = D3DFMT_A1R5G5B5;
+                }
+            }
+        }
+    }
+    else
+        internalRaster.OriginalFormat = nativeRaster.d3d9_.d3dFormat;
+    if ( convert_from_pal )
+        raster->cFormat =
+            raster->cFormat &
+            ~( uint8_t( ( rwRASTERFORMATPAL8 | rwRASTERFORMATPAL4 ) >> 8 ) );
 
+    assert( raster->cFormat > 0 );
     RwTexture *texture = rw_texture.fpCreateTexture( raster );
     if ( texture == nullptr )
         return false;

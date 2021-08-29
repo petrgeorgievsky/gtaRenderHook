@@ -15,6 +15,20 @@ constexpr auto rwTEXTUREADDRESSINGVMASK = 0x0000F000;
 constexpr auto rwTEXTUREADDRESSINGMASK =
     ( rwTEXTUREADDRESSINGUMASK | rwTEXTUREADDRESSINGVMASK );
 
+constexpr auto GetFilterMode( RwTexture *_tex )
+{
+    return _tex->filterAddressing & rwTEXTUREFILTERMODEMASK;
+}
+constexpr auto GetAddressingU( RwTexture *_tex )
+{
+    return static_cast<RwTextureAddressMode>(
+        ( _tex->filterAddressing & rwTEXTUREADDRESSINGUMASK ) >> 8 );
+}
+constexpr auto GetAddressingV( RwTexture *_tex )
+{
+    return static_cast<RwTextureAddressMode>(
+        ( _tex->filterAddressing & rwTEXTUREADDRESSINGVMASK ) >> 12 );
+}
 constexpr void SetFilterMode( RwTexture *_tex, uint32_t _filtering )
 {
     _tex->filterAddressing =

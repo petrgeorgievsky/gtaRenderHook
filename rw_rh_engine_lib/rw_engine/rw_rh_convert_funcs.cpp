@@ -4,60 +4,54 @@
 #include <Engine/Common/types/image_buffer_format.h>
 #include <Engine/Common/types/sampler_addressing.h>
 
-rh::engine::ImageBufferFormat rh::rw::engine::RwFormatToRHImageBufferFormat( RwRasterFormat format )
+rh::engine::ImageBufferFormat
+rh::rw::engine::RwFormatToRHImageBufferFormat( RwRasterFormat format )
 {
-    switch ( format ) {
-    case rwRASTERFORMAT1555:
-        return rh::engine::ImageBufferFormat::BGR5A1;
-    case rwRASTERFORMAT565:
-        return rh::engine::ImageBufferFormat::B5G6R5;
-    case rwRASTERFORMAT4444:
-        return rh::engine::ImageBufferFormat::BGRA4;
-    case rwRASTERFORMATLUM8:
-        return rh::engine::ImageBufferFormat::A8;
+    switch ( format )
+    {
+    case rwRASTERFORMAT1555: return rh::engine::ImageBufferFormat::BGR5A1;
+    case rwRASTERFORMAT565: return rh::engine::ImageBufferFormat::B5G6R5;
+    case rwRASTERFORMAT4444: return rh::engine::ImageBufferFormat::BGRA4;
+    case rwRASTERFORMATLUM8: return rh::engine::ImageBufferFormat::A8;
     case rwRASTERFORMATDEFAULT:
-    case rwRASTERFORMAT8888:
-        return rh::engine::ImageBufferFormat::BGRA8;
-    case rwRASTERFORMAT888:
-        return rh::engine::ImageBufferFormat::BGRA8;
-    case rwRASTERFORMAT16:
-        return rh::engine::ImageBufferFormat::Unknown;
-    case rwRASTERFORMAT24:
-        return rh::engine::ImageBufferFormat::Unknown;
-    case rwRASTERFORMAT32:
-        return rh::engine::ImageBufferFormat::Unknown;
-    case rwRASTERFORMAT555:
-        return rh::engine::ImageBufferFormat::BGR5A1;
-    default:
-        return rh::engine::ImageBufferFormat::Unknown;
+    case rwRASTERFORMAT8888: return rh::engine::ImageBufferFormat::BGRA8;
+    case rwRASTERFORMAT888: return rh::engine::ImageBufferFormat::BGRA8;
+    case rwRASTERFORMAT16: return rh::engine::ImageBufferFormat::Unknown;
+    case rwRASTERFORMAT24: return rh::engine::ImageBufferFormat::Unknown;
+    case rwRASTERFORMAT32: return rh::engine::ImageBufferFormat::Unknown;
+    case rwRASTERFORMAT555: return rh::engine::ImageBufferFormat::BGR5A1;
+    default: return rh::engine::ImageBufferFormat::Unknown;
     }
 }
 
-rh::engine::ImageBufferFormat rh::rw::engine::RwNativeFormatToRHImageBufferFormat(
-    D3DFORMAT format, RwRasterFormat rwFormat, RwPlatformID platform, uint32_t dxt_compression )
+rh::engine::ImageBufferFormat
+rh::rw::engine::RwNativeFormatToRHImageBufferFormat( D3DFORMAT      format,
+                                                     RwRasterFormat rwFormat,
+                                                     RwPlatformID   platform,
+                                                     uint32_t dxt_compression )
 {
-    switch ( platform ) {
-    case rwID_PCD3D7:
-        break;
-    case rwID_PCOGL:
-        break;
-    case rwID_MAC:
-        break;
-    case rwID_PS2:
-        break;
-    case rwID_XBOX:
-        break;
-    case rwID_GAMECUBE:
-        break;
-    case rwID_SOFTRAS:
-        break;
+    switch ( platform )
+    {
+    case rwID_PCD3D7: break;
+    case rwID_PCOGL: break;
+    case rwID_MAC: break;
+    case rwID_PS2: break;
+    case rwID_XBOX: break;
+    case rwID_GAMECUBE: break;
+    case rwID_SOFTRAS: break;
     case rwID_PCD3D8:
-        switch ( dxt_compression ) {
+        switch ( dxt_compression )
+        {
         case 0:
-            if ( rwFormat & rwRASTERFORMATPAL4 || rwFormat & rwRASTERFORMATPAL8 ) {
+            if ( rwFormat & rwRASTERFORMATPAL4 ||
+                 rwFormat & rwRASTERFORMATPAL8 )
+            {
                 return rh::engine::ImageBufferFormat::BGRA8;
-            } else {
-                switch ( rwFormat ) {
+            }
+            else
+            {
+                switch ( rwFormat )
+                {
                 case rwRASTERFORMATDEFAULT:
                     return rh::engine::ImageBufferFormat::BGRA8;
                 case rwRASTERFORMAT1555:
@@ -74,32 +68,30 @@ rh::engine::ImageBufferFormat rh::rw::engine::RwNativeFormatToRHImageBufferForma
                     return rh::engine::ImageBufferFormat::BGRA8;
                 case rwRASTERFORMAT555:
                     return rh::engine::ImageBufferFormat::BGR5A1;
-                default:
-                    break;
+                default: break;
                 }
             }
             break;
-        case 1:
-            return rh::engine::ImageBufferFormat::BC1;
+        case 1: return rh::engine::ImageBufferFormat::BC1;
         case 2:
-        case 3:
-            return rh::engine::ImageBufferFormat::BC2;
+        case 3: return rh::engine::ImageBufferFormat::BC2;
         case 4:
-        case 5:
-            return rh::engine::ImageBufferFormat::BC3;
+        case 5: return rh::engine::ImageBufferFormat::BC3;
         }
         break;
     case rwID_PCD3D9:
-        switch ( format ) {
+        switch ( format )
+        {
+        case D3DFMT_A1R5G5B5:
+        case D3DFMT_X1R5G5B5: return rh::engine::ImageBufferFormat::BGR5A1;
+        case D3DFMT_R5G6B5: return rh::engine::ImageBufferFormat::B5G6R5;
+        case D3DFMT_A4R4G4B4: return rh::engine::ImageBufferFormat::BGRA4;
+        case D3DFMT_A8: return rh::engine::ImageBufferFormat::A8;
         case D3DFMT_A8R8G8B8:
-            return rh::engine::ImageBufferFormat::BGRA8;
-        case D3DFMT_X8R8G8B8:
-            return rh::engine::ImageBufferFormat::BGRA8;
-        case D3DFMT_DXT1:
-            return rh::engine::ImageBufferFormat::BC1;
+        case D3DFMT_X8R8G8B8: return rh::engine::ImageBufferFormat::BGRA8;
+        case D3DFMT_DXT1: return rh::engine::ImageBufferFormat::BC1;
         case D3DFMT_DXT2:
-        case D3DFMT_DXT3:
-            return rh::engine::ImageBufferFormat::BC2;
+        case D3DFMT_DXT3: return rh::engine::ImageBufferFormat::BC2;
         case D3DFMT_DXT4:
         case D3DFMT_DXT5:
             return rh::engine::ImageBufferFormat::BC3;
@@ -115,12 +107,10 @@ return RHEngine::RHImageBufferFormat::BC6H;
 case MAKEFOURCC( 'D', 'X', 'T', '7' ):
 return RHEngine::RHImageBufferFormat::BC7;
 #pragma warning(pop)*/
-        default:
-            break;
+        default: break;
         }
         break;
-    default:
-        break;
+    default: break;
     }
     return rh::engine::ImageBufferFormat::Unknown;
 }
