@@ -37,7 +37,8 @@ void VulkanCommandBuffer::CopyBufferToImage(
 
     std::ranges::for_each(
         copy_info.mRegions,
-        [&image_copies]( const BufferToImageCopySubInfo &info ) {
+        [&image_copies]( const BufferToImageCopySubInfo &info )
+        {
             vk::BufferImageCopy vk_info{};
             vk_info.bufferRowLength   = info.mFrom.mRowLength;
             vk_info.bufferImageHeight = info.mFrom.mRowCount;
@@ -70,7 +71,8 @@ void rh::engine::VulkanCommandBuffer::PipelineBarrier(
 
     std::ranges::for_each(
         info.mImageMemoryBarriers,
-        [&image_barriers]( const ImageMemoryBarrierInfo &info ) {
+        [&image_barriers]( const ImageMemoryBarrierInfo &info )
+        {
             vk::ImageMemoryBarrier vk_info{};
             vk_info.image         = *dynamic_cast<VulkanImage *>( info.mImage );
             vk_info.oldLayout     = Convert( info.mSrcLayout );
@@ -85,7 +87,8 @@ void rh::engine::VulkanCommandBuffer::PipelineBarrier(
             image_barriers.push_back( vk_info );
         } );
     std::ranges::for_each( info.mMemoryBarriers,
-                           [&memory_barriers]( const MemoryBarrierInfo &info ) {
+                           [&memory_barriers]( const MemoryBarrierInfo &info )
+                           {
                                vk::MemoryBarrier vk_info{};
                                vk_info.srcAccessMask =
                                    Convert( info.mSrcMemoryAccess );
@@ -109,7 +112,8 @@ void VulkanCommandBuffer::BindDescriptorSets(
     std::vector<vk::DescriptorSet> descriptor_sets{};
 
     std::ranges::for_each( bind_info.mDescriptorSets,
-                           [&descriptor_sets]( IDescriptorSet *set ) {
+                           [&descriptor_sets]( IDescriptorSet *set )
+                           {
                                vk::DescriptorSet vk_set =
                                    *dynamic_cast<VulkanDescriptorSet *>( set );
                                descriptor_sets.push_back( vk_set );
@@ -153,7 +157,8 @@ void VulkanCommandBuffer::BeginRenderPass( const RenderPassBeginInfo &params )
     // Convert clear params...
     std::ranges::transform(
         params.m_aClearValues, std::back_inserter( clear_values ),
-        []( const ClearValue &cv ) {
+        []( const ClearValue &cv )
+        {
             vk::ClearValue cv_res;
             if ( cv.type == ClearValueType::Color )
             {
@@ -198,12 +203,15 @@ void VulkanCommandBuffer::BindVertexBuffers(
     vertex_buffers.reserve( buffers.Size() );
     vertex_buffer_offsets.reserve( buffers.Size() );
 
-    std::ranges::for_each( buffers, [&vertex_buffers, &vertex_buffer_offsets](
-                                        const VertexBufferBinding &binding ) {
-        vertex_buffers.push_back(
-            *static_cast<VulkanBuffer *>( binding.mBuffer ) );
-        vertex_buffer_offsets.push_back( binding.mOffset );
-    } );
+    std::ranges::for_each(
+        buffers,
+        [&vertex_buffers,
+         &vertex_buffer_offsets]( const VertexBufferBinding &binding )
+        {
+            vertex_buffers.push_back(
+                *static_cast<VulkanBuffer *>( binding.mBuffer ) );
+            vertex_buffer_offsets.push_back( binding.mOffset );
+        } );
 
     m_vkCmdBuffer.bindVertexBuffers( start_id, vertex_buffers,
                                      vertex_buffer_offsets );
@@ -242,7 +250,8 @@ void VulkanCommandBuffer::SetViewports( uint32_t                    start_id,
     // SmallVectorArena<vk::Viewport, 8> vk_viewports_arena;
     std::vector<vk::Viewport> vk_viewports{};
     std::ranges::transform( viewports, std::back_inserter( vk_viewports ),
-                            []( const ViewPort &viewport ) {
+                            []( const ViewPort &viewport )
+                            {
                                 vk::Viewport vk_vp{};
                                 vk_vp.x        = viewport.topLeftX;
                                 vk_vp.y        = viewport.topLeftY;
@@ -262,7 +271,8 @@ void VulkanCommandBuffer::SetScissors( uint32_t                   start_id,
 
     std::vector<vk::Rect2D> vk_scissors{};
     std::ranges::transform( scissors, std::back_inserter( vk_scissors ),
-                            []( const Scissor &scissor ) {
+                            []( const Scissor &scissor )
+                            {
                                 vk::Rect2D vk_sc{};
                                 vk_sc.offset.x      = scissor.offset_x;
                                 vk_sc.offset.y      = scissor.offset_y;
@@ -280,6 +290,19 @@ void VulkanCommandBuffer::BuildBLAS(
         blas->GetImplInfo(), nullptr, 0, 0, blas->GetImpl(), nullptr,
         *dynamic_cast<VulkanBuffer *>( scratch_buffer ), 0 );
 }
+
+void VulkanCommandBuffer::BuildBLAS(
+    const ArrayProxy<BlasBuildInfo> &build_info )
+{
+    for ( auto [blas, scratch_buffer] : build_info )
+    {
+        auto blas_scratch = dynamic_cast<VulkanBuffer *>( scratch_buffer );
+        m_vkCmdBuffer.buildAccelerationStructureNV(
+            blas->GetImplInfo(), nullptr, 0, 0, blas->GetImpl(), nullptr,
+            *blas_scratch, 0 );
+    }
+}
+
 void VulkanCommandBuffer::BuildTLAS( VulkanTopLevelAccelerationStructure *tlas,
                                      IBuffer *scratch_buffer,
                                      IBuffer *instance_buffer )
@@ -341,7 +364,8 @@ void VulkanCommandBuffer::CopyImageToImage(
 
     std::ranges::for_each(
         copy_info.mRegions,
-        [&image_copies]( const ImageToImageCopySubInfo &info ) {
+        [&image_copies]( const ImageToImageCopySubInfo &info )
+        {
             vk::ImageCopy vk_info{};
             vk_info.extent = vk::Extent3D{
                 info.mSrc.mExtentW, info.mSrc.mExtentH, info.mSrc.mExtentD };
@@ -381,7 +405,8 @@ void VulkanCommandBuffer::CopyImageToBuffer(
 
     std::ranges::for_each(
         copy_info.mRegions,
-        [&image_copies]( const ImageToBufferCopySubInfo &info ) {
+        [&image_copies]( const ImageToBufferCopySubInfo &info )
+        {
             vk::BufferImageCopy vk_info{};
             vk_info.imageExtent = vk::Extent3D{
                 info.mFrom.mExtentW, info.mFrom.mExtentH, info.mFrom.mExtentD };

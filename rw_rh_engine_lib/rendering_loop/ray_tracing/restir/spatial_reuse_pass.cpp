@@ -4,6 +4,8 @@
 
 #include "spatial_reuse_pass.h"
 
+#include <imgui.h>
+
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <rendering_loop/DescriptorGenerator.h>

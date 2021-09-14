@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <Engine/Common/IDeviceState.h>
+#include <Engine/Common/ScopedPtr.h>
 #include <Engine/ResourcePool.h>
 #include <cstdint>
 #include <queue>
@@ -33,7 +34,15 @@ class EngineResourceHolder;
 struct BlasBuildPassCreateInfo
 {
     rh::engine::IDeviceState &Device;
-    EngineResourceHolder &    Resources;
+    EngineResourceHolder     &Resources;
+    uint32_t                  ScratchBufferCount    = 2;
+    uint32_t                  ScratchBufferBaseSize = 2 * 1024 * 1024;
+};
+
+struct ScratchBuffer
+{
+    uint64_t                                       Size = 0;
+    rh::engine::ScopedPointer<rh::engine::IBuffer> Data{};
 };
 
 class RTBlasBuildPass
@@ -49,20 +58,21 @@ class RTBlasBuildPass
 
     const BLASMeshData &GetBlas( uint64_t mesh_id ) const
     {
-        return mBLASPool[mesh_id].mData;
+        return BLASPool[mesh_id].mData;
     }
 
   private:
-    rh::engine::IDeviceState &           Device;
-    EngineResourceHolder &               Resources;
-    std::vector<uint64_t>                mNewBLASList;
-    std::queue<uint64_t>                 mBLASQueue;
-    std::vector<PoolEntry<BLASMeshData>> mBLASPool;
-    rh::engine::VulkanCommandBuffer *    mBlasCmdBuffer;
-    rh::engine::IBuffer *                mScratchBuffer     = nullptr;
-    rh::engine::ISyncPrimitive *         mBlasBuilt         = nullptr;
-    uint64_t                             mScratchBufferSize = 0;
-    bool                                 mCompleted         = false;
+    rh::engine::IDeviceState &Device;
+    EngineResourceHolder     &Resources;
+
+    std::vector<uint64_t>                NewBLASList;
+    std::queue<uint64_t>                 BLASQueue;
+    std::vector<PoolEntry<BLASMeshData>> BLASPool;
+    rh::engine::VulkanCommandBuffer     *BlasCmdBuffer;
+    std::vector<ScratchBuffer>           ScratchBuffers{};
+    rh::engine::ISyncPrimitive          *BlasBuilt = nullptr;
+    uint8_t                              ScratchBufferCount;
+    bool                                 IsCompleted = false;
 };
 
 } // namespace rh::rw::engine

@@ -88,12 +88,12 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
     ReservoirBuffer     = device.CreateBuffer( BufferCreateInfo{
         .mSize  = static_cast<uint32_t>( sizeof( float ) * 4 * Width * Height ),
         .mUsage = BufferUsage::StorageBuffer,
-        .mFlags = BufferFlags::Dynamic,
+        .mFlags = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
     PrevReservoirBuffer = device.CreateBuffer( BufferCreateInfo{
         .mSize  = static_cast<uint32_t>( sizeof( float ) * 4 * Width * Height ),
         .mUsage = BufferUsage::StorageBuffer,
-        .mFlags = BufferFlags::Dynamic,
+        .mFlags = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
 
     ParamsBuffer =

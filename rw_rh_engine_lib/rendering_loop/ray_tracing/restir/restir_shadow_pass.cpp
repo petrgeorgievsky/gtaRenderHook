@@ -45,14 +45,14 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
         .mSize =
             static_cast<uint32_t>( sizeof( float ) * 4 * mWidth * mHeight ),
         .mUsage       = BufferUsage::StorageBuffer,
-        .mFlags       = BufferFlags::Dynamic,
+        .mFlags       = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
 
     ResultReservoirBuffer = Device.CreateBuffer( BufferCreateInfo{
         .mSize =
             static_cast<uint32_t>( sizeof( float ) * 4 * mWidth * mHeight ),
         .mUsage       = BufferUsage::StorageBuffer,
-        .mFlags       = BufferFlags::Dynamic,
+        .mFlags       = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
     //
     /*mVisibilityReusePass  = new VisibilityReusePass(

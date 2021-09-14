@@ -18,7 +18,8 @@ enum BufferFlags
 {
     // Initialize once, don't allow to update
     Immutable,
-    Dynamic
+    Dynamic,
+    DynamicGPUOnly
 };
 
 struct BufferCreateInfo

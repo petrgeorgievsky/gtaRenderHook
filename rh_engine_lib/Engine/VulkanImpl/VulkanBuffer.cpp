@@ -40,8 +40,11 @@ VulkanBuffer::VulkanBuffer( const VulkanBufferCreateInfo &create_info )
     // mDevice.memory
     /// TODO: Compute allocation requirements carefully, allow for custom
     /// allocations
-    VmaAllocationCreateInfo allocInfo   = {};
-    allocInfo.usage                     = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    VmaAllocationCreateInfo allocInfo = {};
+    if ( create_info.mFlags == DynamicGPUOnly )
+        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    else
+        allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     VkBufferCreateInfo bufferCreateInfo = vk_create_info;
     VkBuffer           buffer;
     vmaCreateBuffer( mAllocator, &bufferCreateInfo, &allocInfo, &buffer,

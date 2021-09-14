@@ -37,6 +37,13 @@ struct VulkanComputeDispatch
     uint32_t mY = 1;
     uint32_t mZ = 1;
 };
+
+struct BlasBuildInfo
+{
+    VulkanBottomLevelAccelerationStructure *Accel;
+    IBuffer                                *TempBuffer;
+};
+
 class VulkanCommandBuffer : public ICommandBuffer
 {
   public:
@@ -80,7 +87,8 @@ class VulkanCommandBuffer : public ICommandBuffer
     virtual void PipelineBarrier( const PipelineBarrierInfo &info ) override;
 
     void BuildBLAS( VulkanBottomLevelAccelerationStructure *blas,
-                    IBuffer *                               scratch_buffer );
+                    IBuffer                                *scratch_buffer );
+    void BuildBLAS( const ArrayProxy<BlasBuildInfo> &build_info );
 
     void BuildTLAS( VulkanTopLevelAccelerationStructure *blas,
                     IBuffer *scratch_buffer, IBuffer *instance_buffer );
