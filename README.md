@@ -4,6 +4,7 @@ GTA rendering hook
 
 Implements DirectX11 and Vulkan rendering API to GTA 3, GTA VC and GTA SA.
 
+
 Currently there are 2 versions, one of which is broken(can't really build it anymore):
 
 * Old one which implemented only DirectX11 and had a few features(only GTA SA)
