@@ -3,7 +3,56 @@
 #include "VulkanCommon.h"
 #include "VulkanImageView.h"
 
+#include <ranges>
+
 using namespace rh::engine;
+
+namespace
+{
+vk::PresentModeKHR
+SelectPresentMode( VSyncType                              vsync_type,
+                   const std::vector<vk::PresentModeKHR> &supported_modes )
+{
+    auto supported = [&supported_modes]( vk::PresentModeKHR mode )
+    {
+        return std::ranges::any_of( supported_modes,
+                                    [&mode]( auto el ) { return el == mode; } );
+    };
+    switch ( vsync_type )
+    {
+    case VSyncType::None:
+        if ( supported( vk::PresentModeKHR::eImmediate ) )
+            return vk::PresentModeKHR::eImmediate;
+        if ( supported( vk::PresentModeKHR::eMailbox ) )
+            return vk::PresentModeKHR::eMailbox;
+    case VSyncType::HalfRefreshRate:
+        if ( supported( vk::PresentModeKHR::eFifoRelaxed ) )
+            return vk::PresentModeKHR::eFifoRelaxed;
+
+    default: return vk::PresentModeKHR::eFifo;
+    }
+}
+
+vk::SurfaceFormatKHR
+SelectFormat( bool                                     prefer_hdr,
+              const std::vector<vk::SurfaceFormatKHR> &supported_formats )
+{
+    if ( prefer_hdr )
+    {
+        auto hdr_fmt = std::ranges::find_if(
+            supported_formats,
+            []( VkSurfaceFormatKHR fmt )
+            {
+                return fmt.colorSpace ==
+                       VkColorSpaceKHR::VK_COLOR_SPACE_HDR10_ST2084_EXT;
+            } );
+        if ( hdr_fmt != supported_formats.end() )
+            return *hdr_fmt;
+    }
+    return supported_formats.front();
+}
+
+} // namespace
 
 VulkanSwapchain::VulkanSwapchain(
     const VulkanSwapchainCreateParams &create_params )
@@ -17,37 +66,10 @@ VulkanSwapchain::VulkanSwapchain(
     auto surface_present_modes =
         create_params.mGPU.getSurfacePresentModesKHR( create_params.mSurface );
 
-    // TODO: Add better present mode selection code
-    auto select_present_mode = [&surface_present_modes](
-                                   VSyncType vsync_type ) {
-        auto present_mode_supported =
-            [&surface_present_modes](
-                vk::PresentModeKHR present_mode ) -> bool {
-            return std::any_of(
-                surface_present_modes.value.begin(),
-                surface_present_modes.value.end(),
-                [&present_mode]( auto el ) { return el == present_mode; } );
-        };
-
-        switch ( vsync_type )
-        {
-        case VSyncType::None:
-            if ( present_mode_supported( vk::PresentModeKHR::eImmediate ) )
-                return vk::PresentModeKHR::eImmediate;
-            if ( present_mode_supported( vk::PresentModeKHR::eMailbox ) )
-                return vk::PresentModeKHR::eMailbox;
-        case VSyncType::HalfRefreshRate:
-            if ( present_mode_supported( vk::PresentModeKHR::eFifoRelaxed ) )
-                return vk::PresentModeKHR::eFifoRelaxed;
-
-        default: return vk::PresentModeKHR::eFifo;
-        }
-    };
-
-    // TODO: Add ability to select preferred swapchain fmt
-    auto swapchain_fmt = surface_formats.value[0];
-    auto present_mode =
-        select_present_mode( create_params.mPresentParams.mVsyncType );
+    auto swapchain_fmt = SelectFormat( create_params.mPresentParams.mUseHDR,
+                                       surface_formats.value );
+    auto present_mode  = SelectPresentMode(
+        create_params.mPresentParams.mVsyncType, surface_present_modes.value );
     auto buffer_count =
         std::min<>( std::max<>( surface_caps.value.minImageCount,
                                 create_params.mPresentParams.mBufferCount ),
@@ -115,7 +137,6 @@ VulkanSwapchain::~VulkanSwapchain()
 
 SwapchainFrame VulkanSwapchain::GetAvaliableFrame( ISyncPrimitive *signal )
 {
-
     auto vk_signal_prim = static_cast<VulkanGPUSyncPrimitive *>( signal );
 
     auto res = m_vkDevice.acquireNextImageKHR( m_vkSwapChain, UINT64_MAX,

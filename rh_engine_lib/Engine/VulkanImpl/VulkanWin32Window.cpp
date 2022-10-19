@@ -77,6 +77,7 @@ SwapchainRequestResult VulkanWin32Window::GetSwapchain()
     vksc_cp.mPresentQueueIdx          = mPresentQueueIdx;
     vksc_cp.mSurface                  = mSurface;
     vksc_cp.mPresentParams.mVsyncType = VSyncType::None;
+    vksc_cp.mPresentParams.mUseHDR    = true;
     // vksc_cp.mPresentParams.mBufferCount = 3;
     // Create new swap-chain
     res.mSwapchain    = ( mSwapchain = new VulkanSwapchain( vksc_cp ) );

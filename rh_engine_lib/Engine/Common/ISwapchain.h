@@ -26,6 +26,7 @@ struct PresentationParams
     VSyncType mVsyncType = VSyncType::None;
     uint32_t  mBufferCount;
     bool      mWindowed;
+    bool      mUseHDR;
 };
 
 class ISwapchain
@@ -34,10 +35,10 @@ class ISwapchain
     ISwapchain()          = default;
     virtual ~ISwapchain() = default;
 
-    ISwapchain( const ISwapchain & ) = delete;
-    ISwapchain( ISwapchain && )      = delete;
+    ISwapchain( const ISwapchain & )            = delete;
+    ISwapchain( ISwapchain && )                 = delete;
     ISwapchain &operator=( const ISwapchain & ) = delete;
-    ISwapchain &operator=( ISwapchain && ) = delete;
+    ISwapchain &operator=( ISwapchain && )      = delete;
 
     virtual SwapchainFrame GetAvaliableFrame( ISyncPrimitive *signal )      = 0;
     virtual bool Present( uint32_t swapchain_img, ISyncPrimitive *waitFor ) = 0;
