@@ -32,7 +32,7 @@ class DisplayModeTest : public rh::tests::TestSample
 
   private:
     rh::engine::IDeviceState *mDeviceState  = nullptr;
-    rh::engine::IWindow *     mDeviceWindow = nullptr;
+    rh::engine::IWindow      *mDeviceWindow = nullptr;
 
     // Per-Frame resources
     std::array<rh::engine::IFrameBuffer *, 8> mFrameBuffer{
@@ -48,11 +48,11 @@ class DisplayModeTest : public rh::tests::TestSample
     std::unique_ptr<Im2DRenderer> m2DRenderer;
 
     //
-    rh::engine::IBuffer *   mGlobalsBuffer = nullptr;
+    rh::engine::IBuffer    *mGlobalsBuffer = nullptr;
     rh::engine::IImageView *mImageView     = nullptr;
 
-    rh::engine::IDescriptorSetLayout *   mGlobalDescSetLayout = nullptr;
-    rh::engine::IDescriptorSet *         mGlobalDescSet       = nullptr;
+    rh::engine::IDescriptorSetLayout    *mGlobalDescSetLayout = nullptr;
+    rh::engine::IDescriptorSet          *mGlobalDescSet       = nullptr;
     rh::engine::IDescriptorSetAllocator *mGlobalDescSetAlloc  = nullptr;
 
     // TestSample interface
@@ -111,7 +111,7 @@ bool DisplayModeTest::Initialize( void *window )
     rh::engine::DescriptorSetAllocatorCreateParams dsc_all_cp{};
     std::array<rh::engine::DescriptorPoolSize, 3>  dsc_pool_sizes = {
         rh::engine::DescriptorPoolSize{
-            .mType = rh::engine::DescriptorType::ROBuffer, .mCount = 32 },
+             .mType = rh::engine::DescriptorType::ROBuffer, .mCount = 32 },
         rh::engine::DescriptorPoolSize{ rh::engine::DescriptorType::ROTexture,
                                         32 },
         rh::engine::DescriptorPoolSize{ rh::engine::DescriptorType::Sampler,
@@ -287,12 +287,13 @@ void DisplayModeTest::CustomRender()
         mDeviceState->Wait( exec_prim_list );
         mPerFrameResources[current_frame].mBufferIsRecorded = false;
     }
-    auto frame = swapchain->GetAvaliableFrame( img_aq );
+    auto frame = swapchain->GetAvailableFrame( img_aq );
 
     gGlobalStateBuffer.fRedness = frame.mImageId % 2 ? 1.0f : 0.0f;
     mGlobalsBuffer->Update( &gGlobalStateBuffer, sizeof( RenderStateBuffer ) );
 
-    auto record_cmd_buffer = [&]( auto record_call ) {
+    auto record_cmd_buffer = [&]( auto record_call )
+    {
         cmdbuffer->BeginRecord();
         record_call();
         cmdbuffer->EndRecord();
@@ -311,40 +312,44 @@ void DisplayModeTest::CustomRender()
         cmdbuffer->EndRenderPass();
     };
 
-    record_cmd_buffer( [&]() {
-        record_render_pass( [&]() {
-            auto       fb_info   = GetFramebufferForFrame( frame )->GetInfo();
-            std::array viewports = { rh::engine::ViewPort{
-                0,                                    // float topLeftX;
-                0,                                    // float topLeftY;
-                static_cast<float>( fb_info.width ),  // float width;
-                static_cast<float>( fb_info.height ), // float height;
-                0,                                    // float minDepth;
-                1.0                                   // float maxDepth;
-            } };
-            std::array scissors  = { rh::engine::Scissor{
-                0,             // float topLeftX;
-                0,             // float topLeftY;
-                fb_info.width, // float width;
-                fb_info.height // float height;
-            } };
-            cmdbuffer->SetViewports( 0, viewports );
-            cmdbuffer->SetScissors( 0, scissors );
-            m2DRenderer->SetImageView( mImageView );
-            m2DRenderer->RecordDrawCall( triangle_verticles );
+    record_cmd_buffer(
+        [&]()
+        {
+            record_render_pass(
+                [&]()
+                {
+                    auto fb_info = GetFramebufferForFrame( frame )->GetInfo();
+                    std::array viewports = { rh::engine::ViewPort{
+                        0,                                    // float topLeftX;
+                        0,                                    // float topLeftY;
+                        static_cast<float>( fb_info.width ),  // float width;
+                        static_cast<float>( fb_info.height ), // float height;
+                        0,                                    // float minDepth;
+                        1.0                                   // float maxDepth;
+                    } };
+                    std::array scissors  = { rh::engine::Scissor{
+                        0,             // float topLeftX;
+                        0,             // float topLeftY;
+                        fb_info.width, // float width;
+                        fb_info.height // float height;
+                    } };
+                    cmdbuffer->SetViewports( 0, viewports );
+                    cmdbuffer->SetScissors( 0, scissors );
+                    m2DRenderer->SetImageView( mImageView );
+                    m2DRenderer->RecordDrawCall( triangle_verticles );
 
-            std::array desc_sets = { mGlobalDescSet };
+                    std::array desc_sets = { mGlobalDescSet };
 
-            rh::engine::DescriptorSetBindInfo desc_set_bind{};
-            desc_set_bind.mPipelineLayout = m2DRenderer->GetLayout();
-            desc_set_bind.mDescriptorSets = desc_sets;
+                    rh::engine::DescriptorSetBindInfo desc_set_bind{};
+                    desc_set_bind.mPipelineLayout = m2DRenderer->GetLayout();
+                    desc_set_bind.mDescriptorSets = desc_sets;
 
-            cmdbuffer->BindDescriptorSets( desc_set_bind );
+                    cmdbuffer->BindDescriptorSets( desc_set_bind );
 
-            m2DRenderer->DrawBatch( cmdbuffer );
-            m2DRenderer->FrameEnd();
+                    m2DRenderer->DrawBatch( cmdbuffer );
+                    m2DRenderer->FrameEnd();
+                } );
         } );
-    } );
 
     // Submit command buffer
     mDeviceState->ExecuteCommandBuffer( cmdbuffer, img_aq, render_exec );

@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Common/ISwapchain.h"
+#include "Engine/Common/types/image_buffer_format.h"
 #include <common.h>
 
 namespace rh::engine
@@ -22,10 +23,11 @@ class VulkanSwapchain : public ISwapchain
   public:
     VulkanSwapchain( const VulkanSwapchainCreateParams &create_params );
     ~VulkanSwapchain() override;
-    SwapchainFrame GetAvaliableFrame( ISyncPrimitive *signal ) override;
+    SwapchainFrame GetAvailableFrame( ISyncPrimitive *signal ) override;
     bool Present( uint32_t swapchain_img, ISyncPrimitive *waitFor ) override;
 
   private:
+    ImageBufferFormat         mSwapchainFormat;
     vk::SwapchainKHR          m_vkSwapChain    = nullptr;
     vk::Device                m_vkDevice       = nullptr;
     vk::Queue                 m_vkPresentQueue = nullptr;

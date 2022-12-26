@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "Engine/Common/types/image_buffer_format.h"
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/ScopedPtr.h>
 #include <Engine/VulkanImpl/VulkanComputePipeline.h>
@@ -76,22 +77,23 @@ class RayTracingRenderer : public IFrameRenderer
                  const rh::engine::SwapchainFrame &frame ) override;
     void DrawGUI( const FrameState &scene );
 
-    rh::engine::IRenderPass *GetForwardPass();
+    rh::engine::IRenderPass *
+    GetForwardPass( rh::engine::ImageBufferFormat swapchain_fmt );
     rh::engine::VulkanImGUI *GetImGui( rh::engine::IRenderPass *pass );
-    Im2DRenderer *           GetIm2DRenderer( rh::engine::IRenderPass *pass );
-    Im3DRenderer *           GetIm3DRenderer( rh::engine::IRenderPass *pass );
+    Im2DRenderer            *GetIm2DRenderer( rh::engine::IRenderPass *pass );
+    Im3DRenderer            *GetIm3DRenderer( rh::engine::IRenderPass *pass );
     rh::engine::IFrameBuffer *
     GetFrameBuffer( const rh::engine::SwapchainFrame &frame,
-                    rh::engine::IRenderPass *         pass );
+                    rh::engine::IRenderPass          *pass );
 
   private:
-    rh::engine::IDeviceState &  Device;
-    rh::engine::IWindow &       Window;
-    EngineResourceHolder &      Resources;
+    rh::engine::IDeviceState   &Device;
+    rh::engine::IWindow        &Window;
+    EngineResourceHolder       &Resources;
     RenderGraphResourcePool     rgResourcePool;
     ScopedPointer<Im2DRenderer> im2DRendererGlobals;
     ScopedPointer<Im3DRenderer> im3DRenderer;
-    rh::engine::IFrameBuffer *  mFramebufferCache[gFramebufferCacheSize]{};
+    rh::engine::IFrameBuffer   *mFramebufferCache[gFramebufferCacheSize]{};
     ScopedPointer<rh::engine::IRenderPass>  mForwardPass;
     ScopedPointer<rh::engine::IImageBuffer> mDepthBuffer;
     ScopedPointer<rh::engine::IImageView>   mDepthBufferView;

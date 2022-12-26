@@ -6,6 +6,7 @@
 #include "BilateralFilterPass.h"
 #include "CameraDescription.h"
 #include "DeferredCompositionPass.h"
+#include "Engine/Common/types/image_buffer_format.h"
 #include "RTAOPass.h"
 #include "RTBlasBuildPass.h"
 #include "RTPrimaryRaysPass.h"
@@ -150,8 +151,8 @@ RayTracingRenderer::RayTracingRenderer( const RendererBase &info )
 void RayTracingRenderer::OnResize( const rh::engine::WindowParams &window ) {}
 
 std::vector<rh::engine::CommandBufferSubmitInfo>
-RayTracingRenderer::Render( const FrameState &                state,
-                            rh::engine::ICommandBuffer *      dest,
+RayTracingRenderer::Render( const FrameState                 &state,
+                            rh::engine::ICommandBuffer       *dest,
                             const rh::engine::SwapchainFrame &frame )
 {
     using namespace rh::engine;
@@ -159,7 +160,7 @@ RayTracingRenderer::Render( const FrameState &                state,
     using namespace std::chrono;
     using f_mcs = duration<float, std::milli>;
 
-    auto forward_pass = GetForwardPass();
+    auto forward_pass = GetForwardPass( frame.mImageFormat );
     auto framebuffer  = GetFrameBuffer( frame, forward_pass );
     auto im2d         = GetIm2DRenderer( forward_pass );
     auto im3d         = GetIm3DRenderer( forward_pass );
@@ -444,7 +445,8 @@ void RayTracingRenderer::DrawGUI( const FrameState &scene )
     last_frame_time = std::chrono::high_resolution_clock::now();
 }
 
-rh::engine::IRenderPass *RayTracingRenderer::GetForwardPass()
+rh::engine::IRenderPass *RayTracingRenderer::GetForwardPass(
+    rh::engine::ImageBufferFormat swapchain_fmt )
 {
     using namespace rh::engine;
     if ( mForwardPass != nullptr )
@@ -452,8 +454,8 @@ rh::engine::IRenderPass *RayTracingRenderer::GetForwardPass()
     mForwardPass = Device.CreateRenderPass( RenderPassCreateParams{
         .mAttachments =
             {
-                // main framebuffer TODO: Maybe allow for HDR?
-                { .mFormat     = ImageBufferFormat::BGRA8,
+                // main framebuffer
+                { .mFormat     = swapchain_fmt,
                   .mDestLayout = ImageLayout::PresentSrc },
                 // depth buffer
                 { .mFormat     = ImageBufferFormat::D24S8,
@@ -462,8 +464,8 @@ rh::engine::IRenderPass *RayTracingRenderer::GetForwardPass()
         .mSubpasses = {
             { .mBindPoint              = PipelineBindPoint::Graphics,
               .mColorAttachments       = { { .mReqLayout =
-                                           ImageLayout::ColorAttachment,
-                                       .mAttachmentId = 0 } },
+                                                 ImageLayout::ColorAttachment,
+                                             .mAttachmentId = 0 } },
               .mDepthStencilAttachment = AttachmentRef{
                   .mReqLayout    = ImageLayout::DepthStencilAttachment,
                   .mAttachmentId = 1 } } } } );
@@ -519,7 +521,7 @@ RayTracingRenderer::GetIm3DRenderer( rh::engine::IRenderPass *pass )
 
 rh::engine::IFrameBuffer *
 RayTracingRenderer::GetFrameBuffer( const rh::engine::SwapchainFrame &frame,
-                                    rh::engine::IRenderPass *         pass )
+                                    rh::engine::IRenderPass          *pass )
 {
     auto &framebuffer = mFramebufferCache[frame.mImageId];
     using namespace rh::engine;

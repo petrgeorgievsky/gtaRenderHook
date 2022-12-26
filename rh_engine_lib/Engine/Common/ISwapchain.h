@@ -1,4 +1,5 @@
 #pragma once
+#include "types/image_buffer_format.h"
 #include <cstdint>
 
 namespace rh::engine
@@ -15,10 +16,11 @@ enum class VSyncType : uint32_t
 
 struct SwapchainFrame
 {
-    IImageView *mImageView;
-    uint32_t    mImageId;
-    uint32_t    mWidth;
-    uint32_t    mHeight;
+    IImageView       *mImageView;
+    ImageBufferFormat mImageFormat;
+    uint32_t          mImageId;
+    uint32_t          mWidth;
+    uint32_t          mHeight;
 };
 
 struct PresentationParams
@@ -40,7 +42,7 @@ class ISwapchain
     ISwapchain &operator=( const ISwapchain & ) = delete;
     ISwapchain &operator=( ISwapchain && )      = delete;
 
-    virtual SwapchainFrame GetAvaliableFrame( ISyncPrimitive *signal )      = 0;
+    virtual SwapchainFrame GetAvailableFrame( ISyncPrimitive *signal )      = 0;
     virtual bool Present( uint32_t swapchain_img, ISyncPrimitive *waitFor ) = 0;
 };
 } // namespace rh::engine

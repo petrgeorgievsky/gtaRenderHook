@@ -9,6 +9,7 @@
 
 #include <common_headers.h>
 #include <format>
+#include <iostream>
 
 #include <rw_engine/rh_backend/raster_backend.h>
 #include <rw_engine/rw_api_injectors.h>

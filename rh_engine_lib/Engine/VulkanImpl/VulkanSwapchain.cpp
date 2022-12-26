@@ -1,6 +1,7 @@
 #include "VulkanSwapchain.h"
 #include "SyncPrimitives/VulkanGPUSyncPrimitive.h"
 #include "VulkanCommon.h"
+#include "VulkanConvert.h"
 #include "VulkanImageView.h"
 
 #include <ranges>
@@ -116,6 +117,8 @@ VulkanSwapchain::VulkanSwapchain(
         m_vkSwapchainImages = swapchain_img_res.value;
     m_vkSwapchainImageViews.reserve( m_vkSwapchainImages.size() );
 
+    mSwapchainFormat = Convert( swapchain_fmt.format );
+
     for ( auto img : m_vkSwapchainImages )
     {
         ImageViewCreateParams create_info{};
@@ -135,7 +138,7 @@ VulkanSwapchain::~VulkanSwapchain()
         m_vkDevice.destroySwapchainKHR( m_vkSwapChain );
 }
 
-SwapchainFrame VulkanSwapchain::GetAvaliableFrame( ISyncPrimitive *signal )
+SwapchainFrame VulkanSwapchain::GetAvailableFrame( ISyncPrimitive *signal )
 {
     auto vk_signal_prim = static_cast<VulkanGPUSyncPrimitive *>( signal );
 
@@ -143,7 +146,8 @@ SwapchainFrame VulkanSwapchain::GetAvaliableFrame( ISyncPrimitive *signal )
                                                *vk_signal_prim, nullptr );
     assert( res.result == vk::Result::eSuccess );
     auto image_id = res.value;
-    return { m_vkSwapchainImageViews[image_id], image_id, mWidth, mHeight };
+    return { m_vkSwapchainImageViews[image_id], mSwapchainFormat, image_id,
+             mWidth, mHeight };
 }
 
 bool VulkanSwapchain::Present( uint32_t swapchain_img, ISyncPrimitive *waitFor )

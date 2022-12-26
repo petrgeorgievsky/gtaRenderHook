@@ -26,8 +26,8 @@ D3D11Swapchain::D3D11Swapchain(
     sd.SampleDesc.Quality = 0;
     sd.Windowed           = create_params.mPresentParams.mWindowed;
     sd.Flags              = create_params.mPresentParams.mWindowed
-                   ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
-                   : 0;
+                                ? DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+                                : 0;
 
     debug::DebugLogger::Log(
         "Swap-Chain params:"
@@ -82,7 +82,7 @@ D3D11Swapchain::~D3D11Swapchain()
     }
 }
 
-SwapchainFrame D3D11Swapchain::GetAvaliableFrame( ISyncPrimitive * )
+SwapchainFrame D3D11Swapchain::GetAvailableFrame( ISyncPrimitive * )
 {
     SwapchainFrame result{};
     result.mImageView = mBackbufferView;

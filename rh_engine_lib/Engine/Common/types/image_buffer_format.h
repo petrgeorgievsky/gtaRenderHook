@@ -28,6 +28,7 @@ enum class ImageBufferFormat : uint8_t
     B5G6R5,
     BGR5A1,
     BGRA8,
+    BGR10A2,
     BGR8,
     A8,
     BGRA4,

@@ -27,7 +27,7 @@ void FramebufferLoop::Run( const FrameState &frame_state )
 
     // Acquire display image
     auto &frame_res = FramebufferState.CurrentFrameResources();
-    auto  frame     = swap_chain->GetAvaliableFrame( frame_res.mImageAquire );
+    auto  frame     = swap_chain->GetAvailableFrame( frame_res.mImageAquire );
 
     // Record scene to command buffer
     auto dispatch = Renderer.Render( frame_state, frame_res.mCmdBuffer, frame );

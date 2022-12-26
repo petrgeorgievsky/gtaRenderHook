@@ -27,14 +27,14 @@ class D3D11Swapchain : public ISwapchain
   public:
     D3D11Swapchain( const D3D11SwapchainCreateParams &create_params );
     ~D3D11Swapchain() override;
-    SwapchainFrame GetAvaliableFrame( ISyncPrimitive *signal ) override;
+    SwapchainFrame GetAvailableFrame( ISyncPrimitive *signal ) override;
     bool Present( uint32_t swapchain_img, ISyncPrimitive *waitFor ) override;
 
   private:
     uint32_t         mWidth          = 0;
     uint32_t         mHeight         = 0;
-    IDXGISwapChain * mSwapchain      = nullptr;
+    IDXGISwapChain  *mSwapchain      = nullptr;
     ID3D11Texture2D *mBackbufer      = nullptr;
-    IImageView *     mBackbufferView = nullptr;
+    IImageView      *mBackbufferView = nullptr;
 };
 } // namespace rh::engine

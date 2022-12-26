@@ -8,7 +8,10 @@
 #include <Windows.h>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
+#include <unordered_map>
+
 namespace rh::rw::engine
 {
 struct SharedMemoryTaskQueueInfo
@@ -55,7 +58,7 @@ class SharedMemoryTask
     friend class SharedMemoryTaskQueue;
 };
 
-constexpr auto EmptySerializer   = []( MemoryWriter && ) {};
+constexpr auto EmptySerializer   = []( MemoryWriter   &&) {};
 constexpr auto EmptyDeserializer = []( MemoryReader && ) {};
 
 class SharedMemoryTaskQueue
@@ -77,7 +80,7 @@ class SharedMemoryTaskQueue
     [[maybe_unused]] void SendExitEvent();
 
   private:
-    void * mMappedMemory{};
+    void  *mMappedMemory{};
     HANDLE mSharedMemory{};
     HANDLE mMemoryMutex{};
     HANDLE mTaskStartEvent{};

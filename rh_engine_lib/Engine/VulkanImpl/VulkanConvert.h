@@ -79,6 +79,7 @@ constexpr vk::Format Convert( ImageBufferFormat rh_format )
     case ImageBufferFormat::B5G6R5: return vk::Format::eB5G6R5UnormPack16;
     case ImageBufferFormat::BGR5A1: return vk::Format::eA1R5G5B5UnormPack16;
     case ImageBufferFormat::BGRA8: return vk::Format::eB8G8R8A8Unorm;
+    case ImageBufferFormat::BGR10A2: return vk::Format::eA2B10G10R10UnormPack32;
     case ImageBufferFormat::BGR8: return vk::Format::eB8G8R8Unorm;
     // may be incorrect
     case ImageBufferFormat::A8: return vk::Format::eR8Unorm;
@@ -86,6 +87,41 @@ constexpr vk::Format Convert( ImageBufferFormat rh_format )
     case ImageBufferFormat::D24S8: return vk::Format::eD32SfloatS8Uint;
     }
     return vk::Format::eUndefined;
+}
+
+constexpr ImageBufferFormat Convert( vk::Format vk_format )
+{
+    switch ( vk_format )
+    {
+    case vk::Format::eBc1RgbaUnormBlock: return ImageBufferFormat::BC1;
+    case vk::Format::eBc2UnormBlock: return ImageBufferFormat::BC2;
+    case vk::Format::eBc3UnormBlock: return ImageBufferFormat::BC3;
+    case vk::Format::eBc4UnormBlock: return ImageBufferFormat::BC4;
+    case vk::Format::eBc5UnormBlock: return ImageBufferFormat::BC5;
+    case vk::Format::eBc6HUfloatBlock: return ImageBufferFormat::BC6H;
+    case vk::Format::eBc7UnormBlock: return ImageBufferFormat::BC7;
+    case vk::Format::eR32G32B32A32Sfloat: return ImageBufferFormat::RGBA32;
+    case vk::Format::eR32G32B32Sfloat: return ImageBufferFormat::RGB32;
+    case vk::Format::eR16G16B16A16Sfloat: return ImageBufferFormat::RGBA16;
+    case vk::Format::eA2R10G10B10UnormPack32: return ImageBufferFormat::RGB10A2;
+    case vk::Format::eB10G11R11UfloatPack32: return ImageBufferFormat::RG11B10;
+    case vk::Format::eR8G8B8A8Unorm: return ImageBufferFormat::RGBA8;
+    case vk::Format::eR32G32Sfloat: return ImageBufferFormat::RG32;
+    case vk::Format::eR16G16Sfloat: return ImageBufferFormat::RG16;
+    case vk::Format::eR8G8Unorm: return ImageBufferFormat::RG8;
+    case vk::Format::eR32Sfloat: return ImageBufferFormat::R32;
+    case vk::Format::eR16Sfloat: return ImageBufferFormat::R16;
+    case vk::Format::eR8Unorm: return ImageBufferFormat::R8;
+    case vk::Format::eR8Uint: return ImageBufferFormat::R8Uint;
+    case vk::Format::eB5G6R5UnormPack16: return ImageBufferFormat::B5G6R5;
+    case vk::Format::eA1R5G5B5UnormPack16: return ImageBufferFormat::BGR5A1;
+    case vk::Format::eB8G8R8A8Unorm: return ImageBufferFormat::BGRA8;
+    case vk::Format::eA2B10G10R10UnormPack32: return ImageBufferFormat::BGR10A2;
+    case vk::Format::eB8G8R8Unorm: return ImageBufferFormat::BGR8;
+    case vk::Format::eB4G4R4A4UnormPack16: return ImageBufferFormat::BGRA4;
+    case vk::Format::eD32SfloatS8Uint: return ImageBufferFormat::D24S8;
+    default: return ImageBufferFormat::Unknown;
+    }
 }
 
 constexpr vk::AttachmentLoadOp Convert( LoadOp rh_load_op )
