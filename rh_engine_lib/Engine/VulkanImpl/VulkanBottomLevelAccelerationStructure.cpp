@@ -13,101 +13,89 @@ using namespace rh::engine;
 
 VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
     const AccelerationStructureCreateInfoVulkan &create_info )
-    : mDevice( create_info.mDevice )
+    : mDevice( create_info.mDevice ),
+      mAllocator( create_info.mAllocator->GetImpl() )
 {
-    vk::AccelerationStructureCreateInfoNV vk_ac_create_info{};
-
+    using namespace vk;
+    std::vector<uint32_t> max_prim_count{};
     for ( const auto &strip : create_info.mSplits )
     {
-        vk::GeometryNV geometryNv{};
+        AccelerationStructureGeometryKHR geometry{};
 
-        geometryNv.geometryType = vk::GeometryTypeNV::eTriangles;
+        geometry.geometryType = GeometryTypeKHR::eTriangles;
         //  geometryNv.flags        = vk::GeometryFlagBitsNV::eOpaque;
-        geometryNv.geometry.triangles.indexType = vk::IndexType::eUint16;
-        geometryNv.geometry.triangles.indexOffset =
+        auto idx_buffer =
+            dynamic_cast<VulkanBuffer *>( create_info.mIndexBuffer );
+        auto vtx_buffer =
+            dynamic_cast<VulkanBuffer *>( create_info.mVertexBuffer );
+        geometry.geometry.triangles.indexType = IndexType::eUint16;
+        geometry.geometry.triangles.indexData =
+            mDevice.getBufferAddress(
+                vk::BufferDeviceAddressInfo{ *idx_buffer } ) +
             strip.mIndexOffset * sizeof( int16_t );
-        geometryNv.geometry.triangles.indexCount = strip.mIndexCount;
-        geometryNv.geometry.triangles.indexData =
-            *dynamic_cast<VulkanBuffer *>( create_info.mIndexBuffer );
-        geometryNv.geometry.triangles.vertexFormat =
-            vk::Format::eR32G32B32Sfloat;
+        geometry.geometry.triangles.vertexFormat = Format::eR32G32B32Sfloat;
         // TODO: FIX
-        geometryNv.geometry.triangles.vertexStride = 64 + 32;
-        geometryNv.geometry.triangles.vertexOffset = 0;
-        geometryNv.geometry.triangles.vertexCount  = create_info.mVertexCount;
-        geometryNv.geometry.triangles.vertexData =
-            *dynamic_cast<VulkanBuffer *>( create_info.mVertexBuffer );
-        mGeometry.push_back( geometryNv );
+        geometry.geometry.triangles.vertexStride = 64 + 32;
+        geometry.geometry.triangles.maxVertex    = create_info.mVertexCount;
+        geometry.geometry.triangles.vertexData   = mDevice.getBufferAddress(
+            vk::BufferDeviceAddressInfo{ *vtx_buffer } );
+        mGeometry.push_back( geometry );
+
+        vk::AccelerationStructureBuildRangeInfoKHR build_range_info{};
+        build_range_info.primitiveCount  = strip.mIndexCount / 3;
+        build_range_info.primitiveOffset = 0;
+        build_range_info.firstVertex     = strip.mVertexOffset;
+        build_range_info.transformOffset = 0;
+        mBuildRanges.push_back( build_range_info );
+
+        max_prim_count.push_back( build_range_info.primitiveCount );
     }
 
-    mAccelInfo.geometryCount = static_cast<uint32_t>( mGeometry.size() );
-    mAccelInfo.pGeometries   = mGeometry.data();
-    mAccelInfo.type          = vk::AccelerationStructureTypeNV::eBottomLevel;
-    mAccelInfo.flags =
-        vk::BuildAccelerationStructureFlagBitsNV::ePreferFastTrace;
-    vk_ac_create_info.info = mAccelInfo;
+    AccelerationStructureBuildGeometryInfoKHR build_geom_info{};
+    build_geom_info.type          = AccelerationStructureTypeKHR::eBottomLevel;
+    build_geom_info.mode          = BuildAccelerationStructureModeKHR::eBuild;
+    build_geom_info.pGeometries   = mGeometry.data();
+    build_geom_info.geometryCount = mGeometry.size();
 
-    auto result = mDevice.createAccelerationStructureNV( vk_ac_create_info );
+    auto build_sizes = mDevice.getAccelerationStructureBuildSizesKHR(
+        AccelerationStructureBuildTypeKHR::eHostOrDevice, build_geom_info,
+        max_prim_count );
+
+    VmaAllocationCreateInfo alloc_info{};
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    VkBufferCreateInfo buffer_create_info{
+        VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    buffer_create_info.size = build_sizes.accelerationStructureSize;
+    buffer_create_info.usage =
+        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+
+    vmaCreateBuffer( mAllocator, &buffer_create_info, &alloc_info, &mBuffer,
+                     &mAllocation, nullptr );
+
+    AccelerationStructureCreateInfoKHR as_create_info{};
+    as_create_info.size   = build_sizes.accelerationStructureSize;
+    as_create_info.buffer = mBuffer;
+    as_create_info.type   = AccelerationStructureTypeKHR::eBottomLevel;
+
+    // allocate
+
+    mScratchSize = build_sizes.buildScratchSize;
+    auto result  = mDevice.createAccelerationStructureKHR( as_create_info );
 
     if ( !CALL_VK_API( result.result,
                        TEXT( "Failed to create acceleration structure!" ) ) )
         return;
-    mAccel = result.value;
-
-    vk::AccelerationStructureMemoryRequirementsInfoNV
-        accelerationStructureMemoryRequirementsInfoNv{};
-    accelerationStructureMemoryRequirementsInfoNv.accelerationStructure =
-        mAccel;
-    vk::MemoryRequirements2 req =
-        mDevice.getAccelerationStructureMemoryRequirementsNV(
-            accelerationStructureMemoryRequirementsInfoNv );
-
-    // allocate
-
-    mAllocator = create_info.mAllocator->GetImpl();
-
-    VkMemoryRequirements requirements = req.memoryRequirements;
-
-    VmaAllocationInfo       allocationDetail{};
-    VmaAllocationCreateInfo allocationCreateInfo{};
-
-    allocationCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
-    // TODO: HANDLE ERRORS
-    vmaAllocateMemory( mAllocator, &requirements, &allocationCreateInfo,
-                       &mAllocation, &allocationDetail );
-
-    /*VulkanMemoryAllocationInfo alloc_info{};
-    alloc_info.mRequirements = req.memoryRequirements;
-    alloc_info.mDeviceLocal  = true;
-    mAccelMemory = create_info.mAllocator->AllocateDeviceMemory( alloc_info );*/
-
-    // bind
-    vk::BindAccelerationStructureMemoryInfoNV bind_info{};
-    bind_info.accelerationStructure = mAccel;
-    bind_info.memory                = allocationDetail.deviceMemory;
-    bind_info.memoryOffset          = allocationDetail.offset;
-
-    if ( mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info ) !=
-         vk::Result::eSuccess )
-    {
-        debug::DebugLogger::Error( "Failed to bind BLAS memory!" );
-        std::terminate();
-    }
-
-    // compute scratch size
-    vk::AccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo{
-        vk::AccelerationStructureMemoryRequirementsTypeNV::eBuildScratch,
-        mAccel };
-    mScratchSize = mDevice
-                       .getAccelerationStructureMemoryRequirementsNV(
-                           memoryRequirementsInfo )
-                       .memoryRequirements.size;
+    mAccel       = result.value;
+    mScratchSize = build_sizes.buildScratchSize;
 }
 
 VulkanBottomLevelAccelerationStructure::
     ~VulkanBottomLevelAccelerationStructure()
 {
-    mDevice.destroyAccelerationStructureNV( mAccel );
+    mDevice.destroyAccelerationStructureKHR( mAccel );
+    mDevice.destroyBuffer( mBuffer );
     vmaFreeMemory( mAllocator, mAllocation );
 }
 vk::DeviceSize VulkanBottomLevelAccelerationStructure::GetScratchSize() const
@@ -118,13 +106,6 @@ std::uint64_t VulkanBottomLevelAccelerationStructure::GetAddress()
 {
     if ( mGPUHandle != 0 )
         return mGPUHandle;
-    auto result = mDevice.getAccelerationStructureHandleNV(
-        mAccel, sizeof( uint64_t ), &mGPUHandle );
-    if ( result != vk::Result::eSuccess )
-    {
-        debug::DebugLogger::Error( "Failed to get BLAS address!" );
-        std::terminate();
-        return 0;
-    }
+    mGPUHandle = mDevice.getBufferAddress( { mBuffer } );
     return mGPUHandle;
 }

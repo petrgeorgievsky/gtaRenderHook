@@ -1,5 +1,5 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 struct ShadowHitPayload
 {
     float hitDistance;
@@ -7,7 +7,7 @@ struct ShadowHitPayload
     float x;
     float y;
 };
-layout(location = 1) rayPayloadInNV ShadowHitPayload pld;
+layout(location = 1) rayPayloadInEXT ShadowHitPayload pld;
 
 void main()
 {

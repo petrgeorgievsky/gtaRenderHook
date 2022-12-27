@@ -286,59 +286,120 @@ void VulkanCommandBuffer::SetScissors( uint32_t                   start_id,
 void VulkanCommandBuffer::BuildBLAS(
     VulkanBottomLevelAccelerationStructure *blas, IBuffer *scratch_buffer )
 {
-    m_vkCmdBuffer.buildAccelerationStructureNV(
+    /*m_vkCmdBuffer.buildAccelerationStructureNV(
         blas->GetImplInfo(), nullptr, 0, 0, blas->GetImpl(), nullptr,
-        *dynamic_cast<VulkanBuffer *>( scratch_buffer ), 0 );
+        *dynamic_cast<VulkanBuffer *>( scratch_buffer ), 0 );*/
 }
 
 void VulkanCommandBuffer::BuildBLAS(
     const ArrayProxy<BlasBuildInfo> &build_info )
 {
-    for ( auto [blas, scratch_buffer] : build_info )
+    std::vector<vk::AccelerationStructureBuildGeometryInfoKHR> geometries{};
+    std::vector<const vk::AccelerationStructureBuildRangeInfoKHR *>
+        ranges_ptrs{};
+    for ( auto b_i : build_info )
     {
-        auto blas_scratch = dynamic_cast<VulkanBuffer *>( scratch_buffer );
-        m_vkCmdBuffer.buildAccelerationStructureNV(
-            blas->GetImplInfo(), nullptr, 0, 0, blas->GetImpl(), nullptr,
-            *blas_scratch, 0 );
+        vk::AccelerationStructureBuildGeometryInfoKHR build_geometry_info_khr{};
+        const auto &geom = b_i.Accel->GetGeometry();
+        build_geometry_info_khr.mode =
+            vk::BuildAccelerationStructureModeKHR::eBuild;
+        build_geometry_info_khr.type =
+            vk::AccelerationStructureTypeKHR::eBottomLevel;
+        build_geometry_info_khr.geometryCount = geom.size();
+        build_geometry_info_khr.pGeometries   = geom.data();
+
+        vk::BufferDeviceAddressInfo address_info{};
+        address_info.buffer = *dynamic_cast<VulkanBuffer *>( b_i.TempBuffer );
+        build_geometry_info_khr.scratchData.deviceAddress =
+            mDevice.getBufferAddress( address_info );
+        //  =
+        // ->
+        build_geometry_info_khr.dstAccelerationStructure = b_i.Accel->GetImpl();
+        geometries.push_back( build_geometry_info_khr );
+        ranges_ptrs.push_back( b_i.Accel->GetBuildRanges().data() );
     }
+    m_vkCmdBuffer.buildAccelerationStructuresKHR( geometries, ranges_ptrs );
 }
 
 void VulkanCommandBuffer::BuildTLAS( VulkanTopLevelAccelerationStructure *tlas,
                                      IBuffer *scratch_buffer,
                                      IBuffer *instance_buffer )
 {
-    m_vkCmdBuffer.buildAccelerationStructureNV(
-        tlas->GetImplInfo(), *dynamic_cast<VulkanBuffer *>( instance_buffer ),
-        0, 0, tlas->GetImpl(), nullptr,
-        *dynamic_cast<VulkanBuffer *>( scratch_buffer ), 0 );
+    auto vk_instance_buffer = dynamic_cast<VulkanBuffer *>( instance_buffer );
+    auto vk_scratch_buffer  = dynamic_cast<VulkanBuffer *>( scratch_buffer );
+
+    vk::AccelerationStructureBuildGeometryInfoKHR build_info{};
+    vk::AccelerationStructureBuildRangeInfoKHR    build_range_info{};
+    build_range_info.primitiveCount = tlas->mMaxInstances;
+
+    vk::AccelerationStructureGeometryKHR tlas_geom{};
+
+    tlas_geom.geometryType = vk::GeometryTypeKHR::eInstances;
+    tlas_geom.geometry.instances.sType =
+        vk::StructureType::eAccelerationStructureGeometryInstancesDataKHR;
+    tlas_geom.geometry.instances.data =
+        mDevice.getBufferAddress( { *vk_instance_buffer } );
+
+    build_info.mode          = vk::BuildAccelerationStructureModeKHR::eBuild;
+    build_info.type          = vk::AccelerationStructureTypeKHR::eTopLevel;
+    build_info.geometryCount = 1;
+    build_info.pGeometries   = &tlas_geom;
+    build_info.dstAccelerationStructure = tlas->GetImpl();
+    build_info.scratchData = mDevice.getBufferAddress( { *vk_scratch_buffer } );
+
+    m_vkCmdBuffer.buildAccelerationStructuresKHR( { build_info },
+                                                  { &build_range_info } );
 }
 void VulkanCommandBuffer::BindRayTracingPipeline(
     VulkanRayTracingPipeline *pipeline )
 {
-    m_vkCmdBuffer.bindPipeline( vk::PipelineBindPoint::eRayTracingNV,
+    m_vkCmdBuffer.bindPipeline( vk::PipelineBindPoint::eRayTracingKHR,
                                 *pipeline );
 }
 void VulkanCommandBuffer::DispatchRays( const VulkanRayDispatch &dispatch )
 {
-
-    m_vkCmdBuffer.traceRaysNV(
-        dispatch.mRayGenBuffer
-            ? *dynamic_cast<VulkanBuffer *>( dispatch.mRayGenBuffer )
-            : vk::Buffer{},
-        dispatch.mRayGenOffset,
-        dispatch.mMissBuffer
-            ? *dynamic_cast<VulkanBuffer *>( dispatch.mMissBuffer )
-            : vk::Buffer{},
-        dispatch.mMissOffset, dispatch.mMissStride,
-        dispatch.mHitBuffer
-            ? *dynamic_cast<VulkanBuffer *>( dispatch.mHitBuffer )
-            : vk::Buffer{},
-        dispatch.mHitOffset, dispatch.mHitStride,
-        dispatch.mCallableBuffer
-            ? *dynamic_cast<VulkanBuffer *>( dispatch.mCallableBuffer )
-            : vk::Buffer{},
-        dispatch.mCallableOffset, dispatch.mCallableStride, dispatch.mX,
-        dispatch.mY, dispatch.mZ );
+    vk::StridedDeviceAddressRegionKHR ray_gen_region{};
+    vk::StridedDeviceAddressRegionKHR miss_region{};
+    vk::StridedDeviceAddressRegionKHR hit_region{};
+    vk::StridedDeviceAddressRegionKHR callable_region{};
+    if ( dispatch.mRayGenBuffer )
+    {
+        ray_gen_region.deviceAddress =
+            mDevice.getBufferAddress(
+                { *dynamic_cast<VulkanBuffer *>( dispatch.mRayGenBuffer ) } ) +
+            dispatch.mRayGenOffset;
+        ray_gen_region.size = ray_gen_region.stride = dispatch.mRayGenSize;
+    }
+    if ( dispatch.mMissBuffer )
+    {
+        miss_region.deviceAddress =
+            mDevice.getBufferAddress(
+                { *dynamic_cast<VulkanBuffer *>( dispatch.mMissBuffer ) } ) +
+            dispatch.mMissOffset;
+        miss_region.stride = dispatch.mMissStride;
+        miss_region.size   = dispatch.mMissSize;
+    }
+    if ( dispatch.mHitBuffer )
+    {
+        hit_region.deviceAddress =
+            mDevice.getBufferAddress(
+                { *dynamic_cast<VulkanBuffer *>( dispatch.mHitBuffer ) } ) +
+            dispatch.mHitOffset;
+        hit_region.stride = dispatch.mHitStride;
+        hit_region.size   = dispatch.mHitSize;
+    }
+    if ( dispatch.mCallableBuffer )
+    {
+        callable_region.deviceAddress =
+            mDevice.getBufferAddress( { *dynamic_cast<VulkanBuffer *>(
+                dispatch.mCallableBuffer ) } ) +
+            dispatch.mCallableOffset;
+        callable_region.stride = dispatch.mCallableStride;
+        callable_region.size   = dispatch.mCallableSize;
+    }
+    m_vkCmdBuffer.traceRaysKHR( ray_gen_region, miss_region, hit_region,
+                                callable_region, dispatch.mX, dispatch.mY,
+                                dispatch.mZ );
 }
 void VulkanCommandBuffer::DispatchCompute(
     const VulkanComputeDispatch &dispatch )

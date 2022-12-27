@@ -28,7 +28,7 @@ struct VkTransformMatrixKHR
     float matrix[3][4];
 };
 
-struct VkAccelerationStructureInstanceNV
+struct VkAccelerationStructureInstanceKHR
 {
     VkTransformMatrixKHR      transform;
     uint32_t                  instanceCustomIndex : 24;
@@ -45,18 +45,19 @@ class VulkanTopLevelAccelerationStructure
         const TLASCreateInfoVulkan &create_info );
     virtual ~VulkanTopLevelAccelerationStructure();
 
-    std::uint64_t                   GetScratchSize();
-    vk::AccelerationStructureNV     GetImpl() { return mAccel; }
-    vk::AccelerationStructureInfoNV GetImplInfo() { return mAccelInfo; }
+    std::uint64_t                GetScratchSize();
+    vk::AccelerationStructureKHR GetImpl() { return mAccel; }
 
   private:
-    vk::Device                      mDevice;
-    vk::AccelerationStructureNV     mAccel;
-    vk::AccelerationStructureInfoNV mAccelInfo;
+    vk::Device                   mDevice;
+    VkBuffer                     mBuffer;
+    vk::AccelerationStructureKHR mAccel;
+    std::uint32_t                mMaxInstances;
 
     VmaAllocator     mAllocator;
     VmaAllocation    mAllocation{};
     vk::DeviceMemory mAccelMemory;
     std::uint64_t    mScratchSize;
+    friend class VulkanCommandBuffer;
 };
 } // namespace rh::engine

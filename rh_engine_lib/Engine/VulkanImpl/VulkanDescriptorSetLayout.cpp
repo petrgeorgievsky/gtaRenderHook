@@ -15,13 +15,13 @@ constexpr vk::ShaderStageFlags ConvertShaderStage( uint32_t stage )
     if ( stage & ShaderStage::Hull )
         flags |= vk::ShaderStageFlagBits::eGeometry;
     if ( stage & ShaderStage::RayGen )
-        flags |= vk::ShaderStageFlagBits::eRaygenNV;
+        flags |= vk::ShaderStageFlagBits::eRaygenKHR;
     if ( stage & ShaderStage::RayHit )
-        flags |= vk::ShaderStageFlagBits::eClosestHitNV;
+        flags |= vk::ShaderStageFlagBits::eClosestHitKHR;
     if ( stage & ShaderStage::RayMiss )
-        flags |= vk::ShaderStageFlagBits::eMissNV;
+        flags |= vk::ShaderStageFlagBits::eMissKHR;
     if ( stage & ShaderStage::RayAnyHit )
-        flags |= vk::ShaderStageFlagBits::eAnyHitNV;
+        flags |= vk::ShaderStageFlagBits::eAnyHitKHR;
     return flags;
 }
 constexpr vk::DescriptorBindingFlags ConvertDescriptorFlags( uint32_t flags )

@@ -1,14 +1,14 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(location = 0) rayPayloadInNV PrimRaysPayload pay_load;
+layout(location = 0) rayPayloadInEXT PrimRaysPayload pay_load;
 
-hitAttributeNV vec3 attribs;
+hitAttributeEXT vec3 attribs;
 
 // Prim rays pass descriptors
 layout(binding = 3, set = 0) uniform sampler baseSampler;
@@ -72,7 +72,7 @@ void main()
     // Transforming the normal to world space
     normal = normalize(vec3(scnDesc.i[gl_InstanceID].transfoIT * vec4(normal, 0.0)));
 
-    pay_load.normalDepth = vec4(normal, gl_HitTNV);
+    pay_load.normalDepth = vec4(normal, gl_HitTEXT);
     vec4 world_pos_current = cam.proj * ((vec4(obj_pos, 1.0) * scnDesc.i[gl_InstanceID].transfo) * cam.view);
     vec4 world_pos_prev = cam.projPrev * ((vec4(prev_obj_pos, 1.0) * scnDesc.i[gl_InstanceID].prevTransfo) * cam.viewPrev);
     world_pos_current.xy = world_pos_current.xy/world_pos_current.w * 0.5 + 0.5;

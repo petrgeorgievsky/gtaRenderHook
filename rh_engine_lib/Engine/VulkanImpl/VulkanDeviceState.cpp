@@ -21,10 +21,10 @@
 #include "VulkanWin32Window.h"
 
 #include <Engine/Common/ScopedPtr.h>
+#include <Engine/Definitions.h>
 #include <memory_resource>
 #include <numeric>
 #include <ranges>
-#include <Engine/Definitions.h>
 
 using namespace rh;
 using namespace rh::engine;
@@ -43,7 +43,7 @@ VkDebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT /*messageSeverity*/,
 VkResult
 CreateDebugUtilsMessengerEXT( vk::Instance instance,
                               const VkDebugUtilsMessengerCreateInfoEXT *info,
-                              VkDebugUtilsMessengerEXT *                ext )
+                              VkDebugUtilsMessengerEXT                 *ext )
 {
 
     auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
@@ -145,6 +145,7 @@ VulkanDeviceState::VulkanDeviceState()
     vk::ApplicationInfo app_info{};
     app_info.pApplicationName = app_name;
     app_info.pEngineName      = engine_name;
+    app_info.apiVersion       = VK_API_VERSION_1_2;
 
     // Instance info
     vk::InstanceCreateInfo inst_info{};
@@ -288,20 +289,23 @@ bool VulkanDeviceState::Init()
     device_extensions.emplace_back(
         VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME );
     device_extensions.emplace_back( VK_KHR_BIND_MEMORY_2_EXTENSION_NAME );
-    device_extensions.emplace_back( VK_NV_RAY_TRACING_EXTENSION_NAME );
-    device_extensions.emplace_back( VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME );
-    device_extensions.emplace_back( VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME );
+    device_extensions.emplace_back(
+        VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME );
+    device_extensions.emplace_back(
+        VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME );
+    device_extensions.emplace_back(
+        VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME );
+    device_extensions.emplace_back( VK_KHR_SPIRV_1_4_EXTENSION_NAME );
+    device_extensions.emplace_back(
+        VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME );
     device_extensions.emplace_back( VK_KHR_MAINTENANCE3_EXTENSION_NAME );
     device_extensions.emplace_back(
         VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME );
 
-    vk::PhysicalDeviceDescriptorIndexingFeaturesEXT indexFeature{};
-    indexFeature.runtimeDescriptorArray                    = true;
-    indexFeature.descriptorBindingPartiallyBound           = true;
-    indexFeature.descriptorBindingUpdateUnusedWhilePending = true;
-    vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT scalarFeature{};
-    scalarFeature.scalarBlockLayout = true;
-
+    vk::PhysicalDeviceAccelerationStructureFeaturesKHR asFeature{};
+    asFeature.accelerationStructure = true;
+    vk::PhysicalDeviceRayTracingPipelineFeaturesKHR rtFeature{};
+    rtFeature.rayTracingPipeline = true;
 #endif
     vk::DeviceQueueCreateInfo queueCreateInfo = {};
     queueCreateInfo.queueFamilyIndex          = m_iGraphicsQueueFamilyIdx;
@@ -316,10 +320,19 @@ bool VulkanDeviceState::Init()
 
     vk::DeviceCreateInfo info{};
 #ifdef ARCH_64BIT
-    indexFeature.pNext = &scalarFeature;
-    vk::PhysicalDeviceFeatures2 enabledFeatures2{};
-    enabledFeatures2.pNext = &indexFeature;
-    info.pNext             = &enabledFeatures2;
+    asFeature.pNext = &rtFeature;
+    vk::PhysicalDeviceVulkan12Features enabledFeatures2{};
+    enabledFeatures2.pNext                                     = &asFeature;
+    enabledFeatures2.bufferDeviceAddress                       = true;
+    enabledFeatures2.scalarBlockLayout                         = true;
+    enabledFeatures2.runtimeDescriptorArray                    = true;
+    enabledFeatures2.descriptorBindingPartiallyBound           = true;
+    enabledFeatures2.descriptorBindingUpdateUnusedWhilePending = true;
+    enabledFeatures2.descriptorBindingUpdateUnusedWhilePending = true;
+    vk::PhysicalDeviceVulkan11Features enabledFeaturesv11{};
+    enabledFeaturesv11.pNext                    = &enabledFeatures2;
+    enabledFeaturesv11.storageBuffer16BitAccess = true;
+    info.pNext                                  = &enabledFeaturesv11;
 #endif
 
     info.pQueueCreateInfos    = &queueCreateInfo;
@@ -354,6 +367,7 @@ bool VulkanDeviceState::Init()
     m_vkCommandPool = command_pool_res.value;
 
     VulkanMemoryAllocatorCreateInfo vk_malloc_ci{};
+    vk_malloc_ci.mInstance       = m_vkInstance;
     vk_malloc_ci.mPhysicalDevice = m_aAdapters[m_uiCurrentAdapter];
     vk_malloc_ci.mDevice         = m_vkDevice;
     mDefaultAllocator            = new VulkanMemoryAllocator( vk_malloc_ci );
@@ -663,8 +677,8 @@ VulkanDeviceState::CreateImageBuffer( const ImageBufferCreateParams &params )
     for ( uint32_t offset = 0, i = 0; i < params.mMipLevels; i++ )
     {
         const auto &pre_init_data = params.mPreinitData[i];
-        auto        mip_w         = (std::max)( params.mWidth >> i, 1u );
-        auto        mip_h         = (std::max)( params.mHeight >> i, 1u );
+        auto        mip_w         = ( std::max )( params.mWidth >> i, 1u );
+        auto        mip_h         = ( std::max )( params.mHeight >> i, 1u );
 
         // Ignore zero sized mipmaps, can happen on some textures due to some
         // error in mip-map generation software
@@ -699,9 +713,9 @@ VulkanDeviceState::CreateImageBuffer( const ImageBufferCreateParams &params )
             .mSrcMemoryAccess = MemoryAccessFlags::Unknown,
             .mDstMemoryAccess = MemoryAccessFlags::TransferWrite,
             .mSubresRange     = { .baseMipLevel   = 0,
-                              .levelCount     = params.mMipLevels,
-                              .baseArrayLayer = 0,
-                              .layerCount     = 1 },
+                                  .levelCount     = params.mMipLevels,
+                                  .baseArrayLayer = 0,
+                                  .layerCount     = 1 },
         } },
     } );
 
@@ -722,9 +736,9 @@ VulkanDeviceState::CreateImageBuffer( const ImageBufferCreateParams &params )
             .mSrcMemoryAccess = MemoryAccessFlags::TransferWrite,
             .mDstMemoryAccess = MemoryAccessFlags::ShaderRead,
             .mSubresRange     = { .baseMipLevel   = 0,
-                              .levelCount     = params.mMipLevels,
-                              .baseArrayLayer = 0,
-                              .layerCount     = 1 },
+                                  .levelCount     = params.mMipLevels,
+                                  .baseArrayLayer = 0,
+                                  .layerCount     = 1 },
         } },
     } );
 
@@ -784,10 +798,9 @@ void VulkanDeviceState::UpdateDescriptorSets(
     write_desc_set.dstSet = *dynamic_cast<VulkanDescriptorSet *>( params.mSet );
     write_desc_set.dstBinding      = params.mBinding;
     write_desc_set.descriptorType  = Convert( params.mDescriptorType );
-    write_desc_set.descriptorCount = static_cast<uint32_t>(
-        (std::max)( { params.mBufferUpdateInfo.Size(),
-                      params.mASUpdateInfo.Size(),
-                      params.mImageUpdateInfo.Size() } ) );
+    write_desc_set.descriptorCount = static_cast<uint32_t>( ( std::max )(
+        { params.mBufferUpdateInfo.Size(), params.mASUpdateInfo.Size(),
+          params.mImageUpdateInfo.Size() } ) );
 
     std::vector<vk::DescriptorBufferInfo> buffer_list;
     std::ranges::transform(
@@ -822,11 +835,10 @@ void VulkanDeviceState::UpdateDescriptorSets(
     write_desc_set.pImageInfo      = image_list.data();
     if ( params.mASUpdateInfo.Size() > 0 )
     {
-        vk::WriteDescriptorSetAccelerationStructureNV
-            writeDescriptorSetAccelerationStructureNv{};
-        writeDescriptorSetAccelerationStructureNv.accelerationStructureCount =
+        vk::WriteDescriptorSetAccelerationStructureKHR write_desc_as{};
+        write_desc_as.accelerationStructureCount =
             static_cast<uint32_t>( params.mASUpdateInfo.Size() );
-        std::vector<vk::AccelerationStructureNV> as_list;
+        std::vector<vk::AccelerationStructureKHR> as_list;
 
         std::ranges::transform(
             params.mASUpdateInfo, std::back_inserter( as_list ),
@@ -836,10 +848,9 @@ void VulkanDeviceState::UpdateDescriptorSets(
                            info.mTLAS )
                     ->GetImpl();
             } );
-        writeDescriptorSetAccelerationStructureNv.pAccelerationStructures =
-            as_list.data();
+        write_desc_as.pAccelerationStructures = as_list.data();
 
-        write_desc_set.pNext = &writeDescriptorSetAccelerationStructureNv;
+        write_desc_set.pNext = &write_desc_as;
 
         m_vkDevice.updateDescriptorSets( { write_desc_set }, {} );
     }

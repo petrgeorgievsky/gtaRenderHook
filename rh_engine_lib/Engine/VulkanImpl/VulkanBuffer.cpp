@@ -8,16 +8,25 @@ vk::BufferUsageFlags ConvertUsage( uint32_t flags )
 {
     vk::BufferUsageFlags res_flags{};
     if ( flags & BufferUsage::VertexBuffer )
-        res_flags |= vk::BufferUsageFlagBits::eVertexBuffer;
+        res_flags |= vk::BufferUsageFlagBits::eVertexBuffer |
+                     vk::BufferUsageFlagBits::
+                         eAccelerationStructureBuildInputReadOnlyKHR |
+                     vk::BufferUsageFlagBits::eShaderDeviceAddress;
     if ( flags & BufferUsage::IndexBuffer )
-        res_flags |= vk::BufferUsageFlagBits::eIndexBuffer;
+        res_flags |= vk::BufferUsageFlagBits::eIndexBuffer |
+                     vk::BufferUsageFlagBits::
+                         eAccelerationStructureBuildInputReadOnlyKHR |
+                     vk::BufferUsageFlagBits::eShaderDeviceAddress;
     if ( flags & BufferUsage::ConstantBuffer )
         res_flags |= vk::BufferUsageFlagBits::eUniformBuffer;
     if ( flags & BufferUsage::StagingBuffer )
         res_flags |= vk::BufferUsageFlagBits::eTransferSrc |
                      vk::BufferUsageFlagBits::eTransferDst;
     if ( flags & BufferUsage::RayTracingScratch )
-        res_flags |= vk::BufferUsageFlagBits::eRayTracingNV;
+        res_flags |= vk::BufferUsageFlagBits::eStorageBuffer |
+                     vk::BufferUsageFlagBits::
+                         eAccelerationStructureBuildInputReadOnlyKHR |
+                     vk::BufferUsageFlagBits::eShaderDeviceAddress;
 
     if ( flags & BufferUsage::StorageBuffer )
         res_flags |= vk::BufferUsageFlagBits::eStorageBuffer;

@@ -1,15 +1,15 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(location = 0) rayPayloadInNV hitPayload prd;
-hitAttributeNV vec3 attribs;
+layout(location = 0) rayPayloadInEXT hitPayload prd;
+hitAttributeEXT vec3 attribs;
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 1, scalar) buffer ScnDesc
 {
     sceneDesc i[];
@@ -59,8 +59,8 @@ void main()
     if (material.txd_id > 0) {
         vec4 tex_color =texture(sampler2D(textures[material.txd_id], testSampler), tc);
         if (tex_color.a < 0.5)
-        ignoreIntersectionNV();
+        ignoreIntersectionEXT;
     }
     else if (unpackUnorm4x8(material.color).a  < 0.5)
-    ignoreIntersectionNV();
+    ignoreIntersectionEXT;
 }

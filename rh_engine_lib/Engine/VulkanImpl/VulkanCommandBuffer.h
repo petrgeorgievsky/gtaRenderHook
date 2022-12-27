@@ -17,15 +17,19 @@ struct VulkanRayDispatch
 {
     IBuffer *mRayGenBuffer;
     uint64_t mRayGenOffset;
+    uint64_t mRayGenSize;
     IBuffer *mMissBuffer;
     uint64_t mMissOffset;
     uint64_t mMissStride;
+    uint64_t mMissSize;
     IBuffer *mHitBuffer;
     uint64_t mHitOffset;
     uint64_t mHitStride;
+    uint64_t mHitSize;
     IBuffer *mCallableBuffer;
     uint64_t mCallableOffset;
     uint64_t mCallableStride;
+    uint64_t mCallableSize;
     uint32_t mX;
     uint32_t mY;
     uint32_t mZ;

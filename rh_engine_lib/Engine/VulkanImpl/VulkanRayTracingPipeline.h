@@ -27,7 +27,7 @@ struct RayTracingGroup
 
 struct RayTracingPipelineCreateInfo
 {
-    IPipelineLayout *           mLayout;
+    IPipelineLayout            *mLayout;
     ArrayProxy<ShaderStageDesc> mShaderStages;
     ArrayProxy<RayTracingGroup> mShaderGroups;
 };
@@ -47,7 +47,7 @@ class VulkanRayTracingPipeline
     ~VulkanRayTracingPipeline();
     std::vector<uint8_t> GetShaderBindingTable();
     uint32_t             GetSBTHandleSize();
-    uint32_t             GetSBTHandleSizeUnalign();
+    uint32_t             GetSBTHandleSizeUnalign() const;
 
     operator vk::Pipeline() { return mPipelineImpl; }
 

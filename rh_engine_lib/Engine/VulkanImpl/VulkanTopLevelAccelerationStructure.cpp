@@ -13,70 +13,58 @@ namespace rh::engine
 
 VulkanTopLevelAccelerationStructure::VulkanTopLevelAccelerationStructure(
     const TLASCreateInfoVulkan &create_info )
-    : mDevice( create_info.mDevice )
+    : mDevice( create_info.mDevice ),
+      mAllocator( create_info.mAllocator->GetImpl() )
 {
-    vk::AccelerationStructureCreateInfoNV vk_ac_create_info{};
+    vk::AccelerationStructureGeometryKHR geometry_khr{};
+    geometry_khr.geometryType = vk::GeometryTypeKHR::eInstances;
+    geometry_khr.geometry.instances.sType =
+        vk::StructureType::eAccelerationStructureGeometryInstancesDataKHR;
+    mMaxInstances = create_info.mMaxInstanceCount;
 
-    mAccelInfo.instanceCount = create_info.mMaxInstanceCount;
-    mAccelInfo.type          = vk::AccelerationStructureTypeNV::eTopLevel;
-    vk_ac_create_info.info   = mAccelInfo;
+    vk::AccelerationStructureBuildGeometryInfoKHR build_geometry_info_khr{};
+    build_geometry_info_khr.type = vk::AccelerationStructureTypeKHR::eTopLevel;
+    build_geometry_info_khr.mode =
+        vk::BuildAccelerationStructureModeKHR::eBuild;
+    build_geometry_info_khr.pGeometries   = &geometry_khr;
+    build_geometry_info_khr.geometryCount = 1;
 
-    auto result = mDevice.createAccelerationStructureNV( vk_ac_create_info );
+    auto build_sizes = mDevice.getAccelerationStructureBuildSizesKHR(
+        vk::AccelerationStructureBuildTypeKHR::eDevice, build_geometry_info_khr,
+        { create_info.mMaxInstanceCount } );
+
+    VmaAllocationCreateInfo alloc_info{};
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    VkBufferCreateInfo buffer_create_info{
+        VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    buffer_create_info.size = build_sizes.accelerationStructureSize;
+    buffer_create_info.usage =
+        VkBufferUsageFlagBits::
+            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+        VkBufferUsageFlagBits::VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+
+    vmaCreateBuffer( mAllocator, &buffer_create_info, &alloc_info, &mBuffer,
+                     &mAllocation, nullptr );
+
+    vk::AccelerationStructureCreateInfoKHR vk_ac_create_info{};
+
+    vk_ac_create_info.type   = vk::AccelerationStructureTypeKHR::eTopLevel;
+    vk_ac_create_info.size   = build_sizes.accelerationStructureSize;
+    vk_ac_create_info.buffer = mBuffer; //
+
+    auto result = mDevice.createAccelerationStructureKHR( vk_ac_create_info );
     if ( !CALL_VK_API( result.result,
                        TEXT( "Failed to create acceleration structure!" ) ) )
         return;
     mAccel = result.value;
 
-    vk::AccelerationStructureMemoryRequirementsInfoNV
-        accelerationStructureMemoryRequirementsInfoNv{};
-    accelerationStructureMemoryRequirementsInfoNv.accelerationStructure =
-        mAccel;
-    vk::MemoryRequirements2 req =
-        mDevice.getAccelerationStructureMemoryRequirementsNV(
-            accelerationStructureMemoryRequirementsInfoNv );
-
-    // allocate
-    /*VulkanMemoryAllocationInfo alloc_info{};
-    alloc_info.mRequirements = req.memoryRequirements;
-    alloc_info.mDeviceLocal  = true;
-    mAccelMemory = create_info.mAllocator->AllocateDeviceMemory( alloc_info );*/
-
-    mAllocator                        = create_info.mAllocator->GetImpl();
-    VkMemoryRequirements requirements = req.memoryRequirements;
-
-    VmaAllocationInfo       allocationDetail{};
-    VmaAllocationCreateInfo allocationCreateInfo{};
-
-    allocationCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
-    // TODO: HANLE ERRORS
-    vmaAllocateMemory( mAllocator, &requirements, &allocationCreateInfo,
-                       &mAllocation, &allocationDetail );
-    // bind
-    vk::BindAccelerationStructureMemoryInfoNV bind_info{};
-    bind_info.accelerationStructure = mAccel;
-    bind_info.memory                = allocationDetail.deviceMemory;
-    bind_info.memoryOffset          = allocationDetail.offset;
-    // bind_info.memory                = mAccelMemory;
-
-    if ( mDevice.bindAccelerationStructureMemoryNV( 1, &bind_info ) !=
-         vk::Result::eSuccess )
-    {
-        debug::DebugLogger::Error( "Failed to bind TLAS memory!" );
-        std::terminate();
-    }
-
-    // compute scratch size
-    vk::AccelerationStructureMemoryRequirementsInfoNV memoryRequirementsInfo{
-        vk::AccelerationStructureMemoryRequirementsTypeNV::eBuildScratch,
-        mAccel };
-    mScratchSize = mDevice
-                       .getAccelerationStructureMemoryRequirementsNV(
-                           memoryRequirementsInfo )
-                       .memoryRequirements.size;
+    mScratchSize = build_sizes.buildScratchSize;
 }
 VulkanTopLevelAccelerationStructure::~VulkanTopLevelAccelerationStructure()
 {
-    mDevice.destroyAccelerationStructureNV( mAccel );
+    mDevice.destroyAccelerationStructureKHR( mAccel );
+    mDevice.destroyBuffer( mBuffer );
     vmaFreeMemory( mAllocator, mAllocation );
     /*mDevice.destroyAccelerationStructureNV( mAccel );
     mDevice.freeMemory( mAccelMemory );*/

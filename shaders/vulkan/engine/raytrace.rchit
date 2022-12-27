@@ -1,17 +1,17 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(location = 0) rayPayloadInNV hitPayload prd;
-layout(location = 1) rayPayloadInNV bool inShadow;
+layout(location = 0) rayPayloadInEXT hitPayload prd;
+layout(location = 1) rayPayloadInEXT bool inShadow;
 
-hitAttributeNV vec3 attribs;
+hitAttributeEXT vec3 attribs;
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 2, scalar) buffer ScnDesc
 {
     sceneDesc i[];
@@ -66,8 +66,8 @@ void main()
         vec3  origin = worldPos;
         vec3  rayDir = up;
         uint  flags =
-            gl_RayFlagsSkipClosestHitShaderNV;
-        traceNV(topLevelAS,  // acceleration structure
+            gl_RayFlagsSkipClosestHitShaderEXT;
+        traceRayEXT(topLevelAS,  // acceleration structure
                 flags,       // rayFlags
                 0xFF,        // cullMask
                 0,           // sbtRecordOffset
@@ -80,11 +80,11 @@ void main()
                 1            // payload (location = 1)
         );
     }*/
-    prd.normalDepth = vec4(normal, gl_HitTNV);
+    prd.normalDepth = vec4(normal, gl_HitTEXT);
     if (material.spec_id > 0){
         vec4 spec_color = texture(sampler2D(textures[material.spec_id], testSampler), tc);
         vec3 origin = worldPos;
-        vec3 rayDir = reflect(gl_WorldRayDirectionNV, normal);
+        vec3 rayDir = reflect(gl_WorldRayDirectionEXT, normal);
         prd.attenuation *= spec_color.r;
         prd.done      = 0;
         prd.rayOrigin = origin;

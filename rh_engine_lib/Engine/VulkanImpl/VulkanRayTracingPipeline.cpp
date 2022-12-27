@@ -13,15 +13,16 @@ VulkanRayTracingPipeline::VulkanRayTracingPipeline(
     const VulkanRayTracingPipelineCreateInfo &create_info )
     : mDevice( create_info.mDevice ), mGPUInfo( create_info.mGPUInfo )
 {
-    vk::RayTracingPipelineCreateInfoNV createInfoNv{};
+    vk::RayTracingPipelineCreateInfoKHR createInfo{};
     // TODO: allow to change
-    createInfoNv.maxRecursionDepth =
+    createInfo.maxPipelineRayRecursionDepth =
         ( std::max )( 10u, create_info.mGPUInfo.mMaxRecursionDepth );
     std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{};
     shader_stages.reserve( create_info.mShaderStages.Size() );
     std::ranges::transform(
         create_info.mShaderStages, std::back_inserter( shader_stages ),
-        []( const ShaderStageDesc &stage_desc ) {
+        []( const ShaderStageDesc &stage_desc )
+        {
             vk::PipelineShaderStageCreateInfo vk_desc{};
             vk_desc.stage = Convert( stage_desc.mStage );
             vk_desc.pName = stage_desc.mEntryPoint.c_str();
@@ -30,18 +31,19 @@ VulkanRayTracingPipeline::VulkanRayTracingPipeline(
             return vk_desc;
         } );
 
-    std::vector<vk::RayTracingShaderGroupCreateInfoNV> shader_groups{};
+    std::vector<vk::RayTracingShaderGroupCreateInfoKHR> shader_groups{};
     shader_groups.reserve( create_info.mShaderGroups.Size() );
 
     std::ranges::transform(
         create_info.mShaderGroups, std::back_inserter( shader_groups ),
-        []( const RayTracingGroup &group ) {
-            vk::RayTracingShaderGroupCreateInfoNV vk_desc{};
+        []( const RayTracingGroup &group )
+        {
+            vk::RayTracingShaderGroupCreateInfoKHR vk_desc{};
             // TODO: BIX
             vk_desc.type =
                 group.mType == RTShaderGroupType::General
-                    ? vk::RayTracingShaderGroupTypeNV::eGeneral
-                    : vk::RayTracingShaderGroupTypeNV::eTrianglesHitGroup;
+                    ? vk::RayTracingShaderGroupTypeKHR::eGeneral
+                    : vk::RayTracingShaderGroupTypeKHR::eTrianglesHitGroup;
             vk_desc.generalShader      = group.mGeneralId;
             vk_desc.anyHitShader       = group.mAnyHitId;
             vk_desc.closestHitShader   = group.mClosestHitId;
@@ -50,16 +52,17 @@ VulkanRayTracingPipeline::VulkanRayTracingPipeline(
             return vk_desc;
         } );
 
-    createInfoNv.pStages    = shader_stages.data();
-    createInfoNv.stageCount = static_cast<uint32_t>( shader_stages.size() );
-    createInfoNv.pGroups    = shader_groups.data();
-    createInfoNv.groupCount = static_cast<uint32_t>( shader_groups.size() );
-    mGroupCount             = static_cast<uint32_t>( shader_groups.size() );
-    createInfoNv.layout =
+    createInfo.pStages    = shader_stages.data();
+    createInfo.stageCount = static_cast<uint32_t>( shader_stages.size() );
+    createInfo.pGroups    = shader_groups.data();
+    createInfo.groupCount = static_cast<uint32_t>( shader_groups.size() );
+    mGroupCount           = static_cast<uint32_t>( shader_groups.size() );
+    createInfo.layout =
         *static_cast<VulkanPipelineLayout *>( create_info.mLayout );
-    mPipelineLayout = createInfoNv.layout;
+    mPipelineLayout = createInfo.layout;
     mPipelineImpl =
-        mDevice.createRayTracingPipelineNV( nullptr, createInfoNv ).value;
+        mDevice.createRayTracingPipelineKHR( nullptr, nullptr, createInfo )
+            .value;
 }
 
 VulkanRayTracingPipeline::~VulkanRayTracingPipeline()
@@ -73,7 +76,7 @@ std::vector<uint8_t> VulkanRayTracingPipeline::GetShaderBindingTable()
     auto aligned_handle_size = mGPUInfo.GetAlignedSGHandleSize();
     data.resize( mGroupCount * aligned_handle_size );
 
-    (void)VULKAN_HPP_DEFAULT_DISPATCHER.vkGetRayTracingShaderGroupHandlesNV(
+    (void)VULKAN_HPP_DEFAULT_DISPATCHER.vkGetRayTracingShaderGroupHandlesKHR(
         mDevice, mPipelineImpl, 0, mGroupCount, (uint32_t)data.size(),
         (void *)data.data() );
     return data;
@@ -82,7 +85,7 @@ uint32_t VulkanRayTracingPipeline::GetSBTHandleSize()
 {
     return mGPUInfo.GetAlignedSGHandleSize();
 }
-uint32_t VulkanRayTracingPipeline::GetSBTHandleSizeUnalign()
+uint32_t VulkanRayTracingPipeline::GetSBTHandleSizeUnalign() const
 {
     return mGPUInfo.mShaderGroupHandleSize;
 }

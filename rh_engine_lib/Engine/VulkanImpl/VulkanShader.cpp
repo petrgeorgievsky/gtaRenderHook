@@ -107,8 +107,9 @@ bool rh::engine::TranslateHLSL_to_SPIRV( const std::string &path,
         cmd_args << " -D";
 
     cmd_args << " -e " << entry_point << " -S " << shader_type
-             << " -V100 " // emit SPiR-V
+             << " -V --target-env vulkan1.2 " // emit SPiR-V
                 "-o "
+
              << dir_path_ / dest_path << " " << dir_path_ / path;
     if constexpr ( gDebugEnabled )
         cmd_args << " -g";

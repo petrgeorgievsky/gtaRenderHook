@@ -283,7 +283,7 @@ bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
     auto &blas_resource = *mBlasBuildPass;
 
     // Build TLAS instance buffer
-    std::vector<VkAccelerationStructureInstanceNV> instance_buffer{};
+    std::vector<VkAccelerationStructureInstanceKHR> instance_buffer{};
     instance_buffer.reserve( draw_call_count );
     i = 0;
 
@@ -294,7 +294,7 @@ bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
         {
             auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
 
-            VkAccelerationStructureInstanceNV instance{};
+            VkAccelerationStructureInstanceKHR instance{};
             std::copy( &dc.WorldTransform.m[0][0],
                        &dc.WorldTransform.m[0][0] + 3 * 4,
                        &instance.transform.matrix[0][0] );
@@ -314,7 +314,7 @@ bool RayTracingRenderer::RenderPrimaryRays( const MeshInstanceState &mesh_data,
         {
             auto blas = (VulkanBottomLevelAccelerationStructure *)mesh.mBLAS;
 
-            VkAccelerationStructureInstanceNV instance{};
+            VkAccelerationStructureInstanceKHR instance{};
             std::copy( &dc.WorldTransform.m[0][0],
                        &dc.WorldTransform.m[0][0] + 3 * 4,
                        &instance.transform.matrix[0][0] );

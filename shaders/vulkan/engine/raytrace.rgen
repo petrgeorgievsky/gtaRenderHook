@@ -1,9 +1,9 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 0, rgba32f) uniform image2D image;
 layout(binding = 0, set = 1) uniform CameraProperties
 {
@@ -18,18 +18,18 @@ layout(binding = 6, set = 1) uniform sampler testSampler;
 layout(binding = 7, set = 1) uniform texture2D blue_noise;
 
 
-layout(location = 0) rayPayloadNV hitPayload prd;
+layout(location = 0) rayPayloadEXT hitPayload prd;
 
 void main()
 {
-    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
-    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
     vec2 d = inUV * 2.0 - 1.0;
     vec4 origin    = cam.viewInverse * vec4(0, 0, 0, 1);
     vec4 target    = cam.projInverse * vec4(d.x, d.y, 1, 1);
     vec4 direction = cam.viewInverse * vec4(normalize(target.xyz), 0);
 
-    uint  rayFlags = gl_RayFlagsNoneNV;
+    uint  rayFlags = gl_RayFlagsNoneEXT;
     float tMin     = 0.001;
     float tMax     = 10000.0;
 
@@ -44,7 +44,7 @@ void main()
     vec3 hitValue = vec3(0);
     for (;;)
     {
-        traceNV(topLevelAS, // acceleration structure
+        traceRayEXT(topLevelAS, // acceleration structure
         rayFlags, // rayFlags
         0xFF, // cullMask
         0, // sbtRecordOffset
@@ -66,11 +66,11 @@ void main()
         break;
 
         origin.xyz    = prd.rayOrigin;
-        vec3 random_dir = texture(sampler2D(blue_noise, testSampler), vec2(gl_LaunchIDNV.xy%64)/64.0f).xyz * 2.0f - 1.0f.xxx;
+        vec3 random_dir = texture(sampler2D(blue_noise, testSampler), vec2(gl_LaunchIDEXT.xy%64)/64.0f).xyz * 2.0f - 1.0f.xxx;
         float roughness = 1 - prd.materialParams.g;
         direction.xyz = normalize(prd.rayDir + random_dir * roughness * roughness);
         prd.done      = 1;// Will stop if a reflective material isn't hit
     }
 
-    imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(hitValue, 1.0));
+    imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(hitValue, 1.0));
 }

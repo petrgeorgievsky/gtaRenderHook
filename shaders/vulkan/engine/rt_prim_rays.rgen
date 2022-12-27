@@ -1,9 +1,9 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 0, rgba16f) uniform image2D albedo;
 layout(binding = 2, set = 0, rgba16f) uniform image2D normals;
 layout(binding = 5, set = 0, rg16f) uniform image2D velocity;
@@ -19,12 +19,12 @@ layout(binding = 0, set = 1) uniform CameraProperties
     mat4 viewProjInversePrev;
 } cam;
 
-layout(location = 0) rayPayloadNV PrimRaysPayload pay_load;
+layout(location = 0) rayPayloadEXT PrimRaysPayload pay_load;
 
 void main()
 {
-    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
-    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
     vec2 d = inUV * 2.0 - 1.0;
     vec4 origin    = cam.viewInverse * vec4(0, 0, 0, 1);
     vec4 target    = cam.projInverse * vec4(d.x, d.y, 1, 1);
@@ -33,7 +33,7 @@ void main()
     // proj[3][2] (- f*n ) / ( f - n)
     float near_plane = -cam.proj[3][2]/cam.proj[2][2];
 
-    uint  rayFlags = gl_RayFlagsNoneNV;
+    uint  rayFlags = gl_RayFlagsNoneEXT;
     float tMin     = near_plane;
     float tMax     = 10000.0;
 
@@ -41,11 +41,11 @@ void main()
     pay_load.motionVectors    = vec4(0);
     pay_load.normalDepth  =  vec4(0.0f, 0.0f, 0.0f, 10000.0f);
     mat4 Bayer = { vec4(1, 13, 4, 16), vec4(9, 5, 12, 8), vec4(3, 15, 2, 14), vec4(11, 7, 10, 6) };
-    float noise = Bayer[gl_LaunchIDNV.x % 4][gl_LaunchIDNV.y % 4] * 0.0625;//frac(frac(dot(gl_LaunchIDNV.xy, vec2(0.06711056, 0.00583715))) * 52.9829189);
+    float noise = Bayer[gl_LaunchIDEXT.x % 4][gl_LaunchIDEXT.y % 4] * 0.0625;//frac(frac(dot(gl_LaunchIDEXT.xy, vec2(0.06711056, 0.00583715))) * 52.9829189);
     pay_load.materialParams =  vec4(0.1f, 0.01f, 0.f, noise);
 
     vec3 hitValue = vec3(0);
-    traceNV(topLevelAS, rayFlags,
+    traceRayEXT(topLevelAS, rayFlags,
     0xFF, // cullMask
     0, // sbtRecordOffset
     0, // sbtRecordStride
@@ -57,9 +57,9 @@ void main()
     0// payload (location = 0)
     );
 
-    imageStore(albedo, ivec2(gl_LaunchIDNV.xy), vec4(pay_load.albedo.rgb, 1.0));
-    imageStore(normals, ivec2(gl_LaunchIDNV.xy), pay_load.normalDepth);
-    imageStore(velocity, ivec2(gl_LaunchIDNV.xy), pay_load.motionVectors);
-    imageStore(material_params, ivec2(gl_LaunchIDNV.xy), pay_load.materialParams);
+    imageStore(albedo, ivec2(gl_LaunchIDEXT.xy), vec4(pay_load.albedo.rgb, 1.0));
+    imageStore(normals, ivec2(gl_LaunchIDEXT.xy), pay_load.normalDepth);
+    imageStore(velocity, ivec2(gl_LaunchIDEXT.xy), pay_load.motionVectors);
+    imageStore(material_params, ivec2(gl_LaunchIDEXT.xy), pay_load.materialParams);
 
 }

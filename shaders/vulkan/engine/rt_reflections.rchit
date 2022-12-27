@@ -1,17 +1,17 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(location = 0) rayPayloadInNV ReflectionRaysPayload pay_load;
-layout(location = 1) rayPayloadNV ShadowHitPayload shad_pld;
+layout(location = 0) rayPayloadInEXT ReflectionRaysPayload pay_load;
+layout(location = 1) rayPayloadEXT ShadowHitPayload shad_pld;
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 
-hitAttributeNV vec3 attribs;
+hitAttributeEXT vec3 attribs;
 
 // Prim rays pass descriptors
 layout(binding = 3, set = 0) uniform sampler baseSampler;
@@ -96,8 +96,8 @@ void main()
         vec3  origin = vec3(vec4(obj_pos, 1.0) * scnDesc.i[gl_InstanceID].transfo);
         vec3  rayDir = sun_dir;
         uint  flags =
-        gl_RayFlagsSkipClosestHitShaderNV;
-        traceNV(topLevelAS, // acceleration structure
+        gl_RayFlagsSkipClosestHitShaderEXT;
+        traceRayEXT(topLevelAS, // acceleration structure
         flags, // rayFlags
         0xFF, // cullMask
         0, // sbtRecordOffset

@@ -1,5 +1,5 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
@@ -7,7 +7,7 @@
 #include "restir_structs.glsl"
 #include "restir_common.glsl"
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 0, rgba16f) uniform image2D normals;
 layout(binding = 2, set = 0) buffer AnalyticLights
 {
@@ -68,7 +68,7 @@ layout(binding = 2, set = 2) buffer Indices { uint16_t i[]; } indices[];
 layout(binding = 3, set = 2) uniform texture2D textures[];
 layout(binding = 4, set = 2, scalar) buffer MatDesc{ MaterialDesc i[]; } matDesc;
 
-layout(location = 0) rayPayloadNV ShadowHitPayload payload;
+layout(location = 0) rayPayloadEXT ShadowHitPayload payload;
 
 uint SmallestPowerOf2GreaterThan(in uint x)
 {
@@ -102,18 +102,18 @@ float FloatPrecision(in float x, in uint NumMantissaBits)
 // compute reservoir of random sample of size M from N lights
 void main()
 {
-    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
-    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
     vec2 d = inUV * 2.0 - 1.0;
     vec4 origin    = cam.viewInverse * vec4(0, 0, 0, 1);
     vec4 target    = cam.projInverse * vec4(d.x, d.y, 1, 1);
     vec4 direction = cam.viewInverse * vec4(normalize(target.xyz), 0);
 
-    uint  rayFlags = gl_RayFlagsNoneNV;
+    uint  rayFlags = gl_RayFlagsNoneEXT;
     float tMin     = 0.001;
     float tMax     = 5000.0;
 
-    vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDNV.xy));
+    vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDEXT.xy));
     normals_d.xyz = normalize(normals_d.xyz);
     ivec2 tex_res = imageSize(normals);
 
@@ -121,7 +121,7 @@ void main()
     surface.worldPos = origin.xyz + direction.xyz * normals_d.w;
     surface.normal   = normals_d.xyz;
 
-    uint reservoirId = gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y;
+    uint reservoirId = gl_LaunchIDEXT.x * tex_res.y + gl_LaunchIDEXT.y;
     Reservoir r = reservoirs[reservoirId];
 
     float distToLight;
@@ -150,11 +150,11 @@ void main()
     payload.x = 0.0f;
     payload.y = 0.0f;
 
-    uint randSeed = initRand(gl_LaunchIDNV.x * tex_res.y + gl_LaunchIDNV.y, Timestamp, 16);
+    uint randSeed = initRand(gl_LaunchIDEXT.x * tex_res.y + gl_LaunchIDEXT.y, Timestamp, 16);
 
     const float depth_eps = FloatPrecision(normals_d.w, 10);
 
-    traceNV(topLevelAS, rayFlags,
+    traceRayEXT(topLevelAS, rayFlags,
     0xFF, // cullMask
     0, // sbtRecordOffset
     0, // sbtRecordStride

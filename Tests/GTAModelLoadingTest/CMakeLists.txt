@@ -17,6 +17,7 @@ install_rw_library()
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 20
         )
+
 #set_property(TARGET ${PROJECT_NAME} PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 # Copy shaders to build destination
@@ -33,7 +34,7 @@ endforeach ()
 SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/PROFILE")
 add_custom_command(TARGET ${PROJECT_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy
-        $ENV{VULKAN_SDK}\\Bin32\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)
+        $ENV{VULKAN_SDK}\\Bin\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)
 # Copy test models to build destination
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

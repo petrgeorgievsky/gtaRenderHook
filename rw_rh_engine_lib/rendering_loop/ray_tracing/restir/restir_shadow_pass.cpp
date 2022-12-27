@@ -316,10 +316,25 @@ void ShadowsPass::Execute( void *tlas, uint32_t light_count,
     uint32_t sbt_size = mPipeline->GetSBTHandleSize();
     vk_cmd_buff->BindRayTracingPipeline( mPipeline );
 
-    vk_cmd_buff->DispatchRays( { mShaderBindTable, 0, mShaderBindTable,
-                                 sbt_size, sbt_size, mShaderBindTable,
-                                 sbt_size * 2, sbt_size, nullptr, 0, 0, mWidth,
-                                 mHeight, 1 } );
+    vk_cmd_buff->DispatchRays(
+        VulkanRayDispatch{ .mRayGenBuffer   = mShaderBindTable,
+                           .mRayGenOffset   = 0,
+                           .mRayGenSize     = sbt_size,
+                           .mMissBuffer     = mShaderBindTable,
+                           .mMissOffset     = sbt_size,
+                           .mMissStride     = sbt_size,
+                           .mMissSize       = sbt_size,
+                           .mHitBuffer      = mShaderBindTable,
+                           .mHitOffset      = sbt_size * 2,
+                           .mHitStride      = sbt_size,
+                           .mHitSize        = sbt_size,
+                           .mCallableBuffer = nullptr,
+                           .mCallableOffset = 0,
+                           .mCallableStride = 0,
+                           .mCallableSize   = 0,
+                           .mX              = mWidth,
+                           .mY              = mHeight,
+                           .mZ              = 1 } );
     if ( EnableDenoiser )
     {
         mVarianceTAFilter->Execute( vk_cmd_buff );

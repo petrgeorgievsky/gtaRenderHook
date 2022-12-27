@@ -22,7 +22,7 @@ RTTlasBuildPass::RTTlasBuildPass( rh::engine::IDeviceState &device )
         dynamic_cast<VulkanCommandBuffer *>( device.CreateCommandBuffer() );
 
     BufferCreateInfo bufferCreateInfo{
-        .mSize  = 8000 * sizeof( VkAccelerationStructureInstanceNV ),
+        .mSize  = 8000 * sizeof( VkAccelerationStructureInstanceKHR ),
         .mUsage = BufferUsage::RayTracingScratch,
         .mFlags = BufferFlags::Dynamic };
     mTlasBuffer = Device.CreateBuffer( bufferCreateInfo );
@@ -36,7 +36,7 @@ RTTlasBuildPass::~RTTlasBuildPass()
 }
 
 VulkanTopLevelAccelerationStructure *RTTlasBuildPass::Execute(
-    std::vector<VkAccelerationStructureInstanceNV> &&instance_buffer )
+    std::vector<VkAccelerationStructureInstanceKHR> &&instance_buffer )
 {
     auto &device = dynamic_cast<VulkanDeviceState &>( Device );
 
@@ -60,7 +60,7 @@ VulkanTopLevelAccelerationStructure *RTTlasBuildPass::Execute(
 
     mTlasBuffer->Update( instance_buffer.data(),
                          instance_buffer.size() *
-                             sizeof( VkAccelerationStructureInstanceNV ) );
+                             sizeof( VkAccelerationStructureInstanceKHR ) );
     return tlas;
 }
 CommandBufferSubmitInfo

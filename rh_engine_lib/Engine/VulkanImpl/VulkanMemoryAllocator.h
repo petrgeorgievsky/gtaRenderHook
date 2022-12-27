@@ -11,6 +11,7 @@ struct VulkanMemoryAllocationInfo
 };
 struct VulkanMemoryAllocatorCreateInfo
 {
+    vk::Instance       mInstance;
     vk::PhysicalDevice mPhysicalDevice;
     vk::Device         mDevice;
 };

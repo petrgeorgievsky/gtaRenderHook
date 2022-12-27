@@ -1,13 +1,13 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_shader_16bit_storage : require
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(location = 0) rayPayloadInNV PrimRaysPayload prd;
-hitAttributeNV vec3 attribs;
+layout(location = 0) rayPayloadInEXT PrimRaysPayload prd;
+hitAttributeEXT vec3 attribs;
 
 layout(binding = 3, set = 0) uniform sampler baseSampler;
 
@@ -47,8 +47,8 @@ void main()
     if (material.txd_id >= 0) {
         vec4 tex_color =texture(sampler2D(textures[material.txd_id], baseSampler), tc) * res_color;
         if (tex_color.a < 0.9 && tex_color.a * prd.materialParams.a < 0.3)
-        ignoreIntersectionNV();
+        ignoreIntersectionEXT;
     }
     else if (res_color.a < 0.9 && res_color.a * prd.materialParams.a < 0.3)
-        ignoreIntersectionNV();
+        ignoreIntersectionEXT;
 }

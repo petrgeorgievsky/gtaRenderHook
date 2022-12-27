@@ -31,7 +31,7 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
       mCamera( config.mCamera ), mWidth( config.mWidth ),
       mHeight( config.mHeight )
 {
-    auto &              device = Device;
+    auto               &device = Device;
     DescriptorGenerator descriptorGenerator{ device };
 
     descriptorGenerator
@@ -116,7 +116,7 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
     }
 
     mMotionBuffer     = Create2DRenderTargetBuffer( Device, mWidth, mHeight,
-                                                ImageBufferFormat::RG16 );
+                                                    ImageBufferFormat::RG16 );
     mMotionBufferView = device.CreateImageView(
         { mMotionBuffer, ImageBufferFormat::RG16, ImageViewUsage::RWTexture } );
 
@@ -254,15 +254,15 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
           .mSrcLayout = ImageLayout::TransferSrc,
           .mDstLayout = ImageLayout::TransferDst,
           .mRegions   = { { .mSrc =
-                              {
-                                  .mSubresource = { .layerCount = 1 },
-                                  .mExtentW     = mWidth,
-                                  .mExtentH     = mHeight,
+                                {
+                                    .mSubresource = { .layerCount = 1 },
+                                    .mExtentW     = mWidth,
+                                    .mExtentH     = mHeight,
                               },
-                          .mDest = {
-                              .mSubresource = { .layerCount = 1 },
-                              .mExtentW     = mWidth,
-                              .mExtentH     = mHeight,
+                            .mDest = {
+                                .mSubresource = { .layerCount = 1 },
+                                .mExtentW     = mWidth,
+                                .mExtentH     = mHeight,
                           } } } } );
 
     vk_cmd_buff->PipelineBarrier(
@@ -281,17 +281,20 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
         { .mPipelineBindPoint = PipelineBindPoint::RayTracing,
           .mPipelineLayout    = mPipeLayout,
           .mDescriptorSets    = { mRayTraceSet, mCamera->GetDescSet(),
-                               mScene->DescSet() } } );
+                                  mScene->DescSet() } } );
 
     uint32_t sbt_size = mPipeline->GetSBTHandleSize();
     vk_cmd_buff->BindRayTracingPipeline( mPipeline );
     vk_cmd_buff->DispatchRays( { .mRayGenBuffer = mShaderBindTable,
+                                 .mRayGenSize   = sbt_size,
                                  .mMissBuffer   = mShaderBindTable,
                                  .mMissOffset   = sbt_size,
                                  .mMissStride   = sbt_size,
+                                 .mMissSize     = sbt_size,
                                  .mHitBuffer    = mShaderBindTable,
                                  .mHitOffset    = sbt_size * 2,
                                  .mHitStride    = sbt_size,
+                                 .mHitSize      = sbt_size,
                                  .mX            = mWidth,
                                  .mY            = mHeight,
                                  .mZ            = 1 } );

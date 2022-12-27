@@ -172,7 +172,7 @@ constexpr vk::DescriptorType Convert( DescriptorType type )
     case rh::engine::DescriptorType::RWBuffer:
         return vk::DescriptorType::eStorageBuffer;
     case DescriptorType::RTAccelerationStruct:
-        return vk::DescriptorType::eAccelerationStructureNV;
+        return vk::DescriptorType::eAccelerationStructureKHR;
     case DescriptorType::StorageTexture:
         return vk::DescriptorType::eStorageImage;
     }

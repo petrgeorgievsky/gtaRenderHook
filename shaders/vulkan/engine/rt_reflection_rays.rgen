@@ -1,9 +1,9 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_GOOGLE_include_directive : enable
 #include "raycommon.glsl"
 
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 0, rgba16f) uniform image2D normals;
 layout(binding = 2, set = 0, rgba16f) uniform image2D result;
 layout(binding = 3, set = 0) uniform sampler baseSampler;
@@ -27,43 +27,43 @@ layout(binding = 0, set = 1) uniform CameraProperties
     mat4 viewProjInversePrev;
 } cam;
 
-layout(location = 0) rayPayloadNV ReflectionRaysPayload pay_load;
-layout(location = 1) rayPayloadNV ShadowHitPayload shad_pld;
+layout(location = 0) rayPayloadEXT ReflectionRaysPayload pay_load;
+layout(location = 1) rayPayloadEXT ShadowHitPayload shad_pld;
 
 void main()
 {
-    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
-    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+    const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
     vec2 d = inUV * 2.0 - 1.0;
     vec4 origin    = cam.viewInverse * vec4(0, 0, 0, 1);
     vec4 target    = cam.projInverse * vec4(d.x, d.y, 1, 1);
     vec4 direction = cam.viewInverse * vec4(normalize(target.xyz), 0);
 
-    uint  rayFlags = gl_RayFlagsNoneNV;
+    uint  rayFlags = gl_RayFlagsNoneEXT;
     float tMin     = 0.001;
     float tMax     = 10000.0;
 
     pay_load.reflection_color    = vec4(0);
 
-    vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDNV.xy));
-    vec4 mat_params =  imageLoad(material_params, ivec2(gl_LaunchIDNV.xy));
+    vec4 normals_d =  imageLoad(normals, ivec2(gl_LaunchIDEXT.xy));
+    vec4 mat_params =  imageLoad(material_params, ivec2(gl_LaunchIDEXT.xy));
     vec3 hitValue = vec3(0);
     float roughness = (1 - mat_params.g);
 
     vec4 world_pos = vec4(origin.xyz + direction.xyz * normals_d.w, 1);
     if (normals_d.w > 3000.0f){
-        imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(0.0, 0.0, 0.0, 0));
+        imageStore(result, ivec2(gl_LaunchIDEXT.xy), vec4(0.0, 0.0, 0.0, 0));
         return;
     }
 
-    vec3 jitter = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64)/64.0f).xyz;
+    vec3 jitter = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDEXT.xy)%64)/64.0f).xyz;
     const float c_goldenRatioConjugate = 0.61803398875;
 
-    vec3 random_s_dir = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDNV.xy)%64+ jitter.xy * (refl_params.time_stamp%64))/64.0f).xyz * 2.0f - 1.0f.xxx;
+    vec3 random_s_dir = texture(sampler2D(randomNoise, baseSampler), vec2((gl_LaunchIDEXT.xy)%64+ jitter.xy * (refl_params.time_stamp%64))/64.0f).xyz * 2.0f - 1.0f.xxx;
 
     roughness*=roughness;
     vec3 ref_dir = normalize(reflect(direction.xyz, normals_d.xyz) + random_s_dir * roughness * 0.5f);
-    traceNV(topLevelAS, rayFlags,
+    traceRayEXT(topLevelAS, rayFlags,
     0xFF, // cullMask
     0, // sbtRecordOffset
     0, // sbtRecordStride
@@ -74,5 +74,5 @@ void main()
     tMax, // ray max range
     0// payload (location = 0)
     );
-    imageStore(result, ivec2(gl_LaunchIDNV.xy), vec4(pay_load.reflection_color.rgb, max(1.0 - roughness, 0.0f)));
+    imageStore(result, ivec2(gl_LaunchIDEXT.xy), vec4(pay_load.reflection_color.rgb, max(1.0 - roughness, 0.0f)));
 }

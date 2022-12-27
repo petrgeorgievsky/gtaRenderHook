@@ -9,7 +9,7 @@ namespace rh::engine
 class VulkanCommandBuffer;
 class IBuffer;
 class VulkanTopLevelAccelerationStructure;
-struct VkAccelerationStructureInstanceNV;
+struct VkAccelerationStructureInstanceKHR;
 } // namespace rh::engine
 
 namespace rh::rw::engine
@@ -21,16 +21,16 @@ class RTTlasBuildPass
     virtual ~RTTlasBuildPass();
 
     rh::engine::VulkanTopLevelAccelerationStructure *
-    Execute( std::vector<rh::engine::VkAccelerationStructureInstanceNV>
+    Execute( std::vector<rh::engine::VkAccelerationStructureInstanceKHR>
                  &&instance_buffer );
 
     rh::engine::CommandBufferSubmitInfo
     GetSubmitInfo( rh::engine::ISyncPrimitive *dependency );
 
   private:
-    rh::engine::IDeviceState &       Device;
+    rh::engine::IDeviceState        &Device;
     rh::engine::VulkanCommandBuffer *mTlasCmdBuffer     = nullptr;
-    rh::engine::IBuffer *            mTlasScratchBuffer = nullptr;
-    rh::engine::IBuffer *            mTlasBuffer;
+    rh::engine::IBuffer             *mTlasScratchBuffer = nullptr;
+    rh::engine::IBuffer             *mTlasBuffer;
 };
 } // namespace rh::rw::engine

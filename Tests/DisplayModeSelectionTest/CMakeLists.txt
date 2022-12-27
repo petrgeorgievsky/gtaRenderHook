@@ -19,7 +19,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 add_custom_command(TARGET ${PROJECT_NAME}
         COMMAND ${CMAKE_COMMAND} -E copy
-        $ENV{VULKAN_SDK}\\Bin32\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)
+        $ENV{VULKAN_SDK}\\Bin\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)
 
 if (USE_VULKAN_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)

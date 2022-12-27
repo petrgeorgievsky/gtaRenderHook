@@ -11,8 +11,9 @@ VulkanGPUInfo::VulkanGPUInfo( vk::PhysicalDevice gpu )
 
     // fill rt properties
 
-    VkPhysicalDeviceRayTracingPropertiesNV rt_props{
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
+    VkPhysicalDeviceRayTracingPipelinePropertiesKHR rt_props{
+        .sType =
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR,
         .pNext = nullptr };
     VkPhysicalDeviceProperties2 props{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
@@ -20,7 +21,7 @@ VulkanGPUInfo::VulkanGPUInfo( vk::PhysicalDevice gpu )
     vkGetPhysicalDeviceProperties2( gpu, &props );
     mRTInfo.mShaderGroupHandleSize  = rt_props.shaderGroupHandleSize;
     mRTInfo.mShaderGroupHandleAlign = rt_props.shaderGroupBaseAlignment;
-    mRTInfo.mMaxRecursionDepth      = rt_props.maxRecursionDepth;
+    mRTInfo.mMaxRecursionDepth      = rt_props.maxRayRecursionDepth;
 
     LimitsInfo.BufferOffsetMinAlign =
         props.properties.limits.minUniformBufferOffsetAlignment;
