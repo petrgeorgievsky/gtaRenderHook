@@ -1,6 +1,8 @@
 name: CMake
 
-on: push
+on:
+  push:
+    branches: [ "development" ]
 
 env:
   BUILD_TYPE: RelWithDebInfo
