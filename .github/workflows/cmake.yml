@@ -1,27 +1,29 @@
 name: CMake
 
-on: [ push ]
+on:
+  push:
+    branches: [ "development" ]
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: RelWithDebInfo
-  VULKAN_SDK: C:\\VulkanSDK\\1.2.162.1
+  VULKAN_SDK: C:\\VulkanSDK\\1.2.189.0
+
+permissions:
+  id-token: "write"
+  contents: "write"
+  packages: "write"
 
 jobs:
   build:
-    # TODO: Cleanup, improve build times
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: Get commit hash
+        run: echo "CommitHash=$(git rev-parse --short=7 HEAD)" >> $env:GITHUB_ENV
+
       - name: Create Build Environment
-        # Some projects don't allow in-source building, so create a separate build directory
-        # We'll use this as our working directory for all subsequent commands
         run: cmake -E make_directory ${{runner.workspace}}/build_x64
           ${{runner.workspace}}/build_x86
           ${{runner.workspace}}/artifacts/gta3
@@ -32,36 +34,29 @@ jobs:
         id: cache-vulkan-sdk
         uses: actions/cache@v1
         with:
-          path: "C:\\VulkanSDK\\1.2.162.1"
-          key: vulkan-sdk-1.2.162.1
+          path: "C:\\VulkanSDK\\1.2.189.0"
+          key: vulkan-sdk-1.2.189.0
 
       - name: Setup Vulkan
         if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
         run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.162.1/windows/VulkanSDK-1.2.162.1-Installer.exe" -OutFile VulkanSDK.exe
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.189.0/windows/VulkanSDK-1.2.189.0-Installer.exe" -OutFile VulkanSDK.exe
           $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
           $installer.WaitForExit();
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
 
-      # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
       - name: Restore from cache and install vcpkg
-        # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
-        uses: lukka/run-vcpkg@v5
+        uses: lukka/run-vcpkg@v10.7
         with:
           setupOnly: true
-          vcpkgGitCommitId: 097a31d4c3127f38a6fbf4002122550dd9d39b84
-      # Now that vcpkg is installed, it is being used to run desired arguments.
+          vcpkgGitCommitId: 1e9facc7992107ad639b4dcc87bd9a7ade1594e8
       - run: |
           $VCPKG_ROOT/vcpkg install @response_file.txt
         shell: bash
-
       - name: Configure CMake x64
-        # Use a bash shell so we can use the same syntax for environment variable
-        # access regardless of the host operating system
         shell: bash
         working-directory: ${{runner.workspace}}/build_x64
-        # Note the current convention is to use the -S and -B options here to specify source
-        # and build directories, but this is only available with CMake 3.13 and higher.
-        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
         run: cmake $GITHUB_WORKSPACE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
           -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
@@ -76,17 +71,11 @@ jobs:
       - name: Build x64
         working-directory: ${{runner.workspace}}/build_x64
         shell: bash
-        # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config $BUILD_TYPE --target gta_3_render_driver gta_vc_render_driver gta_sa_render_driver
 
       - name: Configure CMake x86
-        # Use a bash shell so we can use the same syntax for environment variable
-        # access regardless of the host operating system
         shell: bash
         working-directory: ${{runner.workspace}}/build_x86
-        # Note the current convention is to use the -S and -B options here to specify source
-        # and build directories, but this is only available with CMake 3.13 and higher.
-        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
         run: cmake $GITHUB_WORKSPACE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
           -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
@@ -101,23 +90,22 @@ jobs:
       - name: Build x86
         working-directory: ${{runner.workspace}}/build_x86
         shell: bash
-        # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config $BUILD_TYPE --target gta_3_render_hook gta_vc_render_hook gta_sa_render_hook
 
-      - name: Artifacts GTA 3
+      - name: Upload artifacts - GTA 3
         uses: actions/upload-artifact@v2
         with:
-          name: gta3_rh
+          name: gta3_rh-${{env.CommitHash}}
           path: ${{runner.workspace}}/artifacts/gta3
 
-      - name: Artifacts GTA VC
+      - name: Upload artifacts - GTA VC
         uses: actions/upload-artifact@v2
         with:
-          name: gtavc_rh
+          name: gtavc_rh-${{env.CommitHash}}
           path: ${{runner.workspace}}/artifacts/gtavc
 
-      - name: Artifacts GTA SA
+      - name: Upload artifacts - GTA SA
         uses: actions/upload-artifact@v2
         with:
-          name: gtasa_rh
+          name: gtasa_rh-${{env.CommitHash}}
           path: ${{runner.workspace}}/artifacts/gtasa
