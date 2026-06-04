@@ -20,24 +20,60 @@ LARGE_INTEGER    Time{};
 LARGE_INTEGER    TicksPerSecond{};
 ImGuiMouseCursor LastMouseCursor = ImGuiMouseCursor_COUNT;
 
-bool ImGuiWin32DriverHandler::Init( void *hwnd )
+struct ImGuiWin32KeyMapping
 {
-    if ( !::QueryPerformanceFrequency( &TicksPerSecond ) )
-        return false;
-    if ( !::QueryPerformanceCounter( &TicksPerSecond ) )
-        return false;
-    Window = static_cast<HWND>( hwnd );
+    int      VirtualKey;
+    ImGuiKey Key;
+};
 
-    ImGuiIO &io = ImGui::GetIO();
-    io.BackendFlags |=
-        ImGuiBackendFlags_HasMouseCursors; // We can honor GetMouseCursor()
-    // values (optional)
-    io.BackendFlags |=
-        ImGuiBackendFlags_HasSetMousePos; // We can honor io.WantSetMousePos
-    // requests (optional, rarely used)
-    io.BackendPlatformName = "imgui_impl_win32_rh";
-    io.ImeWindowHandle     = hwnd;
+#if IMGUI_VERSION_NUM >= 18700
+bool PreviousKeysDown[512]{};
 
+constexpr ImGuiWin32KeyMapping KeyMappings[] = {
+    { VK_TAB, ImGuiKey_Tab },
+    { VK_LEFT, ImGuiKey_LeftArrow },
+    { VK_RIGHT, ImGuiKey_RightArrow },
+    { VK_UP, ImGuiKey_UpArrow },
+    { VK_DOWN, ImGuiKey_DownArrow },
+    { VK_PRIOR, ImGuiKey_PageUp },
+    { VK_NEXT, ImGuiKey_PageDown },
+    { VK_HOME, ImGuiKey_Home },
+    { VK_END, ImGuiKey_End },
+    { VK_INSERT, ImGuiKey_Insert },
+    { VK_DELETE, ImGuiKey_Delete },
+    { VK_BACK, ImGuiKey_Backspace },
+    { VK_SPACE, ImGuiKey_Space },
+    { VK_RETURN, ImGuiKey_Enter },
+    { VK_RETURN, ImGuiKey_KeypadEnter },
+    { VK_ESCAPE, ImGuiKey_Escape },
+    { 'A', ImGuiKey_A },
+    { 'C', ImGuiKey_C },
+    { 'V', ImGuiKey_V },
+    { 'X', ImGuiKey_X },
+    { 'Y', ImGuiKey_Y },
+    { 'Z', ImGuiKey_Z },
+};
+
+void SubmitKeyboardState( ImGuiIO &io, const ImGuiInputState &state )
+{
+    io.AddKeyEvent( ImGuiMod_Ctrl, state.KeyCtrl );
+    io.AddKeyEvent( ImGuiMod_Shift, state.KeyShift );
+    io.AddKeyEvent( ImGuiMod_Alt, state.KeyAlt );
+    io.AddKeyEvent( ImGuiMod_Super, false );
+
+    for ( auto key_mapping : KeyMappings )
+    {
+        auto virtual_key = key_mapping.VirtualKey;
+        if ( PreviousKeysDown[virtual_key] == state.KeysDown[virtual_key] )
+            continue;
+
+        PreviousKeysDown[virtual_key] = state.KeysDown[virtual_key];
+        io.AddKeyEvent( key_mapping.Key, state.KeysDown[virtual_key] );
+    }
+}
+#else
+void InitLegacyKeyboardMapping( ImGuiIO &io )
+{
     // Keyboard mapping. ImGui will use those indices to peek into the
     // io.KeysDown[] array that we will update during the application
     // lifetime.
@@ -63,6 +99,44 @@ bool ImGuiWin32DriverHandler::Init( void *hwnd )
     io.KeyMap[ImGuiKey_X]           = 'X';
     io.KeyMap[ImGuiKey_Y]           = 'Y';
     io.KeyMap[ImGuiKey_Z]           = 'Z';
+}
+
+void SubmitKeyboardState( ImGuiIO &io, const ImGuiInputState &state )
+{
+    io.KeyCtrl  = state.KeyCtrl;
+    io.KeyShift = state.KeyShift;
+    io.KeyAlt   = state.KeyAlt;
+    io.KeySuper = false;
+
+    for ( auto i = 0; i < 512; i++ )
+        io.KeysDown[i] = state.KeysDown[i];
+}
+#endif
+
+bool ImGuiWin32DriverHandler::Init( void *hwnd )
+{
+    if ( !::QueryPerformanceFrequency( &TicksPerSecond ) )
+        return false;
+    if ( !::QueryPerformanceCounter( &TicksPerSecond ) )
+        return false;
+    Window = static_cast<HWND>( hwnd );
+
+    ImGuiIO &io = ImGui::GetIO();
+    io.BackendFlags |=
+        ImGuiBackendFlags_HasMouseCursors; // We can honor GetMouseCursor()
+    // values (optional)
+    io.BackendFlags |=
+        ImGuiBackendFlags_HasSetMousePos; // We can honor io.WantSetMousePos
+    // requests (optional, rarely used)
+    io.BackendPlatformName = "imgui_impl_win32_rh";
+
+#if IMGUI_VERSION_NUM >= 18700
+    if ( auto *viewport = ImGui::GetMainViewport() )
+        viewport->PlatformHandleRaw = hwnd;
+#else
+    io.ImeWindowHandle = hwnd;
+    InitLegacyKeyboardMapping( io );
+#endif
 
     return true;
 }
@@ -73,6 +147,10 @@ void ImGuiWin32DriverHandler::Shutdown()
     Time.QuadPart           = 0;
     TicksPerSecond.QuadPart = 0;
     LastMouseCursor         = ImGuiMouseCursor_COUNT;
+#if IMGUI_VERSION_NUM >= 18700
+    for ( auto &key_down : PreviousKeysDown )
+        key_down = false;
+#endif
 }
 
 void ImGuiWin32DriverHandler::UpdateMousePos()
@@ -154,16 +232,13 @@ void ImGuiWin32DriverHandler::NewFrame( const ImGuiInputState &state )
                    TicksPerSecond.QuadPart;
     Time = current_time;
 
-    // Read keyboard modifiers inputs
-    io.KeyCtrl = state.KeyCtrl; //( ::GetKeyState( VK_CONTROL ) & 0x8000 ) != 0;
-    io.KeyShift = state.KeyShift; //( ::GetKeyState( VK_SHIFT ) & 0x8000 ) != 0;
-    io.KeyAlt   = state.KeyAlt;   //( ::GetKeyState( VK_MENU ) & 0x8000 ) != 0;
-    io.KeySuper = false;
+    // Read keyboard modifiers and key inputs. Dear ImGui 1.87+ removed the
+    // public KeyMap/KeysDown backend path in favor of queued key events.
+    SubmitKeyboardState( io, state );
+
     // Filled by window proc handler on client side
     for ( auto i = 0; i < 5; i++ )
         io.MouseDown[i] = state.MouseDown[i];
-    for ( auto i = 0; i < 512; i++ )
-        io.KeysDown[i] = state.KeysDown[i];
     io.MouseWheel  = state.MouseWheel;
     io.MouseWheelH = state.MouseWheelH;
 
