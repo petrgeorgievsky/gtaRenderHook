@@ -1,66 +1,89 @@
 name: CMake
 
-on:
-  push:
-    branches: [ "development" ]
+on: [ push ]
 
 env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: RelWithDebInfo
-  VULKAN_SDK: C:\\VulkanSDK\\1.2.189.0
-
-permissions:
-  id-token: "write"
-  contents: "write"
-  packages: "write"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
+    # TODO: Cleanup, improve build times
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Get commit hash
-        run: echo "CommitHash=$(git rev-parse --short=7 HEAD)" >> $env:GITHUB_ENV
+      - uses: actions/checkout@v6
 
       - name: Create Build Environment
+        # Some projects don't allow in-source building, so create a separate build directory
+        # We'll use this as our working directory for all subsequent commands
         run: cmake -E make_directory ${{runner.workspace}}/build_x64
           ${{runner.workspace}}/build_x86
           ${{runner.workspace}}/artifacts/gta3
           ${{runner.workspace}}/artifacts/gtavc
           ${{runner.workspace}}/artifacts/gtasa
 
-      - name: Cache Vulkan SDK
-        id: cache-vulkan-sdk
-        uses: actions/cache@v1
-        with:
-          path: "C:\\VulkanSDK\\1.2.189.0"
-          key: vulkan-sdk-1.2.189.0
-
       - name: Setup Vulkan
-        if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
         run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.189.0/windows/VulkanSDK-1.2.189.0-Installer.exe" -OutFile VulkanSDK.exe
-          $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan_sdk.exe?Human=true" -OutFile VulkanSDK.exe
+          $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -NoNewWindow -ArgumentList @("--accept-licenses", "--default-answer", "--confirm-command", "install");
           $installer.WaitForExit();
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+          if ( $installer.ExitCode -ne 0 ) {
+            throw "Vulkan SDK installer failed with exit code $($installer.ExitCode)."
+          }
 
+          $sdkPath = Get-ChildItem "C:\\VulkanSDK" -Directory |
+            Sort-Object Name -Descending |
+            Select-Object -First 1
+
+          if ( -not $sdkPath ) {
+            throw "Unable to locate installed Vulkan SDK under C:\\VulkanSDK."
+          }
+
+          "VULKAN_SDK=$($sdkPath.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$($sdkPath.FullName)\\Bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      # Restore from cache the previously built ports. If cache-miss, download, build vcpkg.
       - name: Restore from cache and install vcpkg
-        uses: lukka/run-vcpkg@v10.7
+        # Download and build vcpkg, without installing any port.
+        uses: lukka/run-vcpkg@v11
         with:
-          setupOnly: true
-          vcpkgGitCommitId: 1e9facc7992107ad639b4dcc87bd9a7ade1594e8
+          runVcpkgInstall: false
+          # Keep this baseline updated when ports break due upstream mirror/package changes.
+          vcpkgGitCommitId: 73248d88e09d43dfd7836902462a64fd2a43387b
+      # Now that vcpkg is installed, it is being used to run desired arguments.
       - run: |
-          $VCPKG_ROOT/vcpkg install @response_file.txt
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if $VCPKG_ROOT/vcpkg install --binarysource=clear @response_file.txt; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "vcpkg install failed on attempt $attempt, retrying..."
+              sleep $((attempt * 15))
+            fi
+          done
+          echo "vcpkg install failed after 3 attempts."
+          exit 1
         shell: bash
+
       - name: Configure CMake x64
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
         shell: bash
         working-directory: ${{runner.workspace}}/build_x64
+        # Note the current convention is to use the -S and -B options here to specify source
+        # and build directories, but this is only available with CMake 3.13 and higher.
+        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
         run: cmake $GITHUB_WORKSPACE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
           -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
-          -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
+          -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W0 /WX- /GR /EHsc  /MT"
           -DARCH_64BIT=ON
           -DBUILD_32BIT_LIBS=ON
           -DGTA_3_FOLDER="${{runner.workspace}}\\artifacts\\gta3\\"
@@ -71,16 +94,22 @@ jobs:
       - name: Build x64
         working-directory: ${{runner.workspace}}/build_x64
         shell: bash
-        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_driver gta_vc_render_driver gta_sa_render_driver
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_driver gta_vc_render_driver gta_sa_render_driver -- -p:TreatWarningsAsErrors=false
 
       - name: Configure CMake x86
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
         shell: bash
         working-directory: ${{runner.workspace}}/build_x86
+        # Note the current convention is to use the -S and -B options here to specify source
+        # and build directories, but this is only available with CMake 3.13 and higher.
+        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
         run: cmake $GITHUB_WORKSPACE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
           -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
           -DCMAKE_C_FLAGS="-m32"
-          -DCMAKE_CXX_FLAGS="-m32 /DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
+          -DCMAKE_CXX_FLAGS="-m32 /DWIN32 /D_WINDOWS /std:c++latest /W0 /WX- /GR /EHsc  /MT"
           -DBUILD_32BIT_LIBS=ON
           -DGTA_3_FOLDER="${{runner.workspace}}\\artifacts\\gta3\\"
           -DGTA_VC_FOLDER="${{runner.workspace}}\\artifacts\\gtavc\\"
@@ -90,22 +119,23 @@ jobs:
       - name: Build x86
         working-directory: ${{runner.workspace}}/build_x86
         shell: bash
-        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_hook gta_vc_render_hook gta_sa_render_hook
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_hook gta_vc_render_hook gta_sa_render_hook -- -p:TreatWarningsAsErrors=false
 
-      - name: Upload artifacts - GTA 3
-        uses: actions/upload-artifact@v2
+      - name: Artifacts GTA 3
+        uses: actions/upload-artifact@v6
         with:
-          name: gta3_rh-${{env.CommitHash}}
+          name: gta3_rh
           path: ${{runner.workspace}}/artifacts/gta3
 
-      - name: Upload artifacts - GTA VC
-        uses: actions/upload-artifact@v2
+      - name: Artifacts GTA VC
+        uses: actions/upload-artifact@v6
         with:
-          name: gtavc_rh-${{env.CommitHash}}
+          name: gtavc_rh
           path: ${{runner.workspace}}/artifacts/gtavc
 
-      - name: Upload artifacts - GTA SA
-        uses: actions/upload-artifact@v2
+      - name: Artifacts GTA SA
+        uses: actions/upload-artifact@v6
         with:
-          name: gtasa_rh-${{env.CommitHash}}
+          name: gtasa_rh
           path: ${{runner.workspace}}/artifacts/gtasa
