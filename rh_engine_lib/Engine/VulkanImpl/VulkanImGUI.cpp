@@ -8,10 +8,10 @@
 #include "VulkanRenderPass.h"
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
-//#include <imgui_impl_win32.h>
+// #include <imgui_impl_win32.h>
 
 extern LRESULT ImGuiImplWin32WndProcHandler( HWND hwnd, UINT msg,
-                                               WPARAM w_param,
+                                             WPARAM                  w_param,
                                              [[maybe_unused]] LPARAM l_param );
 
 namespace rh::engine
@@ -100,8 +100,12 @@ VulkanImGUI::VulkanImGUI( const VulkanImGUIStartParams &params )
         VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 } };
 
     VkDescriptorPoolCreateInfo poolCreateInfo{
-        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, nullptr,     0, 2000,
-        static_cast<uint32_t>( pools.size() ),         pools.data() };
+        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        nullptr,
+        VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        2000,
+        static_cast<uint32_t>( pools.size() ),
+        pools.data() };
 
     vkCreateDescriptorPool( mDevice, &poolCreateInfo, nullptr,
                             &mDescriptorPool );
@@ -111,31 +115,61 @@ void VulkanImGUI::Init( const VulkanImGUIInitParams &params )
 {
 
     ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance                  = mInstance;
-    init_info.PhysicalDevice            = mPhysicalDevice;
-    init_info.Device                    = mDevice;
-    init_info.QueueFamily               = mQueueFamily;
-    init_info.Queue                     = mQueue;
-    init_info.PipelineCache             = VK_NULL_HANDLE;
-    init_info.DescriptorPool            = mDescriptorPool;
-    init_info.Allocator                 = VK_NULL_HANDLE;
-    init_info.CheckVkResultFn           = []( VkResult ) {};
-    init_info.MinImageCount             = 2;
-    init_info.ImageCount                = 2;
+#if IMGUI_VERSION_NUM >= 19200
+#ifdef VK_API_VERSION_1_3
+    init_info.ApiVersion = VK_API_VERSION_1_3;
+#else
+    init_info.ApiVersion = VK_API_VERSION_1_0;
+#endif
+#endif
+    init_info.Instance        = mInstance;
+    init_info.PhysicalDevice  = mPhysicalDevice;
+    init_info.Device          = mDevice;
+    init_info.QueueFamily     = mQueueFamily;
+    init_info.Queue           = mQueue;
+    init_info.PipelineCache   = VK_NULL_HANDLE;
+    init_info.DescriptorPool  = mDescriptorPool;
+    init_info.Allocator       = VK_NULL_HANDLE;
+    init_info.CheckVkResultFn = []( VkResult ) {};
+    init_info.MinImageCount   = 2;
+    init_info.ImageCount      = 2;
 
     auto render_pass_impl =
         dynamic_cast<VulkanRenderPass *>( params.mRenderPass );
 
-    ImGui_ImplVulkan_Init( &init_info,
-                           static_cast<vk::RenderPass>( *render_pass_impl ) );
+    auto render_pass = static_cast<VkRenderPass>(
+        static_cast<vk::RenderPass>( *render_pass_impl ) );
+
+#if IMGUI_VERSION_NUM >= 19270
+    init_info.PipelineInfoMain.RenderPass  = render_pass;
+    init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    ImGui_ImplVulkan_Init( &init_info );
+#elif IMGUI_VERSION_NUM >= 19010
+    init_info.RenderPass  = render_pass;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    ImGui_ImplVulkan_Init( &init_info );
+#else
+    ImGui_ImplVulkan_Init( &init_info, render_pass );
+#endif
 }
 bool VulkanImGUI::UploadFonts( ICommandBuffer *cmd_buff )
 {
     if ( mFontsUploaded )
         return true;
+
+#if IMGUI_VERSION_NUM < 19010
     auto command_buffer = reinterpret_cast<VulkanCommandBuffer *>( cmd_buff );
     mFontsUploaded =
         ImGui_ImplVulkan_CreateFontsTexture( command_buffer->GetBuffer() );
+#elif IMGUI_VERSION_NUM < 19200
+    (void)cmd_buff;
+    mFontsUploaded = ImGui_ImplVulkan_CreateFontsTexture();
+#else
+    (void)cmd_buff;
+    // Since Dear ImGui 1.92, the Vulkan backend owns font texture updates and
+    // uploads the atlas from NewFrame()/RenderDrawData() as needed.
+    mFontsUploaded = true;
+#endif
     return mFontsUploaded;
 }
 void VulkanImGUI::DrawGui( ICommandBuffer *cmd_buff )
@@ -154,7 +188,6 @@ void VulkanImGUI::BeginFrame()
 }
 VulkanImGUI::~VulkanImGUI()
 {
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
     ImGui_ImplVulkan_Shutdown();
     vkDestroyDescriptorPool( mDevice, mDescriptorPool, nullptr );
     // ImGui_ImplWin32_Shutdown();

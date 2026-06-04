@@ -71,7 +71,7 @@ class VulkanDeviceState : public IDeviceState
 
     ICommandBuffer *GetMainCommandBuffer() override;
     ICommandBuffer *CreateCommandBuffer() override;
-    IShader *       CreateShader( const ShaderDesc &params ) override;
+    IShader        *CreateShader( const ShaderDesc &params ) override;
 
     IBuffer *CreateBuffer( const BufferCreateInfo &params ) override;
     IImageBuffer *
@@ -101,7 +101,7 @@ class VulkanDeviceState : public IDeviceState
     CreateRayTracingPipeline( const RayTracingPipelineCreateInfo &params );
     VulkanComputePipeline *
     CreateComputePipeline( const ComputePipelineCreateParams &params );
-    VulkanImGUI *           CreateImGUI( IWindow *wnd );
+    VulkanImGUI            *CreateImGUI( IWindow *wnd );
     const DeviceLimitsInfo &GetLimits() override;
 
   private:
@@ -138,8 +138,8 @@ class VulkanDeviceState : public IDeviceState
     uint32_t                  m_iGraphicsQueueFamilyIdx = 0;
     [[maybe_unused]] uint32_t m_iCopyQueueFamilyIdx     = 0;
 
-    ICommandBuffer *       mMainCmdBuffer    = nullptr;
-    VulkanMemoryAllocator *mDefaultAllocator = nullptr;
-    vk::DynamicLoader      dl;
+    ICommandBuffer           *mMainCmdBuffer    = nullptr;
+    VulkanMemoryAllocator    *mDefaultAllocator = nullptr;
+    vk::detail::DynamicLoader dl;
 };
 } // namespace rh::engine
