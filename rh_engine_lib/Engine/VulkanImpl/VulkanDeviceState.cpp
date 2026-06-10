@@ -22,9 +22,14 @@
 
 #include <Engine/Common/ScopedPtr.h>
 #include <Engine/Definitions.h>
+#include <Engine/D3D11Impl/D3D11Common.h>
+
 #include <memory_resource>
 #include <numeric>
 #include <ranges>
+
+#include <dxgi1_6.h>
+#include <wrl/client.h>
 
 using namespace rh;
 using namespace rh::engine;
@@ -62,6 +67,195 @@ void DestroyDebugUtilsMessengerEXT( vk::Instance             instance,
 
     if ( func != nullptr )
         func( static_cast<VkInstance>( instance ), callback, nullptr );
+}
+
+constexpr size_t EXPECTED_DISPLAY_MAX = 2;
+
+/**
+ * @brief Enumerate display modes via win32 API
+ */
+std::vector<DisplayInfo> Win32EnumDisplaysWinAPI()
+{
+    std::vector<DisplayInfo> result{};
+    result.reserve( EXPECTED_DISPLAY_MAX );
+
+    DISPLAY_DEVICE display_device{};
+    display_device.cb = sizeof( DISPLAY_DEVICE );
+
+    unsigned int display_id = 0;
+
+    rh::debug::DebugLogger::Log( "DisplayDeviceInfo Enumeration:\t" );
+
+    while ( EnumDisplayDevices( nullptr, display_id, &display_device, 0 ) != 0 )
+    {
+        display_id++;
+
+        StringStream ss;
+        ss << "DisplayDeviceInfo:\t"
+           << "\nDeviceName:\t" << display_device.DeviceName
+           << "\nDeviceString:\t" << display_device.DeviceString;
+        debug::DebugLogger::Log( ss.str() );
+
+        if ( display_device.StateFlags & DISPLAY_DEVICE_ACTIVE )
+        {
+            DisplayInfo display_info = { display_device.DeviceName, {} };
+
+            unsigned int display_mode_id = 0;
+
+            DEVMODE device_mode{};
+            device_mode.dmSize = sizeof( DEVMODE );
+
+            debug::DebugLogger::Log( "DisplaySettings Enumeration:\t" );
+
+            while ( EnumDisplaySettings( display_info.m_sDisplayName.c_str(),
+                                         display_mode_id, &device_mode ) )
+            {
+                StringStream stringStream;
+                stringStream << "DisplayModeInfo:\t"
+                             << "\nBitsPerPixel\t" << device_mode.dmBitsPerPel
+                             << "\nWidth\t" << device_mode.dmPelsWidth
+                             << "\nHeight:\t" << device_mode.dmPelsHeight
+                             << "\nFrequency:\t"
+                             << device_mode.dmDisplayFrequency;
+                debug::DebugLogger::Log( stringStream.str() );
+
+                display_info.m_aDisplayModes.push_back(
+                    { static_cast<uint32_t>( device_mode.dmPelsWidth ),
+                      static_cast<uint32_t>( device_mode.dmPelsHeight ),
+                      static_cast<uint32_t>( device_mode.dmDisplayFrequency ),
+                      0 } );
+
+                display_mode_id++;
+            }
+
+            result.push_back( display_info );
+        }
+    }
+    return result;
+}
+
+/**
+ * @brief Enumerate display modes via DXGI API
+ */
+std::vector<DisplayInfo> Win32EnumDisplaysDxgi()
+{
+    using namespace Microsoft::WRL;
+
+    std::vector<DisplayInfo> result{};
+    result.reserve( EXPECTED_DISPLAY_MAX );
+
+    rh::debug::DebugLogger::Log( "DXGI DisplayDeviceInfo Enumeration:\t" );
+
+    ComPtr<IDXGIFactory1> dxgi_factory{};
+    // dxgi factory initialization
+    if ( !CALL_D3D_API( CreateDXGIFactory1( IID_PPV_ARGS( &dxgi_factory ) ),
+                        TEXT( "Failed to create DXGI Factory." ) ) )
+        return {};
+
+    ComPtr<IDXGIAdapter1> adapter;
+
+    for ( UINT i = 0;
+          dxgi_factory->EnumAdapters1( i, &adapter ) != DXGI_ERROR_NOT_FOUND;
+          ++i )
+    {
+        DXGI_ADAPTER_DESC1 adapter_desc;
+        if ( !CALL_D3D_API( adapter->GetDesc1( &adapter_desc ),
+                            TEXT( "Failed to retrieve adapter desc." ) ) )
+            continue;
+        auto adapter_name =
+            ToRHString( std::wstring( adapter_desc.Description ) );
+        {
+            StringStream ss;
+            ss << "AdapterInfo:\t"
+               << "\nNum:\t" << i << "\nVendor:\t" << adapter_desc.VendorId
+               << "\nDevice:\t" << adapter_desc.DeviceId << "\nSubSys:\t"
+               << adapter_desc.SubSysId << "\nRev:\t" << adapter_desc.Revision
+               << "\nDeviceString:\t" << adapter_name;
+            debug::DebugLogger::Log( ss.str() );
+        }
+
+        ComPtr<IDXGIOutput> output;
+        for ( UINT j = 0;
+              adapter->EnumOutputs( j, &output ) != DXGI_ERROR_NOT_FOUND; ++j )
+        {
+            DXGI_OUTPUT_DESC output_desc;
+            if ( !CALL_D3D_API( output->GetDesc( &output_desc ),
+                                TEXT( "Failed to retrieve adapter desc." ) ) )
+                continue;
+            if ( !output_desc.AttachedToDesktop )
+                continue;
+            auto display_name =
+                ToRHString( std::wstring( output_desc.DeviceName ) );
+            {
+                StringStream ss;
+                ss << "DisplayDeviceInfo:\t"
+                   << "\nNum:\t" << j << "\nName:\t" << display_name;
+                debug::DebugLogger::Log( ss.str() );
+            }
+            DisplayInfo          display_info = { display_name, {} };
+            ComPtr<IDXGIOutput6> output6;
+
+            if ( SUCCEEDED( output.As( &output6 ) ) )
+            {
+                DXGI_OUTPUT_DESC1 extendedDesc;
+                if ( SUCCEEDED( output6->GetDesc1( &extendedDesc ) ) )
+                {
+                    // Check if current operating mode is active HDR10
+                    if ( extendedDesc.ColorSpace ==
+                         DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020 )
+                    {
+                        display_info.m_bHdrEnabled = true;
+                    }
+                }
+            }
+
+            DXGI_FORMAT target_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+            // retrieve available display mode count.
+            UINT modeCount = 0;
+
+            if ( !CALL_D3D_API( output->GetDisplayModeList(
+                                    target_format, 0, &modeCount, nullptr ),
+                                TEXT( "Failed to get display mode count." ) ) )
+            {
+                continue;
+            }
+
+            std::vector<DXGI_MODE_DESC> modeDescriptions{ modeCount };
+
+            // get display mode list
+            if ( !CALL_D3D_API(
+                     output->GetDisplayModeList( target_format, 0, &modeCount,
+                                                 modeDescriptions.data() ),
+                     TEXT( "Failed to retrieve display mode list." ) ) )
+            {
+                continue;
+            }
+
+            display_info.m_aDisplayModes.reserve( modeCount );
+            // populate adapter mode list
+            for ( auto &mode_desc : modeDescriptions )
+            {
+                if ( mode_desc.RefreshRate.Denominator != 0 )
+                {
+                    auto refresh_rate = mode_desc.RefreshRate.Numerator /
+                                        mode_desc.RefreshRate.Denominator;
+                    {
+                        StringStream stringStream;
+                        stringStream << "DisplayModeInfo:\t"
+                                     << "\nWidth\t" << mode_desc.Width
+                                     << "\nHeight:\t" << mode_desc.Height
+                                     << "\nFrequency:\t" << refresh_rate;
+                        debug::DebugLogger::Log( stringStream.str() );
+                    }
+                    display_info.m_aDisplayModes.emplace_back(
+                        mode_desc.Width, mode_desc.Height, refresh_rate, 0 );
+                }
+            }
+            result.push_back( std::move( display_info ) );
+        }
+    }
+    return result;
 }
 
 VulkanDeviceState::VulkanDeviceState()
@@ -199,57 +393,10 @@ VulkanDeviceState::VulkanDeviceState()
             return;
     }
 
-    DISPLAY_DEVICE display_device{};
-    display_device.cb = sizeof( DISPLAY_DEVICE );
-
-    unsigned int display_id = 0;
-
-    rh::debug::DebugLogger::Log( "DisplayDeviceInfo Enumeration:\t" );
-
-    while ( EnumDisplayDevices( nullptr, display_id, &display_device, 0 ) != 0 )
+    m_aDisplayInfos = Win32EnumDisplaysDxgi();
+    if ( m_aDisplayInfos.empty() ) // Just in case dxgi one fails
     {
-        display_id++;
-
-        StringStream ss;
-        ss << "DisplayDeviceInfo:\t"
-           << "\nDeviceName:\t" << display_device.DeviceName
-           << "\nDeviceString:\t" << display_device.DeviceString;
-        debug::DebugLogger::Log( ss.str() );
-
-        if ( display_device.StateFlags & DISPLAY_DEVICE_ACTIVE )
-        {
-            DisplayInfo display_info = { display_device.DeviceName, {} };
-
-            unsigned int display_mode_id = 0;
-
-            DEVMODE device_mode{};
-            device_mode.dmSize = sizeof( DEVMODE );
-
-            debug::DebugLogger::Log( "DisplaySettings Enumeration:\t" );
-
-            while ( EnumDisplaySettings( display_info.m_sDisplayName.c_str(),
-                                         display_mode_id, &device_mode ) )
-            {
-                StringStream stringStream;
-                stringStream << "DisplayModeInfo:\t"
-                             << "\nBitsPerPixel\t" << device_mode.dmBitsPerPel
-                             << "\nWidth\t" << device_mode.dmPelsWidth
-                             << "\nHeight:\t" << device_mode.dmPelsHeight
-                             << "\nFrequency:\t"
-                             << device_mode.dmDisplayFrequency;
-                debug::DebugLogger::Log( stringStream.str() );
-
-                display_info.m_aDisplayModes.push_back(
-                    { static_cast<uint32_t>( device_mode.dmPelsWidth ),
-                      static_cast<uint32_t>( device_mode.dmPelsHeight ),
-                      static_cast<uint32_t>( device_mode.dmDisplayFrequency ),
-                      0 } );
-
-                display_mode_id++;
-            }
-
-            m_aDisplayInfos.push_back( display_info );
-        }
+        m_aDisplayInfos = Win32EnumDisplaysWinAPI();
     }
 }
 
@@ -507,15 +654,24 @@ IWindow *VulkanDeviceState::CreateDeviceWindow( HWND              window,
 {
     auto display_mode =
         m_aDisplayInfos[m_uiCurrentOutput].m_aDisplayModes[info.displayModeId];
-    return new VulkanWin32Window(
-        { .mWndHandle       = window,
-          .mInstance        = m_vkInstance,
-          .mGPU             = m_aAdapters[m_uiCurrentAdapter],
-          .mDevice          = m_vkDevice,
-          .mPresentQueue    = m_vkMainQueue,
-          .mPresentQueueIdx = m_iGraphicsQueueFamilyIdx,
-          .mWindowParams{ .mWidth  = display_mode.width,
-                          .mHeight = display_mode.height } } );
+    uint32_t window_flags{ 0 };
+    if ( m_aDisplayInfos[m_uiCurrentOutput].m_bHdrEnabled )
+        window_flags |= static_cast<uint32_t>( WindowFlags::HDR_OUTPUT );
+    if ( !info.windowed )
+        window_flags |= static_cast<uint32_t>( WindowFlags::FULLSCREEN );
+    return new VulkanWin32Window( {
+        .mWndHandle       = window,
+        .mInstance        = m_vkInstance,
+        .mGPU             = m_aAdapters[m_uiCurrentAdapter],
+        .mDevice          = m_vkDevice,
+        .mPresentQueue    = m_vkMainQueue,
+        .mPresentQueueIdx = m_iGraphicsQueueFamilyIdx,
+        .mWindowParams{
+            .mWidth  = display_mode.width,
+            .mHeight = display_mode.height,
+            .mFlags  = window_flags,
+        },
+    } );
 }
 
 ISyncPrimitive *VulkanDeviceState::CreateSyncPrimitive( SyncPrimitiveType type )

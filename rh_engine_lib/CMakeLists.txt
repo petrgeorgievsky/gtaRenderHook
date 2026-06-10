@@ -158,6 +158,7 @@ target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
         imgui::imgui
         ${VMA_CMAKE_TARGET}
         nlohmann_json::nlohmann_json
+        dxgi
         )
 
 if (NOT (CLANG_ANALYSER_PATH STREQUAL ""))

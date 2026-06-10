@@ -6,8 +6,9 @@ namespace rh::engine
 {
 VulkanWin32Window::VulkanWin32Window(
     const VulkanWin32WindowCreateParams &params )
-    : mWndHandle( params.mWndHandle ), mInstance( params.mInstance ),
-      mGPU( params.mGPU ), mDevice( params.mDevice ),
+    : mWndHandle( params.mWndHandle ), mUseHDR( ( params.mWindowParams.mFlags & WindowFlags::HDR_OUTPUT ) != 0 ),
+      mInstance( params.mInstance ), mGPU( params.mGPU ),
+      mDevice( params.mDevice ),
       mPresentQueue( params.mPresentQueue ),
       mPresentQueueIdx( params.mPresentQueueIdx )
 {
@@ -77,7 +78,7 @@ SwapchainRequestResult VulkanWin32Window::GetSwapchain()
     vksc_cp.mPresentQueueIdx          = mPresentQueueIdx;
     vksc_cp.mSurface                  = mSurface;
     vksc_cp.mPresentParams.mVsyncType = VSyncType::None;
-    vksc_cp.mPresentParams.mUseHDR    = true;
+    vksc_cp.mPresentParams.mUseHDR    = mUseHDR;
     // vksc_cp.mPresentParams.mBufferCount = 3;
     // Create new swap-chain
     res.mSwapchain    = ( mSwapchain = new VulkanSwapchain( vksc_cp ) );

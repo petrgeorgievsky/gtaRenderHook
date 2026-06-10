@@ -5,7 +5,7 @@
 // d3d11 struct forwards:
 struct ID3D11Device;
 struct ID3D11DeviceContext;
-struct IDXGIFactory;
+struct IDXGIFactory1;
 struct IDXGIAdapter;
 struct IDXGIOutput;
 struct DXGI_MODE_DESC;
@@ -68,7 +68,7 @@ class D3D11DeviceState : public IDeviceState
 
     /// DXGI Factory - object used to select appropriate physical devices for
     /// rendering
-    IDXGIFactory *m_pdxgiFactory = nullptr;
+    IDXGIFactory1 *m_pdxgiFactory = nullptr;
 
     /// Current physical device ID
     uint32_t m_uiCurrentAdapter = 0;

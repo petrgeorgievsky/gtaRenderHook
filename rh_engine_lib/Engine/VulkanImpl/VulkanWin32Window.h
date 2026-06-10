@@ -38,6 +38,7 @@ class VulkanWin32Window : public IWindow
     WindowParams mCurrentParams{};
     ISwapchain * mSwapchain        = nullptr;
     bool         mIsSwapchainValid = false;
+    bool         mUseHDR = false;
 
     vk::Instance       mInstance;
     vk::PhysicalDevice mGPU;

@@ -25,6 +25,7 @@ struct DisplayInfo
 {
     String                       m_sDisplayName;
     std::vector<DisplayModeInfo> m_aDisplayModes;
+    bool m_bHdrEnabled = false;
 };
 
 class VulkanDeviceState : public IDeviceState

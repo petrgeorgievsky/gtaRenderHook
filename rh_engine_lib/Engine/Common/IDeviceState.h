@@ -38,8 +38,8 @@ struct DisplayModeInfo
 
 struct OutputInfo
 {
-    uint32_t displayModeId;
-    bool     windowed;
+    uint32_t displayModeId{};
+    bool     windowed = false;
 };
 
 struct BufferUpdateInfo

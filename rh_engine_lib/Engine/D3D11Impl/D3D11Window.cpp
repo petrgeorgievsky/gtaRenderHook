@@ -60,7 +60,10 @@ SwapchainRequestResult D3D11Window::GetSwapchain()
     sw_create_params.mWindowHandle            = mWndHandle;
     sw_create_params.mDXGIFactory             = mDXGIFactory;
     sw_create_params.mDevice                  = mDevice;
-    sw_create_params.mPresentParams.mWindowed = !mCurrentParams.mFullscreen;
+    sw_create_params.mPresentParams.mWindowed =
+        ( mCurrentParams.mFlags & WindowFlags::FULLSCREEN ) == 0;
+    sw_create_params.mPresentParams.mUseHDR =
+        ( mCurrentParams.mFlags & WindowFlags::HDR_OUTPUT ) == 0;
 
     res.mSwapchain    = ( mSwapchain = new D3D11Swapchain( sw_create_params ) );
     res.mChanged      = true;

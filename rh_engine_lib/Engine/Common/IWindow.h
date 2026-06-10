@@ -5,12 +5,23 @@ namespace rh::engine
 {
 class ISwapchain;
 
+enum class WindowFlags : uint32_t
+{
+    NONE       = 0x0,
+    FULLSCREEN = 0x1,
+    HDR_OUTPUT = 0x2,
+};
+
+inline uint32_t operator&( uint32_t lhs, WindowFlags rhs )
+{
+    return static_cast<uint32_t>( rhs ) & lhs;
+}
+
 struct WindowParams
 {
     uint32_t mWidth;
     uint32_t mHeight;
-    uint32_t mFullscreen;
-    uint32_t mPadd;
+    uint32_t mFlags = static_cast<uint32_t>( WindowFlags::NONE );
 };
 
 struct SwapchainRequestResult

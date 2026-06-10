@@ -16,9 +16,34 @@
 #include <Engine/Definitions.h>
 #include <cassert>
 #include <d3d11.h>
+#include <dxgi1_6.h>
+
+#include <wrl/client.h>
 
 namespace rh::engine
 {
+bool IsHdrAvailableForOutput( Microsoft::WRL::ComPtr<IDXGIOutput> output )
+{
+    using namespace Microsoft::WRL;
+
+    ComPtr<IDXGIOutput6> output6;
+
+    if ( SUCCEEDED( output.As( &output6 ) ) )
+    {
+        DXGI_OUTPUT_DESC1 extendedDesc;
+        if ( SUCCEEDED( output6->GetDesc1( &extendedDesc ) ) )
+        {
+            // Check if current operating mode is active HDR10
+            if ( extendedDesc.ColorSpace ==
+                 DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020 )
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 D3D11DeviceState::D3D11DeviceState()
 {
     m_driverType     = D3D_DRIVER_TYPE_NULL;
@@ -33,8 +58,8 @@ D3D11DeviceState::D3D11DeviceState()
 
     // dxgi factory initialization
     if ( !CALL_D3D_API(
-             CreateDXGIFactory( __uuidof( IDXGIFactory ),
-                                reinterpret_cast<void **>( &m_pdxgiFactory ) ),
+             CreateDXGIFactory1( __uuidof( IDXGIFactory1 ),
+                                 reinterpret_cast<void **>( &m_pdxgiFactory ) ),
              TEXT( "Failed to create DXGI Factory." ) ) )
         return;
 
@@ -44,8 +69,8 @@ D3D11DeviceState::D3D11DeviceState()
           ++i )
         m_vAdapters.push_back( adapterPtr );
 
-    SetCurrentAdapter( 0 );
-    SetCurrentOutput( 0 );
+    D3D11DeviceState::SetCurrentAdapter( 0 );
+    D3D11DeviceState::SetCurrentOutput( 0 );
 }
 
 D3D11DeviceState::~D3D11DeviceState()
@@ -389,14 +414,19 @@ ICommandBuffer *rh::engine::D3D11DeviceState::GetMainCommandBuffer()
 IWindow *D3D11DeviceState::CreateDeviceWindow( HWND              hwnd,
                                                const OutputInfo &info )
 {
-    auto                    display_mode = m_vDisplayModes[info.displayModeId];
+    auto     display_mode = m_vDisplayModes[info.displayModeId];
+    uint32_t window_flags{ 0 };
+    if ( IsHdrAvailableForOutput( m_vOutputs[m_uiCurrentOutput] ) )
+        window_flags |= static_cast<uint32_t>( WindowFlags::HDR_OUTPUT );
+    if ( !info.windowed )
+        window_flags |= static_cast<uint32_t>( WindowFlags::FULLSCREEN );
     D3D11WindowCreateParams create_params{};
-    create_params.mWindowParams.mWidth      = display_mode.Width;
-    create_params.mWindowParams.mHeight     = display_mode.Height;
-    create_params.mWindowParams.mFullscreen = !info.windowed;
-    create_params.mWndHandle                = hwnd;
-    create_params.mDevice                   = m_pd3dDevice;
-    create_params.mDXGIFactory              = m_pdxgiFactory;
+    create_params.mWindowParams.mWidth  = display_mode.Width;
+    create_params.mWindowParams.mHeight = display_mode.Height;
+    create_params.mWindowParams.mFlags  = window_flags;
+    create_params.mWndHandle            = hwnd;
+    create_params.mDevice               = m_pd3dDevice;
+    create_params.mDXGIFactory          = m_pdxgiFactory;
     return new D3D11Window( create_params );
 }
 
