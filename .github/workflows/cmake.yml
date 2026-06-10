@@ -1,111 +1,158 @@
 name: CMake
 
-on:
-  push:
-    branches: [ "development" ]
+on: [push]
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  VULKAN_SDK: C:\\VulkanSDK\\1.2.189.0
-
-permissions:
-  id-token: "write"
-  contents: "write"
-  packages: "write"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Get commit hash
-        run: echo "CommitHash=$(git rev-parse --short=7 HEAD)" >> $env:GITHUB_ENV
-
-      - name: Create Build Environment
-        run: cmake -E make_directory ${{runner.workspace}}/build_x64
-          ${{runner.workspace}}/build_x86
-          ${{runner.workspace}}/artifacts/gta3
-          ${{runner.workspace}}/artifacts/gtavc
-          ${{runner.workspace}}/artifacts/gtasa
-
-      - name: Cache Vulkan SDK
-        id: cache-vulkan-sdk
-        uses: actions/cache@v1
-        with:
-          path: "C:\\VulkanSDK\\1.2.189.0"
-          key: vulkan-sdk-1.2.189.0
-
-      - name: Setup Vulkan
-        if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
+      - name: Create build and artifact directories
+        shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.189.0/windows/VulkanSDK-1.2.189.0-Installer.exe" -OutFile VulkanSDK.exe
-          $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
-          $installer.WaitForExit();
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+          cmake -E make_directory `
+            "$env:GITHUB_WORKSPACE\build\x64" `
+            "$env:GITHUB_WORKSPACE\build\x86" `
+            "$env:GITHUB_WORKSPACE\artifacts\gta3" `
+            "$env:GITHUB_WORKSPACE\artifacts\gtavc" `
+            "$env:GITHUB_WORKSPACE\artifacts\gtasa"
 
-      - name: Restore from cache and install vcpkg
-        uses: lukka/run-vcpkg@v10.7
+      - name: Setup Vulkan SDK
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installerPath = Join-Path $env:RUNNER_TEMP 'VulkanSDK.exe'
+          Invoke-WebRequest `
+            -Uri 'https://sdk.lunarg.com/sdk/download/latest/windows/vulkan_sdk.exe?Human=true' `
+            -OutFile $installerPath
+
+          $installer = Start-Process `
+            -FilePath $installerPath `
+            -Wait `
+            -PassThru `
+            -NoNewWindow `
+            -ArgumentList @('--accept-licenses', '--default-answer', '--confirm-command', 'install')
+
+          if ($installer.ExitCode -ne 0) {
+            throw "Vulkan SDK installer failed with exit code $($installer.ExitCode)."
+          }
+
+          $sdkPath = Get-ChildItem 'C:\VulkanSDK' -Directory |
+            Sort-Object Name -Descending |
+            Select-Object -First 1
+
+          if (-not $sdkPath) {
+            throw 'Unable to locate installed Vulkan SDK under C:\VulkanSDK.'
+          }
+
+          "VULKAN_SDK=$($sdkPath.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$($sdkPath.FullName)\Bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Restore from cache and bootstrap vcpkg
+        uses: lukka/run-vcpkg@v11
         with:
-          setupOnly: true
-          vcpkgGitCommitId: 1e9facc7992107ad639b4dcc87bd9a7ade1594e8
-      - run: |
-          $VCPKG_ROOT/vcpkg install @response_file.txt
-        shell: bash
-      - name: Configure CMake x64
-        shell: bash
-        working-directory: ${{runner.workspace}}/build_x64
-        run: cmake $GITHUB_WORKSPACE
-          -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-          -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
-          -DCMAKE_CXX_FLAGS="/DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
-          -DARCH_64BIT=ON
-          -DBUILD_32BIT_LIBS=ON
-          -DGTA_3_FOLDER="${{runner.workspace}}\\artifacts\\gta3\\"
-          -DGTA_VC_FOLDER="${{runner.workspace}}\\artifacts\\gtavc\\"
-          -DGTA_SA_FOLDER="${{runner.workspace}}\\artifacts\\gtasa\\"
-          -DVCPKG_TARGET_TRIPLET=x64-windows-static -A x64
+          runVcpkgInstall: false
+          # Keep this baseline updated when ports break due upstream mirror/package changes.
+          vcpkgGitCommitId: 73248d88e09d43dfd7836902462a64fd2a43387b
 
-      - name: Build x64
-        working-directory: ${{runner.workspace}}/build_x64
-        shell: bash
-        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_driver gta_vc_render_driver gta_sa_render_driver
+      - name: Install vcpkg dependencies
+        shell: pwsh
+        working-directory: ${{ github.workspace }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $responseFile = '@response_file.txt'
+
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            & "$env:VCPKG_ROOT\vcpkg.exe" install '--binarysource=clear' $responseFile
+            if ($LASTEXITCODE -eq 0) {
+              exit 0
+            }
+
+            if ($attempt -lt 3) {
+              Write-Warning "vcpkg install failed on attempt $attempt, retrying..."
+              Start-Sleep -Seconds ($attempt * 15)
+            }
+          }
+
+          throw 'vcpkg install failed after 3 attempts.'
+
+      - name: Configure CMake x64
+        shell: pwsh
+        run: |
+          cmake `
+            -S "$env:GITHUB_WORKSPACE" `
+            -B "$env:GITHUB_WORKSPACE\build\x64" `
+            -G 'Visual Studio 17 2022' `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE="$env:BUILD_TYPE" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_CXX_FLAGS='/DWIN32 /D_WINDOWS /std:c++latest /W0 /WX- /GR /EHsc /MT' `
+            -DARCH_64BIT=ON `
+            -DBUILD_32BIT_LIBS=ON `
+            -DGTA_3_FOLDER="$env:GITHUB_WORKSPACE\artifacts\gta3\" `
+            -DGTA_VC_FOLDER="$env:GITHUB_WORKSPACE\artifacts\gtavc\" `
+            -DGTA_SA_FOLDER="$env:GITHUB_WORKSPACE\artifacts\gtasa\" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static
+
+      - name: Build x64 render drivers
+        shell: pwsh
+        run: |
+          cmake --build "$env:GITHUB_WORKSPACE\build\x64" `
+            --config "$env:BUILD_TYPE" `
+            --parallel `
+            --target gta_3_render_driver gta_vc_render_driver gta_sa_render_driver `
+            -- /p:TreatWarningsAsErrors=false
 
       - name: Configure CMake x86
-        shell: bash
-        working-directory: ${{runner.workspace}}/build_x86
-        run: cmake $GITHUB_WORKSPACE
-          -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-          -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake
-          -DCMAKE_C_FLAGS="-m32"
-          -DCMAKE_CXX_FLAGS="-m32 /DWIN32 /D_WINDOWS /std:c++latest /W4 /GR /EHsc  /MT"
-          -DBUILD_32BIT_LIBS=ON
-          -DGTA_3_FOLDER="${{runner.workspace}}\\artifacts\\gta3\\"
-          -DGTA_VC_FOLDER="${{runner.workspace}}\\artifacts\\gtavc\\"
-          -DGTA_SA_FOLDER="${{runner.workspace}}\\artifacts\\gtasa\\"
-          -DVCPKG_TARGET_TRIPLET=x86-windows-static -A Win32
+        shell: pwsh
+        run: |
+          cmake `
+            -S "$env:GITHUB_WORKSPACE" `
+            -B "$env:GITHUB_WORKSPACE\build\x86" `
+            -G 'Visual Studio 17 2022' `
+            -A Win32 `
+            -DCMAKE_BUILD_TYPE="$env:BUILD_TYPE" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_CXX_FLAGS='/DWIN32 /D_WINDOWS /std:c++latest /W0 /WX- /GR /EHsc /MT' `
+            -DBUILD_32BIT_LIBS=ON `
+            -DGTA_3_FOLDER="$env:GITHUB_WORKSPACE\artifacts\gta3\" `
+            -DGTA_VC_FOLDER="$env:GITHUB_WORKSPACE\artifacts\gtavc\" `
+            -DGTA_SA_FOLDER="$env:GITHUB_WORKSPACE\artifacts\gtasa\" `
+            -DVCPKG_TARGET_TRIPLET=x86-windows-static
 
-      - name: Build x86
-        working-directory: ${{runner.workspace}}/build_x86
-        shell: bash
-        run: cmake --build . --config $BUILD_TYPE --target gta_3_render_hook gta_vc_render_hook gta_sa_render_hook
+      - name: Build x86 render hooks
+        shell: pwsh
+        run: |
+          cmake --build "$env:GITHUB_WORKSPACE\build\x86" `
+            --config "$env:BUILD_TYPE" `
+            --parallel `
+            --target gta_3_render_hook gta_vc_render_hook gta_sa_render_hook `
+            -- /p:TreatWarningsAsErrors=false
 
-      - name: Upload artifacts - GTA 3
-        uses: actions/upload-artifact@v2
+      - name: Artifacts GTA 3
+        uses: actions/upload-artifact@v6
         with:
-          name: gta3_rh-${{env.CommitHash}}
-          path: ${{runner.workspace}}/artifacts/gta3
+          name: gta3_rh
+          path: ${{ github.workspace }}\artifacts\gta3
+          if-no-files-found: error
 
-      - name: Upload artifacts - GTA VC
-        uses: actions/upload-artifact@v2
+      - name: Artifacts GTA VC
+        uses: actions/upload-artifact@v6
         with:
-          name: gtavc_rh-${{env.CommitHash}}
-          path: ${{runner.workspace}}/artifacts/gtavc
+          name: gtavc_rh
+          path: ${{ github.workspace }}\artifacts\gtavc
+          if-no-files-found: error
 
-      - name: Upload artifacts - GTA SA
-        uses: actions/upload-artifact@v2
+      - name: Artifacts GTA SA
+        uses: actions/upload-artifact@v6
         with:
-          name: gtasa_rh-${{env.CommitHash}}
-          path: ${{runner.workspace}}/artifacts/gtasa
+          name: gtasa_rh
+          path: ${{ github.workspace }}\artifacts\gtasa
+          if-no-files-found: error

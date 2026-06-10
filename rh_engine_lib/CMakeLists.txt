@@ -156,7 +156,7 @@ target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${RH_REL
 
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
         imgui::imgui
-        unofficial::vulkan-memory-allocator::vulkan-memory-allocator
+        ${VMA_CMAKE_TARGET}
         nlohmann_json::nlohmann_json
         )
 
