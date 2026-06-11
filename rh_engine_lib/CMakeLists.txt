@@ -156,6 +156,7 @@ target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
         ${VMA_CMAKE_TARGET}
         nlohmann_json::nlohmann_json
         dxgi
+        dbghelp
         )
 
 if (NOT (CLANG_ANALYSER_PATH STREQUAL ""))

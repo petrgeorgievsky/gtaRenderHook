@@ -1,7 +1,9 @@
 #include "ModelLoadingTest.h"
-#include <DebugUtils\DebugLogger.h>
-#include <Engine\Definitions.h>
-#include <TestUtils\WindowsSampleWrapper.h>
+
+#include <DebugUtils/DebugLogger.h>
+#include <DebugUtils/Win32UncaughtExceptionHandler.h>
+#include <Engine/Definitions.h>
+#include <TestUtils/WindowsSampleWrapper.h>
 #include <windows.h>
 
 #include <ConfigUtils/ConfigurationManager.h>
@@ -25,6 +27,7 @@ int APIENTRY wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     rh::engine::String logFilePath = ToRHString( "RHDebug.log" );
 
     rh::debug::DebugLogger::Init( logFilePath, rh::debug::LogLevel::Info );
+    rh::debug::InitExceptionHandler();
 
     rh::tests::WindowsSampleWrapper sample(
         initParams,
