@@ -3,12 +3,6 @@ option(USE_VULKAN_API "Add RenderHook Vulkan API implementation" ON)
 set(GTA_VC_FOLDER CACHE PATH "GTA VC folder")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DLL")
 
-include_directories(
-        ../rh_engine_lib
-        ../rw_rh_engine_lib
-        ${DEPENDENCY_INCLUDE_LIST}
-)
-
 set(SOURCES
         dllmain.cpp
         game/TxdStore.cpp

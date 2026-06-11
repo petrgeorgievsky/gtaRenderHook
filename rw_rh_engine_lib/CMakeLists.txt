@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 
 project(rw_rh_engine_lib)
 
-include_directories(
-        /
-        ../rh_engine_lib/
-        ${DEPENDENCY_INCLUDE_LIST}
-)
 set(SOURCES
         rw_engine/rw_stream/rw_stream.cpp
         rw_engine/rw_tex_dict/rw_tex_dict.cpp
@@ -128,7 +123,9 @@ set(SOURCES
 
         material_storage.cpp
         )
-add_library(rw_rh_engine_lib STATIC ${SOURCES})
+add_library(${PROJECT_NAME} STATIC ${SOURCES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC ./)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 20

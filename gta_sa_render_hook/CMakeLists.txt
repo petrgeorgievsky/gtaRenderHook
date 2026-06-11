@@ -3,12 +3,6 @@ cmake_minimum_required(VERSION 3.12)
 project(gta_sa_render_hook)
 set(GTA_SA_FOLDER CACHE PATH "GTA SA folder")
 
-include_directories(
-        ../rw_rh_engine_lib
-        ../rh_engine_lib
-        ${DEPENDENCY_INCLUDE_LIST}
-)
-
 set(SOURCES
         dllmain.cpp
         idle_hook.cpp

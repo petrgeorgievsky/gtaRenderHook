@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.10.2)
 
 project(rh_engine_lib)
 
-include_directories(
-        /
-        ${DEPENDENCY_INCLUDE_LIST}
-)
-
 find_package(imgui CONFIG REQUIRED)
 
 set(VULKAN_SOURCES
@@ -86,6 +81,8 @@ set(SOURCES ${SOURCES}
         ConfigUtils/Serializable.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC ./)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 20

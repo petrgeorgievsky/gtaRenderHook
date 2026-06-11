@@ -7,7 +7,6 @@ set(SOURCES
         main.cpp
         )
 
-include_directories(../../rw_rh_engine_lib ../../rh_engine_lib ${DEPENDENCY_INCLUDE_LIST})
 include(../../rw_rh_engine_lib/install_rw_library.cmake)
 
 add_executable(ClearScreenTest WIN32 ${SOURCES})

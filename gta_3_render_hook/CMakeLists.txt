@@ -5,12 +5,6 @@ set(GTA_3_FOLDER CACHE PATH "GTA 3 folder")
 
 include(../rw_rh_engine_lib/install_rw_library.cmake)
 
-include_directories(
-        ../rh_engine_lib
-        ../rw_rh_engine_lib
-        ${DEPENDENCY_INCLUDE_LIST}
-)
-
 set(SOURCES
         dllmain.cpp
         gta3_geometry_proxy.cpp

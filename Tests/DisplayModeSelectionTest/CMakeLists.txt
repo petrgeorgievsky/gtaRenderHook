@@ -8,8 +8,6 @@ set(SOURCES
         main.cpp
         Im2DRenderer.cpp)
 
-include_directories(. ../../rh_engine_lib ${DEPENDENCY_INCLUDE_LIST})
-
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST} rh_engine_lib)
 #set_property(TARGET ${PROJECT_NAME} PROPERTY

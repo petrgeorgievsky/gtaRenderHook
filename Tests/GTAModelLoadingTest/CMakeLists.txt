@@ -8,8 +8,6 @@ set(SOURCES
         main.cpp
         )
 
-include_directories(../../rw_rh_engine_lib ../../rh_engine_lib ${DEPENDENCY_INCLUDE_LIST})
-
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST} rh_engine_lib imgui::imgui)
 install_rw_library()

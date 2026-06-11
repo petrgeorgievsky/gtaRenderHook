@@ -2,12 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 
 project(rw_x64_render_driver)
 
-include_directories(
-        /
-        ../rh_engine_lib/
-        ${DEPENDENCY_INCLUDE_LIST}
-)
-
 set(SOURCES
         main.cpp
         )

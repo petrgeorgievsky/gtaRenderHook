@@ -32,9 +32,6 @@ add_definitions(-DNOASM)
 if (ARCH_64BIT)
     add_definitions(-DARCH_64BIT)
 endif ()
-# We store common includes dirs in DEPENDENCY_INCLUDE_LIST macro,
-# so we don't need to write it for every new subproject
-set(DEPENDENCY_INCLUDE_LIST)
 
 if (USE_VULKAN_API)
     set(DEPENDENCY_LIB_LIST ${DEPENDENCY_LIB_LIST} Vulkan::Vulkan)
