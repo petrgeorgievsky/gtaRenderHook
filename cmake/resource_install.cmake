@@ -27,4 +27,6 @@ function(copy_resources_to_build_dir TARGET_NAME RESOURCE_DIR DEST_PATH)
         )
     endforeach ()
     target_sources(${TARGET_NAME} PRIVATE ${COPIED_RESOURCE_FILES})
+    # Just in case MSBuild tries to compile them, e.g. using shader compiler...
+    set_source_files_properties(${COPIED_RESOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
 endfunction()
