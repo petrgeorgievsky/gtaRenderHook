@@ -40,18 +40,14 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-add_custom_command(TARGET ${PROJECT_NAME}
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         $ENV{VULKAN_SDK}\\Bin\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)
 
-message("ShaderPath: ${CMAKE_SOURCE_DIR}\\shaders")
-# Copy shaders to build destination
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}\\shaders $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders)
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
-        rh_engine_lib rw_rh_engine_lib)
+        rh_engine_lib)
+
+install_rw_library()
+
 # Copy shaders to build destination
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/rw_rh_engine_lib/resources ${GTA_VC_FOLDER}/resources)
+copy_resources_to_build_dir(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}\\shaders" "shaders" )

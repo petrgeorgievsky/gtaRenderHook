@@ -13,6 +13,9 @@ option(USE_SANITIZERS "Use sanitizers" OFF)
 set(CLANG_ANALYSER_PATH CACHE PATH "Clang analyser path")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+# Common utilities
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # Dependencies
 find_package(imgui CONFIG REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG QUIET)

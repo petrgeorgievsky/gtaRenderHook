@@ -3,6 +3,8 @@ project(gta_3_render_hook)
 option(USE_VULKAN_API "Add RenderHook Vulkan API implementation" ON)
 set(GTA_3_FOLDER CACHE PATH "GTA 3 folder")
 
+include(../rw_rh_engine_lib/install_rw_library.cmake)
+
 include_directories(
         ../rh_engine_lib
         ../rw_rh_engine_lib
@@ -42,7 +44,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${GTA_3_FOLDER}/
         )
 
-add_custom_command(TARGET ${PROJECT_NAME}
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         $ENV{VULKAN_SDK}\\Bin\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)
 
@@ -51,18 +53,10 @@ if (USE_VULKAN_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)
 endif ()
 
-message("ShaderPath: ${CMAKE_SOURCE_DIR}\\shaders")
-message("ShaderDestPath: $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders")
-
-# Copy shaders to build destination
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}\\shaders ${GTA_3_FOLDER}/shaders)
-
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
-        rh_engine_lib rw_rh_engine_lib)
+        rh_engine_lib)
+
+install_rw_library()
 
 # Copy shaders to build destination
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/rw_rh_engine_lib/resources ${GTA_3_FOLDER}/resources)
+copy_resources_to_build_dir(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}\\shaders" "shaders" )
