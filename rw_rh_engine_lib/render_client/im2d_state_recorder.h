@@ -22,6 +22,8 @@ struct Im2DState
     uint8_t ZTestEnable;
     uint8_t ZWriteEnable;
     uint8_t StencilEnable;
+    uint8_t TextureAddressU;
+    uint8_t TextureAddressV;
 };
 
 struct Im2DDrawCall

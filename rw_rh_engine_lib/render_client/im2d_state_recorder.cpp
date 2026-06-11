@@ -42,10 +42,13 @@ void Im2DStateRecorder::RecordDrawCall( RwIm2DVertex *vertices,
     result_dc.RasterId          = im_state.Raster;
     result_dc.IndexCount        = 0;
     result_dc.IndexBufferOffset = 0;
-    result_dc.BlendState = { im_state.ColorBlendSrc, im_state.ColorBlendDst,
-                             im_state.ColorBlendOp,  im_state.BlendEnable,
-                             im_state.ZTestEnable,   im_state.ZWriteEnable,
-                             im_state.StencilEnable };
+    result_dc.BlendState        = {
+        im_state.ColorBlendSrc,   im_state.ColorBlendDst,
+        im_state.ColorBlendOp,    im_state.BlendEnable,
+        im_state.ZTestEnable,     im_state.ZWriteEnable,
+        im_state.StencilEnable,   im_state.TextureAddressU,
+        im_state.TextureAddressV,
+    };
 
     DrawCallCount++;
 }
@@ -70,10 +73,13 @@ void Im2DStateRecorder::RecordDrawCall( RwIm2DVertex *vertices,
     result_dc.VertexCount = num_vertices;
     result_dc.RasterId    = im_state.Raster;
     result_dc.IndexCount  = num_indices;
-    result_dc.BlendState  = { im_state.ColorBlendSrc, im_state.ColorBlendDst,
-                             im_state.ColorBlendOp,  im_state.BlendEnable,
-                             im_state.ZTestEnable,   im_state.ZWriteEnable,
-                             im_state.StencilEnable };
+    result_dc.BlendState  = {
+        im_state.ColorBlendSrc,   im_state.ColorBlendDst,
+        im_state.ColorBlendOp,    im_state.BlendEnable,
+        im_state.ZTestEnable,     im_state.ZWriteEnable,
+        im_state.StencilEnable,   im_state.TextureAddressU,
+        im_state.TextureAddressV,
+    };
     DrawCallCount++;
 }
 

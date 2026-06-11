@@ -1,4 +1,6 @@
 #include "VulkanSampler.h"
+
+#include "Engine/Common/types/sampler_addressing.h"
 #include "Engine/Common/types/sampler_filter.h"
 #include <DebugUtils/DebugLogger.h>
 
@@ -26,9 +28,39 @@ VulkanSampler::VulkanSampler( const VulkanSamplerDesc &desc )
         create_info.anisotropyEnable = true;
         break;
     }
-    create_info.mipmapMode              = vk::SamplerMipmapMode::eLinear;
-    create_info.addressModeU            = vk::SamplerAddressMode::eRepeat;
-    create_info.addressModeV            = vk::SamplerAddressMode::eRepeat;
+    create_info.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    switch ( desc.mInfo.adressU )
+    {
+    case SamplerAddressing::Unknown:
+    case SamplerAddressing::Wrap:
+        create_info.addressModeU = vk::SamplerAddressMode::eRepeat;
+        break;
+    case SamplerAddressing::Clamp:
+        create_info.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+        break;
+    case SamplerAddressing::Mirror:
+        create_info.addressModeU = vk::SamplerAddressMode::eMirroredRepeat;
+        break;
+    case SamplerAddressing::Border:
+        create_info.addressModeU = vk::SamplerAddressMode::eClampToBorder;
+        break;
+    }
+    switch ( desc.mInfo.adressV )
+    {
+    case SamplerAddressing::Unknown:
+    case SamplerAddressing::Wrap:
+        create_info.addressModeV = vk::SamplerAddressMode::eRepeat;
+        break;
+    case SamplerAddressing::Clamp:
+        create_info.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+        break;
+    case SamplerAddressing::Mirror:
+        create_info.addressModeV = vk::SamplerAddressMode::eMirroredRepeat;
+        break;
+    case SamplerAddressing::Border:
+        create_info.addressModeV = vk::SamplerAddressMode::eClampToBorder;
+        break;
+    }
     create_info.addressModeW            = vk::SamplerAddressMode::eRepeat;
     create_info.unnormalizedCoordinates = false;
     create_info.compareEnable           = false;

@@ -17,6 +17,9 @@ struct ImmediateState
     uint8_t ZTestEnable{};
     uint8_t ZWriteEnable{};
     uint8_t StencilEnable{};
+    uint8_t TextureAddressU{};
+    uint8_t TextureAddressV{};
+
     ImmediateState();
     void Update( int32_t nState, void *pParam );
 };

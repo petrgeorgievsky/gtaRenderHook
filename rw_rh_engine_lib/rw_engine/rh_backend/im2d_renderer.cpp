@@ -32,9 +32,9 @@ constexpr auto TEXTURE_DESC_POOL_SIZE = 1000;
 constexpr auto Im2DCallbackId = 421;
 
 Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
-                            RasterPoolType &          raster_pool,
-                            CameraDescription *       cdsec,
-                            rh::engine::IRenderPass * render_pass )
+                            RasterPoolType           &raster_pool,
+                            CameraDescription        *cdsec,
+                            rh::engine::IRenderPass  *render_pass )
     : Device( device ), RasterPool( raster_pool ), mCamDesc( cdsec )
 {
     mRenderPass = render_pass;
@@ -67,8 +67,8 @@ Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
                          .mShaderStage = ShaderStage::Vertex };
 
     mTexPixel.desc   = { .mShaderPath  = "shaders/d3d11/engine/Im2D.hlsl",
-                       .mEntryPoint  = "TexPS",
-                       .mShaderStage = ShaderStage::Pixel };
+                         .mEntryPoint  = "TexPS",
+                         .mShaderStage = ShaderStage::Pixel };
     mNoTexPixel.desc = { .mShaderPath  = "shaders/d3d11/engine/Im2D.hlsl",
                          .mEntryPoint  = "NoTexPS",
                          .mShaderStage = ShaderStage::Pixel };
@@ -212,16 +212,16 @@ Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
     depth_state.depthComparisonFunc = ComparisonFunc::Always;
     mDepthMaskPipeline              = Device.CreateRasterPipeline(
         { .mRenderPass           = render_pass,
-          .mLayout               = mTexLayout,
-          .mShaderStages         = { vs_stage_desc, ps_stage_depthmask_desc },
-          .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-          .mTopology             = Topology::TriangleList,
-          .mBlendState           = default_blend_state,
-          .mDepthStencilState    = depth_state } );
+                       .mLayout               = mTexLayout,
+                       .mShaderStages         = { vs_stage_desc, ps_stage_depthmask_desc },
+                       .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
+                       .mTopology             = Topology::TriangleList,
+                       .mBlendState           = default_blend_state,
+                       .mDepthStencilState    = depth_state } );
 
-    RasterPool.AddOnDestructCallback(
-        [this]( RasterData &data, uint64_t id ) { mTextureCache.erase( id ); },
-        Im2DCallbackId );
+    RasterPool.AddOnDestructCallback( [this]( RasterData &data, uint64_t id )
+                                      { mTextureCache.erase( id ); },
+                                      Im2DCallbackId );
 }
 
 Im2DRenderer::~Im2DRenderer()
@@ -264,8 +264,20 @@ struct PackedIm2DState
         uint64_t i_val;
     };
 };
+struct PackedSamplerState
+{
+    union
+    {
+        struct PackedState
+        {
+            uint8_t addressingU : 4;
+            uint8_t addressingV : 4;
+        } s_val;
+        uint8_t i_val;
+    };
+};
 
-uint64_t Im2DRenderer::Render( const Im2DRenderState &     state,
+uint64_t Im2DRenderer::Render( const Im2DRenderState      &state,
                                rh::engine::ICommandBuffer *cmd_buffer )
 {
     // Update buffers
@@ -276,7 +288,8 @@ uint64_t Im2DRenderer::Render( const Im2DRenderState &     state,
     if ( state.VertexBuffer.Size() <= 0 )
         return 0;
 
-    auto current_display_mode = [this]() {
+    auto current_display_mode = [this]()
+    {
         uint32_t display_mode;
         Device.GetCurrentDisplayMode( display_mode );
         DisplayModeInfo info{};
@@ -326,11 +339,14 @@ uint64_t Im2DRenderer::Render( const Im2DRenderState &     state,
         s.s_val.zWriteEnable   = draw_call.BlendState.ZWriteEnable;
         if ( draw_call.RasterId != BackendRasterPlugin::NullRasterId )
         {
+            PackedSamplerState sampler_state{};
+            sampler_state.s_val.addressingU = draw_call.BlendState.TextureAddressU;
+            sampler_state.s_val.addressingV = draw_call.BlendState.TextureAddressV;
             cmd_buffer->BindDescriptorSets(
                 { .mPipelineLayout       = mTexLayout,
                   .mDescriptorSetsOffset = 2,
                   .mDescriptorSets       = {
-                      GetRasterDescSet( draw_call.RasterId ) } } );
+                      GetRasterDescSet( draw_call.RasterId, sampler_state.i_val ) } } );
         }
 
         cmd_buffer->BindPipeline( GetCachedPipeline( s.i_val ) );
@@ -353,7 +369,7 @@ uint64_t Im2DRenderer::Render( const Im2DRenderState &     state,
     return 0;
 }
 
-void Im2DRenderer::DrawQuad( rh::engine::IImageView *    texture,
+void Im2DRenderer::DrawQuad( rh::engine::IImageView     *texture,
                              rh::engine::ICommandBuffer *cmd_buffer )
 {
     auto w = 1.0f;
@@ -408,21 +424,31 @@ void Im2DRenderer::DrawQuad( rh::engine::IImageView *    texture,
     cmd_buffer->Draw( 6, 1, 0, 0 );
 }
 
-rh::engine::IDescriptorSet *Im2DRenderer::GetRasterDescSet( uint64_t id )
+rh::engine::IDescriptorSet *
+Im2DRenderer::GetRasterDescSet( uint64_t id, uint8_t sampler_hash )
 {
     // auto cache_entry = mTextureCache.find( id );
     // if ( cache_entry != mTextureCache.end() )
     //    return cache_entry->second;
     // else
     {
+        auto sampler = GetCachedSampler( sampler_hash );
         auto set = mTextureCache[id] = mDescriptorSetPool[mDescriptorSetPoolId];
         auto img_view                = RasterPool.GetResource( id ).mImageView;
-        Device.UpdateDescriptorSets(
-            { .mSet             = set,
-              .mBinding         = 1,
-              .mDescriptorType  = DescriptorType::ROTexture,
-              .mImageUpdateInfo = {
-                  { ImageLayout::ShaderReadOnly, img_view, nullptr } } } );
+        Device.UpdateDescriptorSets( {
+            .mSet             = set,
+            .mBinding         = 0,
+            .mDescriptorType  = DescriptorType::Sampler,
+            .mImageUpdateInfo = { { ImageLayout::ShaderReadOnly, nullptr,
+                                    sampler } },
+        } );
+        Device.UpdateDescriptorSets( {
+            .mSet             = set,
+            .mBinding         = 1,
+            .mDescriptorType  = DescriptorType::ROTexture,
+            .mImageUpdateInfo = { { ImageLayout::ShaderReadOnly, img_view,
+                                    nullptr } },
+        } );
         mDescriptorSetPoolId =
             ( mDescriptorSetPoolId + 1 ) % mDescriptorSetPool.size();
         return set;
@@ -448,10 +474,13 @@ void Im2DRenderer::DrawQuad( uint64_t                    texture_id,
 
     cmd_buffer->BindPipeline( mPipelineTex );
 
+    PackedSamplerState sampler_state{};
+    sampler_state.s_val.addressingU = 1;
+    sampler_state.s_val.addressingV = 1;
     cmd_buffer->BindDescriptorSets(
         { .mPipelineLayout = mTexLayout,
           .mDescriptorSets = { mBaseDescSet, mCamDesc->GetDescSet(),
-                               GetRasterDescSet( texture_id ) } } );
+                               GetRasterDescSet( texture_id, sampler_state.i_val ) } } );
 
     cmd_buffer->BindVertexBuffers(
         0, { { mVertexBuffer, 0, sizeof( RwIm2DVertex ) } } );
@@ -531,7 +560,28 @@ rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
     return mIm2DPipelines[hash];
 }
 
-void Im2DRenderer::DrawDepthMask( rh::engine::IImageView *    texture,
+rh::engine::ISampler *Im2DRenderer::GetCachedSampler( uint8_t hash )
+{
+    if ( mSamplerCache.contains( hash ) )
+        return mSamplerCache.at( hash );
+
+    PackedSamplerState s{};
+    s.i_val = hash;
+    SamplerDesc desc{
+        .mInfo =
+            {
+                .filtering = SamplerFilter::Linear,
+                .adressU =
+                    static_cast<SamplerAddressing>( s.s_val.addressingU ),
+                .adressV =
+                    static_cast<SamplerAddressing>( s.s_val.addressingV ),
+            },
+    };
+    mSamplerCache[hash] = Device.CreateSampler( desc );
+    return mSamplerCache[hash];
+}
+
+void Im2DRenderer::DrawDepthMask( rh::engine::IImageView     *texture,
                                   rh::engine::ICommandBuffer *cmd_buffer )
 {
     auto w = 1.0f;

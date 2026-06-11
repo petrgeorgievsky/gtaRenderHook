@@ -31,9 +31,30 @@ void ImmediateState::Update( int32_t nState, void *pParam )
         BlendEnable = true;
         break;
     }
-    case rwRENDERSTATETEXTUREADDRESS: break;
-    case rwRENDERSTATETEXTUREADDRESSU: break;
-    case rwRENDERSTATETEXTUREADDRESSV: break;
+    case rwRENDERSTATETEXTUREADDRESS:
+    {
+        TextureAddressU = TextureAddressV =
+            static_cast<uint8_t>( RwTextureAddressModeToRHSamplerAddressing(
+                static_cast<RwTextureAddressMode>(
+                    reinterpret_cast<uint32_t>( pParam ) ) ) );
+        break;
+    }
+    case rwRENDERSTATETEXTUREADDRESSU:
+    {
+        TextureAddressU =
+            static_cast<uint8_t>( RwTextureAddressModeToRHSamplerAddressing(
+                static_cast<RwTextureAddressMode>(
+                    reinterpret_cast<uint32_t>( pParam ) ) ) );
+        break;
+    }
+    case rwRENDERSTATETEXTUREADDRESSV:
+    {
+        TextureAddressV =
+            static_cast<uint8_t>( RwTextureAddressModeToRHSamplerAddressing(
+                static_cast<RwTextureAddressMode>(
+                    reinterpret_cast<uint32_t>( pParam ) ) ) );
+        break;
+    }
     case rwRENDERSTATETEXTUREPERSPECTIVE: break;
     case rwRENDERSTATEZTESTENABLE:
     {

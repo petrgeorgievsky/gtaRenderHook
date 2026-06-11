@@ -45,6 +45,7 @@ class Im2DRenderer
     ~Im2DRenderer();
 
     rh::engine::IPipeline *GetCachedPipeline( uint64_t hash );
+    rh::engine::ISampler *GetCachedSampler( uint8_t hash );
 
     uint64_t Render( const Im2DRenderState &     state,
                      rh::engine::ICommandBuffer *cmd_buffer );
@@ -57,7 +58,7 @@ class Im2DRenderer
     void     Reset();
 
   private:
-    rh::engine::IDescriptorSet *      GetRasterDescSet( uint64_t id );
+    rh::engine::IDescriptorSet *      GetRasterDescSet( uint64_t id, uint8_t sampler_hash );
     rh::engine::IDeviceState &        Device;
     RasterPoolType &                  RasterPool;
     CameraDescription *               mCamDesc;
@@ -89,6 +90,7 @@ class Im2DRenderer
     uint64_t                                  mDescriptorSetPoolId = 0;
     std::unordered_map<uint64_t, rh::engine::IDescriptorSet *> mTextureCache;
     uint64_t              mVertexBufferOffset = 0;
+    std::unordered_map<uint8_t,rh::engine::ScopedPointer<rh::engine::ISampler>> mSamplerCache;
     rh::engine::ISampler *mTextureSampler;
     rh::engine::IBuffer * mGlobalsBuffer;
 };
