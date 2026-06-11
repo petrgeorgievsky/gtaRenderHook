@@ -44,7 +44,7 @@ float FloatPrecision(in float x, in uint NumMantissaBits)
 // returns true if texcoord is out of bounds
 bool TexBoundsCheck(in ivec2 tc, ivec2 size)
 {
-    return tc.x > size.x || tc.y > size.y || tc.x < 0 || tc.y < 0;
+    return tc.x >= size.x || tc.y >= size.y || tc.x < 0 || tc.y < 0;
 }
 
 // Reprojects old frame onto current frame via motion vectors,

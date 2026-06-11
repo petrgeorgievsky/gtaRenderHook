@@ -62,8 +62,8 @@ void main()
     for (y = -window_size/2; y <= window_size/2; y++)
     {
         ivec2 sample_pos = pos + ivec2(x, y) * atrous_rate;
-        if (sample_pos.x <0 ||sample_pos.x >tex_res.x || sample_pos.y <0||sample_pos.y >tex_res.y)
-        continue;
+        if ( sample_pos.x < 0 || sample_pos.x >= tex_res.x || sample_pos.y < 0 || sample_pos.y >= tex_res.y )
+            continue;
         vec4 offset_sample = imageLoad(input_image, sample_pos);
         vec4 offset_sample_d = imageLoad(normal_depth, sample_pos);
 
