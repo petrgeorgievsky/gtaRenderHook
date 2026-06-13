@@ -6,12 +6,13 @@ namespace rh::engine
 
 enum BufferUsage : uint32_t
 {
-    VertexBuffer      = 0b1u,
-    IndexBuffer       = 0b10u,
-    ConstantBuffer    = 0b100u,
-    StagingBuffer     = 0b1000u,
-    RayTracingScratch = 0b10000u,
-    StorageBuffer     = 0b100000u,
+    VertexBuffer              = 0b1u,
+    IndexBuffer               = 0b10u,
+    ConstantBuffer            = 0b100u,
+    StagingBuffer             = 0b1000u,
+    RayTracingScratch         = 0b10000u,
+    StorageBuffer             = 0b100000u,
+    RayTracingShaderBindTable = 0b1000000u,
 };
 
 enum BufferFlags

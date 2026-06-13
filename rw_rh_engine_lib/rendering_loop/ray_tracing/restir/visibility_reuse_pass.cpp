@@ -162,7 +162,7 @@ VisibilityReusePass::VisibilityReusePass(
 
     mShaderBindTable =
         Device.CreateBuffer( { .mSize  = static_cast<uint32_t>( sbt.size() ),
-                               .mUsage = BufferUsage::RayTracingScratch,
+                               .mUsage = BufferUsage::RayTracingShaderBindTable,
                                .mFlags = BufferFlags::Dynamic } );
     /// Weird stuff from nvidia tutorial, I guess they fill in some data with
     /// garbage?

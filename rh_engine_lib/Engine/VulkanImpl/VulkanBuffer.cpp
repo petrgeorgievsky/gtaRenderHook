@@ -27,6 +27,10 @@ vk::BufferUsageFlags ConvertUsage( uint32_t flags )
                      vk::BufferUsageFlagBits::
                          eAccelerationStructureBuildInputReadOnlyKHR |
                      vk::BufferUsageFlagBits::eShaderDeviceAddress;
+    if ( flags & BufferUsage::RayTracingShaderBindTable )
+        res_flags |= vk::BufferUsageFlagBits::eStorageBuffer |
+                     vk::BufferUsageFlagBits::eShaderBindingTableKHR |
+                     vk::BufferUsageFlagBits::eShaderDeviceAddress;
 
     if ( flags & BufferUsage::StorageBuffer )
         res_flags |= vk::BufferUsageFlagBits::eStorageBuffer;
