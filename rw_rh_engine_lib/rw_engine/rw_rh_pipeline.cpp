@@ -5,6 +5,7 @@
 #include <Engine/Common/types/primitive_type.h>
 #include <algorithm>
 #include <common_headers.h>
+#include <queue>
 #include <rw_engine/rh_backend/mesh_rendering_backend.h>
 #include <rw_engine/rh_backend/raster_backend.h>
 
@@ -130,7 +131,7 @@ void GenerateNormals( VertexDescPosColorUVNormals *verticles,
 }
 
 RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
-                                    RwResEntry **       resEntryPointer,
+                                    RwResEntry        **resEntryPointer,
                                     const RpMeshHeader *meshHeader )
 {
     using namespace rh::engine;
@@ -162,9 +163,21 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         primType = PrimitiveType::TriangleList;
 
     const auto *mesh_start = reinterpret_cast<const RpMesh *>( meshHeader + 1 );
-    auto *      indexBuffer = new uint16_t[meshHeader->totalIndicesInMesh * 3];
-    uint32_t    startIndex  = 0;
-    uint32_t    indexCount;
+    // Vertex data
+    std::vector<VertexDescPosColorUVNormals> vertex_data{
+        static_cast<size_t>( geom_io->GetVertexCount() ) };
+    size_t orig_vertex_count = vertex_data.size();
+
+    auto   morph_target = geom_io->GetMorphTarget( 0 );
+    RwV3d *vertexPos    = morph_target->verts;
+    RwV3d *normalsPtr   = morph_target->normals;
+
+    RwTexCoords *vertexUV       = geom_io->GetTexCoordSetPtr( 0 );
+    RwRGBA      *vertexColorPtr = geom_io->GetVertexColorPtr();
+
+    auto    *indexBuffer = new uint16_t[meshHeader->totalIndicesInMesh * 3];
+    uint32_t startIndex  = 0;
+    uint32_t indexCount;
 
     // Index data
     std::vector<GeometrySplit>    geometry_splits;
@@ -192,25 +205,261 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         if ( convert_to_list )
         {
             size_t j = startIndex;
+            // Problem:
+            // In RenderWare it so happens that 3dsMax plugins for exporting DFF
+            // files, allowed to set "Export 2 sided" flag, that resulted in
+            // duplication of triangles, to simulate multisided polygons, but
+            // they used same indices for such triangles in triangle strips,
+            // just flipped. We want to generate normals for such geometry,
+            // especially if original game doesn't provide them. To do that we
+            // need to duplicate such vertices, so that they get separate
+            // normals for inside and outside facing geometry. It'd be wiser -
+            // to remove backfaces entirely, and set some material property, but
+            // order of triangles isn't preserved, that means simple
+            // deduplication strategy(removing duplicate triangle in order of
+            // traversal) - doesn't work.
+            // To fix that - we do the following:
+            // 1. Find all duplicate triangle keys.
+            // 2. Split double-sided triangles, from single sided ones.
+            // 3. Duplicate such triangles vertices, to avoid normal
+            // self-destruction.
+            struct TriKey
+            {
+                TriKey( uint16_t a, uint16_t b, uint16_t c )
+                {
+                    ids[0] = a;
+                    ids[1] = b;
+                    ids[2] = c;
+                    std::sort( ids, ids + 3 );
+                }
+                uint16_t ids[3];
+                bool     operator<( const TriKey &other ) const
+                {
+                    if ( ids[0] != other.ids[0] )
+                        return ids[0] < other.ids[0];
+                    if ( ids[1] != other.ids[1] )
+                        return ids[1] < other.ids[1];
+                    return ids[2] < other.ids[2];
+                }
+            };
+            std::set<TriKey> dup_tris;
+            auto             is_degenerate_tri =
+                []( uint16_t indx_a, uint16_t indx_b, uint16_t indx_c )
+            {
+                return indx_a == indx_b || indx_b == indx_c || indx_a == indx_c;
+            };
+
+            uint32_t tri_count = 0;
+            {
+                std::set<TriKey> processed_triangles;
+                for ( size_t i = startIndex; i < startIndex + indexCount - 2;
+                      i++ )
+                {
+                    int      idxA = 0, idxB = 1, idxC = 2;
+                    uint16_t indx_a = mesh.indices[i - startIndex + idxA];
+                    uint16_t indx_b = mesh.indices[i - startIndex + idxB];
+                    uint16_t indx_c = mesh.indices[i - startIndex + idxC];
+
+                    if ( is_degenerate_tri( indx_a, indx_b, indx_c ) )
+                    {
+                        continue;
+                    }
+                    tri_count++;
+                    TriKey key{ indx_a, indx_b, indx_c };
+                    if ( processed_triangles.contains( key ) )
+                    {
+                        dup_tris.insert( key );
+                        continue;
+                    }
+
+                    processed_triangles.insert( key );
+                }
+            }
+            std::vector<RxTriangle> duplicate_triangles{};
+            std::vector<RxTriangle> all_triangles{};
+            all_triangles.reserve( tri_count );
             for ( size_t i = startIndex; i < startIndex + indexCount - 2; i++ )
             {
-                int idxA = 0, idxB = 1, idxC = 2;
-                if ( ( i - startIndex ) & 1 )
-                {
-                    idxB = 2;
-                    idxC = 1;
-                }
-                int16_t indx_a = mesh.indices[i - startIndex + idxA];
-                int16_t indx_b = mesh.indices[i - startIndex + idxB];
-                int16_t indx_c = mesh.indices[i - startIndex + idxC];
+                int      idxA = 0, idxB = 1, idxC = 2;
+                uint16_t indx_a = mesh.indices[i - startIndex + idxA];
+                uint16_t indx_b = mesh.indices[i - startIndex + idxB];
+                uint16_t indx_c = mesh.indices[i - startIndex + idxC];
                 // Skip degenerate tris
-                if ( indx_a == indx_b || indx_b == indx_c || indx_a == indx_c )
+                if ( is_degenerate_tri( indx_a, indx_b, indx_c ) )
+                {
                     continue;
-                indexBuffer[j++] = indx_a;
-                indexBuffer[j++] = indx_b;
-                indexBuffer[j++] = indx_c;
+                }
+                if ( i % 2 != 0 )
+                {
+                    // Флипаем, чтобы все смотрели в одну сторону
+                    std::swap( indx_b, indx_c );
+                }
+                TriKey key{ indx_a, indx_b, indx_c };
+                if ( dup_tris.contains( key ) )
+                {
+                    duplicate_triangles.push_back( { indx_a, indx_b, indx_c } );
+                }
+                else
+                {
+                    all_triangles.push_back( { indx_a, indx_b, indx_c } );
+                }
+            }
+            auto duplicate_vertex_data = [&]( uint16_t id ) -> uint16_t
+            {
+                uint16_t new_idx = static_cast<uint16_t>( vertex_data.size() );
+                auto     new_vtx_data = vertex_data[id];
+                new_vtx_data.x        = vertexPos[id].x;
+                new_vtx_data.y        = vertexPos[id].y;
+                new_vtx_data.z        = vertexPos[id].z;
+                new_vtx_data.w        = 1.f;
+                new_vtx_data.nx       = 0.0f;
+                new_vtx_data.ny       = 0.0f;
+                new_vtx_data.nz       = 0.0f;
+                if ( normalsPtr )
+                {
+                    new_vtx_data.nx = normalsPtr[id].x;
+                    new_vtx_data.ny = normalsPtr[id].y;
+                    new_vtx_data.nz = normalsPtr[id].z;
+                }
+                if ( vertexColorPtr )
+                {
+                    new_vtx_data.color[0] = vertexColorPtr[id].red;
+                    new_vtx_data.color[1] = vertexColorPtr[id].green;
+                    new_vtx_data.color[2] = vertexColorPtr[id].blue;
+                    new_vtx_data.color[3] = vertexColorPtr[id].alpha;
+                }
+                else
+                {
+                    new_vtx_data.color[0] = 255;
+                    new_vtx_data.color[1] = 255;
+                    new_vtx_data.color[2] = 255;
+                    new_vtx_data.color[3] = 255;
+                }
+                if ( vertexUV )
+                {
+                    new_vtx_data.u = vertexUV[id].u;
+                    new_vtx_data.v = vertexUV[id].v;
+                }
+                else
+                {
+                    new_vtx_data.u = 0;
+                    new_vtx_data.v = 0;
+                }
+                vertex_data.push_back( new_vtx_data );
+                return new_idx;
+            };
+            auto get_vpos = [&]( uint16_t idx )
+            {
+                if ( idx >= orig_vertex_count )
+                {
+                    auto &vdecl = vertex_data[idx];
+                    return RwV3d{ vdecl.x, vdecl.y, vdecl.z };
+                }
+                return vertexPos[idx];
+            };
+            for ( auto tri : duplicate_triangles )
+            {
+                all_triangles.emplace_back( duplicate_vertex_data( tri.a ),
+                                            duplicate_vertex_data( tri.b ),
+                                            duplicate_vertex_data( tri.c ) );
+            }
+            assert( all_triangles.size() != 0 );
+            for ( auto tri : all_triangles )
+            {
+                indexBuffer[j++] = tri.a;
+                indexBuffer[j++] = tri.b;
+                indexBuffer[j++] = tri.c;
             }
             indexCount = j - startIndex;
+
+            if ( !normalsPtr )
+            {
+                for ( size_t i = startIndex; i < startIndex + indexCount;
+                      i += 3 )
+                {
+                    uint16_t indx_a = indexBuffer[i];
+                    uint16_t indx_b = indexBuffer[i + 1];
+                    uint16_t indx_c = indexBuffer[i + 2];
+
+                    const auto vA = get_vpos( indx_a );
+                    const auto vB = get_vpos( indx_b );
+                    const auto vC = get_vpos( indx_c );
+
+                    RwV3d tangent   = { vB.x - vA.x, vB.y - vA.y, vB.z - vA.z };
+                    RwV3d bitangent = { vC.x - vA.x, vC.y - vA.y, vC.z - vA.z };
+
+                    RwV3d normal = {
+                        ( tangent.y * bitangent.z - tangent.z * bitangent.y ),
+                        ( tangent.z * bitangent.x - tangent.x * bitangent.z ),
+                        ( tangent.x * bitangent.y - tangent.y * bitangent.x ) };
+                    float len =
+                        sqrt( normal.x * normal.x + normal.y * normal.y +
+                              normal.z * normal.z );
+                    if ( len > 0.0f )
+                    {
+                        normal.x /= len;
+                        normal.y /= len;
+                        normal.z /= len;
+                    }
+                    vertex_data[indx_a].nx += normal.x;
+                    vertex_data[indx_a].ny += normal.y;
+                    vertex_data[indx_a].nz += normal.z;
+                    vertex_data[indx_b].nx += normal.x;
+                    vertex_data[indx_b].ny += normal.y;
+                    vertex_data[indx_b].nz += normal.z;
+                    vertex_data[indx_c].nx += normal.x;
+                    vertex_data[indx_c].ny += normal.y;
+                    vertex_data[indx_c].nz += normal.z;
+                }
+            }
+            else
+            {
+                // Correct winding order, if normals are known
+                // This is some weird bug I see in GTA VC, specifically on
+                // vehicles, not sure what's the reason.
+                // If someone finds out another solution to such problem -
+                // commits are welcome.
+                for ( size_t i = startIndex; i < startIndex + indexCount;
+                      i += 3 )
+                {
+                    uint16_t indx_a = indexBuffer[i];
+                    uint16_t indx_b = indexBuffer[i + 1];
+                    uint16_t indx_c = indexBuffer[i + 2];
+
+                    const auto vA   = get_vpos( indx_a );
+                    const auto vB   = get_vpos( indx_b );
+                    const auto vC   = get_vpos( indx_c );
+                    RwV3d tangent   = { vB.x - vA.x, vB.y - vA.y, vB.z - vA.z };
+                    RwV3d bitangent = { vC.x - vA.x, vC.y - vA.y, vC.z - vA.z };
+
+                    RwV3d geomNormal = {
+                        ( tangent.y * bitangent.z - tangent.z * bitangent.y ),
+                        ( tangent.z * bitangent.x - tangent.x * bitangent.z ),
+                        ( tangent.x * bitangent.y - tangent.y * bitangent.x ) };
+                    float len = sqrt( geomNormal.x * geomNormal.x +
+                                      geomNormal.y * geomNormal.y +
+                                      geomNormal.z * geomNormal.z );
+                    if ( len > 0.0f )
+                    {
+                        geomNormal.x /= len;
+                        geomNormal.y /= len;
+                        geomNormal.z /= len;
+                    }
+                    const auto nA         = normalsPtr[indx_a];
+                    const auto nB         = normalsPtr[indx_b];
+                    const auto nC         = normalsPtr[indx_c];
+                    RwV3d      meshNormal = { ( nA.x + nB.x + nC.x ),
+                                              ( nA.y + nB.y + nC.y ),
+                                              ( nA.z + nB.z + nC.z ) };
+                    auto       norm_dir   = meshNormal.x * geomNormal.x +
+                                    meshNormal.y * geomNormal.y +
+                                    meshNormal.z * geomNormal.z;
+                    if ( norm_dir < 0.f )
+                    {
+                        std::swap( indexBuffer[i], indexBuffer[i + 1] );
+                    }
+                }
+            }
         }
         else
         {
@@ -232,22 +481,11 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         geometry_splits.push_back( meshData );
     }
 
-    // Vertex data
-    auto *vertexData = new VertexDescPosColorUVNormals[static_cast<size_t>(
-        geom_io->GetVertexCount() )];
-
-    auto   morph_target = geom_io->GetMorphTarget( 0 );
-    RwV3d *vertexPos    = morph_target->verts;
-    RwV3d *normalsPtr   = morph_target->normals;
-
-    RwTexCoords *vertexUV       = geom_io->GetTexCoordSetPtr( 0 );
-    RwRGBA *     vertexColorPtr = geom_io->GetVertexColorPtr();
-
     uint32_t v_id = 0;
     for ( ; vertexPos != morph_target->verts + geom_io->GetVertexCount();
           vertexPos++ )
     {
-        VertexDescPosColorUVNormals desc{};
+        VertexDescPosColorUVNormals desc{ vertex_data[v_id] };
         desc.x = vertexPos->x;
         desc.y = vertexPos->y;
         desc.z = vertexPos->z;
@@ -261,7 +499,21 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
         }
         else
         {
-            desc.nx = desc.ny = desc.nz = 0;
+            if ( !convert_to_list )
+            {
+                desc.nx = desc.ny = desc.nz = 0;
+            }
+            else
+            {
+                auto l = sqrt( desc.nx * desc.nx + desc.ny * desc.ny +
+                               desc.nz * desc.nz );
+                if ( l > 0.f )
+                {
+                    desc.nx /= l;
+                    desc.ny /= l;
+                    desc.nz /= l;
+                }
+            }
         }
         if ( vertexColorPtr )
         {
@@ -289,12 +541,12 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
             desc.u = 0;
             desc.v = 0;
         }
-        vertexData[v_id] = desc;
+        vertex_data[v_id] = desc;
         v_id++;
     }
-    if ( morph_target->normals == nullptr )
-        GenerateNormals( vertexData,
-                         static_cast<uint32_t>( geom_io->GetVertexCount() ),
+    if ( morph_target->normals == nullptr &&
+         !convert_to_list ) // < tri strip has a normal generation beforehand
+        GenerateNormals( vertex_data.data(), vertex_data.size(),
                          geom_io->GetTrianglePtr(),
                          static_cast<uint32_t>( geom_io->GetTriangleCount() ),
                          primType == rh::engine::PrimitiveType::TriangleStrip );
@@ -306,22 +558,20 @@ RwResEntry *InstanceAtomicGeometry( RpGeometryInterface *geom_io, void *owner,
               i < split.mIndexOffset + split.mIndexCount; i++ )
         {
             auto &m_b = BackendMaterialPlugin::GetData( meshes[j].material );
-            vertexData[indexBuffer[i]].material_idx = j;
-            vertexData[indexBuffer[i]].emissive     = m_b.Emission;
+            vertex_data[indexBuffer[i]].material_idx = j;
+            vertex_data[indexBuffer[i]].emissive     = m_b.Emission;
         }
         j++;
     }
 
     BackendMeshInitData backendMeshInitData{};
-    backendMeshInitData.mIndexCount = startIndex;
-    backendMeshInitData.mVertexCount =
-        static_cast<size_t>( geom_io->GetVertexCount() );
-    backendMeshInitData.mIndexData  = indexBuffer;
-    backendMeshInitData.mVertexData = vertexData;
-    backendMeshInitData.mSplits     = geometry_splits;
-    backendMeshInitData.mMaterials  = geometry_mats;
-    resEntry->meshData              = CreateBackendMesh( backendMeshInitData );
-    delete[] vertexData;
+    backendMeshInitData.mIndexCount  = startIndex;
+    backendMeshInitData.mVertexCount = vertex_data.size();
+    backendMeshInitData.mIndexData   = indexBuffer;
+    backendMeshInitData.mVertexData  = vertex_data.data();
+    backendMeshInitData.mSplits      = geometry_splits;
+    backendMeshInitData.mMaterials   = geometry_mats;
+    resEntry->meshData               = CreateBackendMesh( backendMeshInitData );
     delete[] indexBuffer;
 
     resEntry->batchId = meshHeader->serialNum;
@@ -377,7 +627,7 @@ RenderStatus InstanceAtomic( RpAtomic *atomic, RpGeometryInterface *geom_io )
         if ( resEntry != nullptr )
             return RenderStatus::Instanced;
         RwResEntry **resEntryPointer = &geom_io->GetResEntryRef();
-        void *       owner;
+        void        *owner;
         meshHeader = geom_io->GetMeshHeader();
         if ( geom_io->GetMorphTargetCount() != 1 )
         {

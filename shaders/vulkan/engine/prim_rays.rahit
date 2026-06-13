@@ -33,6 +33,10 @@ void main()
 
     // Computing the normal at hit position
     vec3 normal = v0.normals.xyz * barycentrics.x + v1.normals.xyz * barycentrics.y + v2.normals.xyz * barycentrics.z;
+    if (gl_HitKindEXT == gl_HitKindBackFacingTriangleEXT)
+    {
+        normal *= -1;
+    }
 
     // Transforming the normal to world space
     normal = normalize(vec3(scnDesc.i[gl_InstanceID].transfoIT * vec4(normal, 0.0)));

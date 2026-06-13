@@ -59,8 +59,12 @@ void main()
 
     // Computing the normal at hit position
     vec3 normal = v0.normals.xyz * barycentrics.x +
-    v1.normals.xyz * barycentrics.y +
-    v2.normals.xyz * barycentrics.z;
+                  v1.normals.xyz * barycentrics.y +
+                  v2.normals.xyz * barycentrics.z;
+    if (gl_HitKindEXT == gl_HitKindBackFacingTriangleEXT)
+    {
+        normal *= -1;
+    }
     vec3 obj_pos = v0.pos.xyz * barycentrics.x +
     v1.pos.xyz * barycentrics.y +
     v2.pos.xyz * barycentrics.z;

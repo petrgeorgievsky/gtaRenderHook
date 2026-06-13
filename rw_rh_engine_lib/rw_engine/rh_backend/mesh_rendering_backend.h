@@ -87,7 +87,7 @@ struct VertexDescPosColorUVNormals
 {
     float    x, y, z, w;
     float    u, v, uw, uv;
-    float    nx, ny, nz, nw;
+    float    nx=0, ny=0, nz=0, nw=0;
     float    lmx = 0, lmy = 0, lmz = 0, lmw = 0;
     float    wx = 0, wy = 0, wz = 0, ww = 0;
     uint32_t bone_indices;
