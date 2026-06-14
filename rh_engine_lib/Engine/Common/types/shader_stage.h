@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
+
 namespace rh::engine
 {
+
 enum ShaderStage : uint32_t
 {
     Compute   = 1,
@@ -15,4 +17,5 @@ enum ShaderStage : uint32_t
     RayHit    = 256,
     RayAnyHit = 512,
 };
+
 }

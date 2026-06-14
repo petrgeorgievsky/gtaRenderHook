@@ -1,5 +1,6 @@
 #pragma once
-#include "Engine/Common/types/shader_stage.h"
+#include <Engine/Common/types/shader_stage.h>
+
 #include <string>
 
 namespace rh::engine

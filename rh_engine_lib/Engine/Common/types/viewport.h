@@ -1,5 +1,8 @@
 #pragma once
-namespace rh::engine {
+
+namespace rh::engine
+{
+
 struct ViewPort
 {
     float topLeftX;
@@ -9,4 +12,5 @@ struct ViewPort
     float minDepth;
     float maxDepth;
 };
+
 } // namespace rh::engine

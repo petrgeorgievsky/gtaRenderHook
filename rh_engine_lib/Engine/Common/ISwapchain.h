@@ -1,5 +1,6 @@
 #pragma once
-#include "types/image_buffer_format.h"
+#include <Engine/Common/types/image_buffer_format.h>
+
 #include <cstdint>
 
 namespace rh::engine
@@ -26,9 +27,9 @@ struct SwapchainFrame
 struct PresentationParams
 {
     VSyncType mVsyncType = VSyncType::None;
-    uint32_t  mBufferCount;
-    bool      mWindowed;
-    bool      mUseHDR;
+    uint32_t  mBufferCount{ 2 };
+    bool      mWindowed{ false };
+    bool      mUseHDR{ false };
 };
 
 class ISwapchain
@@ -45,4 +46,5 @@ class ISwapchain
     virtual SwapchainFrame GetAvailableFrame( ISyncPrimitive *signal )      = 0;
     virtual bool Present( uint32_t swapchain_img, ISyncPrimitive *waitFor ) = 0;
 };
+
 } // namespace rh::engine

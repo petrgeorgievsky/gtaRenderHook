@@ -8,3 +8,5 @@ imgui[vulkan-binding]:x86-windows-static
 imgui[dx11-binding]:x86-windows-static
 nlohmann-json:x86-windows-static
 vulkan-memory-allocator:x86-windows-static
+rapidhash:x86-windows-static
+rapidhash:x64-windows-static

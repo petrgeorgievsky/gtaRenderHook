@@ -108,7 +108,7 @@ void GBufferPass::InitializePipeline()
         .mLayout               = mPipeLayout,
         .mShaderStages         = { vs_stage_desc, ps_stage_desc },
         .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-        .mTopology             = Topology::TriangleList };
+        .mTopology             = PrimitiveType::TriangleList };
 
     mPipeline = device_state.CreateRasterPipeline( pipe_create_params );
 }

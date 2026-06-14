@@ -1,9 +1,11 @@
 #pragma once
-#include "IImageView.h"
+#include <Engine/Common/IImageView.h>
+
 #include <cstdint>
 
 namespace rh::engine
 {
+
 class ISyncPrimitive;
 
 /**
@@ -17,12 +19,12 @@ class ISyncPrimitive;
 class IDeviceOutputView
 {
   public:
-    virtual ~IDeviceOutputView()                   = default;
-    IDeviceOutputView()                            = default;
-    IDeviceOutputView( const IDeviceOutputView & ) = delete;
+    virtual ~IDeviceOutputView()                              = default;
+    IDeviceOutputView()                                       = default;
+    IDeviceOutputView( const IDeviceOutputView & )            = delete;
     IDeviceOutputView &operator=( const IDeviceOutputView & ) = delete;
     IDeviceOutputView( IDeviceOutputView && )                 = delete;
-    IDeviceOutputView &operator=( IDeviceOutputView && ) = delete;
+    IDeviceOutputView &operator=( IDeviceOutputView && )      = delete;
 
     virtual bool Present()                      = 0;
     virtual bool SetFullscreenFlag( bool flag ) = 0;

@@ -57,6 +57,7 @@ set(D3D11_SOURCES
 
 add_library(${PROJECT_NAME} STATIC
         Engine/EngineConfigBlock.cpp
+        Engine/Common/hash_data.cpp
         TestUtils/TestSample.cpp
         TestUtils/BitmapLoader.cpp
         TestUtils/test_dump_util.cpp
@@ -78,6 +79,9 @@ if (USE_VULKAN_API)
 endif ()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ./)
+
+find_path(RAPIDHASH_INCLUDE_DIRS "rapidhash.h")
+target_include_directories(${PROJECT_NAME} PRIVATE ${RAPIDHASH_INCLUDE_DIRS})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 20
@@ -130,6 +134,11 @@ if (NOT ANDROID)
     target_link_libraries(${PROJECT_NAME} PRIVATE
             dxgi
             dbghelp
+    )
+    # d3d11 stuff
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            d3d11
+            d3dcompiler
     )
 endif ()
 

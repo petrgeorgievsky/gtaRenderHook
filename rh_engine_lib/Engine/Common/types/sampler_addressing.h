@@ -1,6 +1,16 @@
 #pragma once
-namespace rh::engine {
+#include <cstdint>
 
-enum class SamplerAddressing : unsigned char { Unknown = 0, Wrap, Mirror, Clamp, Border };
+namespace rh::engine
+{
+
+enum class SamplerAddressing : uint8_t
+{
+    Unknown = 0,
+    Wrap,
+    Mirror,
+    Clamp,
+    Border
+};
 
 }

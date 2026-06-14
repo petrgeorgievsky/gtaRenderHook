@@ -1,14 +1,18 @@
 #pragma once
 #include <Engine/Common/IGPUResource.h>
+
 #include <vector>
+
 namespace rh::engine
 {
+
 struct ViewPort;
 struct IndexPtrPair;
 enum class ImageBindType : uint8_t;
 enum class ImageClearType : uint8_t;
 enum ShaderStage : uint32_t;
 enum class PrimitiveType : uint8_t;
+
 // TODO: add comments
 class IRenderingContext : public IGPUResource
 {

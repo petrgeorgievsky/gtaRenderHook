@@ -1,4 +1,5 @@
 #pragma once
+
 namespace rh::engine {
 
 struct IndexBufferInfo
@@ -7,4 +8,5 @@ struct IndexBufferInfo
     unsigned int indexCount;
     const void *initialData;
 };
+
 }

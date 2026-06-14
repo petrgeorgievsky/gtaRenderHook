@@ -28,7 +28,7 @@ struct BufferCreateInfo
     uint32_t    mSize;
     uint32_t    mUsage;
     BufferFlags mFlags;
-    void *      mInitDataPtr;
+    void       *mInitDataPtr;
 };
 
 class IBuffer

@@ -1,7 +1,10 @@
 #pragma once
+#include <cstdint>
+
 namespace rh::engine
 {
-enum class DescriptorType
+
+enum class DescriptorType : uint8_t
 {
     Sampler,
     ROBuffer,
@@ -11,4 +14,5 @@ enum class DescriptorType
     RTAccelerationStruct,
     StorageTexture
 };
+
 } // namespace rh::engine

@@ -8,15 +8,19 @@
 
 using namespace rh::engine;
 
-constexpr D3D11_PRIMITIVE_TOPOLOGY Convert( Topology el_type )
+constexpr D3D11_PRIMITIVE_TOPOLOGY Convert( PrimitiveType el_type )
 {
     switch ( el_type )
     {
-    case Topology::TriangleList:
+    case PrimitiveType::TriangleStrip:
+        return D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+    case PrimitiveType::TriangleList:
         return D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    case Topology::LineList:
+    case PrimitiveType::LineStrip:
         return D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
-    case Topology::PointList:
+    case PrimitiveType::LineList:
+        return D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+    case PrimitiveType::PointList:
         return D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
     default:
         return D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_UNDEFINED;

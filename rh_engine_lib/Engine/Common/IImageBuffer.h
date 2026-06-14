@@ -1,8 +1,10 @@
 #pragma once
-#include "ArrayProxy.h"
-#include "types\image_buffer_format.h"
+#include <Engine/Common/ArrayProxy.h>
+#include <Engine/Common/types/image_buffer_format.h>
+
 namespace rh::engine
 {
+
 enum class ImageDimensions
 {
     d1D,
@@ -40,7 +42,7 @@ enum ImageBufferUsage : uint32_t
 
 struct ImageBufferInitData
 {
-    void *   mData;
+    void    *mData;
     uint32_t mSize;
     uint32_t mStride;
 };
@@ -66,4 +68,5 @@ class IImageBuffer
   public:
     virtual ~IImageBuffer() = default;
 };
+
 } // namespace rh::engine

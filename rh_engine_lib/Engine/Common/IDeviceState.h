@@ -1,22 +1,20 @@
 #pragma once
-#include "ArrayProxy.h"
-#include "Engine/Common/types/string_typedefs.h"
-#include "IBuffer.h"
-#include "ICommandBuffer.h"
-#include "IDescriptorSetAllocator.h"
-#include "IDescriptorSetLayout.h"
-#include "IDeviceOutputView.h"
-#include "IFrameBuffer.h"
-#include "IImageBuffer.h"
-#include "IImageView.h"
-#include "INativeWindow.h"
-#include "IPipeline.h"
-#include "IPipelineLayout.h"
-#include "IRenderPass.h"
-#include "ISampler.h"
-#include "IShader.h"
-#include "ISyncPrimitive.h"
-#include "IWindow.h"
+#include <Engine/Common/ArrayProxy.h>
+#include <Engine/Common/IBuffer.h>
+#include <Engine/Common/ICommandBuffer.h>
+#include <Engine/Common/IDescriptorSetAllocator.h>
+#include <Engine/Common/IDescriptorSetLayout.h>
+#include <Engine/Common/IFrameBuffer.h>
+#include <Engine/Common/IImageBuffer.h>
+#include <Engine/Common/IImageView.h>
+#include <Engine/Common/IPipeline.h>
+#include <Engine/Common/IPipelineLayout.h>
+#include <Engine/Common/IRenderPass.h>
+#include <Engine/Common/ISampler.h>
+#include <Engine/Common/IShader.h>
+#include <Engine/Common/ISyncPrimitive.h>
+#include <Engine/Common/IWindow.h>
+#include <Engine/Common/types/string_typedefs.h>
 
 #ifndef HWND
 using HWND = struct HWND__ *;
@@ -53,7 +51,7 @@ struct ImageUpdateInfo
 {
     ImageLayout mLayout;
     IImageView *mView    = nullptr;
-    ISampler *  mSampler = nullptr;
+    ISampler   *mSampler = nullptr;
 };
 
 /**
@@ -78,7 +76,7 @@ struct AccelStructUpdateInfo
 
 struct DescriptorSetUpdateInfo
 {
-    IDescriptorSet *                  mSet;
+    IDescriptorSet                   *mSet;
     uint32_t                          mBinding;
     DescriptorType                    mDescriptorType;
     uint32_t                          mArrayStartIdx = 0;
@@ -89,14 +87,14 @@ struct DescriptorSetUpdateInfo
 
 struct CommandBufferSubmitInfo
 {
-    ICommandBuffer *              mCmdBuffer;
+    ICommandBuffer               *mCmdBuffer;
     std::vector<ISyncPrimitive *> mWaitForDep;
-    ISyncPrimitive *              mToSignalDep;
+    ISyncPrimitive               *mToSignalDep;
 };
 
 /**
  * @brief Rendering device state, holds info about physical devices,
- * avaliable display modes and logical device state.
+ * available display modes and logical device state.
  *
  */
 class IDeviceState
@@ -117,14 +115,14 @@ class IDeviceState
     /**
      * @brief Get Adapters count
      *
-     * @param n - adapters (GPU) count
+     * @param count - adapters (GPU) count
      */
     virtual bool GetAdaptersCount( unsigned int &count ) = 0;
 
     /**
      * @brief Get the Adapter Info
      *
-     * @param n - adapter id
+     * @param id - adapter id
      * @param info - adapter name
      */
     virtual bool GetAdapterInfo( unsigned int id, String &info ) = 0;
@@ -132,14 +130,14 @@ class IDeviceState
     /**
      * @brief Get Current Adapter
      *
-     * @param n - current adapter
+     * @param id - current adapter
      */
     virtual bool GetCurrentAdapter( unsigned int &id ) = 0;
 
     /**
      * @brief Set Current Adapter
      *
-     * @param n - adapter id
+     * @param id - adapter id
      */
     virtual bool SetCurrentAdapter( unsigned int id ) = 0;
 
@@ -147,7 +145,7 @@ class IDeviceState
      * @brief Get adapter output count
      *
      * @param adapterId - adapter id
-     * @param n - output(monitor) count
+     * @param count - output(monitor) count
      */
     virtual bool GetOutputCount( unsigned int  adapterId,
                                  unsigned int &count ) = 0;
@@ -155,7 +153,7 @@ class IDeviceState
     /**
      * @brief Get output device info
      *
-     * @param n - output device id
+     * @param id - output device id
      * @param info - output device name
      */
     virtual bool GetOutputInfo( unsigned int id, String &info ) = 0;
@@ -186,7 +184,7 @@ class IDeviceState
     /**
      * @brief Get display mode info
      *
-     * @param n - display mode id
+     * @param id - display mode id
      * @param info - display mode info
      */
     virtual bool GetDisplayModeInfo( unsigned int     id,
@@ -236,9 +234,9 @@ class IDeviceState
     CreateRenderPass( const RenderPassCreateParams &params ) = 0;
     virtual IPipeline *
     CreateRasterPipeline( const RasterPipelineCreateParams &params ) = 0;
-    virtual IShader * CreateShader( const ShaderDesc &params )       = 0;
+    virtual IShader  *CreateShader( const ShaderDesc &params )       = 0;
     virtual ISampler *CreateSampler( const SamplerDesc &params )     = 0;
-    virtual IBuffer * CreateBuffer( const BufferCreateInfo &params ) = 0;
+    virtual IBuffer  *CreateBuffer( const BufferCreateInfo &params ) = 0;
     virtual IImageBuffer *
     CreateImageBuffer( const ImageBufferCreateParams &params ) = 0;
     virtual IImageView *
@@ -262,4 +260,5 @@ class IDeviceState
      */
     virtual void WaitForGPU() = 0;
 };
+
 } // namespace rh::engine

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+
 namespace rh::engine
 {
 
@@ -19,4 +20,5 @@ enum class InputElementType : uint32_t
     Vec4fp8,
     Uint32
 };
+
 } // namespace rh::engine

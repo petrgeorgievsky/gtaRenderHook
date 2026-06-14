@@ -1,7 +1,7 @@
 #pragma once
-#include "ArrayProxy.h"
-#include "types/descriptor_type.h"
-#include "types/shader_stage.h"
+#include <Engine/Common/ArrayProxy.h>
+#include <Engine/Common/types/descriptor_type.h>
+
 #include <cstdint>
 
 namespace rh::engine
@@ -25,10 +25,12 @@ struct DescriptorBinding
     // D3D11 specific
     std::uint32_t mRegisterId;
 };
+
 struct DescriptorSetLayoutCreateParams
 {
     ArrayProxy<DescriptorBinding> mBindings;
 };
+
 class IDescriptorSetLayout
 {
   public:
@@ -36,4 +38,5 @@ class IDescriptorSetLayout
     IDescriptorSetLayout()                               = default;
     IDescriptorSetLayout( const IDescriptorSetLayout & ) = delete;
 };
+
 } // namespace rh::engine

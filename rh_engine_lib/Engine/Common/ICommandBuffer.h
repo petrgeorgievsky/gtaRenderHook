@@ -1,10 +1,11 @@
 #pragma once
-#include "ArrayProxy.h"
-#include "Engine/Common/types/image_layout.h"
-#include "Engine/Common/types/memory_access_flags.h"
-#include "Engine/Common/types/pipeline_stages.h"
-#include "types/viewport.h"
+#include <Engine/Common/ArrayProxy.h>
+#include <Engine/Common/types/image_layout.h>
+#include <Engine/Common/types/memory_access_flags.h>
 #include <Engine/Common/types/pipeline_bind_point.h>
+#include <Engine/Common/types/pipeline_stages.h>
+#include <Engine/Common/types/viewport.h>
+
 #include <vector>
 
 namespace rh::engine
@@ -23,6 +24,7 @@ enum ClearValueType
     Color,
     Depth
 };
+
 struct ClearDepthStencil
 {
     float   depth;
@@ -36,22 +38,25 @@ struct ClearColor
 
 struct ClearValue
 {
-    ClearValue( ClearColor c ) : type( ClearValueType::Color ), color( c ) {}
+    explicit ClearValue( ClearColor c )
+        : type( ClearValueType::Color ), color( c )
+    {
+    }
 
-    ClearValue( ClearDepthStencil ds )
+    explicit ClearValue( ClearDepthStencil ds )
         : type( ClearValueType::Depth ), depthStencil( ds )
     {
     }
     ClearValueType type;
-    ClearColor     color;
+    ClearColor     color{};
 
-    ClearDepthStencil depthStencil;
+    ClearDepthStencil depthStencil{};
 };
 
 struct RenderPassBeginInfo
 {
-    IRenderPass *          m_pRenderPass;
-    IFrameBuffer *         m_pFrameBuffer;
+    IRenderPass           *m_pRenderPass{};
+    IFrameBuffer          *m_pFrameBuffer{};
     ArrayProxy<ClearValue> m_aClearValues;
 };
 
@@ -79,8 +84,8 @@ struct Scissor
 struct DescriptorSetBindInfo
 {
     PipelineBindPoint mPipelineBindPoint = PipelineBindPoint::Graphics;
-    IPipelineLayout * mPipelineLayout;
-    uint32_t          mDescriptorSetsOffset;
+    IPipelineLayout  *mPipelineLayout{};
+    uint32_t          mDescriptorSetsOffset{};
     ArrayProxy<IDescriptorSet *> mDescriptorSets;
 };
 
@@ -108,40 +113,40 @@ struct ImageSubresourceRange
 
 struct ImageRegion
 {
-    ImageSubresourceRegion mSubresource;
-    int32_t                mOffsetX;
-    int32_t                mOffsetY;
-    int32_t                mOffsetZ;
-    uint32_t               mExtentW;
-    uint32_t               mExtentH;
+    ImageSubresourceRegion mSubresource{};
+    int32_t                mOffsetX{};
+    int32_t                mOffsetY{};
+    int32_t                mOffsetZ{};
+    uint32_t               mExtentW{};
+    uint32_t               mExtentH{};
     uint32_t               mExtentD = 1;
 };
 
 struct BufferToImageCopySubInfo
 {
-    BufferRegion mFrom;
+    BufferRegion mFrom{};
     ImageRegion  mTo;
 };
 
 struct ImageToBufferCopySubInfo
 {
     ImageRegion  mFrom;
-    BufferRegion mTo;
+    BufferRegion mTo{};
 };
 
 struct ImageToBufferCopyInfo
 {
-    IBuffer *                            mBuffer;
-    IImageBuffer *                       mImage;
-    ImageLayout                          mImageLayout;
+    IBuffer                             *mBuffer{};
+    IImageBuffer                        *mImage{};
+    ImageLayout                          mImageLayout{};
     ArrayProxy<ImageToBufferCopySubInfo> mRegions;
 };
 
 struct BufferToImageCopyInfo
 {
-    IBuffer *                            mBuffer;
-    IImageBuffer *                       mImage;
-    ImageLayout                          mImageLayout;
+    IBuffer                             *mBuffer{};
+    IImageBuffer                        *mImage{};
+    ImageLayout                          mImageLayout{};
     ArrayProxy<BufferToImageCopySubInfo> mRegions;
 };
 
@@ -153,21 +158,21 @@ struct ImageToImageCopySubInfo
 
 struct ImageToImageCopyInfo
 {
-    IImageBuffer *                      mSrc;
-    IImageBuffer *                      mDst;
-    ImageLayout                         mSrcLayout;
-    ImageLayout                         mDstLayout;
+    IImageBuffer                       *mSrc{};
+    IImageBuffer                       *mDst{};
+    ImageLayout                         mSrcLayout{};
+    ImageLayout                         mDstLayout{};
     ArrayProxy<ImageToImageCopySubInfo> mRegions;
 };
 
 struct ImageMemoryBarrierInfo
 {
-    IImageBuffer *        mImage;
-    ImageLayout           mSrcLayout;
-    ImageLayout           mDstLayout;
-    MemoryAccessFlags     mSrcMemoryAccess;
-    MemoryAccessFlags     mDstMemoryAccess;
-    ImageSubresourceRange mSubresRange;
+    IImageBuffer         *mImage{};
+    ImageLayout           mSrcLayout{};
+    ImageLayout           mDstLayout{};
+    MemoryAccessFlags     mSrcMemoryAccess{};
+    MemoryAccessFlags     mDstMemoryAccess{};
+    ImageSubresourceRange mSubresRange{};
 };
 
 struct MemoryBarrierInfo
@@ -178,8 +183,8 @@ struct MemoryBarrierInfo
 
 struct PipelineBarrierInfo
 {
-    PipelineStage                      mSrcStage;
-    PipelineStage                      mDstStage;
+    PipelineStage                      mSrcStage{};
+    PipelineStage                      mDstStage{};
     ArrayProxy<MemoryBarrierInfo>      mMemoryBarriers;
     ArrayProxy<ImageMemoryBarrierInfo> mImageMemoryBarriers;
 };

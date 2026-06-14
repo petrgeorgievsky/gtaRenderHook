@@ -1,9 +1,9 @@
 #pragma once
-#include "ArrayProxy.h"
-#include "types/shader_stage.h"
-#include "types/descriptor_type.h"
-#include "IDescriptorSet.h"
-#include "IDescriptorSetLayout.h"
+#include <Engine/Common/ArrayProxy.h>
+#include <Engine/Common/IDescriptorSet.h>
+#include <Engine/Common/IDescriptorSetLayout.h>
+#include <Engine/Common/types/descriptor_type.h>
+
 #include <cstdint>
 
 namespace rh::engine
@@ -23,15 +23,17 @@ struct DescriptorSetAllocatorCreateParams
 
 struct DescriptorSetsAllocateParams
 {
-    ArrayProxy<IDescriptorSetLayout*> mLayouts;
+    ArrayProxy<IDescriptorSetLayout *> mLayouts;
 };
 
 class IDescriptorSetAllocator
 {
   public:
-    virtual ~IDescriptorSetAllocator()                   = default;
-    IDescriptorSetAllocator()                            = default;
+    virtual ~IDescriptorSetAllocator()                         = default;
+    IDescriptorSetAllocator()                                  = default;
     IDescriptorSetAllocator( const IDescriptorSetAllocator & ) = delete;
-    virtual std::vector<IDescriptorSet*> AllocateDescriptorSets( const DescriptorSetsAllocateParams &) = 0;
+    virtual std::vector<IDescriptorSet *>
+    AllocateDescriptorSets( const DescriptorSetsAllocateParams & ) = 0;
 };
+
 } // namespace rh::engine

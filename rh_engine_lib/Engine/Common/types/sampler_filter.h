@@ -1,6 +1,15 @@
 #pragma once
-namespace rh::engine {
+#include <cstdint>
 
-enum class SamplerFilter : unsigned char { Unknown = 0, Point, Linear, Anisotropic };
+namespace rh::engine
+{
+
+enum class SamplerFilter : uint8_t
+{
+    Unknown = 0,
+    Point,
+    Linear,
+    Anisotropic
+};
 
 }

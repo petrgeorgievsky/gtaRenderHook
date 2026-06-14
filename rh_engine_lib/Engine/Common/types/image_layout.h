@@ -3,6 +3,7 @@
 
 namespace rh::engine
 {
+
 enum class ImageLayout : uint8_t
 {
     Undefined,
@@ -21,4 +22,5 @@ enum class ImageLayout : uint8_t
     ShadingRateOptimal,
     FragmentDensityMapOptimal
 };
+
 }

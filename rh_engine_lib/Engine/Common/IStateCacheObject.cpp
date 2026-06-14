@@ -1,5 +1,7 @@
 #include "IStateCacheObject.h"
-using namespace rh::engine;
+
+namespace rh::engine
+{
 bool IStateCacheObject::IsDirty()
 {
     return m_bDirty;
@@ -21,4 +23,5 @@ void IStateCacheObject::Flush( void *deviceObject )
 void IStateCacheObject::Invalidate()
 {
     MakeDirty();
+}
 }

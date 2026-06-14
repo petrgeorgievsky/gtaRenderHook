@@ -1,7 +1,4 @@
 #pragma once
-#include <Engine/Common/types/input_element_type.h>
-#include <Engine/Common/types/topology_type.h>
-#include <Engine/Common/types/vertex_bind_rate.h>
 #include <common.h>
 
 #include "Engine/Common/types/attachment_load_op.h"
@@ -13,7 +10,10 @@
 #include "Engine/Common/types/memory_access_flags.h"
 #include "Engine/Common/types/pipeline_bind_point.h"
 #include "Engine/Common/types/pipeline_stages.h"
-#include "Engine/Common/types/shader_stage.h"
+#include <Engine/Common/types/input_element_type.h>
+#include <Engine/Common/types/primitive_type.h>
+#include <Engine/Common/types/shader_stage.h>
+#include <Engine/Common/types/vertex_bind_rate.h>
 
 namespace rh::engine
 {
@@ -310,13 +310,17 @@ constexpr vk::Format Convert( InputElementType el_type )
     return vk::Format::eUndefined;
 }
 
-constexpr vk::PrimitiveTopology Convert( Topology el_type )
+constexpr vk::PrimitiveTopology Convert( PrimitiveType el_type )
 {
     switch ( el_type )
     {
-    case Topology::TriangleList: return vk::PrimitiveTopology::eTriangleList;
-    case Topology::LineList: return vk::PrimitiveTopology::eLineList;
-    case Topology::PointList: return vk::PrimitiveTopology::ePointList;
+    case PrimitiveType::TriangleList:
+        return vk::PrimitiveTopology::eTriangleList;
+    case PrimitiveType::TriangleStrip:
+        return vk::PrimitiveTopology::eTriangleStrip;
+    case PrimitiveType::LineList: return vk::PrimitiveTopology::eLineList;
+    case PrimitiveType::LineStrip: return vk::PrimitiveTopology::eLineStrip;
+    case PrimitiveType::PointList: return vk::PrimitiveTopology::ePointList;
     }
     return {};
 }

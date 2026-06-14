@@ -1,6 +1,9 @@
 #pragma once
+#include <cstdint>
+
 namespace rh::engine {
-enum class ImageBufferType : unsigned char {
+
+enum class ImageBufferType : uint8_t {
     Unknown,
     BackBuffer,
     TextureBuffer,
@@ -8,4 +11,5 @@ enum class ImageBufferType : unsigned char {
     RenderTargetBuffer,
     DynamicTextureArrayBuffer
 };
+
 }

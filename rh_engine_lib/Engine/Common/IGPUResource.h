@@ -1,33 +1,37 @@
 #pragma once
 
-namespace rh::engine {
+namespace rh::engine
+{
+
 class IGPUResource
 {
-public:
+  public:
     virtual ~IGPUResource() = default;
     virtual void *GetImplResource() { return nullptr; }
 };
+
 class GPUResourcePtr
 {
-public:
+  public:
     GPUResourcePtr() { mPtr = nullptr; }
     GPUResourcePtr( IGPUResource *resource ) { mPtr = resource; }
     ~GPUResourcePtr() { delete mPtr; }
 
-    GPUResourcePtr( const GPUResourcePtr & ) = delete;
+    GPUResourcePtr( const GPUResourcePtr & )            = delete;
     GPUResourcePtr &operator=( const GPUResourcePtr & ) = delete;
-    GPUResourcePtr( GPUResourcePtr &&other )
+    GPUResourcePtr( GPUResourcePtr &&other ) noexcept
     {
-        mPtr = other.mPtr;
+        mPtr       = other.mPtr;
         other.mPtr = nullptr;
     }
-    GPUResourcePtr &operator=( GPUResourcePtr &&other )
+    GPUResourcePtr &operator=( GPUResourcePtr &&other ) noexcept
     {
-        mPtr = other.mPtr;
+        mPtr       = other.mPtr;
         other.mPtr = nullptr;
         return *this;
     }
 
     IGPUResource *mPtr;
 };
+
 } // namespace rh::engine

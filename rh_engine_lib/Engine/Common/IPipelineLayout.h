@@ -1,17 +1,18 @@
 #pragma once
-#include "types/shader_stage.h"
-#include <string>
-#include "ArrayProxy.h"
-#include "IDescriptorSetLayout.h"
+#include <Engine/Common/ArrayProxy.h>
+#include <Engine/Common/IDescriptorSetLayout.h>
 
 namespace rh::engine
 {
+
 class IRenderPass;
 class IShader;
+
 struct PipelineLayoutCreateParams
 {
-    ArrayProxy<IDescriptorSetLayout*> mSetLayouts;
+    ArrayProxy<IDescriptorSetLayout *> mSetLayouts;
 };
+
 class IPipelineLayout
 {
   public:
@@ -19,4 +20,5 @@ class IPipelineLayout
     IPipelineLayout()                          = default;
     IPipelineLayout( const IPipelineLayout & ) = delete;
 };
+
 } // namespace rh::engine

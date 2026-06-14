@@ -1,6 +1,9 @@
 #pragma once
 #include <cstdint>
-namespace rh::engine {
+
+namespace rh::engine
+{
+
 struct StructuredBufferInfo
 {
     size_t elementCount;

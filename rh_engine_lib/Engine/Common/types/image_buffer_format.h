@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
+
 namespace rh::engine
 {
+
 enum class ImageBufferFormat : uint8_t
 {
     Unknown,
@@ -35,4 +37,5 @@ enum class ImageBufferFormat : uint8_t
     R8Uint,
     D24S8,
 };
+
 }

@@ -221,7 +221,7 @@ rh::engine::IPipeline *Im3DRenderer::GetCachedPipeline( uint64_t hash )
                                                 ? ps_stage_desc
                                                 : ps_stage_notex_desc },
           .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-          .mTopology             = Topology::TriangleList, // TODO: Allow more
+          .mTopology             = PrimitiveType::TriangleList, // TODO: Allow more
           .mBlendState           = blend_state,
           .mDepthStencilState    = depth_state } );
 

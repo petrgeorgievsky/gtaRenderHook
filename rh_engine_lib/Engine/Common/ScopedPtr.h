@@ -25,7 +25,7 @@ template <typename T> class ScopedPointer
     }
 
     T *operator->() const noexcept { return mPtr; }
-       operator T *() { return mPtr; }
+    operator T *() { return mPtr; }
 
   private:
     T *mPtr = nullptr;

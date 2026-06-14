@@ -165,7 +165,7 @@ void Im2DRenderer::CreatePipeline( const Im2DRendererInitParams &params )
         .mLayout               = m2DPipelineLayout,
         .mShaderStages         = { vs_stage_desc, ps_stage_desc },
         .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-        .mTopology             = Topology::TriangleList };
+        .mTopology             = PrimitiveType::TriangleList };
 
     m2DPipeline = mDeviceState->CreateRasterPipeline( pipe_create_params );
 }

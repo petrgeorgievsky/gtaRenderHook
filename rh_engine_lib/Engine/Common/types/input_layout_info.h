@@ -1,9 +1,12 @@
 #pragma once
 #include <string>
 #include <vector>
+
 namespace rh::engine
 {
+
 enum class InputElementType : uint32_t;
+
 /*
     Vertex shader input data layout info, used for InputLayouts allocation
 */
@@ -19,6 +22,7 @@ struct InputElementInfo
 struct InputLayoutInfo
 {
     std::vector<InputElementInfo> inputElements;
-    void *                        shaderPtr = nullptr;
+    void                         *shaderPtr = nullptr;
 };
+
 } // namespace rh::engine

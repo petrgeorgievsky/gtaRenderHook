@@ -1,16 +1,18 @@
 #pragma once
-#include "ArrayProxy.h"
-#include "types/input_element_type.h"
-#include "types/shader_stage.h"
-#include "types/vertex_bind_rate.h"
+#include <Engine/Common/ArrayProxy.h>
 #include <Engine/Common/types/blend_state.h>
 #include <Engine/Common/types/depth_stencil_state.h>
-#include <Engine/Common/types/topology_type.h>
+#include <Engine/Common/types/input_element_type.h>
+#include <Engine/Common/types/primitive_type.h>
+#include <Engine/Common/types/shader_stage.h>
+#include <Engine/Common/types/vertex_bind_rate.h>
+
 #include <string>
 #include <vector>
 
 namespace rh::engine
 {
+
 class IRenderPass;
 class IPipelineLayout;
 class IShader;
@@ -18,7 +20,7 @@ class IShader;
 struct ShaderStageDesc
 {
     ShaderStage mStage;
-    IShader *   mShader;
+    IShader    *mShader;
     std::string mEntryPoint;
 };
 
@@ -47,17 +49,19 @@ struct VertexInputStateDesc
 
 struct RasterPipelineCreateParams
 {
-    IRenderPass *                mRenderPass;
-    IPipelineLayout *            mLayout;
+    IRenderPass                 *mRenderPass;
+    IPipelineLayout             *mLayout;
     std::vector<ShaderStageDesc> mShaderStages;
     VertexInputStateDesc         mVertexInputStateDesc;
-    Topology                     mTopology;
+    PrimitiveType                mTopology;
     BlendState                   mBlendState;
     DepthStencilState            mDepthStencilState;
 };
+
 class IPipeline
 {
   public:
     virtual ~IPipeline() = default;
 };
+
 } // namespace rh::engine

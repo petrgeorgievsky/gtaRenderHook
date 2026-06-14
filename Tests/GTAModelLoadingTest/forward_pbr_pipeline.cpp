@@ -151,7 +151,7 @@ void ForwardPBRPipeline::Init( rh::engine::IRenderPass *render_pass )
         .mLayout               = mPipeLayout,
         .mShaderStages         = { vs_stage_desc, ps_stage_desc },
         .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-        .mTopology             = Topology::TriangleList };
+        .mTopology             = PrimitiveType::TriangleList };
 
     mPipelineImpl = device.CreateRasterPipeline( pipe_create_params );
     mInitialized  = true;

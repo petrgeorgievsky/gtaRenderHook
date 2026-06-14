@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
+
 namespace rh::engine {
+
 enum class ComparisonFunc : uint8_t {
     Unknown = 0,
     Never,
@@ -12,4 +14,5 @@ enum class ComparisonFunc : uint8_t {
     GreaterEqual,
     Always
 };
+
 }

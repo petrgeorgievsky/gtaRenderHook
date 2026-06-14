@@ -6,6 +6,7 @@
 
 namespace rh::engine
 {
+
 /*
     Non-owning immutable proxy to an array on stack or heap, used to transfer
    data from higher levels of abstraction.
@@ -100,4 +101,5 @@ template <typename T> class ArrayProxy
     iterator begin() const { return iterator( mData ); }
     iterator end() const { return iterator( mData, mSize ); }
 };
+
 } // namespace rh::engine

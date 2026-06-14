@@ -1,9 +1,12 @@
 #pragma once
+#include <cstdint>
+
 namespace rh::engine {
+
 /*
     This enum contains all possible image buffer to pipeline bindings
 */
-enum class ImageBindType : unsigned char {
+enum class ImageBindType : uint8_t {
     Unknown,
     RenderTarget,
     DepthStencilTarget,
@@ -15,4 +18,5 @@ enum class ImageBindType : unsigned char {
     DSResource,
     HSResource
 };
+
 } // namespace rh::engine

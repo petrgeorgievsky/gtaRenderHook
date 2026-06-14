@@ -37,12 +37,12 @@ struct SwapchainRequestResult
 class IWindow
 {
   public:
-    virtual ~IWindow()         = default;
-    IWindow()                  = default;
-    IWindow( const IWindow & ) = delete;
+    virtual ~IWindow()                    = default;
+    IWindow()                             = default;
+    IWindow( const IWindow & )            = delete;
     IWindow &operator=( const IWindow & ) = delete;
     IWindow( IWindow && )                 = delete;
-    IWindow &operator=( IWindow && ) = delete;
+    IWindow &operator=( IWindow && )      = delete;
 
     virtual bool SetWindowParams( const WindowParams &params ) = 0;
 
@@ -50,4 +50,5 @@ class IWindow
 
     virtual SwapchainRequestResult GetSwapchain() = 0;
 };
+
 } // namespace rh::engine

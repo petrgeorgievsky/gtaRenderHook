@@ -1,8 +1,9 @@
 #pragma once
-#include <Engine\Common\types\sampler.h>
+#include <Engine/Common/types/sampler.h>
 
 namespace rh::engine
 {
+
 struct SamplerDesc
 {
     // Params

@@ -171,22 +171,22 @@ Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
           { 0, 1, InputElementType::Vec4fp8, 16, "COLOR" },
           { 0, 2, InputElementType::Vec2fp32, 20, "TEXCOORD" } } };
 
-    BlendState default_blend_state = {
-        { { .srcBlend            = BlendOp::SrcAlpha,
-            .destBlend           = BlendOp::InvSrcAlpha,
-            .blendCombineOp      = BlendCombineOp::Add,
-            .srcBlendAlpha       = BlendOp::Zero,
-            .destBlendAlpha      = BlendOp::Zero,
-            .blendAlphaCombineOp = BlendCombineOp::Add,
-            .enableBlending      = true } },
-        { 1.0f, 1.0f, 1.0f, 1.0f } };
+    BlendState default_blend_state = { {}, { 1.0f, 1.0f, 1.0f, 1.0f } };
+    default_blend_state.renderTargetBlendState[0] = {
+        .srcBlend            = BlendOp::SrcAlpha,
+        .destBlend           = BlendOp::InvSrcAlpha,
+        .blendCombineOp      = BlendCombineOp::Add,
+        .srcBlendAlpha       = BlendOp::Zero,
+        .destBlendAlpha      = BlendOp::Zero,
+        .blendAlphaCombineOp = BlendCombineOp::Add,
+        .enableBlending      = true };
 
     mPipelineNoTex = Device.CreateRasterPipeline(
         { .mRenderPass           = render_pass,
           .mLayout               = mNoTexLayout,
           .mShaderStages         = { vs_stage_desc, ps_stage_notex_desc },
           .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-          .mTopology             = Topology::TriangleList,
+          .mTopology             = PrimitiveType::TriangleList,
           .mBlendState           = default_blend_state } );
 
     mPipelineTex = Device.CreateRasterPipeline(
@@ -194,18 +194,18 @@ Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
           .mLayout               = mTexLayout,
           .mShaderStages         = { vs_stage_desc, ps_stage_desc },
           .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-          .mTopology             = Topology::TriangleList,
+          .mTopology             = PrimitiveType::TriangleList,
           .mBlendState           = default_blend_state } );
 
-    BlendState depth_mask_blend_state = {
-        { { .srcBlend            = BlendOp::One,
-            .destBlend           = BlendOp::Zero,
-            .blendCombineOp      = BlendCombineOp::Add,
-            .srcBlendAlpha       = BlendOp::One,
-            .destBlendAlpha      = BlendOp::Zero,
-            .blendAlphaCombineOp = BlendCombineOp::Add,
-            .enableBlending      = true } },
-        { 1.0f, 1.0f, 1.0f, 1.0f } };
+    BlendState depth_mask_blend_state = { {}, { 1.0f, 1.0f, 1.0f, 1.0f } };
+    depth_mask_blend_state.renderTargetBlendState[0] = {
+        .srcBlend            = BlendOp::One,
+        .destBlend           = BlendOp::Zero,
+        .blendCombineOp      = BlendCombineOp::Add,
+        .srcBlendAlpha       = BlendOp::One,
+        .destBlendAlpha      = BlendOp::Zero,
+        .blendAlphaCombineOp = BlendCombineOp::Add,
+        .enableBlending      = true };
     DepthStencilState depth_state{};
     depth_state.enableDepthBuffer   = true;
     depth_state.enableDepthWrite    = true;
@@ -215,7 +215,7 @@ Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
                        .mLayout               = mTexLayout,
                        .mShaderStages         = { vs_stage_desc, ps_stage_depthmask_desc },
                        .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-                       .mTopology             = Topology::TriangleList,
+                       .mTopology             = PrimitiveType::TriangleList,
                        .mBlendState           = default_blend_state,
                        .mDepthStencilState    = depth_state } );
 
@@ -340,13 +340,15 @@ uint64_t Im2DRenderer::Render( const Im2DRenderState      &state,
         if ( draw_call.RasterId != BackendRasterPlugin::NullRasterId )
         {
             PackedSamplerState sampler_state{};
-            sampler_state.s_val.addressingU = draw_call.BlendState.TextureAddressU;
-            sampler_state.s_val.addressingV = draw_call.BlendState.TextureAddressV;
+            sampler_state.s_val.addressingU =
+                draw_call.BlendState.TextureAddressU;
+            sampler_state.s_val.addressingV =
+                draw_call.BlendState.TextureAddressV;
             cmd_buffer->BindDescriptorSets(
                 { .mPipelineLayout       = mTexLayout,
                   .mDescriptorSetsOffset = 2,
-                  .mDescriptorSets       = {
-                      GetRasterDescSet( draw_call.RasterId, sampler_state.i_val ) } } );
+                  .mDescriptorSets       = { GetRasterDescSet(
+                      draw_call.RasterId, sampler_state.i_val ) } } );
         }
 
         cmd_buffer->BindPipeline( GetCachedPipeline( s.i_val ) );
@@ -479,8 +481,9 @@ void Im2DRenderer::DrawQuad( uint64_t                    texture_id,
     sampler_state.s_val.addressingV = 1;
     cmd_buffer->BindDescriptorSets(
         { .mPipelineLayout = mTexLayout,
-          .mDescriptorSets = { mBaseDescSet, mCamDesc->GetDescSet(),
-                               GetRasterDescSet( texture_id, sampler_state.i_val ) } } );
+          .mDescriptorSets = {
+              mBaseDescSet, mCamDesc->GetDescSet(),
+              GetRasterDescSet( texture_id, sampler_state.i_val ) } } );
 
     cmd_buffer->BindVertexBuffers(
         0, { { mVertexBuffer, 0, sizeof( RwIm2DVertex ) } } );
@@ -553,7 +556,7 @@ rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
                                                 ? ps_stage_desc
                                                 : ps_stage_notex_desc },
           .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-          .mTopology             = Topology::TriangleList,
+          .mTopology             = PrimitiveType::TriangleList,
           .mBlendState           = blend_state,
           .mDepthStencilState    = depth_state } );
 

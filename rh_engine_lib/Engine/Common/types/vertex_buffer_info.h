@@ -1,13 +1,17 @@
 #pragma once
-namespace rh::engine {
+
+namespace rh::engine
+{
+
 /*
     Vertex buffer info used for GPU memory allocation
 */
 struct VertexBufferInfo
 {
-    bool isDynamic;
+    bool         isDynamic;
     unsigned int vertexSize;
     unsigned int vertexCount;
-    void *initialData;
+    void        *initialData;
 };
+
 } // namespace rh::engine

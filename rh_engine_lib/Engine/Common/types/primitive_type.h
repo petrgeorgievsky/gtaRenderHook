@@ -1,11 +1,14 @@
 #pragma once
 #include <cstdint>
-namespace rh::engine {
+
+namespace rh::engine
+{
 
 /*
     This enum contains all possible primitive types
 */
-enum class PrimitiveType : uint8_t {
+enum class PrimitiveType : uint8_t
+{
     Unknown = 0,
     LineList,
     LineStrip,
@@ -14,4 +17,5 @@ enum class PrimitiveType : uint8_t {
     TriangleFan,
     PointList
 };
+
 } // namespace rh::engine
