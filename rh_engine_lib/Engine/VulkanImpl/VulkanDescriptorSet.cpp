@@ -1,4 +1,7 @@
 #include "VulkanDescriptorSet.h"
+
+#include "VulkanCommon.h"
+
 #include <DebugUtils/DebugLogger.h>
 namespace rh::engine
 {
@@ -11,7 +14,8 @@ VulkanDescriptorSet::VulkanDescriptorSet(
 
 VulkanDescriptorSet::~VulkanDescriptorSet()
 {
-    mDevice.freeDescriptorSets( mPool, { mDescSet } );
+    CALL_VK_API( mDevice.freeDescriptorSets( mPool, { mDescSet } ),
+                 TEXT( "Failed to free descriptor sets!" ) );
 }
 
 DescriptorType VulkanDescriptorSet::GetType( uint32_t /*binding_id*/ )

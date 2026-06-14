@@ -55,7 +55,7 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
     build_geom_info.type          = AccelerationStructureTypeKHR::eBottomLevel;
     build_geom_info.mode          = BuildAccelerationStructureModeKHR::eBuild;
     build_geom_info.pGeometries   = mGeometry.data();
-    build_geom_info.geometryCount = mGeometry.size();
+    build_geom_info.geometryCount = static_cast<uint32_t>(mGeometry.size());
 
     auto build_sizes = mDevice.getAccelerationStructureBuildSizesKHR(
         AccelerationStructureBuildTypeKHR::eHostOrDevice, build_geom_info,

@@ -37,7 +37,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 #set_property(TARGET ${PROJECT_NAME} PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST} rh_engine_lib)
+target_link_libraries(${PROJECT_NAME} rh_engine_lib)
 
 
 install_rw_library()

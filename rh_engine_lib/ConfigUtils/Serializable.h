@@ -2,8 +2,6 @@
 // Created by peter on 27.11.2020.
 //
 #pragma once
-#include <Engine/FastPimpl.h>
-#include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
@@ -13,7 +11,7 @@ namespace rh::engine
 class Serializable
 {
   public:
-    Serializable( nlohmann::json &impl );
+    explicit Serializable( nlohmann::json &impl );
     ~Serializable();
 
     template <typename T> T    Get( const std::string &name );

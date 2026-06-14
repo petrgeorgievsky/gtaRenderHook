@@ -23,12 +23,12 @@ void DumpToBMP( const std::string &name, char *data, std::size_t width,
                                             sizeof( BITMAPINFOHEADER ) };
     BITMAPINFOHEADER info_header{ .biSize = sizeof( BITMAPINFOHEADER ) };
 
-    info_header.biWidth       = width;
-    info_header.biHeight      = height;
+    info_header.biWidth       = static_cast<LONG>( width );
+    info_header.biHeight      = static_cast<LONG>( height );
     info_header.biPlanes      = 1;
     info_header.biBitCount    = 32;
     info_header.biCompression = BI_RGB;
-    info_header.biSizeImage   = width * height * 4;
+    info_header.biSizeImage   = static_cast<DWORD>( width * height * 4 );
 
     res.write( reinterpret_cast<const char *>( &f_header ),
                sizeof( BITMAPFILEHEADER ) );

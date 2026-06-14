@@ -47,8 +47,7 @@ if (USE_VULKAN_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)
 endif ()
 
-target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
-        rh_engine_lib)
+target_link_libraries(${PROJECT_NAME} rh_engine_lib)
 
 install_rw_library()
 

@@ -91,7 +91,7 @@ LONG WINAPI Win32UncaughtExceptionFilter( _EXCEPTION_POINTERS *ExceptionInfo )
             GetModuleInformation( GetCurrentProcess(), hm, &mi, sizeof( mi ) );
             static std::array<char, MAX_PATH> fn{};
             GetModuleFileNameExA( GetCurrentProcess(), hm, fn.data(),
-                                  fn.size() );
+                                  static_cast<DWORD>( fn.size() ) );
             rh::debug::DebugLogger::ErrorFmt( "ModulePath:%s;ModuleBase:0x%X",
                                               fn.data(), mi.lpBaseOfDll );
         }

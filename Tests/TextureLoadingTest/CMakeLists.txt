@@ -8,7 +8,7 @@ set(SOURCES
         )
 
 add_executable(TextureLoadingTest WIN32 ${SOURCES})
-target_link_libraries(TextureLoadingTest ${DEPENDENCY_LIB_LIST} rh_engine_lib rw_rh_engine_lib)
+target_link_libraries(TextureLoadingTest rh_engine_lib rw_rh_engine_lib)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD 20

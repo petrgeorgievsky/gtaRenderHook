@@ -8,7 +8,6 @@ namespace rh::engine
 
 VulkanGPUInfo::VulkanGPUInfo( vk::PhysicalDevice gpu )
 {
-
     // fill rt properties
 
     VkPhysicalDeviceRayTracingPipelinePropertiesKHR rt_props{
@@ -23,8 +22,8 @@ VulkanGPUInfo::VulkanGPUInfo( vk::PhysicalDevice gpu )
     mRTInfo.mShaderGroupHandleAlign = rt_props.shaderGroupBaseAlignment;
     mRTInfo.mMaxRecursionDepth      = rt_props.maxRayRecursionDepth;
 
-    LimitsInfo.BufferOffsetMinAlign =
-        props.properties.limits.minUniformBufferOffsetAlignment;
+    LimitsInfo.BufferOffsetMinAlign = static_cast<uint32_t>(
+        props.properties.limits.minUniformBufferOffsetAlignment );
 }
 
 const VulkanRayTracingInfo &VulkanGPUInfo::GetRayTracingInfo() const

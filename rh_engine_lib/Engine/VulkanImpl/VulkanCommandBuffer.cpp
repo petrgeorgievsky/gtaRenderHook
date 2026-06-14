@@ -305,8 +305,9 @@ void VulkanCommandBuffer::BuildBLAS(
             vk::BuildAccelerationStructureModeKHR::eBuild;
         build_geometry_info_khr.type =
             vk::AccelerationStructureTypeKHR::eBottomLevel;
-        build_geometry_info_khr.geometryCount = geom.size();
-        build_geometry_info_khr.pGeometries   = geom.data();
+        build_geometry_info_khr.geometryCount =
+            static_cast<uint32_t>( geom.size() );
+        build_geometry_info_khr.pGeometries = geom.data();
 
         vk::BufferDeviceAddressInfo address_info{};
         address_info.buffer = *dynamic_cast<VulkanBuffer *>( b_i.TempBuffer );
@@ -337,15 +338,16 @@ void VulkanCommandBuffer::BuildTLAS( VulkanTopLevelAccelerationStructure *tlas,
     tlas_geom.geometryType = vk::GeometryTypeKHR::eInstances;
     tlas_geom.geometry.instances.sType =
         vk::StructureType::eAccelerationStructureGeometryInstancesDataKHR;
-    tlas_geom.geometry.instances.data =
-        mDevice.getBufferAddress( { *vk_instance_buffer } );
+    tlas_geom.geometry.instances.data = mDevice.getBufferAddress(
+        { static_cast<vk::Buffer>( *vk_instance_buffer ) } );
 
     build_info.mode          = vk::BuildAccelerationStructureModeKHR::eBuild;
     build_info.type          = vk::AccelerationStructureTypeKHR::eTopLevel;
     build_info.geometryCount = 1;
     build_info.pGeometries   = &tlas_geom;
     build_info.dstAccelerationStructure = tlas->GetImpl();
-    build_info.scratchData = mDevice.getBufferAddress( { *vk_scratch_buffer } );
+    build_info.scratchData              = mDevice.getBufferAddress(
+        { static_cast<vk::Buffer>( *vk_scratch_buffer ) } );
 
     m_vkCmdBuffer.buildAccelerationStructuresKHR( { build_info },
                                                   { &build_range_info } );
@@ -365,16 +367,16 @@ void VulkanCommandBuffer::DispatchRays( const VulkanRayDispatch &dispatch )
     if ( dispatch.mRayGenBuffer )
     {
         ray_gen_region.deviceAddress =
-            mDevice.getBufferAddress(
-                { *dynamic_cast<VulkanBuffer *>( dispatch.mRayGenBuffer ) } ) +
+            mDevice.getBufferAddress( { static_cast<vk::Buffer>(
+                *dynamic_cast<VulkanBuffer *>( dispatch.mRayGenBuffer ) ) } ) +
             dispatch.mRayGenOffset;
         ray_gen_region.size = ray_gen_region.stride = dispatch.mRayGenSize;
     }
     if ( dispatch.mMissBuffer )
     {
         miss_region.deviceAddress =
-            mDevice.getBufferAddress(
-                { *dynamic_cast<VulkanBuffer *>( dispatch.mMissBuffer ) } ) +
+            mDevice.getBufferAddress( { static_cast<vk::Buffer>(
+                *dynamic_cast<VulkanBuffer *>( dispatch.mMissBuffer ) ) } ) +
             dispatch.mMissOffset;
         miss_region.stride = dispatch.mMissStride;
         miss_region.size   = dispatch.mMissSize;
@@ -382,8 +384,8 @@ void VulkanCommandBuffer::DispatchRays( const VulkanRayDispatch &dispatch )
     if ( dispatch.mHitBuffer )
     {
         hit_region.deviceAddress =
-            mDevice.getBufferAddress(
-                { *dynamic_cast<VulkanBuffer *>( dispatch.mHitBuffer ) } ) +
+            mDevice.getBufferAddress( { static_cast<vk::Buffer>(
+                *dynamic_cast<VulkanBuffer *>( dispatch.mHitBuffer ) ) } ) +
             dispatch.mHitOffset;
         hit_region.stride = dispatch.mHitStride;
         hit_region.size   = dispatch.mHitSize;
@@ -391,8 +393,9 @@ void VulkanCommandBuffer::DispatchRays( const VulkanRayDispatch &dispatch )
     if ( dispatch.mCallableBuffer )
     {
         callable_region.deviceAddress =
-            mDevice.getBufferAddress( { *dynamic_cast<VulkanBuffer *>(
-                dispatch.mCallableBuffer ) } ) +
+            mDevice.getBufferAddress(
+                { static_cast<vk::Buffer>( *dynamic_cast<VulkanBuffer *>(
+                    dispatch.mCallableBuffer ) ) } ) +
             dispatch.mCallableOffset;
         callable_region.stride = dispatch.mCallableStride;
         callable_region.size   = dispatch.mCallableSize;

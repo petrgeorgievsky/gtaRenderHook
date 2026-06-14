@@ -30,12 +30,12 @@ template <typename T> class ResourcePool
     ResourcePool( uint64_t size, Callback destruct )
     {
         mDestructCallbacks.emplace_back( 0, destruct );
-        mResourcePool.resize( size );
-        mResourcePoolData.resize( size );
+        mResourcePool.resize( static_cast<size_t>( size ) );
+        mResourcePoolData.resize( static_cast<size_t>( size ) );
     }
     ~ResourcePool() { CleanResources(); }
 
-    T &GetResource( uint64_t idx ) { return mResourcePoolData[idx]; }
+    T &GetResource( uint64_t idx ) { return mResourcePoolData[ static_cast<size_t>( idx ) ]; }
 
     const T &GetResource( uint64_t idx ) const
     {
@@ -44,7 +44,7 @@ template <typename T> class ResourcePool
 
     uint64_t RequestResource( T resource, bool very_important = false )
     {
-        if ( mFreeResourceIdx <= mResourcePool.size() )
+        if ( mFreeResourceIdx <= static_cast<int64_t>( mResourcePool.size() ) )
         {
             // search for first unused resource
             auto res = FindFreeResourceIdx();
@@ -60,13 +60,13 @@ template <typename T> class ResourcePool
                 mResourcePool.push_back( {} );
                 mResourcePoolData.push_back( {} );
             }
-            mResourcePoolData[res.first] = std::move( resource );
-            mResourcePool[res.first] =
+            mResourcePoolData[ static_cast<size_t>( res.first ) ] = std::move( resource );
+            mResourcePool[ static_cast<size_t>( res.first ) ] =
                 very_important ? ResourceFlags::Immortal : ResourceFlags::Used;
             if ( !mRequestCallbacks.empty() )
             {
                 for ( auto [id, cb] : mRequestCallbacks )
-                    cb( mResourcePoolData[res.first], res.first );
+                    cb( mResourcePoolData[ static_cast<size_t>( res.first ) ], res.first );
             }
             mFreeResourceIdx = res.first + 1;
             // good path
@@ -79,7 +79,7 @@ template <typename T> class ResourcePool
             mResourcePoolData.push_back( std::move( resource ) );
             if ( !mRequestCallbacks.empty() )
             {
-                auto idx = mResourcePoolData.size() - 1;
+                size_t idx = mResourcePoolData.size() - 1;
                 for ( auto [id, cb] : mRequestCallbacks )
                     cb( mResourcePoolData[idx], idx );
             }
@@ -94,7 +94,7 @@ template <typename T> class ResourcePool
         while ( idx < mResourcePool.size() )
         {
             found_free_resource =
-                ( mResourcePool[idx] == ResourceFlags::Unused );
+                ( mResourcePool[ static_cast<size_t>( idx ) ] == ResourceFlags::Unused );
             if ( found_free_resource )
                 break;
             ++idx;
@@ -104,7 +104,7 @@ template <typename T> class ResourcePool
 
     void FreeResource( uint64_t idx )
     {
-        mResourcePool[idx] = ResourceFlags::FreeAtNextGC;
+        mResourcePool[static_cast<size_t>( idx )] = ResourceFlags::FreeAtNextGC;
         // mFreeResourceIdx   = idx;
         mGarbageCount++;
     }
@@ -149,11 +149,11 @@ template <typename T> class ResourcePool
 
         for ( uint64_t idx = 0; idx < mResourcePoolData.size(); idx++ )
         {
-            auto &flags = mResourcePool[idx];
+            auto &flags = mResourcePool[static_cast<size_t>( idx )];
             if ( flags != ResourceFlags::FreeAtNextGC )
                 continue;
 
-            auto &resource = mResourcePoolData[idx];
+            auto &resource = mResourcePoolData[static_cast<size_t>( idx )];
             if ( free_idx == -1 )
                 free_idx = idx;
 
@@ -176,7 +176,7 @@ template <typename T> class ResourcePool
             mFreeResourceIdx = free_idx;
     }
 
-    T *      GetStorage() { return mResourcePoolData.data(); }
+    T       *GetStorage() { return mResourcePoolData.data(); }
     uint64_t GetSize() { return mResourcePoolData.size(); }
 
     void AddOnRequestCallback( Callback &&cb, uint64_t id )

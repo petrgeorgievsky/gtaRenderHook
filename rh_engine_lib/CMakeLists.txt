@@ -54,23 +54,8 @@ set(D3D11_SOURCES
         Engine/D3D11Impl/D3D11Pipeline.cpp
         )
 
-# android support for future
-if (ANDROID)
-    set(SOURCES ${SOURCES} ${VULKAN_SOURCES})
-else ()
-    set(SOURCES ${SOURCES}
-            ${D3D11_SOURCES}
-            Engine/Common/IStateCacheObject.cpp
-            Engine/Win32NativeWindow.cpp
-            TestUtils/WindowsSampleWrapper.cpp
-            )
-    if (USE_VULKAN_API)
-        set(SOURCES ${SOURCES} ${VULKAN_SOURCES}
-                #[[ImGUI/imgui_impl_vulkan.cpp]])
-    endif ()
-endif ()
 
-set(SOURCES ${SOURCES}
+add_library(${PROJECT_NAME} STATIC
         Engine/EngineConfigBlock.cpp
         TestUtils/TestSample.cpp
         TestUtils/BitmapLoader.cpp
@@ -80,7 +65,17 @@ set(SOURCES ${SOURCES}
         ConfigUtils/ConfigurationManager.cpp
         ConfigUtils/Serializable.cpp)
 
-add_library(${PROJECT_NAME} STATIC ${SOURCES})
+if (NOT ANDROID)
+    target_sources(${PROJECT_NAME} PRIVATE ${D3D11_SOURCES}
+            Engine/Common/IStateCacheObject.cpp
+            Engine/Win32NativeWindow.cpp
+            TestUtils/WindowsSampleWrapper.cpp
+    )
+endif ()
+
+if (USE_VULKAN_API)
+    target_sources(${PROJECT_NAME} PRIVATE ${VULKAN_SOURCES})
+endif ()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ./)
 
@@ -89,38 +84,20 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         UNITY_BUILD TRUE
         )
 
-#if (MSVC)
-#    target_compile_options(${PROJECT_NAME} PRIVATE /EHs-c-)
-#else ()
-#    target_compile_options(${PROJECT_NAME} PRIVATE -fno-exceptions)
-#endif ()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DANDROID_BUILD -DVK_USE_PLATFORM_ANDROID_KHR)
-else ()
-    #set_property(TARGET ${PROJECT_NAME} PROPERTY
-    #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif ()
 
 if (USE_VULKAN_API)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API -DVULKAN_HPP_NO_EXCEPTIONS)
 endif ()
 
-
 set(RH_COMPILE_OPTIONS "")
 set(RH_LINK_OPTIONS "")
 
-# unfortunately it seems this doesn't, due to VMA having warnings with x86 arch
-#if (MSVC)
-#    # warning level 4 and all warnings as errors
-#    set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} /W4 /WX)
-#else ()
-#    # lots of warnings and all warnings as errors
-#    set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -Wall -Wextra -pedantic -Werror)
-#endif ()
-
 if (USE_SANITIZERS)
-    set(RH_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -fsanitize=address)
-    set(RH_LINK_OPTIONS ${RH_LINK_OPTIONS} -fsanitize=address)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+    target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 
     if (ARCH_64BIT)
         target_link_libraries(${PROJECT_NAME}
@@ -135,29 +112,26 @@ if (USE_SANITIZERS)
     endif ()
 endif ()
 
-set(RH_DEBUG_COMPILE_OPTIONS ${RH_COMPILE_OPTIONS} -D_DEBUG -ftime-trace)
-set(RH_DEBUG_LINK_OPTIONS ${RH_LINK_OPTIONS})
+target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:-D_DEBUG -ftime-trace>")
 
-set(RH_RELEASE_COMPILE_OPTIONS "${RH_COMPILE_OPTIONS}")
-set(RH_RELEASE_LINK_OPTIONS "${RH_LINK_OPTIONS}")
-
-target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:${RH_DEBUG_COMPILE_OPTIONS}>")
-target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RH_RELEASE_COMPILE_OPTIONS}>")
-target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${RH_RELEASE_COMPILE_OPTIONS}>")
-
-target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:${RH_DEBUG_LINK_OPTIONS}>")
-target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RH_RELEASE_LINK_OPTIONS}>")
-target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELWITHDEBINFO>:${RH_RELEASE_LINK_OPTIONS}>")
-#target_compile_options(${PROJECT_NAME} PRIVATE -fno-omit-frame-pointer -fsanitize=address)
-#target_link_options(${PROJECT_NAME} PRIVATE -fno-omit-frame-pointer -fsanitize=address)
-
-target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
+target_link_libraries(${PROJECT_NAME} PRIVATE
         imgui::imgui
-        ${VMA_CMAKE_TARGET}
         nlohmann_json::nlohmann_json
-        dxgi
-        dbghelp
         )
+
+if (USE_VULKAN_API)
+    target_link_libraries(${PROJECT_NAME} PUBLIC
+            Vulkan::Vulkan
+            ${VMA_CMAKE_TARGET}
+    )
+endif ()
+
+if (NOT ANDROID)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            dxgi
+            dbghelp
+    )
+endif ()
 
 if (NOT (CLANG_ANALYSER_PATH STREQUAL ""))
     add_custom_command(TARGET ${PROJECT_NAME}

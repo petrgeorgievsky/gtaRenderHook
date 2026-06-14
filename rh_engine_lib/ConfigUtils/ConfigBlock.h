@@ -11,7 +11,7 @@ class ConfigBlock
 
   public:
     ConfigBlock()                       = default;
-    ~ConfigBlock()                      = default;
+    virtual ~ConfigBlock()                      = default;
     ConfigBlock( const ConfigBlock &c ) = delete;
     virtual std::string Name() { return "Uncategorized"; }
     virtual void        Serialize( Serializable *serializable )   = 0;

@@ -38,8 +38,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         $ENV{VULKAN_SDK}\\Bin\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)
 
-target_link_libraries(${PROJECT_NAME} ${DEPENDENCY_LIB_LIST}
-        rh_engine_lib)
+target_link_libraries(${PROJECT_NAME} rh_engine_lib)
 
 install_rw_library()
 

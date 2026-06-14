@@ -21,8 +21,8 @@
 #include "VulkanWin32Window.h"
 
 #include <Engine/Common/ScopedPtr.h>
-#include <Engine/Definitions.h>
 #include <Engine/D3D11Impl/D3D11Common.h>
+#include <Engine/Definitions.h>
 
 #include <memory_resource>
 #include <numeric>
@@ -833,8 +833,8 @@ VulkanDeviceState::CreateImageBuffer( const ImageBufferCreateParams &params )
     for ( uint32_t offset = 0, i = 0; i < params.mMipLevels; i++ )
     {
         const auto &pre_init_data = params.mPreinitData[i];
-        auto        mip_w         = ( std::max )( params.mWidth >> i, 1u );
-        auto        mip_h         = ( std::max )( params.mHeight >> i, 1u );
+        auto        mip_w         = (std::max)( params.mWidth >> i, 1u );
+        auto        mip_h         = (std::max)( params.mHeight >> i, 1u );
 
         // Ignore zero sized mipmaps, can happen on some textures due to some
         // error in mip-map generation software
@@ -926,7 +926,7 @@ void VulkanDeviceState::Wait(
                        "Wait for fences failed!" ) )
         return;
 
-    m_vkDevice.resetFences( fence_list );
+    CALL_VK_API( m_vkDevice.resetFences( fence_list ), "Reset fences failed!" );
 }
 
 VulkanBottomLevelAccelerationStructure *VulkanDeviceState::CreateBLAS(
@@ -954,9 +954,10 @@ void VulkanDeviceState::UpdateDescriptorSets(
     write_desc_set.dstSet = *dynamic_cast<VulkanDescriptorSet *>( params.mSet );
     write_desc_set.dstBinding      = params.mBinding;
     write_desc_set.descriptorType  = Convert( params.mDescriptorType );
-    write_desc_set.descriptorCount = static_cast<uint32_t>( ( std::max )(
-        { params.mBufferUpdateInfo.Size(), params.mASUpdateInfo.Size(),
-          params.mImageUpdateInfo.Size() } ) );
+    write_desc_set.descriptorCount = static_cast<uint32_t>(
+        (std::max)( { params.mBufferUpdateInfo.Size(),
+                      params.mASUpdateInfo.Size(),
+                      params.mImageUpdateInfo.Size() } ) );
 
     std::vector<vk::DescriptorBufferInfo> buffer_list;
     std::ranges::transform(
@@ -1071,7 +1072,8 @@ void VulkanDeviceState::DispatchToGPU(
                 std::ranges::transform(
                     submitInfo.mWaitForDep,
                     std::back_inserter( q_sm_waitable_vec.back() ),
-                    []( ISyncPrimitive *s ) {
+                    []( ISyncPrimitive *s )
+                    {
                         return dynamic_cast<VulkanGPUSyncPrimitive *>( s )
                             ->GetImpl();
                     } );

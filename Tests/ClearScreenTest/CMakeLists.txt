@@ -10,7 +10,7 @@ set(SOURCES
 include(../../rw_rh_engine_lib/install_rw_library.cmake)
 
 add_executable(ClearScreenTest WIN32 ${SOURCES})
-target_link_libraries(ClearScreenTest ${DEPENDENCY_LIB_LIST} rh_engine_lib)
+target_link_libraries(ClearScreenTest rh_engine_lib)
 install_rw_library()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
