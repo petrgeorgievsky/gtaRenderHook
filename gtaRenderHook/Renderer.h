@@ -125,6 +125,10 @@ public:
     */
     static void RenderOneNonRoad( CEntity* );
     /*!
+        Re-reads the visible entity/lod list addresses from the game (limit adjusters may have moved them)
+    */
+    static void UpdateVisibleListPointers();
+    /*!
         Checks if entity is culled by tunnel
     */
     static bool IsCulledByTunnel( CEntity* );

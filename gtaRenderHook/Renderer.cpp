@@ -65,8 +65,19 @@ std::vector<CEntity*> CRendererRH::ms_aVisibleReflectionObjects{};
 #define CVehicle__ResetAfterRender(veh) ((void(__thiscall *)(void*))0x6D0E20)(veh)
 //56E0D0     ; CVehicle *__cdecl FindPlayerVehicle(int playerNum, char includeRemote)
 //#define FindPlayerVehicle(playerNum, includeRemote) ((CVehicle* (__cdecl *)(int, bool))0x56E0D0)(playerNum,includeRemote)
+
+// Limit adjusters (e.g. "VisibleEntityPtrs = unlimited") move the visible entity/lod lists to a bigger buffer once
+// they pass 1000 entries and patch the list address used by CRenderer::AddEntityToRenderList, so read it from there
+// instead of assuming the original arrays.
+void CRendererRH::UpdateVisibleListPointers()
+{
+    ms_aVisibleEntityPtrs = *reinterpret_cast<CEntity***>( 0x553529 ); // mov [eax*4+ms_aVisibleEntityPtrs], esi
+    ms_aVisibleLodPtrs = *reinterpret_cast<CEntity***>( 0x5534F5 );    // mov [eax*4+ms_aVisibleLodPtrs], esi
+}
+
 void CRendererRH::RenderRoads()
 {
+    UpdateVisibleListPointers();
     // Set road render-states.
     //g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEFOGENABLE, 1);
     //g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, 1);
@@ -88,7 +99,8 @@ void CRendererRH::RenderRoads()
         auto entity = ms_aVisibleEntityPtrs[i];
         //auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
         //if (st != 3)
-        RenderOneNonRoad( ms_aVisibleEntityPtrs[i] );
+        if ( entity )
+            RenderOneNonRoad( entity );
     }
     //}
     for ( size_t i = 0; i < ms_nNoOfVisibleLods; ++i )
@@ -96,7 +108,8 @@ void CRendererRH::RenderRoads()
         auto entity = ms_aVisibleLodPtrs[i];
         //auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
         //if (st != 3)
-        RenderOneNonRoad( ms_aVisibleLodPtrs[i] );
+        if ( entity )
+            RenderOneNonRoad( entity );
     }
 }
 
@@ -119,6 +132,7 @@ void CRendererRH::RenderEverythingBarRoads()
 
 void CRendererRH::RenderTOBJs()
 {
+    UpdateVisibleListPointers();
     TOBJpass = true;
     for ( size_t i = 0; i < ms_nNoOfVisibleEntities; ++i )
     {
@@ -960,6 +974,7 @@ void CRendererRH::ScanSectorListForShadowCasters( int x, int y )
 
 void CRendererRH::PreRender()
 {
+    UpdateVisibleListPointers();
     //if (ms_nNoOfVisibleEntities == 0) {
     for ( auto entity : ms_aVisibleEntities )
         entity->PreRender();
