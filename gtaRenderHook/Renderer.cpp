@@ -636,12 +636,20 @@ void CRendererRH::RenderOneRoad( CEntity * entity )
 //6D64F0     ; void __thiscall CVehicle::SetupRender(CVehicle *this)
 void CRendererRH::RenderOneNonRoad( CEntity * entity )
 {
-    if ( ( entity->m_nType ) == eEntityType::ENTITY_TYPE_VEHICLE )
+    bool isVehicle = ( entity->m_nType ) == eEntityType::ENTITY_TYPE_VEHICLE;
+    if ( isVehicle )
     {
         CVehicle__SetupRender( entity );
     }
+    // Models with IDE flag 0x200000 (no backface culling) have one-sided faces that must be visible
+    // from both sides, same as CRenderer::RenderOneNonRoad does in the original game.
+    bool disableCulling = !isVehicle && !entity->m_bBackfaceCulled;
+    if ( disableCulling )
+        g_pRwCustomEngine->RenderStateSet( rwRENDERSTATECULLMODE, rwCULLMODECULLNONE );
     entity->Render();
-    if ( ( entity->m_nType ) == eEntityType::ENTITY_TYPE_VEHICLE )
+    if ( disableCulling )
+        g_pRwCustomEngine->RenderStateSet( rwRENDERSTATECULLMODE, rwCULLMODECULLBACK );
+    if ( isVehicle )
     {
         CVehicle__ResetAfterRender( entity );
     }
