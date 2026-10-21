@@ -56,6 +56,7 @@ public:
     static void RenderDetailedSeaBedSegment( int x, int y, float a, float b, float c, float d );
     static void RenderSeaBedSegment( int x, int y, float a, float b, float c, float d );
     static void RenderSeaBed();
+    static void UpdateOutsideWorldBlockPointers();
     static void RenderWaterTriangle( const CWaterVertice & a, const CWaterVertice & b, const CWaterVertice & c );
     static void RenderAndEmptyRenderBuffer();
 

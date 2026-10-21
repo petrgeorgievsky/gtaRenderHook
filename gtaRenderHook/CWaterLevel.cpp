@@ -48,11 +48,22 @@ float CurrentTextureShiftSecondV = 0.5;
 // GTA Water has fixed speed depending on framerate(or perhaps I'm wrong), but R* didn't account for unlocked framerate
 // TODO: Fix this issue
 float WATER_UPDATE_FRAMERATE = 25.0;
+
+// Limit adjusters (e.g. "OutsideWorldWaterBlocks") move the outside-world block lists to bigger arrays and patch the
+// addresses used by CWaterLevel::AddBlockToOutsideWorldList, so read them from there instead of assuming the
+// original arrays.
+void CWaterLevel::UpdateOutsideWorldBlockPointers()
+{
+    m_BlocksToBeRenderedOutsideWorldX = *reinterpret_cast<SHORT**>( 0x6E6CF2 ); // mov [eax*2+m_BlocksToBeRenderedOutsideWorldX], si
+    m_BlocksToBeRenderedOutsideWorldY = *reinterpret_cast<SHORT**>( 0x6E6CFA ); // mov [eax*2+m_BlocksToBeRenderedOutsideWorldY], di
+}
+
 void CWaterLevel::RenderWater()
 {
     if ( !CGame::CanSeeWaterFromCurrArea() )
         return;
     SetCameraRange();
+    UpdateOutsideWorldBlockPointers();
 
     TempBufferIndicesStored = 0;
     TempBufferVerticesStored = 0;
@@ -459,6 +470,7 @@ void CWaterLevel::RenderSeaBedSegment( int x, int y, float xOffset0, float xOffs
 
 void CWaterLevel::RenderSeaBed()
 {
+    UpdateOutsideWorldBlockPointers();
     TempBufferVerticesStored = 0;
     TempBufferIndicesStored = 0;
 
