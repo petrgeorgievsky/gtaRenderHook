@@ -83,7 +83,8 @@ void CTemporalAA::JitterProjMatrix()
     float uniformY[11] = { 0.0f, 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f };
     RwGraphicsMatrix *projTransformRef = (RwGraphicsMatrix*)&RwD3D9D3D9ProjTransform;
 
-    m_nCurrentJitterSample = ( m_nCurrentJitterSample++ ) % gTAASettingsBlock.GetUInt( "SubPixelCount" );
+    // advance first: "x = ( x++ ) % n" assigned the old value back, so the sample never changed (no jitter at all)
+    m_nCurrentJitterSample = ( m_nCurrentJitterSample + 1 ) % gTAASettingsBlock.GetUInt( "SubPixelCount" );
     float SampleX = ( x8aa_X[m_nCurrentJitterSample] ) * rcx;
     float SampleY = ( x8aa_Y[m_nCurrentJitterSample] ) * rcy;
     auto camera = Scene.m_pRwCamera;
