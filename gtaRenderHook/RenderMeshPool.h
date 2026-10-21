@@ -3,10 +3,7 @@
 template <typename T> class CRenderMeshPool
 {
   public:
-    CRenderMeshPool( size_t capacity = 1000 ) : mCapacity( capacity )
-    {
-        mData.resize( mCapacity );
-    }
+    CRenderMeshPool( size_t capacity = 1000 ) { mData.resize( capacity ); }
 
     void ExecuteForEach( std::function<void( const T & )> f )
     {
@@ -15,11 +12,9 @@ template <typename T> class CRenderMeshPool
     }
     void Push( T &&mesh )
     {
-        if ( mSize + 1 > mCapacity )
-        {
-            mCapacity *= 2;
-            mData.resize( mCapacity );
-        }
+        // Grow from the vector's own size, so the bound and the storage can never disagree.
+        if ( mSize >= mData.size() )
+            mData.resize( mData.empty() ? 1000 : mData.size() * 2 );
 
         mData[mSize++] = mesh;
     }
@@ -27,6 +22,5 @@ template <typename T> class CRenderMeshPool
 
   private:
     std::vector<T> mData{};
-    size_t         mCapacity = 1000;
-    size_t         mSize     = 0;
+    size_t         mSize = 0;
 };
