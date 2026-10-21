@@ -77,7 +77,6 @@ void CRendererRH::UpdateVisibleListPointers()
 
 void CRendererRH::RenderRoads()
 {
-    UpdateVisibleListPointers();
     // Set road render-states.
     //g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEFOGENABLE, 1);
     //g_pRwCustomEngine->RenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, 1);
@@ -99,8 +98,7 @@ void CRendererRH::RenderRoads()
         auto entity = ms_aVisibleEntityPtrs[i];
         //auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
         //if (st != 3)
-        if ( entity )
-            RenderOneNonRoad( entity );
+        RenderOneNonRoad( entity );
     }
     //}
     for ( size_t i = 0; i < ms_nNoOfVisibleLods; ++i )
@@ -108,8 +106,7 @@ void CRendererRH::RenderRoads()
         auto entity = ms_aVisibleLodPtrs[i];
         //auto st = CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->GetModelType();
         //if (st != 3)
-        if ( entity )
-            RenderOneNonRoad( entity );
+        RenderOneNonRoad( entity );
     }
 }
 
@@ -132,7 +129,6 @@ void CRendererRH::RenderEverythingBarRoads()
 
 void CRendererRH::RenderTOBJs()
 {
-    UpdateVisibleListPointers();
     TOBJpass = true;
     for ( size_t i = 0; i < ms_nNoOfVisibleEntities; ++i )
     {
@@ -198,6 +194,8 @@ void CRendererRH::ConstructRenderList()
 
     ScanWorld();
     ProcessLodRenderLists();
+    // Every AddEntityToRenderList call happens in ScanWorld/ProcessLodRenderLists, so the lists can only move above.
+    UpdateVisibleListPointers();
 
     CStreaming::StartRenderEntities();
 }
@@ -974,7 +972,6 @@ void CRendererRH::ScanSectorListForShadowCasters( int x, int y )
 
 void CRendererRH::PreRender()
 {
-    UpdateVisibleListPointers();
     //if (ms_nNoOfVisibleEntities == 0) {
     for ( auto entity : ms_aVisibleEntities )
         entity->PreRender();
