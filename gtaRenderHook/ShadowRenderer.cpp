@@ -239,6 +239,24 @@ void CShadowRenderer::CalculateShadowDistances( const RwReal fNear, const RwReal
     m_fShadowDistances[2] = fNear + farDist * gShadowSettings.DistanceCoefficients[1];
     m_fShadowDistances[3] = fNear + farDist * gShadowSettings.DistanceCoefficients[2];
     m_fShadowDistances[4] = farDist;
+
+    // Practical split scheme (Zhang et al., parallel-split shadow maps): blend logarithmic splits, which give every
+    // cascade the same texel density on screen, with uniform ones. Fixed fractions leave the last cascade covering most
+    // of the shadow distance at a much coarser texel size than the one before it.
+    const float lambda = gShadowSettings.GetFloat( "SplitLambda" );
+    if ( lambda > 0.0f )
+    {
+        const int   count     = gShadowSettings.ShadowCascadeCount;
+        const float splitNear = max( fNear, 0.1f );
+        const float splitFar  = max( min( gShadowSettings.GetFloat( "ShadowDistance" ), farDist ), splitNear + 1.0f );
+        for ( int i = 1; i <= count; i++ )
+        {
+            const float t = static_cast<float>( i ) / count;
+            m_fShadowDistances[i] = lambda * splitNear * powf( splitFar / splitNear, t ) + ( 1.0f - lambda ) * ( splitNear + ( splitFar - splitNear ) * t );
+        }
+        for ( int i = count + 1; i < 5; i++ )
+            m_fShadowDistances[i] = splitFar;
+    }
     for ( int i = 0; i < 5; i++ )
         m_pLightCB->data.FadeDistances[i] = m_fShadowDistances[i];
 }

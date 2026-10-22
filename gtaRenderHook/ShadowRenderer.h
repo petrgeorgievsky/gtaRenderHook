@@ -62,6 +62,11 @@ public:
         m_aFields["MaxDrawDistance"] = new FloatSField( "MaxDrawDistance", false, false, false, m_sName, 500.0f, 5.0f, 30000.0f, 5.0f );
         m_aFields["LodShadowsMinDistance"] = new FloatSField( "LodShadowsMinDistance", false, false, false, m_sName, 150.0f, 2.0f, 3000.0f, 1.0f );
         m_aFields["MaxSectorsAroundPlayer"] = new UIntSField( "MaxSectorsAroundPlayer", false, false, false, m_sName, 3, 1, 10, 1 );
+        // Cascade splits: 0 = the cascades' StartDistanceMultiplier values; above 0, the practical split scheme, which
+        // blends logarithmic (1) and uniform (0) splits up to ShadowDistance
+        m_aFields["SplitLambda"] = new FloatSField( "SplitLambda", false, false, false, m_sName, 0.0f, 0.0f, 1.0f, 0.01f );
+        // where shadows end with SplitLambda, in metres (limited by MaxDrawDistance)
+        m_aFields["ShadowDistance"] = new FloatSField( "ShadowDistance", false, false, false, m_sName, 450.0f, 10.0f, 30000.0f, 5.0f );
         Reset();
     }
     tinyxml2::XMLElement* Save( tinyxml2::XMLDocument* doc );
