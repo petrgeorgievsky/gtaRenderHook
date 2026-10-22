@@ -278,6 +278,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TemporalAA.h" />
+    <ClInclude Include="RenderHookAPI.h" />
     <ClInclude Include="VolumetricLighting.h" />
     <ClInclude Include="VoxelOctreeRenderer.h" />
     <ClInclude Include="VoxelPipeline.h" />

@@ -9,6 +9,7 @@
 #include "D3D1XRenderBuffersManager.h"
 #include <game_sa\CScene.h>
 #include <game_sa\CCamera.h>
+#include "RenderHookAPI.h"
 CD3D1XShader *CTemporalAA::m_pTemporalAA = nullptr;
 RwRaster *CTemporalAA::m_pAccumRasters[2] = { nullptr, nullptr };
 RwV3d CTemporalAA::m_vPrevCamPos = { 0,0,0 };
@@ -18,6 +19,59 @@ int CTemporalAA::m_nCurrentJitterSample = 0;
 CD3D1XConstantBuffer<CBTemporalAA>* CTemporalAA::m_pTAABuffer = nullptr;
 TAASettingsBlock gTAASettingsBlock;
 bool CTemporalAA::m_bFirstTimeRender = true;
+float CTemporalAA::m_fJitterX = 0.0f;
+float CTemporalAA::m_fJitterY = 0.0f;
+static RHTemporalAAHandler g_externalTAA = nullptr;
+
+void __cdecl RHSetTemporalAAHandler( RHTemporalAAHandler handler )
+{
+    g_externalTAA = handler;
+}
+
+static ID3D11ShaderResourceView *RasterSRV( RwRaster *raster )
+{
+    auto d3d1xRaster = raster ? GetD3D1XRaster( raster ) : nullptr;
+    auto viewable    = d3d1xRaster ? dynamic_cast<ID3D1XShaderViewable *>( d3d1xRaster->resourse ) : nullptr;
+    return viewable ? viewable->GetShaderResourceView() : nullptr;
+}
+
+// AddRef'd texture behind a raster, or nullptr
+static ID3D11Texture2D *RasterTexture2D( RwRaster *raster )
+{
+    ID3D11ShaderResourceView *srv = RasterSRV( raster );
+    if ( !srv )
+        return nullptr;
+    ID3D11Resource * resource = nullptr;
+    ID3D11Texture2D *texture  = nullptr;
+    srv->GetResource( &resource );
+    if ( resource )
+    {
+        resource->QueryInterface( __uuidof( ID3D11Texture2D ), reinterpret_cast<void **>( &texture ) );
+        resource->Release();
+    }
+    return texture;
+}
+
+// Gives the frame to a registered external TAA (see RenderHookAPI.h). true = it wrote the output.
+static bool RunExternalTAA( RwRaster *input, RwRaster *output, RwRaster *gBuff1, float jitterX, float jitterY )
+{
+    if ( !g_externalTAA )
+        return false;
+    RHTemporalAAFrame frame{};
+    frame.size     = sizeof( frame );
+    frame.context  = GET_D3D_CONTEXT;
+    frame.input    = RasterTexture2D( input );
+    frame.output   = RasterTexture2D( output );
+    frame.gbuffer1 = RasterSRV( gBuff1 );
+    frame.jitterX  = jitterX;
+    frame.jitterY  = jitterY;
+    bool handled   = frame.input && frame.output && frame.gbuffer1 && g_externalTAA( &frame );
+    if ( frame.input )
+        frame.input->Release();
+    if ( frame.output )
+        frame.output->Release();
+    return handled;
+}
 void CTemporalAA::Init()
 {
     m_pAccumRasters[0] = RwRasterCreate( RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32, rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555 );
@@ -88,8 +142,10 @@ void CTemporalAA::JitterProjMatrix()
     float SampleX = ( x8aa_X[m_nCurrentJitterSample] ) * rcx;
     float SampleY = ( x8aa_Y[m_nCurrentJitterSample] ) * rcy;
     auto camera = Scene.m_pRwCamera;
-    projTransformRef->m[2].x += SampleX * Scale;
-    projTransformRef->m[2].y += SampleY * Scale;
+    m_fJitterX = SampleX * Scale;
+    m_fJitterY = SampleY * Scale;
+    projTransformRef->m[2].x += m_fJitterX;
+    projTransformRef->m[2].y += m_fJitterY;
 
     g_pRenderBuffersMgr->UpdateViewProjMatricles( RwD3D9D3D9ViewTransform, *(RwMatrix*)projTransformRef );
 }
@@ -112,6 +168,14 @@ void CTemporalAA::SaveViewMatrix()
 void CTemporalAA::Render( RwRaster * input, RwRaster* output, RwRaster* gBuff1, RwRaster* gBuff2 )
 {
     RwV3d* curCamPos = RwMatrixGetPos( &Scene.m_pRwCamera->viewMatrix );
+    if ( RunExternalTAA( input, output, gBuff1, m_fJitterX, m_fJitterY ) )
+    {
+        // our history is stale now; start it fresh if the external TAA hands the frames back
+        m_bFirstTimeRender = true;
+        m_vPrevCamPos      = *curCamPos;
+        SaveViewMatrix();
+        return;
+    }
     m_pTAABuffer->data.PrevView = m_mPrevView;
     m_pTAABuffer->data.MovementVec = { m_vPrevCamPos.x - curCamPos->x, m_vPrevCamPos.y - curCamPos->y, m_vPrevCamPos.z - curCamPos->z };
     m_pTAABuffer->data.BlendFactor = ( gTAASettingsBlock.GetInt( "FrameCount" ) - 1.0f ) / ( 1.0f*gTAASettingsBlock.GetInt( "FrameCount" ) );
