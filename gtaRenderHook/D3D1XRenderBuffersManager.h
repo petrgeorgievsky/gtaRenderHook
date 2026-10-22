@@ -26,7 +26,8 @@ struct MaterialBuffer
     float		specularIntensity;
     float		glossiness;
     float		metallness;
-    float       padd__[2];
+    float       alphaCutoff;    // dual-pass alpha objects: alpha test value, 0 = off
+    float       alphaBlendPass; // 1 in the blended pass of a dual-pass mesh
     int         hasNormalTex;
     int			hasSpecTex;
 };
@@ -112,6 +113,11 @@ public:
         Updates current value of normal texture avaliablity
     */
     void UpdateHasNormalTex( const int &hastex );
+    /*!
+        Updates dual-pass alpha parameters: alpha test value for the G-buffer and shadow passes (0 = off), and
+        whether this is the blended pass, which then draws only the pixels below the cutoff
+    */
+    void UpdateAlphaPass( float cutoff, bool blendPass );
     /*!
         Flushes all material buffer changes if there was any
     */

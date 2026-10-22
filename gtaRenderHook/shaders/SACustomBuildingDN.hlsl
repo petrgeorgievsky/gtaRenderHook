@@ -128,6 +128,9 @@ float4 PS(PS_DEFERRED_DN_IN i) : SV_Target
         albedoSample *= txDiffuse.Sample( samLinear, i.vTexCoord.xy );
     if ( albedoSample.a < 0.3 )
         discard;
+    // dual pass: the G-buffer pass already drew the texels at or above the cutoff
+    if ( fAlphaBlendPass > 0.5f && albedoSample.a >= fAlphaCutoff )
+        discard;
     float4 outColor;
 #if SAMPLE_SHADOWS != 1
     float ShadowTerm =
@@ -172,6 +175,13 @@ void ShadowPS(PS_DEFERRED_IN i)
 {
 #if HAS_TEXTURE == 1
 	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
+    if ( fAlphaCutoff > 0 )
+    {
+        // dual pass: plain alpha test, like the G-buffer pass (dithered shadows speckle lit foliage)
+        if ( outColor.a < fAlphaCutoff )
+            discard;
+        return;
+    }
     outColor.a = outColor.a > 0.95f ? outColor.a : InterleavedGradientNoise(i.vPosition.xy) * outColor.a;
 	if (outColor.a < 0.2f)
 		discard;
@@ -187,7 +197,15 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     
     float4 params = bHasSpecTex > 0 ? float4(txSpec.Sample(samLinear, i.vTexCoord.xy).xyz, 3) : float4(fSpecularIntensity, fGlossiness, 0, 3);
     params.w = baseColor.a > 0.95f ? 3 : 5;
-    baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
+    if ( fAlphaCutoff > 0 )
+    {
+        // dual pass: alpha test instead of dithering; the blended pass draws the texels below the cutoff
+        if ( baseColor.a < fAlphaCutoff )
+            discard;
+        baseColor.a = 1.0f;
+    }
+    else
+        baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
     float3 normal = i.vNormalDepth.xyz;
     if ( bHasNormalTex > 0 && length( i.vTangent.xyz ) > 0 )
     {
