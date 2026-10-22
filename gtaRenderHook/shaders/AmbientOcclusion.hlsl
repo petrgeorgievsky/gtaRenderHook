@@ -40,9 +40,13 @@ float AOFastAcos(float x)
     return x >= 0 ? r : AO_PI - r;
 }
 
-float AOInterleavedGradientNoise(float2 p)
+// Sample pattern repeating every 4x4 pixels (a Bayer matrix), so the denoiser, whose kernel spans exactly one period,
+// averages every pattern value once and leaves no grain (the approach of Intel's XeGTAO).
+static const float AOBayer4x4[16] = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
+float AOTiledNoise(uint2 pixel, uint2 shift)
 {
-    return frac(52.9829189f * frac(dot(p, float2(0.06711056f, 0.00583715f))));
+    const uint2 p = (pixel + shift) & 3u;
+    return (AOBayer4x4[p.y * 4 + p.x] + 0.5f) / 16.0f;
 }
 
 // G-buffer texel without filtering: interpolating the encoded depth across edges gives depths that don't exist
@@ -91,9 +95,10 @@ float4 AmbientOcclusionPS(PS_QUAD_IN i) : SV_Target
     const float falloffMul = -1.0f / falloffRange;
     const float falloffAdd = (radius - falloffRange) / falloffRange + 1.0f;
 
-    const float2 noisePos = i.vPosition.xy + AOFrame * float2(5.588238f, 7.123456f);
-    const float sliceNoise = AOInterleavedGradientNoise(noisePos);
-    const float stepNoise = AOInterleavedGradientNoise(noisePos.yx * 1.31f + 17.0f);
+    const uint2 pixel = uint2(i.vPosition.xy);
+    const float frameShift = frac(AOFrame * 0.61803399f); // TemporalNoise: shift the pattern every frame
+    const float sliceNoise = frac(AOTiledNoise(pixel, uint2(0, 0)) + frameShift);
+    const float stepNoise = frac(AOTiledNoise(pixel, uint2(2, 1)) + frameShift);
 
     float visibility = 0;
     [unroll]
@@ -153,7 +158,7 @@ float4 AmbientOcclusionPS(PS_QUAD_IN i) : SV_Target
     return float4(ao, ao, ao, 1);
 }
 
-// Edge-aware blur along AODenoiseDir: neighbours count less the more their depth or normal differs.
+// Edge-aware blur along AODenoiseDir over one noise period: neighbours count less the more their depth or normal differs.
 float4 AODenoisePS(PS_QUAD_IN i) : SV_Target
 {
     const int2 center = int2(i.vPosition.xy);
@@ -168,13 +173,13 @@ float4 AODenoisePS(PS_QUAD_IN i) : SV_Target
 
     float sum = 0, weightSum = 0;
     [unroll]
-    for (int k = -4; k <= 4; k++)
+    for (int k = -2; k <= 2; k++)
     {
         const int2 p = clamp(center + int2(AODenoiseDir * k), int2(0, 0), int2(w - 1, h - 1));
         float sampleZ;
         float3 sampleN;
         AOLoadNormalsDepth((p + 0.5f) * AOTexelSize, sampleZ, sampleN);
-        float weight = exp(-k * k / 12.5f);                                            // gaussian, sigma 2.5 texels
+        float weight = abs(k) == 2 ? 0.5f : 1.0f;    // spans exactly one 4-texel noise period
         weight *= saturate(1.0f - abs(sampleZ - viewZ) / (viewZ * 0.03f + 0.05f));      // depth edges
         weight *= pow(saturate(dot(sampleN, N)), 8);                                     // normal edges
         sum += txAOInput.Load(int3(p, 0)).r * weight;
