@@ -118,6 +118,15 @@ float SpotLightIntensity(float cosA, float umbraAngle, float penumbraAngle)
 }
 
 // point and spot light pass
+// Point/spot light reach and brightness. The game's lamps hang 4-6 m up with ranges of 7-14 m, so with the true range
+// the ground is near the edge of their reach and barely lit.
+#ifndef LIGHT_RANGE_SCALE
+#define LIGHT_RANGE_SCALE 1.5f
+#endif
+#ifndef LIGHT_INTENSITY
+#define LIGHT_INTENSITY 1.25f
+#endif
+
 float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
 {
 	float4 OutLighting;
@@ -150,7 +159,8 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
     for (uint i = 0; i < uiLightCount; i++)
 	{
         float3 LightDir = -normalize(WorldPos.xyz - aDynamicLights[i].vPosition.xyz);
-        float LightDistance = length(WorldPos.xyz - aDynamicLights[i].vPosition.xyz);
+        // the falloff below reaches LIGHT_RANGE_SCALE x fRange
+        float LightDistance = length(WorldPos.xyz - aDynamicLights[i].vPosition.xyz) / LIGHT_RANGE_SCALE;
 
         float DiffuseTerm, SpecularTerm;
         float3 LightColor = aDynamicLights[i].cColor;
@@ -158,7 +168,7 @@ float4 PointLightingPS(PS_QUAD_IN i) : SV_Target
 		CalculateSpecularTerm(Normals.xyz, LightDir, -ViewDir, Roughness, SpecularTerm);
 		
         float Attenuation = 1.0f - pow(saturate(LightDistance / aDynamicLights[i].fRange), 2);
-        Attenuation *= Attenuation;
+        Attenuation *= Attenuation * LIGHT_INTENSITY;
         if (aDynamicLights[i].nLightType == 1)
 		{
             float fSpot = SpotLightIntensity(max(dot(-LightDir, aDynamicLights[i].vDir), 0.0f), PI / 3.0f, PI / 6.0f); //pow(, 4.0f);
