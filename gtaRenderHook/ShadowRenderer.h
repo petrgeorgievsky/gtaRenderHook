@@ -65,7 +65,7 @@ public:
         // Cascade splits: 0 = the cascades' StartDistanceMultiplier values; above 0, the practical split scheme, which
         // blends logarithmic (1) and uniform (0) splits up to ShadowDistance
         m_aFields["SplitLambda"] = new FloatSField( "SplitLambda", false, false, false, m_sName, 0.0f, 0.0f, 1.0f, 0.01f );
-        // where shadows end with SplitLambda, in metres (limited by MaxDrawDistance)
+        // where shadows end with SplitLambda, in metres, plus the camera's height above the ground (limited by MaxDrawDistance)
         m_aFields["ShadowDistance"] = new FloatSField( "ShadowDistance", false, false, false, m_sName, 450.0f, 10.0f, 30000.0f, 5.0f );
         Reset();
     }

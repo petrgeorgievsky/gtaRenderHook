@@ -10,6 +10,7 @@
 #include "RwMethods.h"
 #include "D3D1XBuffer.h"
 #include <game_sa\CScene.h>
+#include <game_sa\CCamera.h>
 #include "DeferredRenderer.h"
 #include "D3D1XRenderBuffersManager.h"
 RW::BBox	CShadowRenderer::m_LightBBox[4];
@@ -248,7 +249,10 @@ void CShadowRenderer::CalculateShadowDistances( const RwReal fNear, const RwReal
     {
         const int   count     = gShadowSettings.ShadowCascadeCount;
         const float splitNear = max( fNear, 0.1f );
-        const float splitFar  = max( min( gShadowSettings.GetFloat( "ShadowDistance" ), farDist ), splitNear + 1.0f );
+        // ShadowDistance is meant from the ground: seen from the air (a plane hundreds of metres up) the ground starts
+        // that far from the camera, and shadows measured from the camera would switch off as soon as you climb.
+        const float heightAboveGround = max( TheCamera.GetPosition().z - TheCamera.CalculateGroundHeight( 0 ), 0.0f );
+        const float splitFar  = max( min( gShadowSettings.GetFloat( "ShadowDistance" ) + heightAboveGround, farDist ), splitNear + 1.0f );
         for ( int i = 1; i <= count; i++ )
         {
             const float t = static_cast<float>( i ) / count;
