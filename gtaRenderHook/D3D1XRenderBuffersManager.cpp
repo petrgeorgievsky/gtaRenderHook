@@ -248,10 +248,14 @@ void CD3D1XRenderBuffersManager::Transpose4x4Matrix( RwGraphicsMatrix *a,
 
 void CD3D1XRenderBuffersManager::SetMatrixBuffer()
 {
-    if ( m_pCurrentWorldMatrix != m_pOldWorldMatrix )
+    // The pointer alone is not enough: the same frame can be moved between draws (the grass renderer moves one
+    // atomic's frame for every plant), so the matrix itself is compared too.
+    if ( m_pCurrentWorldMatrix != m_pOldWorldMatrix ||
+         memcmp( &m_mUploadedWorld, &m_pPerObjectMatrixBuffer->data.mWorld, sizeof( RwMatrix ) ) != 0 )
     {
         m_pPerObjectMatrixBuffer->Update();
         m_pOldWorldMatrix = m_pCurrentWorldMatrix;
+        m_mUploadedWorld  = m_pPerObjectMatrixBuffer->data.mWorld;
     }
 }
 
