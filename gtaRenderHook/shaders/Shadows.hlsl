@@ -89,10 +89,10 @@ float SampleShadowCascadeSoft(Texture2D txShadow, SamplerComparisonState samShad
             blockerCount += 1;
         }
     }
-    if (blockerCount == 0)
-        return 1.0f;
-    // penumbra width per metre of distance to the caster: MaxShadowBlur * 0.1 (0.2 ~ twice the sun's apparent size)
-    const float blockerDistance = (receiverZ - blockerSum / blockerCount) * ShadowDepthWorldScale(i);
+    // penumbra width per metre of distance to the caster: MaxShadowBlur * 0.1 (0.2 ~ twice the sun's apparent size).
+    // No blocker found still gets the filter at its minimum width: the search's few samples can miss a thin caster seen
+    // edge-on by the sun (a car body above the road), and returning "lit" would drop its shadow.
+    const float blockerDistance = blockerCount > 0 ? (receiverZ - blockerSum / blockerCount) * ShadowDepthWorldScale(i) : 0.0f;
     const float radiusTexels = clamp(blockerDistance * fMaxShadowBlur * 0.1f * softness / texelWorld, minTexels, 16.0f);
 #else
     const float radiusTexels = clamp(fMaxShadowBlur * 0.1f * softness / texelWorld, minTexels, 16.0f);
