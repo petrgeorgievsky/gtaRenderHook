@@ -82,14 +82,34 @@ RW::V3d CShadowRenderer::CalculateCameraPos( RwCamera* mainCam, const RW::V3d & 
 
     RwCameraSync(mainCam);*/
 
-    RW::V3d vFrustumCorners[8];
-    CalculateFrustumPoints( m_fShadowDistances[shadowCascade], m_fShadowDistances[shadowCascade + 1], mainCam, m_vFrustumCorners[shadowCascade] );
-    // Transform frustum corners in light space
-    for ( UINT i = 0; i < 8; i++ )
-        vFrustumCorners[i] = m_vFrustumCorners[shadowCascade][i] * m_LightSpaceMatrix[shadowCascade];
-    // Generate light-aligned Bounding Box from frustum corners in light space
-    m_LightBBox[shadowCascade] = { vFrustumCorners, 8 };
-    vFrustrumCenter = m_LightBBox[shadowCascade].getCenter()*m_InvLightSpaceMatrix[shadowCascade];
+    const RwReal fNear = m_fShadowDistances[shadowCascade], fFar = m_fShadowDistances[shadowCascade + 1];
+    CalculateFrustumPoints( fNear, fFar, mainCam, m_vFrustumCorners[shadowCascade] );
+
+    // Stable cascade: enclose the frustum slice in its smallest bounding sphere. Its radius depends only on the slice
+    // distances and the field of view, so the cascade keeps its size while the camera turns (a box fitted to the corners
+    // grows and shrinks, which makes every shadow edge crawl). The sphere's centre lies on the view axis where the near
+    // and far corners are equally far away.
+    const RwReal halfDiag = sqrtf( mainCam->viewWindow.x * mainCam->viewWindow.x + mainCam->viewWindow.y * mainCam->viewWindow.y );
+    const RwReal nearRadius = halfDiag * fNear, farRadius = halfDiag * fFar;
+    RwReal centerDist = ( fFar * fFar + farRadius * farRadius - fNear * fNear - nearRadius * nearRadius ) / ( 2.0f * ( fFar - fNear ) );
+    centerDist = min( max( centerDist, fNear ), fFar );
+    RwReal radius = max( sqrtf( ( centerDist - fNear ) * ( centerDist - fNear ) + nearRadius * nearRadius ),
+                         sqrtf( ( fFar - centerDist ) * ( fFar - centerDist ) + farRadius * farRadius ) );
+    radius = ceilf( radius * 16.0f ) / 16.0f; // no float noise in the cascade size
+
+    RwMatrix *camMatrix = RwFrameGetMatrix( RwCameraGetFrame( mainCam ) );
+    RW::V3d camPos = *RwMatrixGetPos( camMatrix );
+    RW::V3d camAt = *RwMatrixGetAt( camMatrix );
+    RW::V3d center = camPos + camAt * centerDist;
+
+    // Move the centre in whole shadow-map texels (in light space), so the texel grid stays fixed in the world and static
+    // shadows don't shimmer when the camera moves.
+    const RwReal texelSize = 2.0f * radius / static_cast<RwReal>( gShadowSettings.Size );
+    RW::V3d lightCenter = center * m_LightSpaceMatrix[shadowCascade];
+    lightCenter = { floorf( lightCenter.getX() / texelSize ) * texelSize, floorf( lightCenter.getY() / texelSize ) * texelSize,
+                    lightCenter.getZ() };
+    m_LightBBox[shadowCascade] = { lightCenter - RW::V3d{ radius, radius, radius }, lightCenter + RW::V3d{ radius, radius, radius } };
+    vFrustrumCenter = lightCenter * m_InvLightSpaceMatrix[shadowCascade];
     /*RwCameraSetNearClipPlane(mainCam, oldNP);
     RwCameraSetFarClipPlane(mainCam, oldFP);
     RwCameraSync(mainCam);*/
@@ -119,8 +139,8 @@ void CShadowRenderer::CalculateFrustumPoints( RwReal fNear, RwReal fFar, RwCamer
     RW::V3d farBottom = farCenter - camUp * farHeight*0.5f;
     RW::V3d farTop = farCenter + camUp * farHeight*0.5f;
 
-    RW::V3d farRightOffset = camRight * ( nearWidth*0.5f );
-    RW::V3d nearRightOffset = camRight * ( farWidth*0.5f );
+    RW::V3d farRightOffset = camRight * ( farWidth*0.5f );
+    RW::V3d nearRightOffset = camRight * ( nearWidth*0.5f );
 
     // near plane
     points[0] = nearBottom - nearRightOffset;
