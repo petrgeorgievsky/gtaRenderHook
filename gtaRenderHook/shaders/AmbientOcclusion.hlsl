@@ -69,6 +69,66 @@ float3 AOViewPos(float2 uv)
     return DepthToViewPos(viewZ, uv).xyz;
 }
 
+// ---- Wide-range occlusion ----------------------------------------------------------------------------------------------
+// GTAO's horizon search only reaches AORadius and fades out occluders across large depth gaps, so the road under a car
+// (the body is 0.3-1.5 m up and metres across) gets almost nothing. This term works like the original Serendipity AO: taps
+// on a spiral reaching AO_WIDE_RADIUS metres, each counting by how far it rises above the receiver's surface, without
+// GTAO's depth-gap rejection. Each tap's share falls off with distance, so something small metres away (a pole, a ped)
+// adds next to nothing while a car body right beside the receiver counts fully; rises under AO_WIDE_BIAS (the bumps of a
+// normal-mapped road) don't count at all. It only darkens upward-facing receivers (ground, floors), so vertical surfaces
+// such as car body panels keep GTAO's detail without the wide gradient over them.
+#ifndef AO_WIDE_RADIUS
+#define AO_WIDE_RADIUS 3.0f
+#endif
+#ifndef AO_WIDE_TAPS
+#define AO_WIDE_TAPS 12
+#endif
+#ifndef AO_WIDE_STRENGTH
+#define AO_WIDE_STRENGTH 4.0f
+#endif
+#ifndef AO_WIDE_BIAS
+#define AO_WIDE_BIAS 0.2f
+#endif
+
+float AOWideOcclusion(float2 uv, float3 P, float3 N, float viewZ, uint2 pixel)
+{
+    // world up in view space; full effect on faces within ~45 degrees of up, none on walls
+    const float upness = dot(N, normalize(mView[2].xyz));
+    const float receiver = saturate((upness - 0.35f) / 0.35f);
+    const float fade = smoothstep(0.5f, 2.5f, viewZ) * smoothstep(75.0f, 60.0f, viewZ);
+    if (receiver * fade <= 0)
+        return 0;
+
+    float2 radiusUV = AO_WIDE_RADIUS * float2(mProjection[0].x, mProjection[1].y) * 0.5f / viewZ;
+    radiusUV *= min(1.0f, 0.3f / max(radiusUV.x, radiusUV.y));
+    const float rotation = AOTiledNoise(pixel, uint2(1, 3)) * 6.2831853f;
+    const float offset = AOTiledNoise(pixel, uint2(3, 2));
+
+    float sum = 0;
+    [loop]
+    for (int s = 0; s < AO_WIDE_TAPS; s++)
+    {
+        const float t = (s + offset) / AO_WIDE_TAPS;
+        const float angle = s * 2.39996323f + rotation;
+        const float2 suv = uv + float2(cos(angle), sin(angle)) * radiusUV * t;
+        if (any(suv <= 0) || any(suv >= 1))
+            continue;
+        float sZ;
+        float3 sN;
+        AOLoadNormalsDepth(suv, sZ, sN);
+        const float3 d = DepthToViewPos(sZ, suv).xyz - P;
+        const float dist = max(length(d), 1e-3f);
+        const float3 u = d / dist;
+        const float falloff = saturate(1.0f - dist / AO_WIDE_RADIUS) * saturate(1.0f - dist / AO_WIDE_RADIUS);
+        // A tap nearer the camera than the receiver is only the front of something of unknown thickness: a car body
+        // seen beside or behind the receiver counts fully, a ped or bike standing in front of it fades out.
+        const float thickness = saturate(1.0f - (-d.z - 0.3f) / 0.7f);
+        const float elevation = saturate((dot(u, N) - AO_WIDE_BIAS) / (1.0f - AO_WIDE_BIAS));
+        sum += (0.5f * abs(dot(u, sN)) + 0.5f) * elevation * falloff * thickness;
+    }
+    return saturate(AO_WIDE_STRENGTH * sum / AO_WIDE_TAPS) * receiver * fade;
+}
+
 float4 AmbientOcclusionPS(PS_QUAD_IN i) : SV_Target
 {
     const float2 uv = i.vTexCoord.xy;
@@ -154,6 +214,7 @@ float4 AmbientOcclusionPS(PS_QUAD_IN i) : SV_Target
         visibility += projNLen * (arc0 + arc1);
     }
     visibility = saturate(visibility / AO_SLICE_COUNT);
+    visibility *= 1.0f - AOWideOcclusion(uv, P, N, viewZ, pixel);
     const float ao = lerp(1.0f, pow(visibility, AOCurve), saturate(AOIntensity));
     return float4(ao, ao, ao, 1);
 }
