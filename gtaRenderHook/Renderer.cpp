@@ -987,6 +987,9 @@ else {*/
 
 }
 
+// Same as the game's CRenderer::ProcessLodRenderLists. m_nNumLodChildrenRendered is a signed byte in the game: the count of
+// LOD children rendered this frame, or negative (0x80) when they can't render (their models aren't loaded). plugin-sdk
+// declares it unsigned, so it is compared as signed here.
 void CRendererRH::ProcessLodRenderLists()
 {
     if ( ms_pLodRenderList == GetLodRenderListBase() )
@@ -1001,65 +1004,25 @@ void CRendererRH::ProcessLodRenderLists()
             current->entity = nullptr;
         }
     }
-    // than remove all rendered lods and request all unloaded lods
-    bool renderedLodsExist = true;
-    while ( renderedLodsExist )
-    {
-        renderedLodsExist = false;
-        for ( auto current = GetLodRenderListBase(); current != ms_pLodRenderList; current++ )
-        {
-            auto entity = current->entity;
-
-            if ( entity )
-            {
-                auto numLodChildren = (char)entity->m_nNumLodChildren;
-                // if every lod children has been rendered, than
-                if ( numLodChildren > 0 && entity->m_nNumLodChildrenRendered == numLodChildren )
-                {
-                    entity->m_nNumLodChildrenRendered = 0;
-                    current->entity = nullptr;
-                    renderedLodsExist = true;
-                }
-                else
-                {
-                    auto lod = entity->m_pLod;
-                    if ( lod )
-                    {
-                        if ( CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->m_nAlpha < 0xFFu &&
-                             lod->m_nNumLodChildrenRendered != 0x80u && lod->m_bDisplayedSuperLowLOD )
-                            lod->m_nNumLodChildrenRendered = 0;
-
-                        if ( entity->m_pRwObject == nullptr )
-                        {
-                            if ( lod->m_bDisplayedSuperLowLOD )
-                                lod->m_nNumLodChildrenRendered = 0x80u;
-                            current->entity = nullptr;
-                            entity->m_nNumLodChildrenRendered = 0;
-                            CStreaming::RequestModel( entity->m_nModelIndex, 0 );
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // remove all rendered lods
+    // (the game's next loop, which drops entries whose model isn't loaded, never runs: its loop flag starts false)
+    // remove the lods whose children were rendered
     for ( auto current = GetLodRenderListBase(); current != ms_pLodRenderList; current++ )
     {
         auto entity = current->entity;
-        if ( entity && entity->m_nNumLodChildrenRendered > 0 )
+        if ( entity && static_cast<signed char>( entity->m_nNumLodChildrenRendered ) > 0 )
         {
             entity->m_bDisplayedSuperLowLOD = false;
             entity->m_nNumLodChildrenRendered = 0;
             current->entity = nullptr;
         }
     }
-    // add last lods to renderlist
+    // render the remaining lods: their children can't render (negative) or none of them was rendered
     for ( auto current = GetLodRenderListBase(); current != ms_pLodRenderList; current++ )
     {
         auto entity = current->entity;
         if ( entity )
         {
-            if ( entity->m_nNumLodChildrenRendered == 0x80u )
+            if ( static_cast<signed char>( entity->m_nNumLodChildrenRendered ) <= 0 )
             {
                 entity->m_bDisplayedSuperLowLOD = true;
                 if ( CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->m_nAlpha != 0xFF )
