@@ -4,6 +4,7 @@
 #include "RwD3D1XEngine.h"
 #include "D3DRenderer.h"
 #include "D3D1XTexture.h"
+#include "D3D1XBaseTexture.h"
 #include "FullscreenQuad.h"
 #include "D3D1XStateManager.h"
 #include "D3D1XRenderBuffersManager.h"
