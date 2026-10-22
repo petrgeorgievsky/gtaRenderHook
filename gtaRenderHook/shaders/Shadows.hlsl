@@ -16,90 +16,126 @@ cbuffer ShadowBuffer : register(b4)
     float4 ShadowBias;
 }
 
-// Samples shadow texture using poisson sampling. Approximatly uses (SHADOW_BLUR_KERNEL*2+1)^2 samples(perhaps that's way too much).
-float poissonShadowSampling(Texture2D txShadow, SamplerComparisonState samShadow, float2 ShadowCoord, float Z, float poissonScale)
+// ---- Soft shadows ----------------------------------------------------------------------------------------------------
+// Percentage-closer soft shadows (PCSS): a blocker search finds how far the casters are above the receiver, and the
+// penumbra grows with that distance, so shadows are sharp where objects touch the ground and soften further away. The
+// result is filtered with hardware-compared taps over a Vogel disk. Sizes are worked out in metres from each cascade's
+// light matrix, so the softness matches across cascades; the filter never gets narrower than 1.5 shadow-map texels,
+// which keeps sub-texel casters (fence wire, foliage) from aliasing. The disk rotation is fixed per screen pixel, so the
+// result is stable from frame to frame (no temporal AA needed to hide it).
+#ifndef SHADOW_FILTER_TAPS
+#define SHADOW_FILTER_TAPS 16
+#endif
+#ifndef SHADOW_BLOCKER_TAPS
+#define SHADOW_BLOCKER_TAPS 12
+#endif
+
+// Metres covered by one shadow-map texel of cascade i (from its orthographic light matrix).
+float ShadowTexelWorldSize(int i)
 {
-    float visibility = 0.0;
-    float offsetScale = poissonScale / (float) ShadowSize;
-	// Simple box 7x7 blur-dependent kernel. 
-	// TODO: Implement ability to change kernel minimum and maximum size and more kernels for ex. gaussian or
-	//		 user defined with custom matrix or ability to choose blur-independent kernel.
-    int kernelSize = min(ceil(poissonScale), SHADOW_BLUR_KERNEL); // Here kernelSize is half the actual kernel size
-#if BLUR_SHADOWS==1
-    int count		 = (kernelSize*2+1)*(kernelSize*2+1);
-	for (int x = -kernelSize;x<=kernelSize; x++) // (kernelSize*2+1)^2 comparisons and 3*(kernelSize*2+1)^2 ALU per cycle ~ o(kernelSize^2) complexity
-	for (int y = -kernelSize;y<=kernelSize; y++)
-	{
-		visibility += txShadow.SampleCmpLevelZero(samShadow, ShadowCoord + float2(x, y) * offsetScale, Z);
-	}
-    return visibility/count;
-#else
-    return txShadow.SampleCmpLevelZero(samShadow, ShadowCoord, Z);
-#endif	
+    const float ndcPerMetre = length(float3(DirLightViewProj[i]._11, DirLightViewProj[i]._21, DirLightViewProj[i]._31));
+    return 2.0f / (ndcPerMetre * ShadowSize);
 }
 
-//reciever's coordinate on shadow map, reciever's depth, shadow map sampler, current layer of the shadow map array sampler
-float AvarageShadowCasterDepth(float2 ShadowCoord, float Depth, SamplerState samShadow, Texture2D txShadow)
+// Metres per unit of cascade i's shadow depth.
+float ShadowDepthWorldScale(int i)
 {
-    float RetValue = 0.0f;
-    int Count = 0;
-    int R = 6; //Radius of the blocker search
-    const int start = -R / 2;
-    const int end = start + R;
-    const float offsetScale = 1.0f / (ShadowSize);
-    for (int IS = 0; IS < 4; IS++)//cause a discrete search
-        for (int JS = 0; JS < 4; JS++)
+    return 1.0f / length(float3(DirLightViewProj[i]._13, DirLightViewProj[i]._23, DirLightViewProj[i]._33));
+}
+
+// Point index of count on a Vogel (golden-angle) disk of radius 1, rotated by phi.
+float2 ShadowVogelDisk(int index, int count, float phi)
+{
+    const float r = sqrt((index + 0.5f) / count);
+    const float theta = index * 2.39996323f + phi;
+    return r * float2(cos(theta), sin(theta));
+}
+
+// Disk rotation: interleaved gradient noise of the receiver's screen pixel.
+float ShadowRotationNoise(float3 worldPos)
+{
+    const float4 clip = mul(float4(worldPos, 1), mViewProjection);
+    const float2 pixel = floor((clip.xy / clip.w * float2(0.5f, -0.5f) + 0.5f) * float2(fScreenWidth, fScreenHeight));
+    return 6.2831853f * frac(52.9829189f * frac(dot(pixel, float2(0.06711056f, 0.00583715f))));
+}
+
+// Visibility (1 = lit) of light-space position lp in cascade i. softness scales the penumbra.
+float SampleShadowCascadeSoft(Texture2D txShadow, SamplerComparisonState samShadow, SamplerState samShadowNonComp,
+                              float3 lp, int i, float phi, float softness)
+{
+    const float2 atlasTexel = float2(1.0f / (ShadowSize * CascadeCount), 1.0f / ShadowSize);
+    const float2 uv = float2((0.5f * lp.x + 0.5f + i) / CascadeCount, 0.5f - 0.5f * lp.y);
+    const float receiverZ = lp.z - ShadowBias[i];
+#if BLUR_SHADOWS == 1
+    const float texelWorld = ShadowTexelWorldSize(i);
+    const float minTexels = max(1.5f, fMinShadowBlur / texelWorld);
+#if USE_PCS_SHADOWS == 1
+    // blocker search over about 0.6 m: average depth of the casters in front of the receiver
+    const float searchTexels = clamp(0.6f / texelWorld, 2.0f, 16.0f);
+    float blockerSum = 0, blockerCount = 0;
+    [unroll]
+    for (int b = 0; b < SHADOW_BLOCKER_TAPS; b++)
+    {
+        const float d = txShadow.SampleLevel(samShadowNonComp, uv + ShadowVogelDisk(b, SHADOW_BLOCKER_TAPS, phi) * searchTexels * atlasTexel, 0).r;
+        if (d < receiverZ)
         {
-            for (int i = start + IS; i < end; i += 4)
-                for (int j = start + JS; j < R; j += 4)
-                {
-#if FEATURE_LEVEL>0xa100
-			const float4 SamplesDepth = txShadow.Gather(samShadow, float2(ShadowCoord + float2(i, j) * offsetScale));
-			for (int k=0;k<4;k++)
-			if (SamplesDepth[k]<Depth)
-			{
-				RetValue+=SamplesDepth[k];
-				Count++;
-			}
-#else
-                    const float SampleDepth = txShadow.SampleLevel(samShadow, float2(ShadowCoord + float2(i, j) * offsetScale), 0).r;
-                    if (SampleDepth < Depth)
-                    {
-                        RetValue += SampleDepth;
-                        Count++;
-                    }
-#endif
-                    if (Count > 16)//early fail
-                        return RetValue / Count;
-                }
+            blockerSum += d;
+            blockerCount += 1;
         }
-
-    return (Count != 0) ? RetValue / Count : 0.0f;
+    }
+    if (blockerCount == 0)
+        return 1.0f;
+    // penumbra width per metre of distance to the caster: MaxShadowBlur * 0.1 (0.2 ~ twice the sun's apparent size)
+    const float blockerDistance = (receiverZ - blockerSum / blockerCount) * ShadowDepthWorldScale(i);
+    const float radiusTexels = clamp(blockerDistance * fMaxShadowBlur * 0.1f * softness / texelWorld, minTexels, 16.0f);
+#else
+    const float radiusTexels = clamp(fMaxShadowBlur * 0.1f * softness / texelWorld, minTexels, 16.0f);
+#endif
+    float lit = 0;
+    [unroll]
+    for (int k = 0; k < SHADOW_FILTER_TAPS; k++)
+        lit += txShadow.SampleCmpLevelZero(samShadow, uv + ShadowVogelDisk(k, SHADOW_FILTER_TAPS, phi) * radiusTexels * atlasTexel, receiverZ);
+    return lit / SHADOW_FILTER_TAPS;
+#else
+    return txShadow.SampleCmpLevelZero(samShadow, uv, receiverZ);
+#endif
 }
 
-// Samples shadow texture.
-float SampleShadowMap(Texture2D txShadow, SamplerComparisonState samShadow, SamplerState samShadowNonComp, float3 LightViewPos, float2 offset, int i)
+// Visibility of a world position: the smallest cascade that contains it, blended into the next cascade over the last
+// 10% of its range (no visible seams), and faded out at the end of the last cascade.
+float SampleShadowCascadesSoft(Texture2D txShadow, SamplerComparisonState samShadow, SamplerState samShadowNonComp,
+                               float3 worldPos, float viewZ, float softness)
 {
-    float2 ShadowTexCoord = 0.5 * LightViewPos.xy + float2(0.5, 0.5);
-    ShadowTexCoord.y = 1.0f - ShadowTexCoord.y;
-	// early fail
-    if (ShadowTexCoord.x < 0 || ShadowTexCoord.x > 1 || ShadowTexCoord.y < 0 || ShadowTexCoord.y > 1)
-        return 1.0f;
-	// calculate shadow coordinate(because we use 4 cascades, we need to get 4 texcoord spaces each is half of original space plus offset)
-    ShadowTexCoord.x *= 1.0f / CascadeCount;
-    ShadowTexCoord += offset;
-    float blurScale;
-#if USE_PCS_SHADOWS==1&&BLUR_SHADOWS==1
-	float avgRecieverDepth 	= txShadow.Sample(samShadowNonComp, ShadowTexCoord).r;
-	float avgCasterDepth   	= AvarageShadowCasterDepth(ShadowTexCoord,LightViewPos.z,samShadowNonComp,txShadow);
-    
-    blurScale = (LightViewPos.z - avgCasterDepth) / avgCasterDepth;
-    blurScale = max(blurScale * fMaxShadowBlur, fMinShadowBlur);
-#else
-    blurScale = fMaxShadowBlur;
-#endif
+    const float4 wp = float4(worldPos, 1);
+    const float phi = ShadowRotationNoise(worldPos);
+    const float margin = 36.0f / ShadowSize; // filter and blocker-search reach, in light-space units
+    const float cascadeStart[4] = { FadeDistances.x, FadeDistances.y, FadeDistances.z, FadeDistances.w };
+    const float cascadeEnd[4] = { FadeDistances.y, FadeDistances.z, FadeDistances.w, FadeDistanceMax };
 
-    return poissonShadowSampling(txShadow, samShadow, ShadowTexCoord, LightViewPos.z - ShadowBias[i], blurScale); //(LightViewPos.z - sSample < 0.001);
+    [loop]
+    for (int i = 0; i < CascadeCount; i++)
+    {
+        const float3 lp = mul(wp, DirLightViewProj[i]).xyz;
+        if (any(abs(lp.xy) > 1.0f - margin) || lp.z > 1.0f)
+            continue;
+        float shadow = SampleShadowCascadeSoft(txShadow, samShadow, samShadowNonComp, lp, i, phi, softness);
+
+        const float blendStart = lerp(cascadeStart[i], cascadeEnd[i], 0.9f);
+        const float blend = saturate((viewZ - blendStart) / max(cascadeEnd[i] - blendStart, 1e-3f));
+        if (i + 1 < CascadeCount)
+        {
+            if (blend > 0)
+            {
+                const float3 lpNext = mul(wp, DirLightViewProj[i + 1]).xyz;
+                if (all(abs(lpNext.xy) <= 1.0f - margin))
+                    shadow = lerp(shadow, SampleShadowCascadeSoft(txShadow, samShadow, samShadowNonComp, lpNext, i + 1, phi, softness), blend);
+            }
+        }
+        else
+            shadow = lerp(shadow, 1.0f, blend);
+        return shadow;
+    }
+    return 1.0f;
 }
 
 // Samples shadow texture without any blurring.
@@ -145,84 +181,16 @@ bool CheckIsOutOfBounds( float3 LightViewPos )
     return false;
 }
 
-// Samples cascade shadow maps, blended 
+// Samples cascade shadow maps, blended
 float SampleShadowCascades(Texture2D txShadow, SamplerComparisonState samShadow, SamplerState samShadowNonComp, float3 worldPos, float viewZ)
 {
 	// early fail
     if (vSunLightDir.w <= 0)
         return 0.0f;
-	// TODO: make blend distance customizible, perhaps different for each cascade.
-    const float blendDistance = 6;
 	// Shift view depth a bit, to avoid some blurring problems
     viewZ = max( viewZ - 0.15f, 0.0 );
-
-    const float LFadeDistances[] =
-    {
-        FadeDistances.x,
-        FadeDistances.y,
-        FadeDistances.z,
-        FadeDistances.w,
-        FadeDistanceMax
-    };
-    float Shadow = 1;
-    float blendFactor;
-    float far, near;
-    float4 WorldPos = float4(worldPos.xyz, 1);
-    int i = dot(float4(CascadeCount > 0, CascadeCount > 1, CascadeCount > 2, CascadeCount > 3),
-			  float4(viewZ > FadeDistances.y, viewZ > FadeDistances.z, viewZ > FadeDistances.w, viewZ > FadeDistanceMax));
-    float3 LightViewPos = mul(WorldPos, DirLightViewProj[i]).xyz;
-    far = FadeDistanceMax;
-    near = LFadeDistances[i];
-    float2 shadowTCOffset = float2((float) i / CascadeCount, 0.0f);
-    if ( !CheckIsOutOfBounds( LightViewPos ) )
-        Shadow = SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos, shadowTCOffset, i);
-    else if ( i < CascadeCount )
-    {
-        i=i+1;
-        near                  = LFadeDistances[i];
-        shadowTCOffset = float2( (float)i / CascadeCount, 0.0f );
-        LightViewPos = mul( WorldPos, DirLightViewProj[i] ).xyz;
-        if (!CheckIsOutOfBounds(LightViewPos))
-        {
-            Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
-                                      LightViewPos, shadowTCOffset, i );
-        }
-        else if ( i < CascadeCount )
-        {
-            i              = i + 1;
-            near           = LFadeDistances[i];
-            shadowTCOffset = float2( (float)i / CascadeCount, 0.0f );
-            LightViewPos   = mul( WorldPos, DirLightViewProj[i] ).xyz;
-            if ( !CheckIsOutOfBounds( LightViewPos ) )
-            {
-                Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
-                                          LightViewPos, shadowTCOffset, i );
-            }
-            else if ( i < CascadeCount )
-            {
-                i              = i + 1;
-                near           = LFadeDistances[i];
-                shadowTCOffset = float2( (float)i / CascadeCount, 0.0f );
-                LightViewPos   = mul( WorldPos, DirLightViewProj[i] ).xyz;
-                Shadow = SampleShadowMap( txShadow, samShadow, samShadowNonComp,
-                                          LightViewPos, shadowTCOffset, i );
-            }
-        }
-    }
-	
-    /*for (i = 0; i < CascadeCount; i++)
-    {        
-        float3 LightViewPos = mul(WorldPos, DirLightViewProj[i]).xyz;
-        far = LFadeDistances[i + 1];
-        near = LFadeDistances[i];
-		// Cascade blending factor
-        blendFactor = min(max(viewZ - near, 0) / blendDistance, 1.0);
-        float2 shadowTCOffset = float2((float) i / CascadeCount, 0.0f);
-        Shadow = lerp(Shadow, SampleShadowMap(txShadow, samShadow, samShadowNonComp, LightViewPos, shadowTCOffset, i), blendFactor);
-    }*/
-    blendFactor = min(max(viewZ - far, 0) / blendDistance, 1.0);
-
-    return max(lerp(Shadow, 1.0, blendFactor), 1 - vSunLightDir.w);
+    const float Shadow = SampleShadowCascadesSoft(txShadow, samShadow, samShadowNonComp, worldPos, viewZ, 1.0f);
+    return max(Shadow, 1 - vSunLightDir.w);
 }
 // Samples cascade shadow maps, blended 
 float SampleShadowCascadesUnfiltered(Texture2D txShadow, SamplerComparisonState samShadow, SamplerState samShadowNonComp, float3 worldPos, float viewZ)
