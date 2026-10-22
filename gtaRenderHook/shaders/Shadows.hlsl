@@ -21,7 +21,7 @@ cbuffer ShadowBuffer : register(b4)
 // penumbra grows with that distance, so shadows are sharp where objects touch the ground and soften further away. The
 // result is filtered with hardware-compared taps over a Vogel disk. Sizes are worked out in metres from each cascade's
 // light matrix, so the softness matches across cascades; the filter never gets narrower than 1.5 shadow-map texels,
-// which keeps sub-texel casters (fence wire, foliage) from aliasing. The disk rotation is fixed per screen pixel, so the
+// which keeps sub-texel casters (fence wire, foliage) from aliasing. The disk rotation is anchored to the world, so the
 // result is stable from frame to frame (no temporal AA needed to hide it).
 #ifndef SHADOW_FILTER_TAPS
 #define SHADOW_FILTER_TAPS 16
@@ -51,12 +51,18 @@ float2 ShadowVogelDisk(int index, int count, float phi)
     return r * float2(cos(theta), sin(theta));
 }
 
-// Disk rotation: interleaved gradient noise of the receiver's screen pixel.
+// Disk rotation: hash of the receiver's world position, quantised to the size of its screen pixel. It stays the same
+// when temporal AA / DLAA jitters the camera by a fraction of a pixel; noise keyed to screen pixels changes which world
+// point it belongs to every frame, which makes soft shadow edges shimmer, most visibly on coarse distant cascades.
 float ShadowRotationNoise(float3 worldPos)
 {
-    const float4 clip = mul(float4(worldPos, 1), mViewProjection);
-    const float2 pixel = floor((clip.xy / clip.w * float2(0.5f, -0.5f) + 0.5f) * float2(fScreenWidth, fScreenHeight));
-    return 6.2831853f * frac(52.9829189f * frac(dot(pixel, float2(0.06711056f, 0.00583715f))));
+    const float cell = max(max(length(ddx(worldPos)), length(ddy(worldPos))), 1e-3f);
+    const int3 c = int3(floor(worldPos / cell));
+    uint h = (uint(c.x) * 73856093u) ^ (uint(c.y) * 19349663u) ^ (uint(c.z) * 83492791u);
+    h = h * 747796405u + 2891336453u;
+    h = ((h >> ((h >> 28u) + 4u)) ^ h) * 277803737u;
+    h = (h >> 22u) ^ h;
+    return 6.2831853f * (h * (1.0f / 4294967296.0f));
 }
 
 // Visibility (1 = lit) of light-space position lp in cascade i. softness scales the penumbra.
