@@ -31,4 +31,10 @@ typedef bool( __cdecl *RHTemporalAAHandler )( const RHTemporalAAFrame *frame );
     The TAA block's EnableTAA must stay on: the handler runs where TAA runs, and the projection is jittered as for
     TAA.
 */
-extern "C" __declspec( dllexport ) void __cdecl RHSetTemporalAAHandler( RHTemporalAAHandler handler );
+#ifdef GTARENDERHOOK_EXPORTS
+#define RENDERHOOK_API extern "C" __declspec( dllexport )
+#else
+#define RENDERHOOK_API extern "C" __declspec( dllimport )
+#endif
+
+RENDERHOOK_API void __cdecl RHSetTemporalAAHandler( RHTemporalAAHandler handler );
