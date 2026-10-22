@@ -1,6 +1,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 #include "SettingsHolder.h"
+#include <chrono>
 using namespace std;
 typedef chrono::high_resolution_clock hr_clock;
 

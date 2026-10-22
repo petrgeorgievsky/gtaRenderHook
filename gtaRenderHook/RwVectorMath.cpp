@@ -104,7 +104,7 @@ void V3d::normalize()
 
 RwV3d V3d::getRWVector()
 {
-    return RwV3d{ x_, y_, z_ }
+    return RwV3d{ x_, y_, z_ };
 }
 
 /*
@@ -214,12 +214,12 @@ void V4d::normalize()
 
 RwV4d V4d::getRWVector()
 {
-    return RwV4d{ x_, y_, z_, w_ }
+    return RwV4d{ x_, y_, z_, w_ };
 }
 
 RwV3d RW::V4d::getRW3Vector()
 {
-    return RwV3d{ x_, y_, z_ }
+    return RwV3d{ x_, y_, z_ };
 }
 
 RW::Matrix::Matrix()

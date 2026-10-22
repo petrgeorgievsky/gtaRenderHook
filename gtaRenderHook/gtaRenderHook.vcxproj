@@ -78,7 +78,7 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.asi</TargetExt>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(TINY_XML)\..\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;$(TINY_XML)\..\;$(IncludePath)</IncludePath>
     <LibraryPath>$(TINY_XML)\Debug-Lib;$(ANT_TWEAKBAR)\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(GTA_SA_DIR)</OutDir>
     <CodeAnalysisRuleSet>gtaRenderHook.ruleset</CodeAnalysisRuleSet>
@@ -96,7 +96,7 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.asi</TargetExt>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(TINY_XML)\..\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ANT_TWEAKBAR)\include;$(PLUGIN_SDK_DIR)\plugin_sa\;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;$(TINY_XML)\..\;$(IncludePath)</IncludePath>
     <LibraryPath>$(TINY_XML)\Release-Lib;$(ANT_TWEAKBAR)\lib;$(PLUGIN_SDK_DIR)\output\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(GTA_SA_DIR)</OutDir>
     <CodeAnalysisRuleSet>gtaRenderHook.ruleset</CodeAnalysisRuleSet>

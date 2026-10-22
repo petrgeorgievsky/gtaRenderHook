@@ -809,7 +809,7 @@ void CRendererRH::ScanPtrList( CPtrList* ptrList, bool loadIfRequired )
                 auto pos = entity->GetPosition();
                 auto maxDist = 30.0;
                 if ( ( entity->m_nType == eEntityType::ENTITY_TYPE_VEHICLE &&
-                    ( (CVehicle*)entity )->m_nFlags.bAlwaysSkidMarks ) )
+                    ( (CVehicle*)entity )->m_nVehicleFlags.bAlwaysSkidMarks ) )
                     maxDist = 200.0f;
                 if ( abs( pos.x - ms_vecCameraPosition.x ) < maxDist&&abs( pos.y - ms_vecCameraPosition.y ) < maxDist )
                 {
