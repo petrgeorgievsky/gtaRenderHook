@@ -22,6 +22,8 @@ TAASettingsBlock gTAASettingsBlock;
 bool CTemporalAA::m_bFirstTimeRender = true;
 float CTemporalAA::m_fJitterX = 0.0f;
 float CTemporalAA::m_fJitterY = 0.0f;
+RwGraphicsMatrix CTemporalAA::m_mView = {};
+RwGraphicsMatrix CTemporalAA::m_mProjection = {};
 static RHTemporalAAHandler g_externalTAA = nullptr;
 
 void __cdecl RHSetTemporalAAHandler( RHTemporalAAHandler handler )
@@ -54,7 +56,8 @@ static ID3D11Texture2D *RasterTexture2D( RwRaster *raster )
 }
 
 // Gives the frame to a registered external TAA (see RenderHookAPI.h). true = it wrote the output.
-static bool RunExternalTAA( RwRaster *input, RwRaster *output, RwRaster *gBuff1, float jitterX, float jitterY )
+static bool RunExternalTAA( RwRaster *input, RwRaster *output, RwRaster *gBuff1, float jitterX, float jitterY,
+                            const RwGraphicsMatrix &view, const RwGraphicsMatrix &projection )
 {
     if ( !g_externalTAA )
         return false;
@@ -66,6 +69,8 @@ static bool RunExternalTAA( RwRaster *input, RwRaster *output, RwRaster *gBuff1,
     frame.gbuffer1 = RasterSRV( gBuff1 );
     frame.jitterX  = jitterX;
     frame.jitterY  = jitterY;
+    memcpy( frame.view, &view, sizeof( frame.view ) );
+    memcpy( frame.projection, &projection, sizeof( frame.projection ) );
     bool handled   = frame.input && frame.output && frame.gbuffer1 && g_externalTAA( &frame );
     if ( frame.input )
         frame.input->Release();
@@ -143,6 +148,8 @@ void CTemporalAA::JitterProjMatrix()
     float SampleX = ( x8aa_X[m_nCurrentJitterSample] ) * rcx;
     float SampleY = ( x8aa_Y[m_nCurrentJitterSample] ) * rcy;
     auto camera = Scene.m_pRwCamera;
+    m_mView       = *(RwGraphicsMatrix *)&RwD3D9D3D9ViewTransform;
+    m_mProjection = *projTransformRef;
     m_fJitterX = SampleX * Scale;
     m_fJitterY = SampleY * Scale;
     projTransformRef->m[2].x += m_fJitterX;
@@ -169,7 +176,7 @@ void CTemporalAA::SaveViewMatrix()
 void CTemporalAA::Render( RwRaster * input, RwRaster* output, RwRaster* gBuff1, RwRaster* gBuff2 )
 {
     RwV3d* curCamPos = RwMatrixGetPos( &Scene.m_pRwCamera->viewMatrix );
-    if ( RunExternalTAA( input, output, gBuff1, m_fJitterX, m_fJitterY ) )
+    if ( RunExternalTAA( input, output, gBuff1, m_fJitterX, m_fJitterY, m_mView, m_mProjection ) )
     {
         // our history is stale now; start it fresh if the external TAA hands the frames back
         m_bFirstTimeRender = true;

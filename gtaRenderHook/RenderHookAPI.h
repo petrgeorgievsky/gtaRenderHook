@@ -16,6 +16,8 @@ struct RHTemporalAAFrame
     ID3D11ShaderResourceView *gbuffer1; // G-buffer 1: normals (xy) and view-space depth (z/w), as TAA reads it
     float                     jitterX;  // offset added to this frame's projection _31 (x) and _32 (y), in NDC
     float                     jitterY;
+    float                     view[16];       // this frame's view matrix (row vectors, as RwD3D9D3D9ViewTransform)
+    float                     projection[16]; // this frame's projection without the jitter (as RwD3D9D3D9ProjTransform)
 };
 
 /*!
