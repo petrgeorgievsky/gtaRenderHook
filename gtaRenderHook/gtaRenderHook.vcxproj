@@ -279,6 +279,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TemporalAA.h" />
     <ClInclude Include="RenderHookAPI.h" />
+    <ClInclude Include="PluginDrawCallback.h" />
     <ClInclude Include="VolumetricLighting.h" />
     <ClInclude Include="VoxelOctreeRenderer.h" />
     <ClInclude Include="VoxelPipeline.h" />
@@ -377,6 +378,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TemporalAA.cpp" />
+    <ClCompile Include="PluginDrawCallback.cpp" />
     <ClCompile Include="VolumetricLighting.cpp" />
     <ClCompile Include="VoxelOctreeRenderer.cpp" />
     <ClCompile Include="VoxelPipeline.cpp" />

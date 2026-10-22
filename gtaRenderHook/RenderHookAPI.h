@@ -38,3 +38,45 @@ typedef bool( __cdecl *RHTemporalAAHandler )( const RHTemporalAAFrame *frame );
 #endif
 
 RENDERHOOK_API void __cdecl RHSetTemporalAAHandler( RHTemporalAAHandler handler );
+
+/*!
+    Pass of a building draw (RHBuildingDraw::pass).
+*/
+enum RHDrawPass
+{
+    RH_PASS_FORWARD = 0, // forward shading (also reflections)
+    RH_PASS_GBUFFER = 1, // deferred G-buffer pass
+    RH_PASS_SHADOW  = 2, // sun shadow map
+    RH_PASS_BLENDED = 3, // alpha-blended pass after the deferred passes (queued alpha meshes)
+    RH_PASS_OTHER   = 4  // anything else (voxelization)
+};
+
+/*!
+    One mesh of the building pipelines (CustomBuilding and CustomBuildingDN), about to be drawn or queued for the
+    blended pass.
+*/
+struct RHBuildingDraw
+{
+    unsigned int         size;          // sizeof( RHBuildingDraw ), for future additions
+    ID3D11DeviceContext *context;       // RenderHook's immediate context, e.g. to set extra constant buffers
+    void *               atomic;        // RpAtomic * the mesh belongs to
+    const float *        worldMatrix;   // RwMatrix it is drawn with (16 floats, position at [12], [13], [14])
+    int                  meshIndex;     // mesh of the atomic's geometry
+    int                  pass;          // RHDrawPass
+    int                  dualPassEdges; // 1: blended pass of a dual-pass mesh, which draws only its soft edges
+};
+
+/*!
+    Flags an RHBuildingDrawCallback can return.
+    RH_DRAW_VERTEX_ALPHA_IS_NOT_OPACITY: the mesh's prelight alpha holds other data (e.g. a wind weight), so it does
+    not make the mesh transparent; it can then use dual pass (UseDualPassForAlphaObjects) like any cut-out mesh.
+*/
+const unsigned int RH_DRAW_VERTEX_ALPHA_IS_NOT_OPACITY = 1;
+
+typedef unsigned int( __cdecl *RHBuildingDrawCallback )( const RHBuildingDraw *draw );
+
+/*!
+    Registers a callback called before each building mesh is drawn or queued, in every pass, or removes it with
+    nullptr. Constant buffers it binds stay bound for that draw (RenderHook itself uses slots b0-b11).
+*/
+RENDERHOOK_API void __cdecl RHSetBuildingDrawCallback( RHBuildingDrawCallback callback );

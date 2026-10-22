@@ -268,6 +268,7 @@ struct AlphaMesh
     RwMatrix *      worldMatrix;
     int             meshID;
     int             flags; // ALPHA_MESH_DUAL_PASS: also drawn alpha-tested into the G-buffer
+    void *          atomic = nullptr; // RpAtomic, for RHSetBuildingDrawCallback
 };
 const int ALPHA_MESH_DUAL_PASS = 1;
 

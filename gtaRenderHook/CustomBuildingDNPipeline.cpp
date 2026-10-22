@@ -15,6 +15,7 @@
 #include "Renderer.h"
 #include "RwD3D1XEngine.h"
 #include "RwRenderEngine.h"
+#include "PluginDrawCallback.h"
 #include "stdafx.h"
 #include <game_sa\CWeather.h>
 extern int      drawCallCount;
@@ -107,6 +108,8 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
     const bool  dualPassEnabled =
         !dithering && gDeferredSettings.GetToggleField( "UseDualPassForAlphaObjects" );
     const float alphaCutoff = gDeferredSettings.GetFloat( "AlphaObjectsCutoff" );
+    RwMatrix *  ltm  = RwFrameGetLTM( static_cast<RwFrame *>( atomic->object.object.parent ) );
+    const int   pass = CurrentBuildingDrawPass();
 
     // set<RpMaterial*> materialSet{};
     // To improve preformance we try to reduce texture set calls, to do that we
@@ -121,6 +124,9 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
         RwUInt8 bAlphaEnable = 0;
         auto    mesh         = GetModelsData( entryData )[i];
         bAlphaEnable         = 0;
+        const unsigned int drawFlags = NotifyBuildingDraw( atomic, ltm, (int)i, pass, false );
+        const bool vertexAlpha =
+            mesh.vertexAlpha && !( drawFlags & RH_DRAW_VERTEX_ALPHA_IS_NOT_OPACITY );
         // if (mesh.material->color.alpha == 0) continue;
         if ( m_uiDeferredStage != 2 )
         {
@@ -140,7 +146,7 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
             g_pRenderBuffersMgr->UpdateMaterialSpecularInt( fSpec );
             g_pRenderBuffersMgr->UpdateMaterialGlossiness( fGlossiness );
         }
-        bAlphaEnable |= mesh.material->color.alpha != 255 || mesh.vertexAlpha;
+        bAlphaEnable |= mesh.material->color.alpha != 255 || vertexAlpha;
 
         if ( mesh.material->texture && mesh.material->texture->raster )
         {
@@ -169,7 +175,7 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
         // Dual pass: the transparency comes from the texture alone (material alpha 255, no vertex alpha), so the
         // solid texels can go to the G-buffer and only the soft edges need blending.
         const bool dualPass = dualPassEnabled && bAlphaEnable > 0 &&
-                              mesh.material->color.alpha == 255 && !mesh.vertexAlpha;
+                              mesh.material->color.alpha == 255 && !vertexAlpha;
         g_pRenderBuffersMgr->UpdateAlphaPass(
             dualPass && ( m_uiDeferredStage == 1 || m_uiDeferredStage == 2 ) ? alphaCutoff : 0.0f, false );
         if ( m_uiDeferredStage != 1 )
@@ -178,10 +184,8 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
         {
             if ( bAlphaEnable > 0 && !dithering )
             {
-                m_aAlphaMeshList.Push( {entryData,
-                                        RwFrameGetLTM( static_cast<RwFrame *>(
-                                            atomic->object.object.parent ) ),
-                                        (int)i, dualPass ? ALPHA_MESH_DUAL_PASS : 0} );
+                m_aAlphaMeshList.Push(
+                    {entryData, ltm, (int)i, dualPass ? ALPHA_MESH_DUAL_PASS : 0, atomic} );
                 if ( !dualPass )
                     continue;
             }
@@ -250,6 +254,7 @@ void CCustomBuildingDNPipeline::RenderAlphaList()
         g_pRwCustomEngine->SetTexture( curmesh.material->texture, 0 );
 
         const bool dualPass = ( mesh.flags & ALPHA_MESH_DUAL_PASS ) != 0;
+        NotifyBuildingDraw( mesh.atomic, mesh.worldMatrix, mesh.meshID, RH_PASS_BLENDED, dualPass );
         g_pRenderBuffersMgr->UpdateAlphaPass( dualPass ? alphaCutoff : 0.0f, dualPass );
         g_pRenderBuffersMgr->FlushMaterialBuffer();
         g_pStateMgr->FlushStates();
