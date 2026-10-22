@@ -123,5 +123,7 @@ private:
     bool m_bMaterialBufferRequiresUpdate = false;
     RwMatrix *		m_pCurrentWorldMatrix = nullptr;
     RwMatrix *		m_pOldWorldMatrix = nullptr;
+    // world matrix as last uploaded, see SetMatrixBuffer
+    RwMatrix		m_mUploadedWorld{};
 };
 extern CD3D1XRenderBuffersManager* g_pRenderBuffersMgr;
