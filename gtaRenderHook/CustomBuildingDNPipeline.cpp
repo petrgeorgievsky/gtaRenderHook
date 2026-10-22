@@ -123,6 +123,9 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
             if ( m_uiDeferredStage == 1 )
             {
                 color.alpha = max( color.alpha, 2 );
+                // fading entity: opaque (dithering by the fade left holes where nothing is behind a fading LOD)
+                if ( CRendererRH::FadingPass )
+                    color.alpha = 255;
             }
             if ( mesh.material->surfaceProps.ambient > 1.0 )
                 g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor( color );
@@ -165,7 +168,11 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
             g_pStateMgr->SetAlphaBlendEnable( bAlphaEnable > 0 );
         else
         {
-            if ( bAlphaEnable > 0 && !gDeferredSettings.GetToggleField("UseDitheringForAlphaObjects") )
+            // A fading entity (LOD cross-fade) gets its fade through the material alpha, which the game restores right
+            // after drawing it: on the forward alpha list it would be drawn fully opaque anyway, but lit by the forward
+            // shader instead of the deferred one, so distant LODs popped in dark. Draw it opaque into the G-buffer.
+            if ( bAlphaEnable > 0 && !gDeferredSettings.GetToggleField("UseDitheringForAlphaObjects") &&
+                 !CRendererRH::FadingPass )
             { 
                 m_aAlphaMeshList.Push( {entryData,
                                         RwFrameGetLTM( static_cast<RwFrame *>(

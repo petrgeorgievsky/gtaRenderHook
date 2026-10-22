@@ -220,6 +220,9 @@ public:
     static RwPlane ms_aShadowCasterBoundingPlanes[4][5];
     //static CBaseModelInfo **ms_modelInfoPtrs;
     static bool TOBJpass;
+    // true while the game draws its fading entities (LOD cross-fades): their meshes are transparent only because of the
+    // fade, so they are drawn opaque into the G-buffer instead of going to the forward alpha list
+    static bool FadingPass;
     static std::list<CEntity*> ms_aVisibleEntities;
     static std::list<CEntity*> ms_aVisibleLods;
     static std::vector<CEntity*> ms_aVisibleShadowCasters[4];
