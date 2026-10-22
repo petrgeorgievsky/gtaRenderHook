@@ -168,11 +168,24 @@ float4 PS(PS_DEFERRED_DN_IN i) : SV_Target
     return outColor;
 }
 
-void ShadowPS(PS_DEFERRED_IN i)
+// Hashed alpha test anchored to the world (Wyman & McGuire, "Hashed Alpha Testing", 2017). A dither keyed to shadow-map
+// pixels gives every world point a new value whenever a cascade moves, so the shadows of semi-transparent casters
+// sparkle. Here the world position is quantised to the size of one shadow-map texel, so the pattern stays in place.
+float WorldAlphaHash(float3 worldPos)
+{
+    const float texelWorld = max(max(length(ddx(worldPos)), length(ddy(worldPos))), 1e-3f);
+    const int3 cell = int3(floor(worldPos / texelWorld));
+    uint h = (uint(cell.x) * 73856093u) ^ (uint(cell.y) * 19349663u) ^ (uint(cell.z) * 83492791u);
+    h = h * 747796405u + 2891336453u;
+    h = ((h >> ((h >> 28u) + 4u)) ^ h) * 277803737u;
+    h = (h >> 22u) ^ h;
+    return h * (1.0f / 4294967296.0f);
+}
+void ShadowPS(PS_DEFERRED_DN_IN i)
 {
 #if HAS_TEXTURE == 1
 	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
-    outColor.a = outColor.a > 0.95f ? outColor.a : InterleavedGradientNoise(i.vPosition.xy) * outColor.a;
+    outColor.a = outColor.a > 0.95f ? outColor.a : WorldAlphaHash(i.vWorldPos.xyz) * outColor.a;
 	if (outColor.a < 0.2f)
 		discard;
 #endif
