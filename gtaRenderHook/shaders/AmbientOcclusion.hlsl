@@ -70,21 +70,20 @@ float3 AOViewPos(float2 uv)
 }
 
 // ---- Wide-range occlusion ----------------------------------------------------------------------------------------------
-// GTAO's horizon search only reaches AORadius and fades out occluders across large depth gaps, so the road under a car
-// (the body is 0.3-1.5 m up and metres across) gets almost nothing. This term works like the original Serendipity AO: taps
-// on a spiral reaching AO_WIDE_RADIUS metres, each counting by how far it rises above the receiver's surface, without
-// GTAO's depth-gap rejection. Each tap's share falls off with distance, so something small metres away (a pole, a ped)
-// adds next to nothing while a car body right beside the receiver counts fully; rises under AO_WIDE_BIAS (the bumps of a
-// normal-mapped road) don't count at all. It only darkens upward-facing receivers (ground, floors), so vertical surfaces
-// such as car body panels keep GTAO's detail without the wide gradient over them.
-#ifndef AO_WIDE_RADIUS
-#define AO_WIDE_RADIUS 3.0f
-#endif
+// GTAO's horizon search only reaches AORadius and fades out occluders across large depth gaps, so the road under and in
+// front of a car gets almost nothing. This term samples like the Serendipity preset's AO, which handles that well:
+// - the spiral is centred on the point 0.25 m above the surface (along its normal), which, seen from a low camera,
+//   projects onto whatever stands over the receiver (a car's bumper and body);
+// - its reach is in screen pixels (up to 224 at close range, shrinking past 20 m), so a nearby car fills the spiral;
+// - each tap counts by how far it rises above the receiver's surface, weighted by 1/distance^2 (full within ~3 m).
+// Changes from the original: a fixed 4x4 pattern instead of random noise (the denoiser removes it), rises under
+// AO_WIDE_BIAS don't count (the bumps of a normal-mapped road turned into grain), and only upward-facing receivers
+// (ground, floors) are darkened, so car body panels keep GTAO's detail.
 #ifndef AO_WIDE_TAPS
-#define AO_WIDE_TAPS 12
+#define AO_WIDE_TAPS 16
 #endif
 #ifndef AO_WIDE_STRENGTH
-#define AO_WIDE_STRENGTH 4.0f
+#define AO_WIDE_STRENGTH 1.3f
 #endif
 #ifndef AO_WIDE_BIAS
 #define AO_WIDE_BIAS 0.2f
@@ -99,34 +98,37 @@ float AOWideOcclusion(float2 uv, float3 P, float3 N, float viewZ, uint2 pixel)
     if (receiver * fade <= 0)
         return 0;
 
-    float2 radiusUV = AO_WIDE_RADIUS * float2(mProjection[0].x, mProjection[1].y) * 0.5f / viewZ;
-    radiusUV *= min(1.0f, 0.3f / max(radiusUV.x, radiusUV.y));
+    const float3 C = P + N * 0.25f;
+    if (C.z <= 0.05f)
+        return 0;
+    const float2 centerUV = float2(C.x * mProjection[0].x / C.z * 0.5f + 0.5f, 0.5f - C.y * mProjection[1].y / C.z * 0.5f);
+    // 7 px per tap over 32 taps in the original; the same reach with AO_WIDE_TAPS
+    const float tapPixels = 7.0f / max(1.0f, viewZ * 0.05f) * (32.0f / AO_WIDE_TAPS);
     const float rotation = AOTiledNoise(pixel, uint2(1, 3)) * 6.2831853f;
-    const float offset = AOTiledNoise(pixel, uint2(3, 2));
 
-    float sum = 0;
+    float sum = 0, weight = 0;
     [loop]
-    for (int s = 0; s < AO_WIDE_TAPS; s++)
+    for (int s = 1; s <= AO_WIDE_TAPS; s++)
     {
-        const float t = (s + offset) / AO_WIDE_TAPS;
-        const float angle = s * 2.39996323f + rotation;
-        const float2 suv = uv + float2(cos(angle), sin(angle)) * radiusUV * t;
+        const float angle = 10.166406827f * s + rotation;
+        const float2 suv = centerUV + float2(cos(angle) / fScreenWidth, sin(angle) / fScreenHeight) * tapPixels * s;
         if (any(suv <= 0) || any(suv >= 1))
+        {
+            weight += 0.5f;
             continue;
+        }
         float sZ;
         float3 sN;
         AOLoadNormalsDepth(suv, sZ, sN);
         const float3 d = DepthToViewPos(sZ, suv).xyz - P;
         const float dist = max(length(d), 1e-3f);
         const float3 u = d / dist;
-        const float falloff = saturate(1.0f - dist / AO_WIDE_RADIUS) * saturate(1.0f - dist / AO_WIDE_RADIUS);
-        // A tap nearer the camera than the receiver is only the front of something of unknown thickness: a car body
-        // seen beside or behind the receiver counts fully, a ped or bike standing in front of it fades out.
-        const float thickness = saturate(1.0f - (-d.z - 0.3f) / 0.7f);
-        const float elevation = saturate((dot(u, N) - AO_WIDE_BIAS) / (1.0f - AO_WIDE_BIAS));
-        sum += (0.5f * abs(dot(u, sN)) + 0.5f) * elevation * falloff * thickness;
+        const float w = saturate(10.0f / (dist * dist));
+        const float elevation = saturate((dot(u, N) - AO_WIDE_BIAS) * 5.0f);
+        sum += (0.5f * abs(dot(u, sN)) + 0.5f) * elevation * w;
+        weight += w;
     }
-    return saturate(AO_WIDE_STRENGTH * sum / AO_WIDE_TAPS) * receiver * fade;
+    return weight > 0 ? saturate(AO_WIDE_STRENGTH * sum / weight) * receiver * fade : 0;
 }
 
 float4 AmbientOcclusionPS(PS_QUAD_IN i) : SV_Target
