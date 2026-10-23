@@ -41,7 +41,8 @@ bool CLightManager::AddLight( const CLight& light )
 
 void CLightManager::SortByDistance( const RwV3d& from )
 {
-    sort( &m_aLights[0], &m_aLights[1023], [&] ( const CLight &a, const CLight &b )
+    // only this frame's lights: Reset() just zeroes the count, so the rest of the array holds lights from earlier frames
+    sort( &m_aLights[0], &m_aLights[m_nLightCount], [&] ( const CLight &a, const CLight &b )
     {
         return ( rwV3D_Dist( a.m_vPos, from ) < rwV3D_Dist( b.m_vPos, from ) );
     } );
