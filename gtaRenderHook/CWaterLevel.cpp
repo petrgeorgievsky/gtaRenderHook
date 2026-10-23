@@ -99,20 +99,20 @@ void CWaterLevel::RenderWater()
     TextureShiftHighLightU = sin( magic1 ) * 0.1f + magic2;
     TextureShiftHighLightV = cos( magic1 ) * 0.1f + magic2;
     CD3DRenderer* renderer = static_cast<CRwD3D1XEngine*>( g_pRwCustomEngine )->getRenderer();
+    renderer->BeginDebugEvent( L"Water quads" );
     // Water triangles
-    /*for (int j = 0; j < m_nNumOfWaterTriangles; ++j)
+    for ( UINT j = 0; j < m_nNumOfWaterTriangles; ++j )
     {
-        if (m_aTriangles[j].d & 1)
+        if ( m_aTriangles[j].d & 1 )
         {
             int a = m_aTriangles[j].a;
             int b = m_aTriangles[j].b;
             int c = m_aTriangles[j].c;
-            RenderWaterTriangle(m_aVertices[a], m_aVertices[b], m_aVertices[c]);
+            RenderWaterTriangle( m_aVertices[a], m_aVertices[b], m_aVertices[c] );
             m_aTriangles[j].d &= 0xFEu;
         }
-    }*/
+    }
     // water quads
-    renderer->BeginDebugEvent( L"Water quads" );
     if ( m_nNumOfWaterQuads > 0 )
     {
         for ( UINT i = 0; i < m_nNumOfWaterQuads; i++ )
@@ -554,9 +554,77 @@ void CWaterLevel::RenderSeaBed()
     TempBufferVerticesStored = 0;
 }
 
+// The game's CWaterLevel::RenderWaterTriangle draws through its own RenderWare buffers, so a triangle is drawn like
+// RenderDetailedWaterRectangle_OneLayer instead: a grid of 4-point patches over the triangle, with corners a, b, c, c.
+// The quad domain shader interpolates such a patch into the triangle.
 void CWaterLevel::RenderWaterTriangle( const CWaterVertice &a, const CWaterVertice & b, const CWaterVertice & c )
 {
-    CWaterLevel_RenderWaterTriangle( a.posX, a.posY, a.renPar, b.posX, b.posY, b.renPar, c.posX, c.posY, c.renPar );
+    if ( TempBufferIndicesStored >= 4090 || TempBufferVerticesStored >= 2044 )
+    {
+        RenderAndEmptyRenderBuffer();
+    }
+    // same winding as the rectangles' patches: (x0,y0), (x1,y0), (x0,y1)
+    const CWaterVertice *p0 = &a, *p1 = &b, *p2 = &c;
+    if ( ( p1->posX - p0->posX ) * ( p2->posY - p0->posY ) - ( p1->posY - p0->posY ) * ( p2->posX - p0->posX ) < 0 )
+        std::swap( p1, p2 );
+
+    // texture coordinates as for a rectangle over the triangle's bounding box
+    int x0 = min( min( p0->posX, p1->posX ), p2->posX ), x1 = max( max( p0->posX, p1->posX ), p2->posX );
+    int y0 = min( min( p0->posY, p1->posY ), p2->posY ), y1 = max( max( p0->posY, p1->posY ), p2->posY );
+    float layerTCScale = 1.0f / ( WATER_UPDATE_FRAMERATE * 2.0f );
+    float uBaseOffset = TextureShiftU + x0 * layerTCScale;
+    float vBaseOffset = TextureShiftV + y0 * layerTCScale;
+
+    const UINT tessFactor = 16;
+    float cellX = max( x1 - x0, 1 ) / (float)tessFactor;
+    float cellY = max( y1 - y0, 1 ) / (float)tessFactor;
+    auto camPos = TheCamera.GetPosition();
+    UINT startVertex = TempBufferVerticesStored;
+    for ( UINT s_offset = 0; s_offset <= tessFactor; s_offset++ )
+    {
+        for ( UINT t_offset = 0; t_offset <= tessFactor; t_offset++ )
+        {
+            // s runs from p0 to p1, t from that edge to p2
+            float s = s_offset / (float)tessFactor, t = t_offset / (float)tessFactor;
+            float w0 = ( 1.0f - s ) * ( 1.0f - t ), w1 = s * ( 1.0f - t ), w2 = t;
+            float x = w0 * p0->posX + w1 * p1->posX + w2 * p2->posX;
+            float y = w0 * p0->posY + w1 * p1->posY + w2 * p2->posY;
+            float detailScale = sqrtf( ( camPos.y - y ) * ( camPos.y - y ) + ( camPos.x - x ) * ( camPos.x - x ) ) / DETAILEDWATERDIST;
+            float waterHeightScale = 1.0f;
+            if ( detailScale > 1.0f )
+                waterHeightScale = 0.0f;
+            else if ( detailScale > 0.75f )
+                waterHeightScale = ( 1.0f - detailScale ) * 4.0f;
+
+            float height = w0 * p0->renPar.baseHeight + w1 * p1->renPar.baseHeight + w2 * p2->renPar.baseHeight;
+            float wave0Height = ( w0 * p0->renPar.wave0Height + w1 * p1->renPar.wave0Height + w2 * p2->renPar.wave0Height ) * waterHeightScale;
+            float wave1Height = ( w0 * p0->renPar.wave1Height + w1 * p1->renPar.wave1Height + w2 * p2->renPar.wave1Height ) * waterHeightScale;
+            float diffuse, sunGlare;
+            UINT currVertID = startVertex + s_offset * ( tessFactor + 1 ) + t_offset;
+            CalculateWavesForCoordinate( (int)x, (int)y, wave0Height, wave1Height, &height, &diffuse, &sunGlare, (CVector*)&TempVertexBuffer[currVertID].objNormal );
+            float u = ( x - x0 ) / cellX * layerTCScale + uBaseOffset;
+            float v = ( y - y0 ) / cellY * layerTCScale + vBaseOffset;
+            TempVertexBuffer[currVertID].u = u - floorf( u );
+            TempVertexBuffer[currVertID].v = v - floorf( v );
+            TempVertexBuffer[currVertID].objVertex.x = x;
+            TempVertexBuffer[currVertID].objVertex.y = y;
+            TempVertexBuffer[currVertID].objVertex.z = height;
+            TempVertexBuffer[currVertID].color = 0xFFFFFFFF;
+        }
+    }
+    TempBufferVerticesStored = startVertex + ( tessFactor + 1 ) * ( tessFactor + 1 );
+    for ( UINT s_offset = 0; s_offset < tessFactor; s_offset++ )
+    {
+        for ( UINT t_offset = 0; t_offset < tessFactor; t_offset++ )
+        {
+            UINT startIndex = TempBufferIndicesStored;
+            TempBufferRenderIndexList[startIndex] = startVertex + s_offset * ( tessFactor + 1 ) + t_offset;
+            TempBufferRenderIndexList[startIndex + 1] = startVertex + ( s_offset + 1 ) * ( tessFactor + 1 ) + t_offset;
+            TempBufferRenderIndexList[startIndex + 2] = startVertex + s_offset * ( tessFactor + 1 ) + t_offset + 1;
+            TempBufferRenderIndexList[startIndex + 3] = startVertex + ( s_offset + 1 ) * ( tessFactor + 1 ) + t_offset + 1;
+            TempBufferIndicesStored = startIndex + 4;
+        }
+    }
 }
 
 void CWaterLevel::RenderAndEmptyRenderBuffer()
