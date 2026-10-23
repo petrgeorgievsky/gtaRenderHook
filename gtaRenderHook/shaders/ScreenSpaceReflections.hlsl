@@ -126,7 +126,7 @@ float4 ReflectionPassPS(PSInput_Quad input) : SV_Target
     float ViewZ = DecodeFloatRG(NormalSpec.zw);
     ViewZ = ViewZ <= 0 ? fFarClip : ViewZ;
     float3 cameraSpacePos = DepthToViewPos(ViewZ, input.texCoordOut.xy).xyz;
-    float3 worldSpacePos = DepthToWorldPos(ViewZ, input.texCoordOut.xy).xyz;
+    float3 worldSpacePos = SSRDepthToWorldPos(ViewZ, input.texCoordOut.xy);
     float3 NormalsVS = DecodeNormals(NormalSpec.xy);
     NormalsVS = mul(float4(NormalsVS, 0.0f), mViewInv).rgb;
     float2 Parameters = txGB2.Sample(samLinear, input.texCoordOut.xy).xy;

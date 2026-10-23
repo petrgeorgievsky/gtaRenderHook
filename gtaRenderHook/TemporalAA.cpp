@@ -15,6 +15,10 @@ RwV3d CTemporalAA::m_vPrevCamPos = { 0,0,0 };
 RwGraphicsMatrix CTemporalAA::m_mPrevView = {};
 int CTemporalAA::m_nCurrentAccRaster = 0;
 int CTemporalAA::m_nCurrentJitterSample = 0;
+float CTemporalAA::m_fJitterX = 0.0f;
+float CTemporalAA::m_fJitterY = 0.0f;
+float CTemporalAA::m_fPrevJitterX = 0.0f;
+float CTemporalAA::m_fPrevJitterY = 0.0f;
 CD3D1XConstantBuffer<CBTemporalAA>* CTemporalAA::m_pTAABuffer = nullptr;
 TAASettingsBlock gTAASettingsBlock;
 bool CTemporalAA::m_bFirstTimeRender = true;
@@ -88,8 +92,12 @@ void CTemporalAA::JitterProjMatrix()
     float SampleX = ( x8aa_X[m_nCurrentJitterSample] ) * rcx;
     float SampleY = ( x8aa_Y[m_nCurrentJitterSample] ) * rcy;
     auto camera = Scene.m_pRwCamera;
-    projTransformRef->m[2].x += SampleX * Scale;
-    projTransformRef->m[2].y += SampleY * Scale;
+    m_fPrevJitterX = m_fJitterX;
+    m_fPrevJitterY = m_fJitterY;
+    m_fJitterX = SampleX * Scale;
+    m_fJitterY = SampleY * Scale;
+    projTransformRef->m[2].x += m_fJitterX;
+    projTransformRef->m[2].y += m_fJitterY;
 
     g_pRenderBuffersMgr->UpdateViewProjMatricles( RwD3D9D3D9ViewTransform, *(RwMatrix*)projTransformRef );
 }

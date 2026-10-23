@@ -23,6 +23,9 @@ public:
     static void Render( RwRaster *input, RwRaster *output, RwRaster *gBuff1,
                         RwRaster *gBuff2 );
     static void QueueTextureReload();
+    // NDC offset from this frame's jitter to the previous frame's (SSR samples the previous frame)
+    static float GetJitterDeltaX() { return m_fPrevJitterX - m_fJitterX; }
+    static float GetJitterDeltaY() { return m_fPrevJitterY - m_fJitterY; }
 
   private:
     static CD3D1XShader * m_pTemporalAA;
@@ -33,6 +36,7 @@ public:
     static RwV3d m_vPrevCamPos;
     static RwGraphicsMatrix m_mPrevView;
     static CD3D1XConstantBuffer<CBTemporalAA>* m_pTAABuffer;
+    static float m_fJitterX, m_fJitterY, m_fPrevJitterX, m_fPrevJitterY;
 };
 
 /*!

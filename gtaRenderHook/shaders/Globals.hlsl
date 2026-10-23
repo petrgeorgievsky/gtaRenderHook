@@ -81,6 +81,8 @@ cbuffer DeferredRendering : register(b6)
     float fSSRStep;
     float fMaxShadowBlur;
     float fMinShadowBlur;
+    float2 vSSRPrevFrameOffset; // uv offset from this frame's jitter to the previous frame's
+    float2 __padSSR;
 }
 cbuffer VolumetricLighting : register(b7)
 {
