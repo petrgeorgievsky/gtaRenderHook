@@ -160,6 +160,7 @@ public:
         Scans sector for shadow casting entities
     */
     static void ScanSectorListForShadowCasters( int x, int y );
+    static void ScanBigBuildingsForShadowCasters();
     /*!
         Prepares render entiy lists before rendering
     */
