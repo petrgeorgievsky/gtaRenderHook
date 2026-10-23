@@ -32,9 +32,12 @@ public:
     */
     RwBool SubmitNode();
 private:
+    void EnsureCapacity( unsigned int vertexCount, unsigned int indexCount );
     CD3D1XVertexDeclaration*	m_pVertexDeclaration = nullptr;
     CD3D1XDynamicVertexBuffer*	m_pVertexBuffer = nullptr;
     CD3D1XDynamicIndexBuffer*	m_pIndexBuffer = nullptr;
+    unsigned int				m_uiVertexCapacity = 10000;
+    unsigned int				m_uiIndexCapacity = 10000;
 };
 #endif // D3D1XIm3DPipeline_h__
 

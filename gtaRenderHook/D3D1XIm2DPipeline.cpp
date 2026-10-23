@@ -23,8 +23,8 @@ CD3D1XIm2DPipeline::CD3D1XIm2DPipeline() :
         { "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, 20,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
     };
     m_pVertexDecl = new CD3D1XVertexDeclaration( layout, sizeof( RwIm2DVertex ), m_pVS );
-    m_pVertexBuffer = new CD3D1XDynamicVertexBuffer( sizeof( RwIm2DVertex ), 10000 );
-    m_pIndexBuffer = new CD3D1XDynamicIndexBuffer( 10000 );
+    m_pVertexBuffer = new CD3D1XDynamicVertexBuffer( sizeof( RwIm2DVertex ), m_uiVertexCapacity );
+    m_pIndexBuffer = new CD3D1XDynamicIndexBuffer( m_uiIndexCapacity );
     m_pVertexBuffer->SetDebugName( "Im2D_DynamicVB" );
     m_pIndexBuffer->SetDebugName( "Im2D_DynamicIB" );
 }
@@ -49,13 +49,36 @@ CD3D1XIm2DPipeline::~CD3D1XIm2DPipeline()
     }
 }
 
+// RenderWare takes up to 65535 vertices and indices per Im2D call. Sprite batches (e.g. coronas of plugins) can pass the
+// initial 10000, so the buffers grow to fit a call instead of being written past their end.
+void CD3D1XIm2DPipeline::EnsureCapacity( unsigned int vertexCount, unsigned int indexCount )
+{
+    if ( vertexCount > m_uiVertexCapacity )
+    {
+        m_uiVertexCapacity = max( vertexCount, m_uiVertexCapacity * 2 );
+        delete m_pVertexBuffer;
+        m_pVertexBuffer = new CD3D1XDynamicVertexBuffer( sizeof( RwIm2DVertex ), m_uiVertexCapacity );
+        m_pVertexBuffer->SetDebugName( "Im2D_DynamicVB" );
+    }
+    if ( indexCount > m_uiIndexCapacity )
+    {
+        m_uiIndexCapacity = max( indexCount, m_uiIndexCapacity * 2 );
+        delete m_pIndexBuffer;
+        m_pIndexBuffer = new CD3D1XDynamicIndexBuffer( m_uiIndexCapacity );
+        m_pIndexBuffer->SetDebugName( "Im2D_DynamicIB" );
+    }
+}
+
 void CD3D1XIm2DPipeline::Draw( RwPrimitiveType prim, RwIm2DVertex* verticles, RwUInt32 vertexCount )
 {
     ID3D11DeviceContext* pImmediateContext = GET_D3D_CONTEXT;
     auto vertCount = vertexCount;
     // dynamic vertex buffer update
     if ( prim != rwPRIMTYPETRIFAN )
+    {
+        EnsureCapacity( vertCount, 0 );
         m_pVertexBuffer->Update( &verticles[0], sizeof( RwIm2DVertex ) * vertCount );
+    }
     else
     {
         std::vector<RwIm2DVertex> vertexArr;
@@ -67,6 +90,7 @@ void CD3D1XIm2DPipeline::Draw( RwPrimitiveType prim, RwIm2DVertex* verticles, Rw
             vertexArr.push_back( verticles[i + 1] );
         }
         vertCount = vertexArr.size();
+        EnsureCapacity( vertCount, 0 );
         m_pVertexBuffer->Update( vertexArr.data(), sizeof( RwIm2DVertex )* vertCount );
     }
     // initialize primitive info
@@ -87,6 +111,7 @@ void CD3D1XIm2DPipeline::DrawIndexed( RwPrimitiveType prim, RwIm2DVertex *vertic
     // dynamic vertex and index buffer update
     if ( prim != rwPRIMTYPETRIFAN )
     {
+        EnsureCapacity( numVertices, numIndices );
         m_pVertexBuffer->Update( &vertices[0], sizeof( RwIm2DVertex )*numVertices );
         m_pIndexBuffer->Update( &indices[0], sizeof( RwImVertexIndex )*numIndices );
     }
