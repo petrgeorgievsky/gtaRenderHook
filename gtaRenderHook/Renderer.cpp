@@ -952,6 +952,12 @@ void CRendererRH::ScanBigBuildingsForShadowCasters()
     std::unordered_set<CEntity*> casters;
     for ( int i = 0; i < 4; i++ )
         casters.insert( ms_aVisibleShadowCasters[i].begin(), ms_aVisibleShadowCasters[i].end() );
+    // LODs of casters stand in for geometry that already casts: a LOD sits a little above or below its detailed
+    // version, so casting both shadows the detailed ground with the LOD (large straight-edged shadows around the camera)
+    std::unordered_set<CEntity*> replacedLods;
+    for ( CEntity *caster : casters )
+        for ( CEntity *lod = caster->m_pLod; lod != nullptr && replacedLods.insert( lod ).second; lod = lod->m_pLod )
+            ;
 
     const int lodSectorRange = 3; // 200 m sectors: about 700 m around the camera
     const int camSectorX = (int)floorf( ms_vecCameraPosition.x / 200.0f + 15.0f );
@@ -973,7 +979,7 @@ void CRendererRH::ScanBigBuildingsForShadowCasters()
             for ( auto current = GetLodPtrList( x, y )->GetNode(); current != nullptr; current = current->pNext )
             {
                 auto entity = (CEntity*)current->pItem;
-                if ( casters.count( entity ) != 0 || !entity->m_bIsVisible ||
+                if ( casters.count( entity ) != 0 || replacedLods.count( entity ) != 0 || !entity->m_bIsVisible ||
                      ( entity->m_nAreaCode != CGame::currArea && entity->m_nAreaCode != 13 ) ) // 13: every area
                     continue;
                 AddEntityToShadowCastersIfNeeded( entity, true );
