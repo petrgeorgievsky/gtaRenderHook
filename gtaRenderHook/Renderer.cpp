@@ -273,11 +273,33 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded( CEntity * entity, bool check
         auto clump        = reinterpret_cast<RpClump*> (modelInfo->m_pRwObject);
         auto entityRadius = modelInfo->m_pColModel->m_boundSphere.m_fRadius;
 
-        // Get entity bounding box
-        RW::BBox entityBBox = { RW::V3d{ modelInfo->m_pColModel->m_boundBox.m_vecMin.ToRwV3d() },
-            RW::V3d{ modelInfo->m_pColModel->m_boundBox.m_vecMax.ToRwV3d() } };
-        // Transform it to world space
-        entityBBox += entityPos;
+        // World-space box around the entity's collision box, rotated with the entity: shifting the model-space box by
+        // the position alone leaves a rotated object (a fence running along X instead of Y) outside its own box, so
+        // it gets culled from cascades it should cast into.
+        const CVector bmin = modelInfo->m_pColModel->m_boundBox.m_vecMin;
+        const CVector bmax = modelInfo->m_pColModel->m_boundBox.m_vecMax;
+        CVector axisX, axisY, axisZ;
+        if ( shadowEntity->m_matrix != nullptr )
+        {
+            axisX = shadowEntity->m_matrix->right;
+            axisY = shadowEntity->m_matrix->up;
+            axisZ = shadowEntity->m_matrix->at;
+        }
+        else
+        {
+            const float heading = shadowEntity->m_placement.m_fHeading;
+            axisX = CVector( cosf( heading ), sinf( heading ), 0.0f );
+            axisY = CVector( -sinf( heading ), cosf( heading ), 0.0f );
+            axisZ = CVector( 0.0f, 0.0f, 1.0f );
+        }
+        const CVector localCenter = ( bmin + bmax ) * 0.5f;
+        const CVector halfSize = ( bmax - bmin ) * 0.5f;
+        RW::V3d worldCenter = RW::V3d{ entityPos } +
+            RW::V3d{ ( axisX * localCenter.x + axisY * localCenter.y + axisZ * localCenter.z ).ToRwV3d() };
+        RW::V3d worldHalfSize{ fabsf( axisX.x ) * halfSize.x + fabsf( axisY.x ) * halfSize.y + fabsf( axisZ.x ) * halfSize.z,
+                                     fabsf( axisX.y ) * halfSize.x + fabsf( axisY.y ) * halfSize.y + fabsf( axisZ.y ) * halfSize.z,
+                                     fabsf( axisX.z ) * halfSize.x + fabsf( axisY.z ) * halfSize.y + fabsf( axisZ.z ) * halfSize.z };
+        RW::BBox entityBBox = { worldCenter - worldHalfSize, worldCenter + worldHalfSize };
         //DebugRendering::AddToRenderList(new DebugBBox(entityBBox));
 
 
@@ -309,17 +331,18 @@ bool CRendererRH::IsAABBInsideBoundingVolume( RwPlane * boundingPlanes, int plan
                                               const RW::BBox& b )
 {
 
+    // The box is outside when even its corner furthest along a plane's normal is behind that plane. Testing only the
+    // min and max corners misses the other six, which matters for planes that aren't axis-aligned (the light frustum
+    // turns with the sun): a box could be rejected while some of it is inside.
+    const auto min = b.getMin();
+    const auto max = b.getMax();
     for ( auto i = 0; i < planeCount; i++ )
     {
-        RwV3d normal = boundingPlanes[i].normal;
-        auto min = b.getMin();
-        auto max = b.getMax();
-        bool infIsOutside = ( min.getX() )*normal.x +
-            ( min.getY() )*normal.y +
-            ( min.getZ() )*normal.z -
-            boundingPlanes[i].distance < 0;
-        bool supIsOutside = max.getX()*normal.x + max.getY()*normal.y + max.getZ()*normal.z - boundingPlanes[i].distance < 0;
-        if ( infIsOutside && supIsOutside )
+        const RwV3d normal = boundingPlanes[i].normal;
+        const float x = normal.x >= 0 ? max.getX() : min.getX();
+        const float y = normal.y >= 0 ? max.getY() : min.getY();
+        const float z = normal.z >= 0 ? max.getZ() : min.getZ();
+        if ( x * normal.x + y * normal.y + z * normal.z - boundingPlanes[i].distance < 0 )
             return false;
     }
     return true;
