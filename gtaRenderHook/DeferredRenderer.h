@@ -14,6 +14,10 @@ struct CBDeferredRendering
     float SSRStep;
     float MaxShadowBlur;
     float MinShadowBlur;
+    // UV offset from this frame's jitter to the previous frame's: SSR samples the previous frame
+    float SSRPrevFrameOffsetX;
+    float SSRPrevFrameOffsetY;
+    float __pad[2];
 };
 class CDeferredRenderer
 {
