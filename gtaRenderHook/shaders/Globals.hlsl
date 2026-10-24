@@ -94,7 +94,9 @@ cbuffer AmbientOcclusion : register(b8)
     float AOIntensity;
     float AORadius;
     float AOCurve;
-    float padding__;
+    float AOFrame;          // sample pattern frame index, 0 = stable pattern
+    float2 AOTexelSize;     // 1 / size of the AO target
+    float2 AODenoiseDir;    // AODenoisePS blur direction, in texels
 }
 cbuffer TemporalAA : register(b9)
 {
