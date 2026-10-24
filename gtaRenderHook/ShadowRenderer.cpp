@@ -189,7 +189,10 @@ void CShadowRenderer::RenderShadowToBuffer( int cascade, void( *render )( int ca
     RwGraphicsMatrix* view = (RwGraphicsMatrix *)&RwD3D9D3D9ViewTransform;
     RwGraphicsMatrix* proj = (RwGraphicsMatrix *)&RwD3D9D3D9ProjTransform;
     g_pRenderBuffersMgr->Multipy4x4Matrices( (RwGraphicsMatrix *)&m_pLightCB->data.ViewProj[cascade], view, proj );
+    // Clamp instead of clip at the near plane: a tall building far towards a low sun lies in front of it and still casts.
+    g_pStateMgr->SetDepthClipEnable( false );
     render( cascade );
+    g_pStateMgr->SetDepthClipEnable( true );
     RwCameraEndUpdate( m_pShadowCamera );
     renderer->EndDebugEvent();
 }
