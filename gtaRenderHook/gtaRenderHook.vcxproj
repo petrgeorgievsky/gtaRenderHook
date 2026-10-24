@@ -234,6 +234,7 @@
     <ClInclude Include="CustomBuildingPipeline.h" />
     <ClInclude Include="CustomCarFXPipeline.h" />
     <ClInclude Include="CustomWaterPipeline.h" />
+    <ClInclude Include="GrassRendererRH.h" />
     <ClInclude Include="CWaterLevel.h" />
     <ClInclude Include="D3D1XBuffer.h" />
     <ClInclude Include="D3D1XDefaultPipeline.h" />
@@ -321,6 +322,7 @@
     <ClCompile Include="CustomBuildingPipeline.cpp" />
     <ClCompile Include="CustomCarFXPipeline.cpp" />
     <ClCompile Include="CustomWaterPipeline.cpp" />
+    <ClCompile Include="GrassRendererRH.cpp" />
     <ClCompile Include="CWaterLevel.cpp" />
     <ClCompile Include="D3D1XBuffer.cpp" />
     <ClCompile Include="D3D1XDefaultPipeline.cpp" />

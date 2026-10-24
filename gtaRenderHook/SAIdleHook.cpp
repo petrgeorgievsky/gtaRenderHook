@@ -40,6 +40,7 @@
 #include <game_sa\CRopes.h>
 #include <game_sa\CRenderer.h>
 #include "VolumetricLighting.h"
+#include "GrassRendererRH.h"
 #include "FullscreenQuad.h"
 #include "CubemapReflectionRenderer.h"
 #include "TemporalAA.h"
@@ -58,21 +59,10 @@
 int drawCallCount = 0;
 float CSAIdleHook::m_fShadowDNBalance = 1.0;
 
-// CGrassRenderer sets each plant type's colour with RpGeometryForAllMaterials( geometry, 0x5DAC10, &colour ). Its alpha
-// comes from plants.dat (about 40/255, faded with distance) and is meant for soft blending, but the building pipeline's
-// forward pixel shader discards everything below 0.3, so no grass would be visible. Scale the alpha before it's set.
-static RpMaterial *SetGrassMaterialColour( RpMaterial *material, void *data )
-{
-    const float alphaScale = 6.0f;
-    RwRGBA colour = *static_cast<RwRGBA *>( data );
-    colour.alpha  = static_cast<RwUInt8>( min( colour.alpha * alphaScale, 255.0f ) );
-    return ( (RpMaterial * (__cdecl *)( RpMaterial *, void * ))0x5DAC10 )( material, &colour );
-}
-
 void CSAIdleHook::Patch()
 {
     RedirectCall( 0x53ECBD, Idle );
-    SetPointer( 0x5DAEC8, SetGrassMaterialColour ); // operand of push 5DAC10h in CGrassRenderer::DrawTriPlants
+    CGrassRendererRH::Patch();
 }
 
 void CSAIdleHook::Idle( void *Data )
@@ -261,7 +251,7 @@ void CSAIdleHook::RenderInGame()
     g_pCustomBuildingPipe->ResetAlphaList();
     g_pCustomBuildingDNPipe->ResetAlphaList();
     // Render scene to geometry buffers.
-    g_pDeferredRenderer->RenderToGBuffer( RenderDeferred );
+    g_pDeferredRenderer->RenderToGBuffer( RenderGBuffer );
 
     // Reset renderstates and disable Z-Test
     DefinedState();
@@ -372,10 +362,12 @@ void CSAIdleHook::RenderForwardAfterDeferred()
     RenderEffects();
     renderer->EndDebugEvent();
     DefinedState();
-    renderer->BeginDebugEvent( L"Grass rendering pass" );
-    RenderGrass();
-    renderer->EndDebugEvent();
-    DefinedState();
+}
+
+void CSAIdleHook::RenderGBuffer()
+{
+    RenderDeferred();
+    CGrassRendererRH::RenderDeferred();
 }
 
 void CSAIdleHook::RenderDeferred()

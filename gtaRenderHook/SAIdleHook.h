@@ -46,7 +46,6 @@
 #define CVisibilityPlugins__RenderFadingInEntities() ((void (__cdecl *)())0x733F10)()
 #define RenderStaticShadows() ((void (__cdecl *)())0x708300)()
 #define RenderStoredShadows() ((void (__cdecl *)())0x70A960)()
-#define RenderGrass() ((void (__cdecl *)())0x5DBAE0)()
 #define RenderRainStreaks() ((void (__cdecl *)())0x72AF70)()
 #define RenderStencil() ((unsigned char (__cdecl *)())0x7113B0)()
 #define FindPlayerPos(outvec,id) ((RwV3d* (__cdecl *)(RwV3d*, int))0x56E010)(outvec,id)
@@ -132,6 +131,7 @@ public:
         Renders geometry in deferred render path
     */
     static void RenderDeferred();
+    static void RenderGBuffer();
     /*!
         Renders geometry in forward render path
     */
