@@ -267,8 +267,9 @@ struct AlphaMesh
     RxInstanceData *entryptr;
     RwMatrix *      worldMatrix;
     int             meshID;
-    int             __padding;
+    int             flags; // ALPHA_MESH_DUAL_PASS: also drawn alpha-tested into the G-buffer
 };
+const int ALPHA_MESH_DUAL_PASS = 1;
 
 #ifdef RENDER_VK_ENGINE
 struct RwVulkanRasterData
