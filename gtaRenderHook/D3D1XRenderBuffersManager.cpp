@@ -344,6 +344,18 @@ void CD3D1XRenderBuffersManager::UpdateHasNormalTex( const int &hastex )
     }
 }
 
+void CD3D1XRenderBuffersManager::UpdateAlphaPass( float cutoff, bool blendPass )
+{
+    const float blend = blendPass ? 1.0f : 0.0f;
+    if ( m_pPerMaterialBuffer->data.alphaCutoff != cutoff ||
+         m_pPerMaterialBuffer->data.alphaBlendPass != blend )
+    {
+        m_pPerMaterialBuffer->data.alphaCutoff    = cutoff;
+        m_pPerMaterialBuffer->data.alphaBlendPass = blend;
+        m_bMaterialBufferRequiresUpdate           = true;
+    }
+}
+
 void CD3D1XRenderBuffersManager::FlushMaterialBuffer()
 {
     if ( m_bMaterialBufferRequiresUpdate )
