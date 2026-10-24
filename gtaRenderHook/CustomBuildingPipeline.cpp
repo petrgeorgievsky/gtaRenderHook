@@ -160,8 +160,13 @@ void CCustomBuildingPipeline::Render( RwResEntry *repEntry, void *object,
             g_pRenderBuffersMgr->UpdateMaterialEmmissiveColor(
                 mesh.material->color );
         else
-            g_pRenderBuffersMgr->UpdateMaterialDiffuseColor(
-                mesh.material->color );
+        {
+            RwRGBA color = mesh.material->color;
+            // fading entity: opaque in the G-buffer (dithering by the fade left holes where nothing is behind it)
+            if ( m_uiDeferredStage == 1 && CRendererRH::FadingPass )
+                color.alpha = 255;
+            g_pRenderBuffersMgr->UpdateMaterialDiffuseColor( color );
+        }
         float fSpec = ( std::max )(
             CWeather::WetRoads,
             CCustomCarEnvMapPipeline__GetFxSpecSpecularity( mesh.material ) );
@@ -195,7 +200,10 @@ void CCustomBuildingPipeline::Render( RwResEntry *repEntry, void *object,
         else
         {
             g_pStateMgr->SetAlphaBlendEnable( FALSE );
-            if ( bAlphaEnable > 0 )
+            // A fading entity (LOD cross-fade) gets its fade through the material alpha, which the game restores right
+            // after drawing it: on the forward alpha list it would be drawn fully opaque anyway, but lit by the forward
+            // shader instead of the deferred one, so distant LODs popped in dark. Draw it opaque into the G-buffer.
+            if ( bAlphaEnable > 0 && !CRendererRH::FadingPass )
             {
                 m_aAlphaMeshList.Push( { entryData,
                                          RwFrameGetLTM( static_cast<RwFrame *>(

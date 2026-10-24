@@ -45,6 +45,7 @@ float&				CRendererRH::ms_fCameraHeading = *(float*)0xB7684C;
 float&				CRendererRH::ms_lowLodDistScale = *(float*)0x8CD804;
 float&				CRendererRH::ms_fFarClipPlane = *(float*)0xB76848;
 bool CRendererRH::TOBJpass = false;
+bool CRendererRH::FadingPass = false;
 std::list<CEntity*> CRendererRH::ms_aVisibleEntities{};
 std::list<CEntity*> CRendererRH::ms_aVisibleLods{};
 std::vector<CEntity*> CRendererRH::ms_aVisibleShadowCasters[4] = { {}, {},{},{} };
