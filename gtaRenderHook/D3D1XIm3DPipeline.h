@@ -35,6 +35,8 @@ private:
     CD3D1XVertexDeclaration*	m_pVertexDeclaration = nullptr;
     CD3D1XDynamicVertexBuffer*	m_pVertexBuffer = nullptr;
     CD3D1XDynamicIndexBuffer*	m_pIndexBuffer = nullptr;
+    // Fills the G-buffer (pixel shader DeferredPS) while the deferred stage renders to it
+    CD3D1XShader*				m_pDeferredPS = nullptr;
 };
 #endif // D3D1XIm3DPipeline_h__
 

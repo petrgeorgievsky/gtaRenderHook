@@ -8,6 +8,7 @@
 #include "D3D1XStateManager.h"
 #include "RwD3D1XEngine.h"
 #include "D3D1XEnumParser.h"
+#include "DeferredRenderer.h"
 
 CD3D1XIm3DPipeline::CD3D1XIm3DPipeline() :
 #ifndef DebuggingShaders
@@ -28,6 +29,7 @@ CD3D1XIm3DPipeline::CD3D1XIm3DPipeline() :
     m_pIndexBuffer = new CD3D1XDynamicIndexBuffer( 10000 );
     m_pVertexBuffer->SetDebugName( "Im3D_DynamicVB" );
     m_pIndexBuffer->SetDebugName( "Im3D_DynamicIB" );
+    m_pDeferredPS = new CD3D1XPixelShader( "shaders/" + m_sPipeName + ".hlsl", "DeferredPS" );
 }
 
 
@@ -36,6 +38,7 @@ CD3D1XIm3DPipeline::~CD3D1XIm3DPipeline()
     delete m_pVertexDeclaration;
     delete m_pIndexBuffer;
     delete m_pVertexBuffer;
+    delete m_pDeferredPS;
 }
 
 RwBool CD3D1XIm3DPipeline::SubmitNode()
@@ -55,7 +58,15 @@ RwBool CD3D1XIm3DPipeline::SubmitNode()
         g_pStateMgr->SetPrimitiveTopology( CD3D1XEnumParser::ConvertPrimTopology( im3dPoolStash.primType ) );
         // initialize shaders
         m_pVS->Set();
-        m_pPS->Set();
+        // The game draws smashed objects (e.g. a knocked-over lamppost) in immediate mode from the G-buffer pass. There every
+        // G-buffer target has to be written and nothing blended, or the pieces get the normals and depth of what is behind.
+        if ( m_uiDeferredStage == 1 )
+        {
+            m_pDeferredPS->Set();
+            g_pStateMgr->SetAlphaBlendEnable( FALSE );
+        }
+        else
+            m_pPS->Set();
         // draw mesh
         if ( im3dPoolStash.indices && im3dPoolStash.numIndices > 0 )
         {
