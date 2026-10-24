@@ -19,6 +19,9 @@
 #include "CustomCarFXPipeline.h"
 #include "DeferredRenderer.h"
 #include "D3D1XVertexDeclarationManager.h"
+#if (GTA_SA)
+#include <game_sa\CScene.h>
+#endif
 #include "D3D1XRenderBuffersManager.h"
 #include "D3D1XTextureMemoryManager.h"
 #include "CustomSeabedPipeline.h"
@@ -820,6 +823,7 @@ bool CRwD3D1XEngine::CameraBeginUpdate( RwCamera *camera )
     projTransformRef->m[3].x = -( ( camera->viewOffset.x ) * camera->recipViewWindow.x );
     projTransformRef->m[3].y = -( ( camera->viewOffset.y ) * camera->recipViewWindow.y );
 
+    const bool reversedZ = IsReversedZCamera( camera );
     if ( camera->projectionType == rwPARALLEL )
     {
         projTransformRef->m[2].z = 1.0f / ( camera->farPlane - camera->nearPlane );
@@ -833,6 +837,13 @@ bool CRwD3D1XEngine::CameraBeginUpdate( RwCamera *camera )
         projTransformRef->m[3].w = 0;
     }
     projTransformRef->m[3].z = -( projTransformRef->m[2].z * camera->nearPlane );
+    if ( reversedZ )
+    {
+        // near -> 1, far -> 0 (1 - standard depth): float depth keeps its precision far away
+        projTransformRef->m[2].z = projTransformRef->m[2].w - projTransformRef->m[2].z;
+        projTransformRef->m[3].z = projTransformRef->m[3].w - projTransformRef->m[3].z;
+    }
+    g_pStateMgr->SetReversedZ( reversedZ );
     // compute view-projection transform
 #if (GTA_SA)
     RwD3D9ActiveViewProjTransform = nullptr;
@@ -879,7 +890,18 @@ bool CRwD3D1XEngine::CameraEndUpdate( RwCamera *camera )
         //d3dRaster->resourse->EndRendering();
         m_pRenderer->EndUpdate( camera );
     dgGGlobals = nullptr;
+    g_pStateMgr->SetReversedZ( false );
     return true;
+}
+
+bool CRwD3D1XEngine::IsReversedZCamera( RwCamera *camera )
+{
+#if (GTA_SA)
+    // only the main scene camera: shadow maps, reflections etc. keep standard depth and their comparison samplers
+    return camera != nullptr && camera == Scene.m_pRwCamera;
+#else
+    return false;
+#endif
 }
 
 bool CRwD3D1XEngine::RasterShowRaster( RwRaster *raster, UINT flags )

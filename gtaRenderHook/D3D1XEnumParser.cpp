@@ -161,6 +161,8 @@ DXGI_FORMAT CD3D1XEnumParser::ConvertToSRVSupportedFormat( DXGI_FORMAT fmt )
         return DXGI_FORMAT_R32_FLOAT;
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
         return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
     default:
         return fmt;
     }
@@ -175,6 +177,8 @@ DXGI_FORMAT CD3D1XEnumParser::ConvertToTextureBufferSupportedFormat( DXGI_FORMAT
         return DXGI_FORMAT_R32_TYPELESS;
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
         return DXGI_FORMAT_R24G8_TYPELESS;
+    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        return DXGI_FORMAT_R32G8X24_TYPELESS;
     default:
         return fmt;
     }
@@ -262,8 +266,10 @@ void CD3D1XEnumParser::ConvertRasterFormat( RwRaster* raster, RwUInt32 flags )
     }
     if ( raster->cType == rwRASTERTYPEZBUFFER )
     {
+        // float depth with stencil: with reversed Z (see CRwD3D1XEngine::CameraBeginUpdate) its precision is
+        // nearly the same at every distance, 24-bit depth loses it quickly far away (z-fighting on distant geometry)
         if ( rasterPixelFmt == rwRASTERFORMATDEFAULT )
-            d3dRaster->format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+            d3dRaster->format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
     }
 }
 

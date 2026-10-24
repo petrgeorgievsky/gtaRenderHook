@@ -1,4 +1,5 @@
 // Fullscreen quad. Used for postprocessing
+#include "Globals.hlsl"
 
 //--------------------------------------------------------------------------------------
 // Variables
@@ -25,6 +26,9 @@ PS_QUAD_IN VS(VS_QUAD_IN i)
 {
     PS_QUAD_IN o;
     o.vPosition = i.vPosition;
+    // the quad sits at the far plane: 0 in a reversed Z depth buffer
+    if ( fReversedZ > 0 )
+        o.vPosition.z = o.vPosition.w - o.vPosition.z;
     o.vTexCoord = float4(i.vTexCoord, 0, 1);
     return o;
 }

@@ -31,7 +31,8 @@ struct ShaderRenderStateBuffer
     float	fFogRange;
     float	fFarClip;
     float fTimeStep;
-    float pad[3];
+    float fReversedZ;   // 1 while the bound depth buffer uses reversed Z (near = 1, far = 0)
+    float pad[2];
 };
 
 extern ShaderRenderStateBuffer g_shaderRenderStateBuffer;
@@ -64,6 +65,16 @@ public:
         Enables or disables writing to Z-Buffer.
     */
     void SetZWriteEnable( bool bEnable );
+    /*!
+        Changes depth test comparison function.
+    */
+    void SetDepthFunc( D3D11_COMPARISON_FUNC func );
+    /*!
+        Reversed Z (near = 1, far = 0) on or off for the following draws: depth comparisons are mirrored
+        (LESS <-> GREATER) and shaders see fReversedZ.
+    */
+    void SetReversedZ( bool reversed );
+    bool IsReversedZ() const { return m_bReversedZ; }
     /*!
         Changes current fill mode.
     */
@@ -381,6 +392,9 @@ private:
 
     bool						m_bRasterDescReqUpdate;
     bool						m_bDepthStencilDescReqUpdate;
+    bool						m_bReversedZ = false;
+    // depth function as requested, before the reversed Z mirroring
+    D3D11_COMPARISON_FUNC		m_depthFunc = D3D11_COMPARISON_LESS_EQUAL;
     bool						m_bBlendDescReqUpdate;
     bool						m_bSampDescReqUpdate;
     bool						m_bTopologyReqUpdate;
