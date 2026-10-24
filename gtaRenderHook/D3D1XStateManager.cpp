@@ -243,6 +243,14 @@ void CD3D1XStateManager::SetZWriteEnable( bool bEnable )
         m_bDepthStencilDescReqUpdate = true;
     }
 }
+void CD3D1XStateManager::SetDepthFunc( D3D11_COMPARISON_FUNC func )
+{
+    if ( m_depthStencilDesc.DepthFunc != func )
+    {
+        m_depthStencilDesc.DepthFunc = func;
+        m_bDepthStencilDescReqUpdate = true;
+    }
+}
 void CD3D1XStateManager::SetStencilEnable( BOOL bEnable )
 {
     if ( m_depthStencilDesc.StencilEnable != bEnable )

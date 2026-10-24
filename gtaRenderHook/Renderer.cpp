@@ -296,6 +296,9 @@ void CRendererRH::AddEntityToShadowCastersIfNeeded( CEntity * entity, bool check
         {
             for ( auto i = 0; i < gShadowSettings.ShadowCascadeCount; i++ )
             {
+                // cascades kept from an earlier frame aren't rendered
+                if ( !g_pDeferredRenderer->m_pShadowRenderer->IsCascadeUpdated( i ) )
+                    continue;
                 // Check if entity is inside light bounding volume 
                 isInsideLightBBox = IsAABBInsideBoundingVolume( ms_aShadowCasterBoundingPlanes[i], 5, entityBBox );
                 if ( isInsideLightBBox )

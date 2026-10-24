@@ -223,6 +223,7 @@ void CSAIdleHook::RenderInGame()
     // First forward pass(clouds, sky etc.)
     RenderForwardBeforeDeferred();
 
+    g_pDeferredRenderer->m_pShadowRenderer->m_bShadowHistoryValid = g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered;
     g_pDeferredRenderer->m_pShadowRenderer->m_bShadowsRendered = false;
     if ( !CGame::currArea && ( m_fShadowDNBalance < 1.0 ) )
         PrepareRealTimeShadows( sunDirs[curr_sun_dir] );
@@ -452,9 +453,11 @@ void CSAIdleHook::PrepareRealTimeShadows( const RwV3d &sundir )
     auto shadowRenderer = g_pDeferredRenderer->m_pShadowRenderer;
 
     shadowRenderer->CalculateShadowDistances( Scene.m_pRwCamera->nearPlane, Scene.m_pRwCamera->farPlane );
+    shadowRenderer->SelectCascadesToUpdate( sundir );
     // Render cascades
     for ( int i = 0; i < gShadowSettings.ShadowCascadeCount; i++ )
-        shadowRenderer->DirectionalLightTransform( Scene.m_pRwCamera, sundir, i );
+        if ( shadowRenderer->IsCascadeUpdated( i ) )
+            shadowRenderer->DirectionalLightTransform( Scene.m_pRwCamera, sundir, i );
 
     g_pDebug->printMsg( "Shadow PrePass: end", 1 );
 }
@@ -464,7 +467,9 @@ void CSAIdleHook::RenderRealTimeShadows( const RwV3d &sundir )
 
     auto shadowRenderer = g_pDeferredRenderer->m_pShadowRenderer;
     m_uiDeferredStage = 2;
-    RwCameraClear( shadowRenderer->m_pShadowCamera, gColourTop, rwCAMERACLEARZ );
+    // with some cascades kept from earlier frames, each re-rendered cascade clears its own region instead
+    if ( shadowRenderer->AllCascadesUpdated() )
+        RwCameraClear( shadowRenderer->m_pShadowCamera, gColourTop, rwCAMERACLEARZ );
 
     // Render cascades
     for ( int i = 0; i < gShadowSettings.ShadowCascadeCount; i++ )
