@@ -21,7 +21,6 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 enum rtao_slot_ids
 {
@@ -39,6 +38,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
       mCamera( params.mCamera ), mWidth( params.mWidth ),
       mHeight( params.mHeight )
 {
+    using namespace rh::engine;
     DescriptorGenerator descriptorGenerator{ Device };
     descriptorGenerator
         .AddDescriptor( 0, rtaoRTAS, 0, DescriptorType::RTAccelerationStruct, 1,
@@ -221,6 +221,7 @@ RTAOPass::RTAOPass( const RTAOInitParams &params )
 
 void RTAOPass::Execute( void *tlas, rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
     std::array<AccelStructUpdateInfo, 1> accel_ui = { { { tlas } } };

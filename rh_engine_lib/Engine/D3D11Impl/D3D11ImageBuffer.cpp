@@ -1,7 +1,8 @@
 #include "D3D11ImageBuffer.h"
 #include "D3D11Convert.h"
 #include <d3d11.h>
-using namespace rh::engine;
+namespace rh::engine
+{
 
 D3D11ImageBuffer::D3D11ImageBuffer(
     const D3D11ImageBufferCreateParams &create_params )
@@ -75,4 +76,6 @@ D3D11ImageBuffer::~D3D11ImageBuffer()
         mImage->Release();
         mImage = nullptr;
     }
+}
+
 }

@@ -13,7 +13,6 @@
 #include <rendering_loop/ray_tracing/CameraDescription.h>
 #include <rendering_loop/ray_tracing/RTSceneDescription.h>
 
-using namespace rh::engine;
 namespace rh::rw::engine::restir
 {
 
@@ -31,6 +30,7 @@ struct SpatialReusePassBind
 SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
     : SpatialReusePassBase( base )
 {
+    using namespace rh::engine;
 
     auto               &device = (VulkanDeviceState &)Device;
     DescriptorGenerator descriptor_generator{ device };
@@ -107,6 +107,7 @@ SpatialReusePass::SpatialReusePass( SpatialReusePassBase &&base )
 void SpatialReusePass::Execute( uint32_t                    light_count,
                                 rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
 
     auto *vk_cmd_buff       = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
     mPassParams.ScreenWidth = mWidth;

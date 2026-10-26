@@ -1,7 +1,7 @@
 #pragma once
 #include "DebugUtils/DebugLogger.h"
 #include "Engine/Common/types/string_typedefs.h"
-//#include <comdef.h>
+// #include <comdef.h>
 #include <sstream>
 
 /**
@@ -9,19 +9,19 @@
     D3D API specific wrapper, prints out debug message and error code in debug
    file and throws runtime error.
 */
-inline bool CALL_D3D_API( long                     callResult,
+inline bool CALL_D3D_API( long                      callResult,
                           const rh::engine::String &errorMessage )
 {
-    if ( callResult < 0  )
+    if ( callResult < 0 )
     {
         rh::engine::StringStream ss;
 
         rh::debug::DebugLogger::Error( errorMessage );
-
+        ss << "call result: " << std::hex << callResult;
         //_com_error err( callResult );
-        //ss << TEXT( "Error Desc:" ) << err.ErrorMessage() << std::endl;
+        // ss << TEXT( "Error Desc:" ) << err.ErrorMessage() << std::endl;
 
-       // MessageBox( nullptr, ss.str().c_str(), errorMessage.c_str(), 0 );
+        // MessageBox( nullptr, ss.str().c_str(), errorMessage.c_str(), 0 );
 
         rh::debug::DebugLogger::Log( ss.str(), rh::debug::LogLevel::Error );
 
@@ -36,21 +36,20 @@ inline bool CALL_D3D_API( long                     callResult,
     D3D API specific wrapper, prints out debug message and error code in debug
    file.
 */
-inline bool CALL_D3D_API_SILENT( long                    callResult,
+inline bool CALL_D3D_API_SILENT( long                      callResult,
                                  const rh::engine::String &errorMessage )
 {
-    if (  callResult < 0 )
+    if ( callResult < 0 )
     {
         rh::engine::StringStream ss;
 
         rh::debug::DebugLogger::Log( errorMessage, rh::debug::LogLevel::Error );
 
-        //_com_error err( callResult );
-        //ss << TEXT( "ERROR_DESC:" ) << err.ErrorMessage() << std::endl;
+        ss << "call result: " << std::hex << callResult;
 
         rh::debug::DebugLogger::Log( ss.str(), rh::debug::LogLevel::Error );
 
-       // MessageBox( nullptr, errorMessage.c_str(),
+        // MessageBox( nullptr, errorMessage.c_str(),
         //            TEXT( "RUNTIME SILENT ERROR" ), 0 );
 
         return false;

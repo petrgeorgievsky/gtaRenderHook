@@ -11,12 +11,12 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 DebugPipeline::DebugPipeline( const DebugPipelineInitParams &params )
     : Device( params.Device ), mWidth( params.mWidth ),
       mHeight( params.mHeight )
 {
+    using namespace rh::engine;
     auto &              device = (VulkanDeviceState &)Device;
     DescriptorGenerator descriptorGenerator{ device };
 

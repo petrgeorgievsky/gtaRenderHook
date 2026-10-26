@@ -4,7 +4,9 @@
 #include "VulkanDescriptorSetLayout.h"
 #include <DebugUtils/DebugLogger.h>
 
-using namespace rh::engine;
+namespace rh::engine
+{
+
 VulkanDescriptorSetAllocator::VulkanDescriptorSetAllocator(
     const VulkanDescriptorSetAllocatorCreateParams &create_params )
     : mDevice( create_params.mDevice )
@@ -15,7 +17,8 @@ VulkanDescriptorSetAllocator::VulkanDescriptorSetAllocator(
     // TODO: add ability to free desc_pool entries
     std::ranges::transform( create_params.mDescriptorPools,
                             std::back_inserter( pool_sizes ),
-                            []( const DescriptorPoolSize &pool_size ) {
+                            []( const DescriptorPoolSize &pool_size )
+                            {
                                 vk::DescriptorPoolSize vk_impl{};
                                 vk_impl.descriptorCount = pool_size.mCount;
                                 vk_impl.type = Convert( pool_size.mType );
@@ -42,7 +45,7 @@ VulkanDescriptorSetAllocator::~VulkanDescriptorSetAllocator()
 }
 
 std::vector<IDescriptorSet *>
-rh::engine::VulkanDescriptorSetAllocator::AllocateDescriptorSets(
+VulkanDescriptorSetAllocator::AllocateDescriptorSets(
     const DescriptorSetsAllocateParams &params )
 {
     vk::DescriptorSetAllocateInfo alloc_i{};
@@ -50,7 +53,9 @@ rh::engine::VulkanDescriptorSetAllocator::AllocateDescriptorSets(
     std::vector<vk::DescriptorSetLayout> set_layouts;
     set_layouts.reserve( params.mLayouts.Size() );
     std::ranges::for_each(
-        params.mLayouts, [&set_layouts]( IDescriptorSetLayout *layout ) {
+        params.mLayouts,
+        [&set_layouts]( IDescriptorSetLayout *layout )
+        {
             set_layouts.push_back(
                 *dynamic_cast<VulkanDescriptorSetLayout *>( layout ) );
         } );
@@ -69,7 +74,8 @@ rh::engine::VulkanDescriptorSetAllocator::AllocateDescriptorSets(
     result_set.reserve( result.value.size() );
 
     std::ranges::transform( result.value, std::back_inserter( result_set ),
-                            [this]( const auto &desc ) {
+                            [this]( const auto &desc )
+                            {
                                 return new VulkanDescriptorSet( {
                                     .mDevice  = mDevice,
                                     .mPool    = mPool,
@@ -78,3 +84,5 @@ rh::engine::VulkanDescriptorSetAllocator::AllocateDescriptorSets(
                             } );
     return result_set;
 }
+
+} // namespace rh::engine

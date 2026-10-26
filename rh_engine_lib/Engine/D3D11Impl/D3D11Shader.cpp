@@ -7,9 +7,9 @@
 #include <d3dcompiler.h>
 #include <filesystem>
 
-using namespace rh::engine;
-
-HRESULT rh::engine::CompileShaderFromFile( const std::string &fileName,
+namespace rh::engine
+{
+HRESULT CompileShaderFromFile( const std::string &fileName,
                                            const std::string &entryPoint,
                                            const std::string &shaderModel,
                                            ID3DBlob **        blobOut )
@@ -110,4 +110,6 @@ D3D11Shader::~D3D11Shader()
         mShaderImpl->Release();
     if ( mShaderBlob )
         mShaderBlob->Release();
+}
+
 }

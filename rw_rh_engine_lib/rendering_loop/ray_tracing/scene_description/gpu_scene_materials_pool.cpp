@@ -8,7 +8,6 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 GPUSceneMaterialsPool::GPUSceneMaterialsPool(
     rh::engine::IDescriptorSet *desc_set, uint64_t max_buffer_count,
     uint32_t materials_binding, uint32_t index_remap_binding )

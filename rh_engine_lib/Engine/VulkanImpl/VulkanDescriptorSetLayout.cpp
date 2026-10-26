@@ -1,8 +1,8 @@
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanCommon.h"
 #include "VulkanConvert.h"
-using namespace rh::engine;
-
+namespace rh::engine
+{
 constexpr vk::ShaderStageFlags ConvertShaderStage( uint32_t stage )
 {
     vk::ShaderStageFlags flags{};
@@ -37,8 +37,7 @@ constexpr vk::DescriptorBindingFlags ConvertDescriptorFlags( uint32_t flags )
         result |= vk::DescriptorBindingFlagBits::ePartiallyBound;
     return result;
 }
-namespace rh::engine
-{
+
 vk::DescriptorSetLayoutBinding Convert( const DescriptorBinding &desc )
 {
     vk::DescriptorSetLayoutBinding vk_desc_binding{};
@@ -49,7 +48,6 @@ vk::DescriptorSetLayoutBinding Convert( const DescriptorBinding &desc )
 
     return vk_desc_binding;
 }
-} // namespace rh::engine
 
 VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(
     const VulkanDescriptorSetLayoutCreateInfo &create_info )
@@ -86,4 +84,6 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(
 VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout()
 {
     mDevice.destroyDescriptorSetLayout( mDescSetLayoutImpl );
+}
+
 }

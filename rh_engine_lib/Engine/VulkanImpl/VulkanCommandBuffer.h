@@ -48,7 +48,7 @@ struct BlasBuildInfo
     IBuffer                                *TempBuffer;
 };
 
-class VulkanCommandBuffer : public ICommandBuffer
+class VulkanCommandBuffer final : public ICommandBuffer
 {
   public:
     VulkanCommandBuffer( vk::Device device, vk::CommandPool pool,
@@ -72,8 +72,7 @@ class VulkanCommandBuffer : public ICommandBuffer
                       const ArrayProxy<Scissor> &scissors ) override;
 
     void BindPipeline( IPipeline *pipeline ) override;
-    virtual void
-    BindDescriptorSets( const DescriptorSetBindInfo &bind_info ) override;
+    void BindDescriptorSets( const DescriptorSetBindInfo &bind_info ) override;
 
     void BindVertexBuffers(
         uint32_t                               start_id,
@@ -86,9 +85,8 @@ class VulkanCommandBuffer : public ICommandBuffer
                                  uint32_t first_index, uint32_t first_vertex,
                                  uint32_t first_instance ) override;
     ISyncPrimitive *ExecutionFinishedPrimitive() override;
-    virtual void
-    CopyBufferToImage( const BufferToImageCopyInfo &copy_info ) override;
-    virtual void PipelineBarrier( const PipelineBarrierInfo &info ) override;
+    void CopyBufferToImage( const BufferToImageCopyInfo &copy_info ) override;
+    void PipelineBarrier( const PipelineBarrierInfo &info ) override;
 
     void BuildBLAS( VulkanBottomLevelAccelerationStructure *blas,
                     IBuffer                                *scratch_buffer );

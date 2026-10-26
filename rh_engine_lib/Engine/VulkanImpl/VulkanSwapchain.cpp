@@ -6,8 +6,8 @@
 
 #include <ranges>
 
-using namespace rh::engine;
-
+namespace rh::engine
+{
 namespace
 {
 vk::PresentModeKHR
@@ -142,8 +142,9 @@ SwapchainFrame VulkanSwapchain::GetAvailableFrame( ISyncPrimitive *signal )
 {
     auto vk_signal_prim = static_cast<VulkanGPUSyncPrimitive *>( signal );
 
-    auto res = m_vkDevice.acquireNextImageKHR( m_vkSwapChain, UINT64_MAX,
-                                               *vk_signal_prim, nullptr );
+    auto res = m_vkDevice.acquireNextImageKHR(
+        m_vkSwapChain, UINT64_MAX,
+        static_cast<vk::Semaphore>( *vk_signal_prim ), nullptr );
     assert( res.result == vk::Result::eSuccess );
     auto image_id = res.value;
     return { m_vkSwapchainImageViews[image_id], mSwapchainFormat, image_id,
@@ -165,4 +166,6 @@ bool VulkanSwapchain::Present( uint32_t swapchain_img, ISyncPrimitive *waitFor )
     present_info.pImageIndices = &swapchain_img;
     auto result                = m_vkPresentQueue.presentKHR( present_info );
     return CALL_VK_API( result, "Failed to present image to surface" );
+}
+
 }

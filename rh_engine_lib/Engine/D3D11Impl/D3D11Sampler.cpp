@@ -1,6 +1,7 @@
 #include "D3D11Sampler.h"
 #include <d3d11.h>
-using namespace rh::engine;
+namespace rh::engine
+{
 
 D3D11Sampler::D3D11Sampler( const D3D11SamplerCreateParams &create_params )
 {
@@ -17,4 +18,6 @@ D3D11Sampler::~D3D11Sampler()
 {
     if ( mSampler )
         mSampler->Release();
+}
+
 }

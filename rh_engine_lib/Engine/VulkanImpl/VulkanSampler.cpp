@@ -4,8 +4,8 @@
 #include "Engine/Common/types/sampler_filter.h"
 #include <DebugUtils/DebugLogger.h>
 
-using namespace rh::engine;
-
+namespace rh::engine
+{
 VulkanSampler::VulkanSampler( const VulkanSamplerDesc &desc )
     : mDevice( desc.mDevice )
 {
@@ -77,3 +77,5 @@ VulkanSampler::VulkanSampler( const VulkanSamplerDesc &desc )
 }
 
 VulkanSampler::~VulkanSampler() { mDevice.destroySampler( mSamplerImpl ); }
+
+}

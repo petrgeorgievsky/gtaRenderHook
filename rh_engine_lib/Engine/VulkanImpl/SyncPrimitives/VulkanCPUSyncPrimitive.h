@@ -2,22 +2,22 @@
 
 #include <common.h>
 
-#include "Engine/Common/ISyncPrimitive.h"
+#include <Engine/Common/ISyncPrimitive.h>
 
 namespace rh::engine
 {
 
 /**
  * @brief CPU handle for GPU work synchronisation primitive(semaphore)
- * This primitive is sent to GPU and will be signaled
+ * This primitive is sent to the driver, and will be signaled by GPU.
  */
-class VulkanCPUSyncPrimitive : public ISyncPrimitive
+class VulkanCPUSyncPrimitive final : public ISyncPrimitive
 {
   public:
-    VulkanCPUSyncPrimitive( vk::Device device );
-    ~VulkanCPUSyncPrimitive();
+    explicit VulkanCPUSyncPrimitive( vk::Device device );
+    ~VulkanCPUSyncPrimitive() override;
 
-    operator vk::Fence();
+    explicit operator vk::Fence() const;
 
   private:
     vk::Device m_vkDevice = nullptr;

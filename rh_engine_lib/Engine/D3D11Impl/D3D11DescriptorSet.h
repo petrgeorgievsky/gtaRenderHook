@@ -18,12 +18,13 @@ struct D3D11DescriptorSetCreateParams
     IDescriptorSetLayout *mLayout;
 };
 
-enum class D3DDescriptorType : int32_t
+enum class D3DDescriptorType : uint8_t
 {
     ConstantBuffer = 0,
     ShaderResource = 1,
     Sampler        = 2,
 };
+
 struct D3D11ShaderResourceBinding
 {
     DescriptorType      mDescriptorType;
@@ -36,7 +37,7 @@ struct D3D11ShaderResourceBinding
 class D3D11DescriptorSet : public IDescriptorSet
 {
   public:
-    D3D11DescriptorSet( const D3D11DescriptorSetCreateParams &desc );
+    explicit D3D11DescriptorSet( const D3D11DescriptorSetCreateParams &desc );
     ~D3D11DescriptorSet() override;
     DescriptorType GetType( uint32_t binding_id ) override;
     void           BindToContext( ID3D11DeviceContext *context );

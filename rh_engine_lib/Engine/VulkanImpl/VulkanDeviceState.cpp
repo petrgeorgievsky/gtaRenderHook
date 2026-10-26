@@ -31,10 +31,10 @@
 #include <dxgi1_6.h>
 #include <wrl/client.h>
 
-using namespace rh;
-using namespace rh::engine;
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
+namespace rh::engine
+{
 static VKAPI_ATTR VkBool32 VKAPI_CALL
 VkDebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT /*messageSeverity*/,
                  VkDebugUtilsMessageTypeFlagsEXT /* messageType*/,
@@ -919,7 +919,7 @@ void VulkanDeviceState::Wait(
         []( ISyncPrimitive *fence ) -> vk::Fence
         {
             auto fence_impl = dynamic_cast<VulkanCPUSyncPrimitive *>( fence );
-            return *fence_impl;
+            return static_cast<vk::Fence>( *fence_impl );
         } );
 
     if ( !CALL_VK_API( m_vkDevice.waitForFences( fence_list, true, ~0u ),
@@ -951,7 +951,8 @@ void VulkanDeviceState::UpdateDescriptorSets(
     const DescriptorSetUpdateInfo &params )
 {
     vk::WriteDescriptorSet write_desc_set{};
-    write_desc_set.dstSet = *dynamic_cast<VulkanDescriptorSet *>( params.mSet );
+    write_desc_set.dstSet = static_cast<vk::DescriptorSet>(
+        *dynamic_cast<VulkanDescriptorSet *>( params.mSet ) );
     write_desc_set.dstBinding      = params.mBinding;
     write_desc_set.descriptorType  = Convert( params.mDescriptorType );
     write_desc_set.descriptorCount = static_cast<uint32_t>(
@@ -965,7 +966,8 @@ void VulkanDeviceState::UpdateDescriptorSets(
         []( const BufferUpdateInfo &info ) -> vk::DescriptorBufferInfo
         {
             vk::DescriptorBufferInfo buffer_info{};
-            buffer_info.buffer = *dynamic_cast<VulkanBuffer *>( info.mBuffer );
+            buffer_info.buffer = static_cast<vk::Buffer>(
+                *dynamic_cast<VulkanBuffer *>( info.mBuffer ) );
             buffer_info.offset = info.mOffset;
             buffer_info.range  = info.mRange;
             return buffer_info;
@@ -1122,3 +1124,5 @@ const DeviceLimitsInfo &VulkanDeviceState::GetLimits()
 {
     return m_aAdaptersInfo[m_uiCurrentAdapter].GetLimitsInfo();
 }
+
+} // namespace rh::engine

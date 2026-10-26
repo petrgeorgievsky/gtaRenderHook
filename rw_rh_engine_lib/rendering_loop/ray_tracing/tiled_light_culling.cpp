@@ -14,7 +14,6 @@
 #include <rendering_loop/DescriptorGenerator.h>
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 struct TileData
 {
     uint32_t light_count;
@@ -33,6 +32,7 @@ TiledLightCulling::TiledLightCulling( const TiledLightCullingParams &params )
     : mCameraDesc( params.mCameraDesc ), mWidth( params.mWidth ),
       mHeight( params.mHeight )
 {
+    using namespace rh::engine;
     auto &device = dynamic_cast<VulkanDeviceState &>( params.mDevice );
 
     mBuildTilesShader = device.CreateShader(
@@ -124,6 +124,7 @@ TiledLightCulling::TiledLightCulling( const TiledLightCullingParams &params )
 void TiledLightCulling::Execute( rh::engine::ICommandBuffer *dest,
                                  const AnalyticLightsState & info )
 {
+    using namespace rh::engine;
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( dest );
     if ( info.PointLights.Size() > 0 )
         mLightBuffer->Update( info.PointLights.Data(),

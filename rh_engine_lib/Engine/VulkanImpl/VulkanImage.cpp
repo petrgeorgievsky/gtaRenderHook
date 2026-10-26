@@ -3,7 +3,6 @@
 
 #include <vk_mem_alloc.h>
 
-using namespace rh::engine;
 namespace rh::engine
 {
 constexpr vk::ImageType Convert( ImageDimensions dims )
@@ -61,10 +60,8 @@ constexpr vk::ImageUsageFlags ConvertImageUsage( uint32_t flags )
         res_flags |= vk::ImageUsageFlagBits::eStorage;
     return res_flags;
 }
-} // namespace rh::engine
 
-rh::engine::VulkanImage::VulkanImage(
-    const VulkanImageBufferCreateParams &create_params )
+VulkanImage::VulkanImage( const VulkanImageBufferCreateParams &create_params )
     : mDevice( create_params.mDevice )
 {
     vk::ImageCreateInfo create_info_impl{};
@@ -106,3 +103,5 @@ VulkanImage::~VulkanImage()
     // mDevice.destroy( mImage );
     // mDevice.freeMemory( mImageMemory );
 }
+
+} // namespace rh::engine

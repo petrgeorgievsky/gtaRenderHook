@@ -9,12 +9,11 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
-DescriptorGenerator::DescriptorGenerator( IDeviceState &device )
+DescriptorGenerator::DescriptorGenerator( rh::engine::IDeviceState &device )
     : Device( device )
 {
 }
-IDescriptorSetLayout *
+rh::engine::IDescriptorSetLayout *
 DescriptorGenerator::FinalizeDescriptorSet( uint32_t set, uint32_t max_count )
 {
     DescriptorSets[set].max_count = max_count;
@@ -24,7 +23,7 @@ DescriptorGenerator::FinalizeDescriptorSet( uint32_t set, uint32_t max_count )
 rh::engine::IDescriptorSetAllocator *DescriptorGenerator::FinalizeAllocator()
 {
     uint32_t                        max_sets = 0;
-    std::vector<DescriptorPoolSize> pool_sizes;
+    std::vector<rh::engine::DescriptorPoolSize> pool_sizes;
     for ( auto &&[id, info] : DescriptorSets )
     {
         for ( const auto &binding : info.bindings )

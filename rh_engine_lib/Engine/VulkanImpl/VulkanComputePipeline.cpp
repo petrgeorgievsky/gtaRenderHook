@@ -1,8 +1,8 @@
 //
 // Created by peter on 12.05.2020.
 //
-
 #include "VulkanComputePipeline.h"
+
 #include "VulkanCommon.h"
 #include "VulkanConvert.h"
 #include "VulkanPipelineLayout.h"
@@ -10,13 +10,14 @@
 
 namespace rh::engine
 {
+
 VulkanComputePipeline::VulkanComputePipeline(
     const VulkanComputePipelineCreateInfo &create_info )
     : mDevice( create_info.mDevice )
 {
     vk::ComputePipelineCreateInfo vk_ci{};
 
-    vk_ci.layout = *static_cast<VulkanPipelineLayout *>( create_info.mLayout );
+    vk_ci.layout = *dynamic_cast<VulkanPipelineLayout *>( create_info.mLayout );
     vk::PipelineShaderStageCreateInfo vk_desc{};
     vk_desc.stage = Convert( create_info.mShaderStage.mStage );
     vk_desc.pName = create_info.mShaderStage.mEntryPoint.c_str();
@@ -26,8 +27,10 @@ VulkanComputePipeline::VulkanComputePipeline(
 
     mPipelineImpl = mDevice.createComputePipeline( nullptr, vk_ci ).value;
 }
+
 VulkanComputePipeline::~VulkanComputePipeline()
 {
     mDevice.destroyPipeline( mPipelineImpl );
 }
+
 } // namespace rh::engine

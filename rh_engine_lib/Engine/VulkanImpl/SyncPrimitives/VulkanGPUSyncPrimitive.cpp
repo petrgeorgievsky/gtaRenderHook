@@ -10,11 +10,12 @@ VulkanGPUSyncPrimitive::VulkanGPUSyncPrimitive( vk::Device device )
     auto result = m_vkDevice.createSemaphore( {} );
     if ( result.result != vk::Result::eSuccess )
     {
-        debug::DebugLogger::ErrorFmt( "Failed to create sampler:%s",
+        debug::DebugLogger::ErrorFmt( "Failed to create semaphore:%s",
                                       vk::to_string( result.result ).c_str() );
+        std::terminate(); // < That generally shouldn't happen, if it does -
+                          // something went wrong!
     }
-    else
-        m_vkSyncPrim = result.value;
+    m_vkSyncPrim = result.value;
 }
 
 VulkanGPUSyncPrimitive::~VulkanGPUSyncPrimitive()
@@ -22,5 +23,6 @@ VulkanGPUSyncPrimitive::~VulkanGPUSyncPrimitive()
     m_vkDevice.destroySemaphore( m_vkSyncPrim );
 }
 
-VulkanGPUSyncPrimitive::operator vk::Semaphore() { return m_vkSyncPrim; }
+VulkanGPUSyncPrimitive::operator vk::Semaphore() const { return m_vkSyncPrim; }
+
 } // namespace rh::engine

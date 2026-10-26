@@ -17,14 +17,13 @@
 namespace rh::rw::engine
 {
 
-using namespace rh::engine;
-
 constexpr auto SceneDescCallbacksId = 0x52;
 
 RTSceneDescription::RTSceneDescription(
     const RTSceneDescriptionCreateInfo &info )
     : Device( info.Device ), Resources( info.Resources )
 {
+    using namespace rh::engine;
 
     constexpr auto draw_count_limit     = 10000;
     constexpr auto model_count_limit    = 20000;

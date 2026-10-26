@@ -9,13 +9,13 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 uint64_t CameraDescription::Id = UninitializedId;
 
 CameraDescription::CameraDescription( const RendererBase &renderer )
     : Device( renderer.Device )
 {
+    using namespace rh::engine;
     DescriptorGenerator descriptorGenerator{ Device };
     descriptorGenerator.AddDescriptor(
         0, 0, 0, DescriptorType::ROBuffer, 1,

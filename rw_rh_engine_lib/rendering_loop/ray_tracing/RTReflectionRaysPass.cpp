@@ -18,14 +18,14 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 RTReflectionRaysPass::RTReflectionRaysPass(
     const RTReflectionInitParams &params )
-    : Device( params.Device ), mCamera( params.mCamera ),
-      mScene( params.mScene ), mHeight( params.mHeight ),
-      mWidth( params.mWidth )
+    : Device( params.Device ), mWidth( params.mWidth ),
+      mHeight( params.mHeight ), mScene( params.mScene ),
+      mCamera( params.mCamera )
 {
+    using namespace rh::engine;
 
     auto &              device = Device;
     DescriptorGenerator descriptorGenerator{ device };
@@ -247,6 +247,7 @@ RTReflectionRaysPass::RTReflectionRaysPass(
 void RTReflectionRaysPass::Execute( void *                      tlas,
                                     rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     //
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 

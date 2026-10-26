@@ -12,11 +12,12 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
-ImageMemoryBarrierInfo GetLayoutTransformBarrier( IImageBuffer *buffer,
-                                                  ImageLayout   src,
-                                                  ImageLayout   dst )
+rh::engine::ImageMemoryBarrierInfo
+GetLayoutTransformBarrier( rh::engine::IImageBuffer *buffer,
+                           rh::engine::ImageLayout   src,
+                           rh::engine::ImageLayout   dst )
 {
+    using namespace rh::engine;
     return { .mImage           = buffer,
              .mSrcLayout       = src,
              .mDstLayout       = dst,
@@ -24,9 +25,11 @@ ImageMemoryBarrierInfo GetLayoutTransformBarrier( IImageBuffer *buffer,
              .mDstMemoryAccess = MemoryAccessFlags::MemoryWrite,
              .mSubresRange     = { 0, 1, 0, 1 } };
 }
-IImageBuffer *Create2DRenderTargetBuffer( rh::engine::IDeviceState &device,
-                                          uint32_t w, uint32_t h,
-                                          ImageBufferFormat f, uint32_t usage )
+
+rh::engine::IImageBuffer *
+Create2DRenderTargetBuffer( rh::engine::IDeviceState &device, uint32_t w,
+                            uint32_t h, rh::engine::ImageBufferFormat f,
+                            uint32_t usage )
 {
     using namespace rh::engine;
     return device.CreateImageBuffer( { .mDimension = ImageDimensions::d2D,

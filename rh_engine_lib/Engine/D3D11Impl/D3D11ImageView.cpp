@@ -2,7 +2,8 @@
 #include "D3D11ImageBuffer.h"
 #include <d3d11.h>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 D3D11ImageView::D3D11ImageView(
     const D3D11ImageViewCreateParams &create_params )
@@ -86,4 +87,6 @@ D3D11ImageView::~D3D11ImageView()
         mSRView->Release();
         mSRView = nullptr;
     }
+}
+
 }

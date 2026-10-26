@@ -17,17 +17,16 @@
 #include <rw_engine/rw_rh_skin_pipeline.h>
 #include <rw_game_hooks.h>
 
-using namespace rh::engine;
-using namespace rh::rw::engine;
 
 bool true_ret_hook() { return true; }
 bool false_ret_hook() { return false; }
 
-static RpGeometryRw36 geometry_interface_35{};
+static rh::rw::engine::RpGeometryRw36 geometry_interface_35{};
 
 static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
                                        const RxPipelineNodeParam *params )
 {
+    using namespace rh::rw::engine;
     RpAtomic *atomic;
 
     atomic           = static_cast<RpAtomic *>( params->dataParam );
@@ -74,6 +73,7 @@ static int32_t D3D8AtomicAllInOneNode( void * /*self*/,
 static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
                                            const RxPipelineNodeParam *params )
 {
+    using namespace rh::rw::engine;
     RpAtomic *atomic;
 
     atomic           = static_cast<RpAtomic *>( params->dataParam );
@@ -85,7 +85,7 @@ static int32_t D3D8SkinAtomicAllInOneNode( void * /*self*/,
          RenderStatus::Instanced )
         return 0;
 
-    const RwMatrix *ltm = ::RwFrameGetLTM(
+    const RwMatrix *ltm = RwFrameGetLTM(
         static_cast<RwFrame *>( rwObject::GetParent( atomic ) ) );
     DrawAtomic( atomic, &geometry_interface_35,
                 [&ltm, atomic]( ResEnty *res_entry )
@@ -193,6 +193,7 @@ int32_t rwDevicePluginInit() { return 1; }
 BOOL APIENTRY DllMain( HMODULE /*hModule*/, DWORD ul_reason_for_call,
                        LPVOID /*lpReserved*/ )
 {
+    using namespace rh::rw::engine;
     switch ( ul_reason_for_call )
     {
     case DLL_PROCESS_ATTACH:

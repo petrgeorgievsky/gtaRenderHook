@@ -17,9 +17,10 @@ BilateralFilterPass::BilateralFilterPass(
     BilateralFilterPipeline *pipeline, const BilateralFilterPassParams &params )
     : mPassParams( params ), mParent( pipeline )
 {
+    using namespace rh::engine;
+
     mTempImageBuffer   = params.mTempImageBuffer;
     mOutputImageBuffer = params.mOutputImageBuffer;
-    using namespace rh::engine;
 
     auto desc_sets = mParent->mDescAllocator->AllocateDescriptorSets(
         { { mParent->mDynamicBlurDescSetLayout,

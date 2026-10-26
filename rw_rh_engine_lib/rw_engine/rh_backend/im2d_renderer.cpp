@@ -23,7 +23,6 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 constexpr auto VERTEX_COUNT_LIMIT     = 100000;
 constexpr auto INDEX_COUNT_LIMIT      = 100000;
@@ -37,6 +36,7 @@ Im2DRenderer::Im2DRenderer( rh::engine::IDeviceState &device,
                             rh::engine::IRenderPass  *render_pass )
     : Device( device ), RasterPool( raster_pool ), mCamDesc( cdsec )
 {
+    using namespace rh::engine;
     mRenderPass = render_pass;
     // screen stuff
     DescriptorGenerator d_gen{ Device };
@@ -280,6 +280,7 @@ struct PackedSamplerState
 uint64_t Im2DRenderer::Render( const Im2DRenderState      &state,
                                rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     // Update buffers
     if ( state.IndexBuffer.Size() > 0 )
         mIndexBuffer->Update( state.IndexBuffer.Data(),
@@ -374,6 +375,7 @@ uint64_t Im2DRenderer::Render( const Im2DRenderState      &state,
 void Im2DRenderer::DrawQuad( rh::engine::IImageView     *texture,
                              rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     auto w = 1.0f;
     auto h = 1.0f;
 
@@ -429,6 +431,7 @@ void Im2DRenderer::DrawQuad( rh::engine::IImageView     *texture,
 rh::engine::IDescriptorSet *
 Im2DRenderer::GetRasterDescSet( uint64_t id, uint8_t sampler_hash )
 {
+    using namespace rh::engine;
     // auto cache_entry = mTextureCache.find( id );
     // if ( cache_entry != mTextureCache.end() )
     //    return cache_entry->second;
@@ -492,8 +495,9 @@ void Im2DRenderer::DrawQuad( uint64_t                    texture_id,
 }
 void Im2DRenderer::Reset() { mVertexBufferOffset = 0; }
 
-AttachmentBlendState UnpackBlendState( const PackedIm2DState &s )
+rh::engine::AttachmentBlendState UnpackBlendState( const PackedIm2DState &s )
 {
+    using namespace rh::engine;
     return { .srcBlend       = static_cast<BlendOp>( s.s_val.srcBlendState ),
              .destBlend      = static_cast<BlendOp>( s.s_val.destBlendState ),
              .blendCombineOp = BlendCombineOp::Add,
@@ -505,6 +509,7 @@ AttachmentBlendState UnpackBlendState( const PackedIm2DState &s )
 
 rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
 {
+    using namespace rh::engine;
     if ( mIm2DPipelines.contains( hash ) )
         return mIm2DPipelines.at( hash );
 
@@ -565,6 +570,7 @@ rh::engine::IPipeline *Im2DRenderer::GetCachedPipeline( uint64_t hash )
 
 rh::engine::ISampler *Im2DRenderer::GetCachedSampler( uint8_t hash )
 {
+    using namespace rh::engine;
     if ( mSamplerCache.contains( hash ) )
         return mSamplerCache.at( hash );
 
@@ -587,6 +593,7 @@ rh::engine::ISampler *Im2DRenderer::GetCachedSampler( uint8_t hash )
 void Im2DRenderer::DrawDepthMask( rh::engine::IImageView     *texture,
                                   rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     auto w = 1.0f;
     auto h = 1.0f;
 

@@ -2,7 +2,8 @@
 #include "D3D11Swapchain.h"
 #include <Windows.h>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 D3D11Window::D3D11Window( const D3D11WindowCreateParams &params )
 {
@@ -81,3 +82,5 @@ bool D3D11Window::SetWindowParamsImpl( const WindowParams &params )
 }
 
 const WindowParams &D3D11Window::GetWindowParams() { return mCurrentParams; }
+
+}

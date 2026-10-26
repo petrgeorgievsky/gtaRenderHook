@@ -9,7 +9,6 @@
 #include <memory_resource>
 #include <span>
 
-using namespace rh::engine;
 namespace rh::engine
 {
 vk::PipelineColorBlendAttachmentState
@@ -76,7 +75,6 @@ Convert( const DepthStencilState &state )
     res.depthCompareOp = Convert( state.depthComparisonFunc );
     return res;
 }
-} // namespace rh::engine
 
 VulkanPipeline::VulkanPipeline( const VulkanPipelineCreateInfo &create_info )
     : mDevice( create_info.mDevice )
@@ -176,7 +174,7 @@ VulkanPipeline::VulkanPipeline( const VulkanPipelineCreateInfo &create_info )
     vk_create_info.pRasterizationState = &raster_state;
 
     vk::PipelineInputAssemblyStateCreateInfo ia_state{};
-    ia_state.topology                  = Convert( create_info.mTopology );
+    ia_state.topology                  = ConvertVk( create_info.mTopology );
     vk_create_info.pInputAssemblyState = &ia_state;
 
     vk::PipelineMultisampleStateCreateInfo ms_state{};
@@ -205,3 +203,4 @@ VulkanPipeline::~VulkanPipeline()
     if ( mPipelineImpl )
         mDevice.destroyPipeline( mPipelineImpl );
 }
+} // namespace rh::engine

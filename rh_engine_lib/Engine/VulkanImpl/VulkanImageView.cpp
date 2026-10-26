@@ -2,7 +2,8 @@
 #include "VulkanConvert.h"
 #include "VulkanImage.h"
 #include <DebugUtils/DebugLogger.h>
-using namespace rh::engine;
+namespace rh::engine
+{
 /*
 VulkanImageView::VulkanImageView( vk::ImageView view )
     : m_vkImageView( view ), m_bOwner( false )
@@ -64,4 +65,6 @@ VulkanImageView::~VulkanImageView()
 {
     if ( m_bOwner )
         m_vkDevice.destroyImageView( m_vkImageView );
+}
+
 }

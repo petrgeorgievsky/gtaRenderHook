@@ -66,8 +66,6 @@ VulkanTopLevelAccelerationStructure::~VulkanTopLevelAccelerationStructure()
     mDevice.destroyAccelerationStructureKHR( mAccel );
     mDevice.destroyBuffer( mBuffer );
     vmaFreeMemory( mAllocator, mAllocation );
-    /*mDevice.destroyAccelerationStructureNV( mAccel );
-    mDevice.freeMemory( mAccelMemory );*/
 }
 
 std::uint64_t VulkanTopLevelAccelerationStructure::GetScratchSize()

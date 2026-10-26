@@ -310,7 +310,7 @@ constexpr vk::Format Convert( InputElementType el_type )
     return vk::Format::eUndefined;
 }
 
-constexpr vk::PrimitiveTopology Convert( PrimitiveType el_type )
+constexpr vk::PrimitiveTopology ConvertVk( PrimitiveType el_type )
 {
     switch ( el_type )
     {

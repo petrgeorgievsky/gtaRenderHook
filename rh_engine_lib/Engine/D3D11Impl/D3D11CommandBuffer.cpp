@@ -10,7 +10,8 @@
 #include <d3d11.h>
 #include <ranges>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 D3D11CommandBuffer::D3D11CommandBuffer(
     const D3D11CommandBufferCreateParams &create_params )
@@ -55,9 +56,9 @@ void D3D11CommandBuffer::BeginRenderPass( const RenderPassBeginInfo &params )
     std::vector<ID3D11RenderTargetView *> d3d_rtv_vec;
     for ( const auto &color_attachment : subpass.mColorAttachments )
     {
-        int   attachment_id   = color_attachment.mAttachmentId;
-        auto  attachment_info = attachments[attachment_id];
-        auto *d3d_img_view    = dynamic_cast<D3D11ImageView *>(
+        uint32_t attachment_id   = color_attachment.mAttachmentId;
+        auto     attachment_info = attachments[attachment_id];
+        auto    *d3d_img_view    = dynamic_cast<D3D11ImageView *>(
             d3d_fb->GetImageView( static_cast<uint8_t>( attachment_id ) ) );
         ID3D11View *img_view = ( d3d_img_view )->GetRTV();
         d3d_rtv_vec.push_back(
@@ -80,9 +81,9 @@ void D3D11CommandBuffer::BeginRenderPass( const RenderPassBeginInfo &params )
     ID3D11DepthStencilView *d3d_dsv = nullptr;
     if ( subpass.mDepthStencilAttachment )
     {
-        int  attachment_id   = subpass.mDepthStencilAttachment->mAttachmentId;
-        auto attachment_info = attachments[attachment_id];
-        auto d3d_img_view    = dynamic_cast<D3D11ImageView *>(
+        uint32_t attachment_id = subpass.mDepthStencilAttachment->mAttachmentId;
+        auto     attachment_info = attachments[attachment_id];
+        auto     d3d_img_view    = dynamic_cast<D3D11ImageView *>(
             d3d_fb->GetImageView( static_cast<uint8_t>( attachment_id ) ) );
         ID3D11View *img_view = ( d3d_img_view )->GetDSV();
         d3d_dsv = reinterpret_cast<ID3D11DepthStencilView *>( img_view );
@@ -121,12 +122,16 @@ void D3D11CommandBuffer::BindVertexBuffers(
     std::vector<uint32_t>       vertex_offsets;
     std::vector<uint32_t>       vertex_strides;
 
-    std::ranges::for_each( buffers, [&]( const VertexBufferBinding &binding ) {
-        auto buffer = dynamic_cast<D3D11Buffer *>( binding.mBuffer )->GetImpl();
-        vertex_buffers.push_back( buffer );
-        vertex_strides.push_back( binding.mStride );
-        vertex_offsets.push_back( binding.mOffset );
-    } );
+    std::ranges::for_each(
+        buffers,
+        [&]( const VertexBufferBinding &binding )
+        {
+            auto buffer =
+                dynamic_cast<D3D11Buffer *>( binding.mBuffer )->GetImpl();
+            vertex_buffers.push_back( buffer );
+            vertex_strides.push_back( binding.mStride );
+            vertex_offsets.push_back( binding.mOffset );
+        } );
 
     mContext->IASetVertexBuffers( start_id, static_cast<UINT>( buffers.Size() ),
                                   vertex_buffers.data(), vertex_strides.data(),
@@ -163,14 +168,15 @@ void D3D11CommandBuffer::DrawIndexed( uint32_t index_count,
                                       uint32_t first_instance )
 {
     if ( instance_count > 1 )
-        mContext->DrawIndexedInstanced( index_count, instance_count,
-                                        first_index, first_vertex,
-                                        first_instance );
+        mContext->DrawIndexedInstanced(
+            index_count, instance_count, first_index,
+            static_cast<INT>( first_vertex ), first_instance );
     else
-        mContext->DrawIndexed( index_count, first_index, first_vertex );
+        mContext->DrawIndexed( index_count, first_index,
+                               static_cast<INT>( first_vertex ) );
 }
 
-void rh::engine::D3D11CommandBuffer::BindDescriptorSets(
+void D3D11CommandBuffer::BindDescriptorSets(
     const DescriptorSetBindInfo &bind_info )
 {
     for ( auto desc_set : bind_info.mDescriptorSets )
@@ -180,14 +186,13 @@ void rh::engine::D3D11CommandBuffer::BindDescriptorSets(
     }
 }
 
-void rh::engine::D3D11CommandBuffer::CopyBufferToImage(
+void D3D11CommandBuffer::CopyBufferToImage(
     const BufferToImageCopyInfo & /*copy_info*/ )
 {
     // mContext->CopySubresourceRegion()
 }
 
-void rh::engine::D3D11CommandBuffer::PipelineBarrier(
-    const PipelineBarrierInfo & /*info*/ )
+void D3D11CommandBuffer::PipelineBarrier( const PipelineBarrierInfo & /*info*/ )
 {
 }
 
@@ -199,7 +204,8 @@ void D3D11CommandBuffer::SetViewports( uint32_t                    start_id,
         std::vector<D3D11_VIEWPORT> vp;
 
         std::ranges::transform( viewports, std::back_inserter( vp ),
-                                []( const ViewPort &vport ) {
+                                []( const ViewPort &vport )
+                                {
                                     D3D11_VIEWPORT view_port{};
                                     view_port.Width    = vport.width;
                                     view_port.Height   = vport.height;
@@ -232,3 +238,5 @@ void D3D11CommandBuffer::CopyImageToBuffer(
 {
     // TODO: Implement
 }
+
+} // namespace rh::engine

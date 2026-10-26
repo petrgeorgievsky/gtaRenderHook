@@ -4,8 +4,8 @@
 #include "VulkanCommon.h"
 #include "VulkanImageView.h"
 
-using namespace rh::engine;
-
+namespace rh::engine
+{
 VulkanDeviceOutputView::VulkanDeviceOutputView(
     HWND window, vk::Instance instance, vk::PhysicalDevice gpu,
     vk::Device device, vk::Queue queue, uint32_t graphicsQueueFamilyIdx )
@@ -135,4 +135,6 @@ bool rh::engine::VulkanDeviceOutputView::SetFullscreenFlag( bool flag )
 IImageView *VulkanDeviceOutputView::GetImageView( uint32_t id )
 {
     return m_vkSwapchainImageViews[id];
+}
+
 }

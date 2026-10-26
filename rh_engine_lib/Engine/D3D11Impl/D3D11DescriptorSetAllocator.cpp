@@ -1,8 +1,8 @@
 #include "D3D11DescriptorSetAllocator.h"
 #include "D3D11DescriptorSet.h"
 #include <algorithm>
-using namespace rh::engine;
-
+namespace rh::engine
+{
 D3D11DescriptorSetAllocator::D3D11DescriptorSetAllocator(
     const DescriptorSetAllocatorCreateParams & /*desc*/ )
 {
@@ -26,4 +26,6 @@ D3D11DescriptorSetAllocator::AllocateDescriptorSets(
                             } );
 
     return result;
+}
+
 }

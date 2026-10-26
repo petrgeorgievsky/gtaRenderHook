@@ -6,8 +6,8 @@
 #include <cassert>
 #include <d3d11.h>
 
-using namespace rh::engine;
-
+namespace rh::engine
+{
 constexpr D3D11_PRIMITIVE_TOPOLOGY Convert( PrimitiveType el_type )
 {
     switch ( el_type )
@@ -118,4 +118,6 @@ void D3D11Pipeline::BindToContext( ID3D11DeviceContext *context )
     context->PSSetShader( mShaderBindTable.mPixelShader, nullptr, 0 );
     context->RSSetState( mRasterizerState );
     context->OMSetBlendState( mBlendState, nullptr, 0 );
+}
+
 }

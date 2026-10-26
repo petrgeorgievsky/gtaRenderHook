@@ -1,6 +1,6 @@
 #include "D3D11Framebuffer.h"
-using namespace rh::engine;
-
+namespace rh::engine
+{
 D3D11Framebuffer::D3D11Framebuffer(
     const FrameBufferCreateParams &create_params )
 {
@@ -12,7 +12,10 @@ D3D11Framebuffer::D3D11Framebuffer(
 D3D11Framebuffer::~D3D11Framebuffer() {}
 
 const FrameBufferInfo &D3D11Framebuffer::GetInfo() const { return mInfo; }
+
 IImageView *           D3D11Framebuffer::GetImageView( uint8_t id )
 {
     return mImageViews[id];
+}
+
 }

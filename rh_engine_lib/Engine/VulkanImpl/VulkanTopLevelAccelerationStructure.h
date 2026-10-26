@@ -56,7 +56,6 @@ class VulkanTopLevelAccelerationStructure
 
     VmaAllocator     mAllocator;
     VmaAllocation    mAllocation{};
-    vk::DeviceMemory mAccelMemory;
     std::uint64_t    mScratchSize;
     friend class VulkanCommandBuffer;
 };

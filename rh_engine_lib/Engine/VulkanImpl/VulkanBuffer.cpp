@@ -2,7 +2,8 @@
 
 #include <vk_mem_alloc.h>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 vk::BufferUsageFlags ConvertUsage( uint32_t flags )
 {
@@ -46,13 +47,7 @@ VulkanBuffer::VulkanBuffer( const VulkanBufferCreateInfo &create_info )
     vk_create_info.size        = create_info.mSize;
     vk_create_info.usage       = ConvertUsage( create_info.mUsage );
     mAllocator                 = create_info.mAllocator->GetImpl();
-    // mBuffer                    = mDevice.createBuffer( vk_create_info );
-    // auto memory_req            = mDevice.getBufferMemoryRequirements( mBuffer
-    // );
 
-    // mDevice.memory
-    /// TODO: Compute allocation requirements carefully, allow for custom
-    /// allocations
     VmaAllocationCreateInfo allocInfo = {};
     if ( create_info.mFlags == DynamicGPUOnly )
         allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -63,12 +58,6 @@ VulkanBuffer::VulkanBuffer( const VulkanBufferCreateInfo &create_info )
     vmaCreateBuffer( mAllocator, &bufferCreateInfo, &allocInfo, &buffer,
                      &mAllocation, nullptr );
     mBuffer = buffer;
-    /*
-        VulkanMemoryAllocationInfo alloc_info{};
-        alloc_info.mRequirements = memory_req;
-        alloc_info.mDeviceLocal  = false;
-        mBufferMemory = create_info.mAllocator->AllocateDeviceMemory( alloc_info
-       );*/
 
     if ( create_info.mInitDataPtr )
     {
@@ -76,15 +65,11 @@ VulkanBuffer::VulkanBuffer( const VulkanBufferCreateInfo &create_info )
         vmaMapMemory( mAllocator, mAllocation, &mapped_memory );
         memcpy( mapped_memory, create_info.mInitDataPtr, create_info.mSize );
         vmaUnmapMemory( mAllocator, mAllocation );
-        // mDevice.unmapMemory( mBufferMemory );
     }
-    // mDevice.bindBufferMemory( mBuffer, mBufferMemory, 0 );
 }
 
 VulkanBuffer::~VulkanBuffer()
 {
-    /*mDevice.destroyBuffer( mBuffer );
-    mDevice.freeMemory( mBufferMemory );*/
     vmaDestroyBuffer( mAllocator, mBuffer, mAllocation );
 }
 
@@ -96,18 +81,22 @@ void VulkanBuffer::Update( const void *data, uint32_t size )
     vmaUnmapMemory( mAllocator, mAllocation );
 }
 
-void rh::engine::VulkanBuffer::Update( const void *data, uint32_t size,
+void VulkanBuffer::Update( const void *data, uint32_t size,
                                        uint32_t offset )
 {
     void *mapped_memory;
     vmaMapMemory( mAllocator, mAllocation, &mapped_memory );
-    memcpy( reinterpret_cast<char *>( mapped_memory ) + offset, data, size );
+    memcpy( static_cast<char *>( mapped_memory ) + offset, data, size );
     vmaUnmapMemory( mAllocator, mAllocation );
 }
+
 void *VulkanBuffer::Lock()
 {
     void *mapped_memory;
     vmaMapMemory( mAllocator, mAllocation, &mapped_memory );
     return mapped_memory;
 }
+
 void VulkanBuffer::Unlock() { vmaUnmapMemory( mAllocator, mAllocation ); }
+
+}

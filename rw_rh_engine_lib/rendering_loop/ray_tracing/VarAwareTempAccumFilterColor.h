@@ -62,7 +62,7 @@ class VATAColorFilterPass
     uint32_t                          mHeight{};
     struct TAParams
     {
-        float accumulation = 0.95;
+        float accumulation = 0.95f;
         float pad[3];
     } mParams;
     SPtr<rh::engine::IBuffer> mParamsBuffer;

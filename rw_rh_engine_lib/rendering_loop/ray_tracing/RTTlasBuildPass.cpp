@@ -8,11 +8,11 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 RTTlasBuildPass::RTTlasBuildPass( rh::engine::IDeviceState &device )
     : Device( device )
 {
+    using namespace rh::engine;
     mTlasScratchBuffer =
         Device.CreateBuffer( { .mSize  = 1024 * 1024 * 8,
                                .mUsage = BufferUsage::RayTracingScratch,
@@ -35,9 +35,11 @@ RTTlasBuildPass::~RTTlasBuildPass()
     delete mTlasBuffer;
 }
 
-VulkanTopLevelAccelerationStructure *RTTlasBuildPass::Execute(
-    std::vector<VkAccelerationStructureInstanceKHR> &&instance_buffer )
+rh::engine::VulkanTopLevelAccelerationStructure *RTTlasBuildPass::Execute(
+    std::vector<rh::engine::VkAccelerationStructureInstanceKHR>
+        &&instance_buffer )
 {
+    using namespace rh::engine;
     auto &device = dynamic_cast<VulkanDeviceState &>( Device );
 
     auto tlas = device.CreateTLAS( { .mMaxInstanceCount = static_cast<uint32_t>(
@@ -63,9 +65,11 @@ VulkanTopLevelAccelerationStructure *RTTlasBuildPass::Execute(
                              sizeof( VkAccelerationStructureInstanceKHR ) );
     return tlas;
 }
-CommandBufferSubmitInfo
-RTTlasBuildPass::GetSubmitInfo( ISyncPrimitive *dependency )
+
+rh::engine::CommandBufferSubmitInfo
+RTTlasBuildPass::GetSubmitInfo( rh::engine::ISyncPrimitive *dependency )
 {
+    using namespace rh::engine;
     return { mTlasCmdBuffer,
              dependency ? std::vector{ dependency }
                         : std::vector<ISyncPrimitive *>{},

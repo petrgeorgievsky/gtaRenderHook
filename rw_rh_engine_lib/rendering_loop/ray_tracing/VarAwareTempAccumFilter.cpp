@@ -12,7 +12,6 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 namespace reproject_slot_ids
 {
@@ -40,6 +39,7 @@ VarAwareTempAccumFilterPipe::VarAwareTempAccumFilterPipe(
     rh::engine::IDeviceState &device )
     : Device( device )
 {
+    using namespace rh::engine;
     auto &vk_device = (VulkanDeviceState &)Device;
 
     /// Shaders
@@ -127,6 +127,7 @@ VATAFilterPass::VATAFilterPass( VarAwareTempAccumFilterPipe *pipeline,
                                 const VATAPassParam &        params )
     : mParent( pipeline ), mWidth( params.mWidth ), mHeight( params.mHeight )
 {
+    using namespace rh::engine;
     auto &device = mParent->Device;
 
     auto desc_sets = pipeline->mDescSetAlloc->AllocateDescriptorSets(
@@ -225,6 +226,7 @@ VATAFilterPass::VATAFilterPass( VarAwareTempAccumFilterPipe *pipeline,
 }
 void VATAFilterPass::Execute( rh::engine::ICommandBuffer *dest )
 {
+    using namespace rh::engine;
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( dest );
     vk_cmd_buff->PipelineBarrier(
         { .mSrcStage            = PipelineStage::Host,

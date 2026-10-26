@@ -21,7 +21,6 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 constexpr auto VERTEX_COUNT_LIMIT     = 100000;
 constexpr auto INDEX_COUNT_LIMIT      = 100000;
@@ -29,10 +28,12 @@ constexpr auto DRAW_CALL_POOL_SIZE    = 1000;
 constexpr auto TEXTURE_DESC_POOL_SIZE = 1000;
 
 Im3DRenderer::Im3DRenderer( rh::engine::IDeviceState &device,
-                            RasterPoolType &          raster_pool,
-                            CameraDescription *cdsec, IRenderPass *render_pass )
+                            RasterPoolType           &raster_pool,
+                            CameraDescription        *cdsec,
+                            rh::engine::IRenderPass  *render_pass )
     : Device( device ), RasterPool( raster_pool ), mCamDesc( cdsec )
 {
+    using namespace rh::engine;
     mRenderPass = render_pass;
     DescriptorGenerator d_gen{ Device };
 
@@ -62,8 +63,8 @@ Im3DRenderer::Im3DRenderer( rh::engine::IDeviceState &device,
                          .mShaderStage = ShaderStage::Vertex };
 
     mTexPixel.desc   = { .mShaderPath  = "shaders/d3d11/engine/Im3D.hlsl",
-                       .mEntryPoint  = "TexPS",
-                       .mShaderStage = ShaderStage::Pixel };
+                         .mEntryPoint  = "TexPS",
+                         .mShaderStage = ShaderStage::Pixel };
     mNoTexPixel.desc = { .mShaderPath  = "shaders/d3d11/engine/Im3D.hlsl",
                          .mEntryPoint  = "NoTexPS",
                          .mShaderStage = ShaderStage::Pixel };
@@ -156,8 +157,9 @@ struct PackedIm3DState
     };
 };
 
-AttachmentBlendState UnpackBlendState( const PackedIm3DState &s )
+rh::engine::AttachmentBlendState UnpackBlendState( const PackedIm3DState &s )
 {
+    using namespace rh::engine;
     return { .srcBlend       = static_cast<BlendOp>( s.s_val.srcBlendState ),
              .destBlend      = static_cast<BlendOp>( s.s_val.destBlendState ),
              .blendCombineOp = BlendCombineOp::Add,
@@ -169,6 +171,7 @@ AttachmentBlendState UnpackBlendState( const PackedIm3DState &s )
 
 rh::engine::IPipeline *Im3DRenderer::GetCachedPipeline( uint64_t hash )
 {
+    using namespace rh::engine;
     if ( mIm3DPipelines.contains( hash ) )
         return mIm3DPipelines.at( hash );
 
@@ -221,17 +224,18 @@ rh::engine::IPipeline *Im3DRenderer::GetCachedPipeline( uint64_t hash )
                                                 ? ps_stage_desc
                                                 : ps_stage_notex_desc },
           .mVertexInputStateDesc = { vertex_binding_desc, vertex_layout_desc },
-          .mTopology             = PrimitiveType::TriangleList, // TODO: Allow more
-          .mBlendState           = blend_state,
-          .mDepthStencilState    = depth_state } );
+          .mTopology          = PrimitiveType::TriangleList, // TODO: Allow more
+          .mBlendState        = blend_state,
+          .mDepthStencilState = depth_state } );
 
     return mIm3DPipelines[hash];
 }
 void Im3DRenderer::Reset() { mVertexBufferOffset = 0; }
 
-uint64_t Im3DRenderer::Render( const Im3DRenderState &     state,
+uint64_t Im3DRenderer::Render( const Im3DRenderState      &state,
                                rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     // Update buffers
     if ( state.IndexBuffer.Size() > 0 )
         mIndexBuffer->Update( state.IndexBuffer.Data(),
@@ -262,7 +266,7 @@ uint64_t Im3DRenderer::Render( const Im3DRenderState &     state,
 
     auto     vertex_offset = mVertexBufferOffset / sizeof( RwIm3DVertex );
     uint32_t dc_id         = 0;
-    auto *   matrix_buffers =
+    auto    *matrix_buffers =
         static_cast<DirectX::XMFLOAT4X4 *>( mMatrixBuffer->Lock() );
     for ( auto &draw_call : state.DrawCalls )
     {
@@ -322,6 +326,7 @@ uint64_t Im3DRenderer::Render( const Im3DRenderState &     state,
 }
 rh::engine::IDescriptorSet *Im3DRenderer::GetRasterDescSet( uint64_t id )
 {
+    using namespace rh::engine;
     auto set      = mDescriptorSetPool[mDescriptorSetPoolId];
     auto img_view = RasterPool.GetResource( id ).mImageView;
     Device.UpdateDescriptorSets(

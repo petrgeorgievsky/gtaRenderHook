@@ -2,6 +2,7 @@
 
 namespace rh::engine
 {
+
 bool IStateCacheObject::IsDirty()
 {
     return m_bDirty;
@@ -24,4 +25,5 @@ void IStateCacheObject::Invalidate()
 {
     MakeDirty();
 }
+
 }

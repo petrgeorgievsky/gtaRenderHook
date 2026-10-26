@@ -4,9 +4,23 @@
 
 #include "restir_shadow_pass.h"
 #include "light_sampling_pass.h"
+#include "restir_structs.hpp"
 #include "spatial_reuse_pass.h"
 #include "visibility_reuse_pass.h"
 #include <imgui.h>
+
+#include <Engine/Common/IDeviceState.h>
+#include <Engine/Common/types/sampler_filter.h>
+#include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <Engine/VulkanImpl/VulkanCommandBuffer.h>
+
+#include <rendering_loop/DescriptorGenerator.h>
+#include <rendering_loop/DescriptorUpdater.h>
+#include <rendering_loop/ray_tracing/CameraDescription.h>
+#include <rendering_loop/ray_tracing/RTSceneDescription.h>
+#include <rendering_loop/ray_tracing/utils.h>
+#include <rendering_loop/ray_tracing/VarAwareTempAccumFilterColor.h>
+#include <rendering_loop/ray_tracing/BilateralFilterPass.h>
 
 namespace rh::rw::engine::restir
 {
@@ -29,6 +43,7 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
       mCamera( params.mCamera ), mWidth( params.mWidth ),
       mHeight( params.mHeight )
 {
+    using namespace rh::engine;
     TriangleLights = Device.CreateBuffer( BufferCreateInfo{
         .mSize        = static_cast<uint32_t>( sizeof( PackedLight ) *
                                         ( TriLightsCpuBuffer.max_size() + 1 ) ),
@@ -43,14 +58,14 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
 
     TempReservoirBuffer = Device.CreateBuffer( BufferCreateInfo{
         .mSize =
-            static_cast<uint32_t>( sizeof( float ) * 4 * mWidth * mHeight ),
+            static_cast<uint32_t>( sizeof( Reservoir ) * mWidth * mHeight ),
         .mUsage       = BufferUsage::StorageBuffer,
         .mFlags       = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
 
     ResultReservoirBuffer = Device.CreateBuffer( BufferCreateInfo{
         .mSize =
-            static_cast<uint32_t>( sizeof( float ) * 4 * mWidth * mHeight ),
+            static_cast<uint32_t>( sizeof( Reservoir ) * mWidth * mHeight ),
         .mUsage       = BufferUsage::StorageBuffer,
         .mFlags       = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
@@ -258,6 +273,7 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
 void ShadowsPass::Execute( void *tlas, uint32_t light_count,
                            rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     auto l                        = TriangleLights->Lock();
     *static_cast<uint32_t *>( l ) = TriLightsCpuBufferCount;
     PackedLight *triangle_light =

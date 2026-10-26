@@ -13,13 +13,14 @@ struct VulkanDescriptorSetCreateParams
     vk::DescriptorSet mDescSet;
 };
 
-class VulkanDescriptorSet : public IDescriptorSet
+class VulkanDescriptorSet final : public IDescriptorSet
 {
   public:
-    VulkanDescriptorSet( const VulkanDescriptorSetCreateParams &create_params );
-    ~VulkanDescriptorSet();
+    explicit VulkanDescriptorSet(
+        const VulkanDescriptorSetCreateParams &create_params );
+    ~VulkanDescriptorSet() override;
     DescriptorType GetType( uint32_t binding_id ) override;
-                   operator vk::DescriptorSet() { return mDescSet; }
+    explicit       operator vk::DescriptorSet() const { return mDescSet; }
 
   private:
     vk::Device         mDevice;

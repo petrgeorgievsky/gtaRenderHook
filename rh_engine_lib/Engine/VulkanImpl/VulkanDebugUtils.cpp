@@ -11,7 +11,7 @@
 namespace rh::engine
 {
 
-void VulkanDebugUtils::SetDebugName( IBuffer *buffer, std::string name )
+void VulkanDebugUtils::SetDebugName( IBuffer *buffer, const std::string &name )
 {
     auto *buffer_impl = dynamic_cast<VulkanBuffer *>( buffer );
 
@@ -29,7 +29,8 @@ void VulkanDebugUtils::SetDebugName( IBuffer *buffer, std::string name )
             vk::to_string( result ).c_str() );
 }
 
-void VulkanDebugUtils::SetDebugName( ICommandBuffer *buffer, std::string name )
+void VulkanDebugUtils::SetDebugName( ICommandBuffer *buffer,
+                                     const std::string &name )
 {
     auto *buffer_impl = dynamic_cast<VulkanCommandBuffer *>( buffer );
 
@@ -47,7 +48,8 @@ void VulkanDebugUtils::SetDebugName( ICommandBuffer *buffer, std::string name )
             vk::to_string( result ).c_str() );
 }
 
-void VulkanDebugUtils::SetDebugName( ISyncPrimitive *sp, std::string name )
+void VulkanDebugUtils::SetDebugName( ISyncPrimitive *sp,
+                                     const std::string &name )
 {
     vk::Result result = vk::Result::eErrorUnknown;
     if ( auto *gpu_impl = dynamic_cast<VulkanGPUSyncPrimitive *>( sp ) )

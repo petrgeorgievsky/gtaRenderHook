@@ -25,7 +25,6 @@ struct VisibilityReusePassBind
     constexpr static auto Params          = 6;
     constexpr static auto SkyCfg          = 7;
 };
-using namespace rh::engine;
 
 //
 VisibilityReusePass::VisibilityReusePass(
@@ -33,6 +32,7 @@ VisibilityReusePass::VisibilityReusePass(
     : Device( params.Device ), mScene( params.Scene ), mCamera( params.Camera ),
       mWidth( params.Width ), mHeight( params.Height )
 {
+    using namespace rh::engine;
     DescriptorGenerator descriptor_generator{ Device };
 
     descriptor_generator
@@ -181,6 +181,7 @@ void VisibilityReusePass::Execute( void                       *tlas,
                                    VisibilityReuseProperties   properties,
                                    rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     mParamsBuffer->Update( &properties, sizeof( VisibilityReuseProperties ) );
 
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );

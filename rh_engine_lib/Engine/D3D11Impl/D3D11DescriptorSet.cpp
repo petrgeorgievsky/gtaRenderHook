@@ -125,6 +125,7 @@ void D3D11DescriptorSet::UpdateDescriptorBinding(
     auto [cb, buff_id]                = mBindingMap[id];
     mBindings[cb].mResources[buff_id] = descriptor;
 }
+
 DescriptorType D3D11DescriptorSet::GetType( uint32_t binding_id )
 {
     auto [cb, resource] = mBindingMap[binding_id];

@@ -1,7 +1,11 @@
 #include "D3D11Buffer.h"
-#include "Engine/D3D11Impl/D3D11Common.h"
+
+#include <Engine/D3D11Impl/D3D11Common.h>
+
 #include <d3d11.h>
-using namespace rh::engine;
+
+namespace rh::engine
+{
 
 D3D11Buffer::D3D11Buffer( const D3D11BufferCreateInfo &desc )
     : mImmediateContext( desc.mImmediateContext )
@@ -9,7 +13,6 @@ D3D11Buffer::D3D11Buffer( const D3D11BufferCreateInfo &desc )
     debug::DebugLogger::Log( "D3D11Buffer constructor..." );
 
     D3D11_BUFFER_DESC impl_desc{};
-
     impl_desc.Usage          = D3D11_USAGE_DYNAMIC;
     impl_desc.ByteWidth      = desc.mSize;
     impl_desc.BindFlags      = 0;
@@ -27,6 +30,7 @@ D3D11Buffer::D3D11Buffer( const D3D11BufferCreateInfo &desc )
 
     impl_desc.StructureByteStride = 0;
     impl_desc.MiscFlags           = 0;
+
     D3D11_SUBRESOURCE_DATA res_data{};
     res_data.pSysMem          = desc.mInitDataPtr;
     res_data.SysMemPitch      = 0;
@@ -58,33 +62,51 @@ void D3D11Buffer::Update( const void *data, uint32_t size )
 {
     D3D11_MAPPED_SUBRESOURCE mappedResource;
 
-    mImmediateContext->Map( m_pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
-                            &mappedResource );
+    if ( CALL_D3D_API( mImmediateContext->Map( m_pBuffer, 0,
+                                               D3D11_MAP_WRITE_DISCARD, 0,
+                                               &mappedResource ),
+                       TEXT( "Failed to map buffer" ) ) )
+    {
+        return;
+    }
 
     memcpy( mappedResource.pData, data, size );
 
     mImmediateContext->Unmap( m_pBuffer, 0 );
 }
 
-void rh::engine::D3D11Buffer::Update( const void *data, uint32_t size,
-                                      uint32_t offset )
+void D3D11Buffer::Update( const void *data, uint32_t size, uint32_t offset )
 {
     D3D11_MAPPED_SUBRESOURCE mappedResource;
 
-    mImmediateContext->Map( m_pBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0,
-                            &mappedResource );
+    if ( CALL_D3D_API( mImmediateContext->Map( m_pBuffer, 0,
+                                               D3D11_MAP_WRITE_NO_OVERWRITE, 0,
+                                               &mappedResource ),
+                       TEXT( "Failed to update buffer(with offset)" ) ) )
+    {
+        return;
+    }
 
     memcpy( ( static_cast<uint8_t *>( mappedResource.pData ) + offset ), data,
             size );
 
     mImmediateContext->Unmap( m_pBuffer, 0 );
 }
+
 void *D3D11Buffer::Lock()
 {
     D3D11_MAPPED_SUBRESOURCE mappedResource;
 
-    mImmediateContext->Map( m_pBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0,
-                            &mappedResource );
+    if ( CALL_D3D_API( mImmediateContext->Map( m_pBuffer, 0,
+                                               D3D11_MAP_WRITE_NO_OVERWRITE, 0,
+                                               &mappedResource ),
+                       TEXT( "Failed to lock buffer" ) ) )
+    {
+        return nullptr;
+    }
     return mappedResource.pData;
 }
+
 void D3D11Buffer::Unlock() { mImmediateContext->Unmap( m_pBuffer, 0 ); }
+
+} // namespace rh::engine

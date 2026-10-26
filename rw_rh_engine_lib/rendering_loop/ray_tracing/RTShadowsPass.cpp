@@ -21,13 +21,13 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
-    : Device( params.Device ), mCamera( params.mCamera ),
-      mScene( params.mScene ), mWidth( params.mWidth ),
+    : Device( params.Device ), mScene( params.mScene ),
+      mCamera( params.mCamera ), mWidth( params.mWidth ),
       mHeight( params.mHeight )
 {
+    using namespace rh::engine;
     DescriptorGenerator descriptorGenerator{ Device };
     /// TLAS
     descriptorGenerator.AddDescriptor(
@@ -280,6 +280,7 @@ RTShadowsPass::RTShadowsPass( const RTShadowsInitParams &params )
 void RTShadowsPass::Execute( void                       *tlas,
                              rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
 
     std::array<AccelStructUpdateInfo, 1> accel_ui = { { tlas } };

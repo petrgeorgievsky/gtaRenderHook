@@ -10,7 +10,8 @@
 #include "VulkanRenderPass.h"
 #include <DebugUtils/DebugLogger.h>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 VulkanCommandBuffer::VulkanCommandBuffer( vk::Device        device,
                                           vk::CommandPool   pool,
@@ -28,8 +29,9 @@ ISyncPrimitive *VulkanCommandBuffer::ExecutionFinishedPrimitive()
 void VulkanCommandBuffer::CopyBufferToImage(
     const BufferToImageCopyInfo &copy_info )
 {
-    vk::Image       img    = *static_cast<VulkanImage *>( copy_info.mImage );
-    vk::Buffer      buffer = *static_cast<VulkanBuffer *>( copy_info.mBuffer );
+    vk::Image  img    = *static_cast<VulkanImage *>( copy_info.mImage );
+    vk::Buffer buffer = static_cast<vk::Buffer>(
+        *static_cast<VulkanBuffer *>( copy_info.mBuffer ) );
     vk::ImageLayout layout = Convert( copy_info.mImageLayout );
 
     // SmallVectorArena<vk::BufferImageCopy, 8> arena;
@@ -115,7 +117,7 @@ void VulkanCommandBuffer::BindDescriptorSets(
                            [&descriptor_sets]( IDescriptorSet *set )
                            {
                                vk::DescriptorSet vk_set =
-                                   *dynamic_cast<VulkanDescriptorSet *>( set );
+                                   static_cast<vk::DescriptorSet>( *dynamic_cast<VulkanDescriptorSet *>( set ));
                                descriptor_sets.push_back( vk_set );
                            } );
 
@@ -208,8 +210,8 @@ void VulkanCommandBuffer::BindVertexBuffers(
         [&vertex_buffers,
          &vertex_buffer_offsets]( const VertexBufferBinding &binding )
         {
-            vertex_buffers.push_back(
-                *static_cast<VulkanBuffer *>( binding.mBuffer ) );
+            vertex_buffers.push_back( static_cast<vk::Buffer>(
+                *static_cast<VulkanBuffer *>( binding.mBuffer ) ) );
             vertex_buffer_offsets.push_back( binding.mOffset );
         } );
 
@@ -222,7 +224,8 @@ void VulkanCommandBuffer::BindIndexBuffer( uint32_t offset, IBuffer *buffer,
 {
 
     m_vkCmdBuffer.bindIndexBuffer(
-        *dynamic_cast<VulkanBuffer *>( buffer ), offset,
+        static_cast<vk::Buffer>( *dynamic_cast<VulkanBuffer *>( buffer ) ),
+        offset,
         type == IndexType::i16 ? vk::IndexType::eUint16
                                : vk::IndexType::eUint32 );
 }
@@ -310,7 +313,8 @@ void VulkanCommandBuffer::BuildBLAS(
         build_geometry_info_khr.pGeometries = geom.data();
 
         vk::BufferDeviceAddressInfo address_info{};
-        address_info.buffer = *dynamic_cast<VulkanBuffer *>( b_i.TempBuffer );
+        address_info.buffer = static_cast<vk::Buffer>(
+            *dynamic_cast<VulkanBuffer *>( b_i.TempBuffer ) );
         build_geometry_info_khr.scratchData.deviceAddress =
             mDevice.getBufferAddress( address_info );
         //  =
@@ -460,8 +464,9 @@ void VulkanCommandBuffer::CopyImageToBuffer(
     const ImageToBufferCopyInfo &copy_info )
 {
 
-    vk::Image       img    = *static_cast<VulkanImage *>( copy_info.mImage );
-    vk::Buffer      buffer = *static_cast<VulkanBuffer *>( copy_info.mBuffer );
+    vk::Image  img    = *static_cast<VulkanImage *>( copy_info.mImage );
+    vk::Buffer buffer = static_cast<vk::Buffer>(
+        *static_cast<VulkanBuffer *>( copy_info.mBuffer ) );
     vk::ImageLayout layout = Convert( copy_info.mImageLayout );
 
     // SmallVectorArena<vk::BufferImageCopy, 8> arena;
@@ -489,4 +494,6 @@ void VulkanCommandBuffer::CopyImageToBuffer(
         } );
 
     m_vkCmdBuffer.copyImageToBuffer( img, layout, buffer, image_copies );
+}
+
 }

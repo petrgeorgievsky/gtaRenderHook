@@ -1,8 +1,8 @@
 #include "VulkanFrameBuffer.h"
 #include "VulkanCommon.h"
 
-using namespace rh::engine;
-
+namespace rh::engine
+{
 VulkanFrameBuffer::VulkanFrameBuffer( vk::Device                    device,
                                       vk::ArrayProxy<vk::ImageView> attachments,
                                       uint32_t w, uint32_t h,
@@ -30,3 +30,5 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 }
 
 const FrameBufferInfo &VulkanFrameBuffer::GetInfo() const { return m_rhInfo; }
+
+} // namespace rh::engine

@@ -6,7 +6,8 @@
 #include <fstream>
 #include <iostream>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 VulkanShader::VulkanShader( const VulkanShaderDesc &desc )
     : mDevice( desc.mDevice )
@@ -146,4 +147,6 @@ bool rh::engine::TranslateHLSL_to_SPIRV( const std::string &path,
         debug::DebugLogger::ErrorFmt( "glslangValidator returned %i",
                                       exit_code );
     return exit_code == S_OK;
+}
+
 }

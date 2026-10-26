@@ -1,10 +1,11 @@
 //
 // Created by peter on 29.04.2020.
 //
-
 #pragma once
-#include "VulkanMemoryAllocator.h"
 #include <common.h>
+
+#include "VulkanMemoryAllocator.h"
+
 #include <cstdint>
 
 VK_DEFINE_HANDLE( VmaAllocator )
@@ -12,6 +13,7 @@ VK_DEFINE_HANDLE( VmaAllocation )
 
 namespace rh::engine
 {
+
 class IBuffer;
 
 struct GeometryStrip
@@ -26,6 +28,7 @@ struct AccelerationStructureCreateInfo
 {
     IBuffer                   *mVertexBuffer;
     IBuffer                   *mIndexBuffer;
+    uint32_t                   mVertexStride;
     uint32_t                   mVertexCount;
     uint32_t                   mIndexCount;
     std::vector<GeometryStrip> mSplits;
@@ -37,16 +40,17 @@ struct AccelerationStructureCreateInfoVulkan : AccelerationStructureCreateInfo
     vk::Device             mDevice;
     VulkanMemoryAllocator *mAllocator;
 };
+
 class VulkanBottomLevelAccelerationStructure
 {
   public:
-    VulkanBottomLevelAccelerationStructure(
+    explicit VulkanBottomLevelAccelerationStructure(
         const AccelerationStructureCreateInfoVulkan &create_info );
     ~VulkanBottomLevelAccelerationStructure();
 
-    std::uint64_t                GetScratchSize() const;
+    [[nodiscard]] std::uint64_t                GetScratchSize() const;
     std::uint64_t                GetAddress();
-    vk::AccelerationStructureKHR GetImpl() { return mAccel; }
+    vk::AccelerationStructureKHR GetImpl() const { return mAccel; }
 
     auto GetGeometry()
         -> const std::vector<vk::AccelerationStructureGeometryKHR> &
@@ -62,13 +66,13 @@ class VulkanBottomLevelAccelerationStructure
   private:
     vk::Device                                              mDevice;
     vk::AccelerationStructureKHR                            mAccel;
-    std::vector<vk::AccelerationStructureGeometryKHR>       mGeometry;
-    std::vector<vk::AccelerationStructureBuildRangeInfoKHR> mBuildRanges;
-    vk::DeviceMemory                                        mAccelMemory;
-    VkBuffer                                                mBuffer;
-    VmaAllocator                                            mAllocator;
-    VmaAllocation                                           mAllocation{};
-    std::uint64_t                                           mScratchSize;
-    std::uint64_t                                           mGPUHandle = 0;
+    std::vector<vk::AccelerationStructureGeometryKHR>       mGeometry{};
+    std::vector<vk::AccelerationStructureBuildRangeInfoKHR> mBuildRanges{};
+    VkBuffer      mBuffer{ VK_NULL_HANDLE };
+    VmaAllocator  mAllocator;
+    VmaAllocation mAllocation{};
+    std::uint64_t mScratchSize;
+    std::uint64_t mGPUHandle = 0;
 };
+
 } // namespace rh::engine

@@ -16,17 +16,17 @@ struct VulkanBufferCreateInfo : BufferCreateInfo
     VulkanMemoryAllocator *mAllocator;
 };
 
-class VulkanBuffer : public IBuffer
+class VulkanBuffer final : public IBuffer
 {
   public:
-    VulkanBuffer( const VulkanBufferCreateInfo &create_info );
+    explicit VulkanBuffer( const VulkanBufferCreateInfo &create_info );
     ~VulkanBuffer() override;
     void Update( const void *data, uint32_t size ) override;
     void Update( const void *data, uint32_t size, uint32_t offset ) override;
 
-          operator vk::Buffer() { return mBuffer; }
-    void *Lock() override;
-    void  Unlock() override;
+    explicit operator vk::Buffer() const { return mBuffer; }
+    void    *Lock() override;
+    void     Unlock() override;
 
   private:
     vk::Device       mDevice;

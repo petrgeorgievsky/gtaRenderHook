@@ -3,16 +3,17 @@
 //
 #pragma once
 #include <Engine/Common/IPipeline.h>
-#include <Engine/Common/IPipelineLayout.h>
 #include <common.h>
 
 namespace rh::engine
 {
+
 struct ComputePipelineCreateParams
 {
     IPipelineLayout *mLayout;
     ShaderStageDesc  mShaderStage;
 };
+
 struct VulkanComputePipelineCreateInfo : ComputePipelineCreateParams
 {
     // Dependencies...
@@ -22,9 +23,9 @@ struct VulkanComputePipelineCreateInfo : ComputePipelineCreateParams
 class VulkanComputePipeline
 {
   public:
-    VulkanComputePipeline( const VulkanComputePipelineCreateInfo &create_info );
+    explicit VulkanComputePipeline( const VulkanComputePipelineCreateInfo &create_info );
     ~VulkanComputePipeline();
-    vk::Pipeline GetImpl() { return mPipelineImpl; }
+    vk::Pipeline GetImpl() const { return mPipelineImpl; }
 
   private:
     vk::Pipeline mPipelineImpl;

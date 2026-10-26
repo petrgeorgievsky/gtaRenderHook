@@ -4,6 +4,8 @@
 
 #include "light_sampling_pass.h"
 
+#include "restir_structs.hpp"
+
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
 #include <rendering_loop/DescriptorGenerator.h>
@@ -11,7 +13,6 @@
 #include <rendering_loop/ray_tracing/CameraDescription.h>
 #include <rendering_loop/ray_tracing/RTSceneDescription.h>
 
-using namespace rh::engine;
 namespace rh::rw::engine::restir
 {
 
@@ -31,6 +32,7 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
     : LightPopulationPassBase( base )
 {
 
+    using namespace rh::engine;
     auto               &device = (VulkanDeviceState &)Device;
     DescriptorGenerator descriptor_generator{ device };
 
@@ -86,12 +88,12 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
                             .mEntryPoint = shader_desc.mEntryPoint } } );
 
     ReservoirBuffer     = device.CreateBuffer( BufferCreateInfo{
-        .mSize  = static_cast<uint32_t>( sizeof( float ) * 4 * Width * Height ),
+        .mSize  = static_cast<uint32_t>( sizeof( Reservoir ) * Width * Height ),
         .mUsage = BufferUsage::StorageBuffer,
         .mFlags = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
     PrevReservoirBuffer = device.CreateBuffer( BufferCreateInfo{
-        .mSize  = static_cast<uint32_t>( sizeof( float ) * 4 * Width * Height ),
+        .mSize  = static_cast<uint32_t>( sizeof( Reservoir ) * Width * Height ),
         .mUsage = BufferUsage::StorageBuffer,
         .mFlags = BufferFlags::DynamicGPUOnly,
         .mInitDataPtr = nullptr } );
@@ -133,6 +135,7 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
 void LightSamplingPass::Execute( uint32_t                    light_count,
                                  rh::engine::ICommandBuffer *cmd_buffer )
 {
+    using namespace rh::engine;
 
     auto *vk_cmd_buff     = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
     PassParams.LightCount = light_count;

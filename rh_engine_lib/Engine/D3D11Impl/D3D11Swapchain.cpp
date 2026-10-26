@@ -5,7 +5,8 @@
 #include <cassert>
 #include <d3d11.h>
 
-using namespace rh::engine;
+namespace rh::engine
+{
 
 D3D11Swapchain::D3D11Swapchain(
     const D3D11SwapchainCreateParams &create_params )
@@ -96,4 +97,6 @@ bool D3D11Swapchain::Present( uint32_t, ISyncPrimitive * )
 {
     HRESULT result = mSwapchain->Present( 0, 0 );
     return SUCCEEDED( result );
+}
+
 }

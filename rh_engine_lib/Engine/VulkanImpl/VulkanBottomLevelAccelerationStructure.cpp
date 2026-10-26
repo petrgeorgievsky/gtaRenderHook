@@ -3,14 +3,15 @@
 //
 
 #include "VulkanBottomLevelAccelerationStructure.h"
+
 #include "VulkanBuffer.h"
 #include "VulkanCommon.h"
 #include <DebugUtils/DebugLogger.h>
 
 #include <vk_mem_alloc.h>
 
-using namespace rh::engine;
-
+namespace rh::engine
+{
 VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
     const AccelerationStructureCreateInfoVulkan &create_info )
     : mDevice( create_info.mDevice ),
@@ -30,15 +31,14 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
             dynamic_cast<VulkanBuffer *>( create_info.mVertexBuffer );
         geometry.geometry.triangles.indexType = IndexType::eUint16;
         geometry.geometry.triangles.indexData =
-            mDevice.getBufferAddress(
-                vk::BufferDeviceAddressInfo{ *idx_buffer } ) +
+            mDevice.getBufferAddress( vk::BufferDeviceAddressInfo{
+                static_cast<Buffer>( *idx_buffer ) } ) +
             strip.mIndexOffset * sizeof( int16_t );
         geometry.geometry.triangles.vertexFormat = Format::eR32G32B32Sfloat;
-        // TODO: FIX
-        geometry.geometry.triangles.vertexStride = 64 + 32;
+        geometry.geometry.triangles.vertexStride = create_info.mVertexStride;
         geometry.geometry.triangles.maxVertex    = create_info.mVertexCount;
         geometry.geometry.triangles.vertexData   = mDevice.getBufferAddress(
-            vk::BufferDeviceAddressInfo{ *vtx_buffer } );
+            vk::BufferDeviceAddressInfo{ static_cast<Buffer>( *vtx_buffer ) } );
         mGeometry.push_back( geometry );
 
         vk::AccelerationStructureBuildRangeInfoKHR build_range_info{};
@@ -55,7 +55,7 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
     build_geom_info.type          = AccelerationStructureTypeKHR::eBottomLevel;
     build_geom_info.mode          = BuildAccelerationStructureModeKHR::eBuild;
     build_geom_info.pGeometries   = mGeometry.data();
-    build_geom_info.geometryCount = static_cast<uint32_t>(mGeometry.size());
+    build_geom_info.geometryCount = static_cast<uint32_t>( mGeometry.size() );
 
     auto build_sizes = mDevice.getAccelerationStructureBuildSizesKHR(
         AccelerationStructureBuildTypeKHR::eHostOrDevice, build_geom_info,
@@ -71,8 +71,14 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
-    vmaCreateBuffer( mAllocator, &buffer_create_info, &alloc_info, &mBuffer,
-                     &mAllocation, nullptr );
+    if ( !CALL_VK_API(
+             vmaCreateBuffer( mAllocator, &buffer_create_info, &alloc_info,
+                              &mBuffer, &mAllocation, nullptr ),
+             TEXT( "Failed to allocate acceleration struct buffer!" ) ) )
+    {
+        std::terminate();
+        return;
+    }
 
     AccelerationStructureCreateInfoKHR as_create_info{};
     as_create_info.size   = build_sizes.accelerationStructureSize;
@@ -86,7 +92,10 @@ VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(
 
     if ( !CALL_VK_API( result.result,
                        TEXT( "Failed to create acceleration structure!" ) ) )
+    {
+        std::terminate();
         return;
+    }
     mAccel       = result.value;
     mScratchSize = build_sizes.buildScratchSize;
 }
@@ -109,3 +118,4 @@ std::uint64_t VulkanBottomLevelAccelerationStructure::GetAddress()
     mGPUHandle = mDevice.getBufferAddress( { mBuffer } );
     return mGPUHandle;
 }
+} // namespace rh::engine

@@ -60,9 +60,10 @@ RTBlasBuildPass::RTBlasBuildPass( const BlasBuildPassCreateInfo &info )
             ac_ci.mIndexBuffer       = data.mIndexBuffer->Get();
             ac_ci.mIndexCount        = data.mIndexCount;
             ac_ci.mVertexCount       = data.mVertexCount;
+            ac_ci.mVertexStride      = sizeof( VertexDescPosColorUVNormals );
             ac_ci.mSplits            = { { 0, 0,
-                                static_cast<uint32_t>( data.mVertexCount ),
-                                static_cast<uint32_t>( data.mIndexCount ) } };
+                                           static_cast<uint32_t>( data.mVertexCount ),
+                                           static_cast<uint32_t>( data.mIndexCount ) } };
             BLASPool[id].mData.mBLAS = device.CreateBLAS( ac_ci );
             // Add BLAS to build list
             RequestBlasBuild( id );
@@ -112,8 +113,9 @@ void RTBlasBuildPass::Execute()
         if ( !blas )
             continue;
 
-        scratch_buff_size[current_scratch] = ( std::max )(
-            blas->GetScratchSize(), scratch_buff_size[current_scratch] );
+        scratch_buff_size[current_scratch] =
+            (std::max)( blas->GetScratchSize(),
+                        scratch_buff_size[current_scratch] );
         blas_list.back().push_back(
             BlasBuildInfo{ blas, ScratchBuffers[current_scratch].Data } );
         mesh_info.mBlasBuilt = true;

@@ -14,7 +14,6 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 struct SkyCfg
 {
@@ -31,6 +30,7 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
       mCamera( config.mCamera ), mWidth( config.mWidth ),
       mHeight( config.mHeight )
 {
+    using namespace rh::engine;
     auto               &device = Device;
     DescriptorGenerator descriptorGenerator{ device };
 
@@ -196,9 +196,11 @@ RTPrimaryRaysPass::RTPrimaryRaysPass( const PrimaryRaysConfig &config )
     mShaderBindTable->Unlock();
 }
 
-void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
+void RTPrimaryRaysPass::Execute( void *tlas,
+                                 rh::engine::ICommandBuffer *cmd_buffer,
                                  const SkyState &state )
 {
+    using namespace rh::engine;
     mFrame                  = 1 - mFrame;
     gSkyCfg.skyColor[0]     = state.mSkyTopColor[0];
     gSkyCfg.skyColor[1]     = state.mSkyTopColor[1];
@@ -313,6 +315,7 @@ void RTPrimaryRaysPass::Execute( void *tlas, ICommandBuffer *cmd_buffer,
 void RTPrimaryRaysPass::ConvertNormalsToShaderRO(
     rh::engine::ICommandBuffer *dest )
 {
+    using namespace rh::engine;
     ImageMemoryBarrierInfo shader_ro_barrier = GetLayoutTransformBarrier(
         (rh::engine::IImageBuffer *)mNormalsBuffer[0], ImageLayout::General,
         ImageLayout::ShaderReadOnly );

@@ -11,7 +11,6 @@
 
 namespace rh::rw::engine
 {
-using namespace rh::engine;
 
 RwIm2DVertex *TriFanToTriList( RwIm2DVertex *vertices_in,
                                RwIm2DVertex *vertices_out,
