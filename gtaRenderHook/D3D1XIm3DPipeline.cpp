@@ -24,10 +24,30 @@ CD3D1XIm3DPipeline::CD3D1XIm3DPipeline() :
         { "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, 28,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
     };
     m_pVertexDeclaration = new CD3D1XVertexDeclaration( layout, sizeof( RwIm3DVertex ), m_pVS );
-    m_pVertexBuffer = new CD3D1XDynamicVertexBuffer( sizeof( RwIm3DVertex ), 10000 );
-    m_pIndexBuffer = new CD3D1XDynamicIndexBuffer( 10000 );
+    m_pVertexBuffer = new CD3D1XDynamicVertexBuffer( sizeof( RwIm3DVertex ), m_uiVertexCapacity );
+    m_pIndexBuffer = new CD3D1XDynamicIndexBuffer( m_uiIndexCapacity );
     m_pVertexBuffer->SetDebugName( "Im3D_DynamicVB" );
     m_pIndexBuffer->SetDebugName( "Im3D_DynamicIB" );
+}
+
+// RenderWare takes up to 65535 vertices and indices per Im3D batch. Plugins draw more than the initial 10000 (e.g. the
+// LOD lights of Project2DFX), so the buffers grow to fit a batch instead of being written past their end.
+void CD3D1XIm3DPipeline::EnsureCapacity( unsigned int vertexCount, unsigned int indexCount )
+{
+    if ( vertexCount > m_uiVertexCapacity )
+    {
+        m_uiVertexCapacity = max( vertexCount, m_uiVertexCapacity * 2 );
+        delete m_pVertexBuffer;
+        m_pVertexBuffer = new CD3D1XDynamicVertexBuffer( sizeof( RwIm3DVertex ), m_uiVertexCapacity );
+        m_pVertexBuffer->SetDebugName( "Im3D_DynamicVB" );
+    }
+    if ( indexCount > m_uiIndexCapacity )
+    {
+        m_uiIndexCapacity = max( indexCount, m_uiIndexCapacity * 2 );
+        delete m_pIndexBuffer;
+        m_pIndexBuffer = new CD3D1XDynamicIndexBuffer( m_uiIndexCapacity );
+        m_pIndexBuffer->SetDebugName( "Im3D_DynamicIB" );
+    }
 }
 
 
@@ -46,6 +66,7 @@ RwBool CD3D1XIm3DPipeline::SubmitNode()
 
     if ( im3dPoolStash.primType != rwPRIMTYPETRIFAN )
     {
+        EnsureCapacity( rwD3D9ImmPool->numElements, im3dPoolStash.indices ? im3dPoolStash.numIndices : 0 );
         // update verticles
         m_pVertexBuffer->Update( &( (RwIm3DVertex*)rwD3D9ImmPool->elements )[0], sizeof( RwIm3DVertex )*rwD3D9ImmPool->numElements );
         // initialize vertex declaration and buffer
