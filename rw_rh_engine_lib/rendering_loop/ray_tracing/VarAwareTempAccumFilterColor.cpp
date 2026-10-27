@@ -144,6 +144,8 @@ VATAColorFilterPass::VATAColorFilterPass(
     mAccumDescSet  = desc_sets[0];
     mReprojDescSet = desc_sets[1];
 
+    mParams.max_tspp = params.mMaxTspp;
+
     mParamsBuffer =
         device.CreateBuffer( { .mSize        = sizeof( TAParams ),
                                .mUsage       = BufferUsage::ConstantBuffer,

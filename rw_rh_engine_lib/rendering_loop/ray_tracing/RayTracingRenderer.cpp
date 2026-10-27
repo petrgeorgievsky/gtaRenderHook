@@ -374,6 +374,9 @@ void RayTracingRenderer::DrawGUI( const FrameState &scene )
     mRTAOPass->UpdateUI();
     mRestirShadowsPass->UpdateUI();
 
+    if ( ImGui::CollapsingHeader( "Reflections" ) )
+        mRTReflectionPass->UpdateUI();
+
     if ( ImGui::CollapsingHeader( "Debug view" ) )
     {
         const char *items[] = { "Final", "Shadows", "AO", "Reflections" };

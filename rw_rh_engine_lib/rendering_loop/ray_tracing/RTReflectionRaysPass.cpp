@@ -10,6 +10,8 @@
 #include "rendering_loop/DescriptorUpdater.h"
 #include "restir/dispatch_size.h"
 #include "utils.h"
+#include <algorithm>
+#include <imgui.h>
 #include <Engine/Common/types/sampler_filter.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
@@ -135,6 +137,7 @@ RTReflectionRaysPass::RTReflectionRaysPass(
         .mPrevDepth     = params.mPrevNormalsView,
         .mCurrentDepth  = params.mNormalsView,
         .mMotionVectors = params.mMotionVectorsView,
+        .mMaxTspp       = 64,
     } );
 
     BilateralFilterPassParams p{};
@@ -317,5 +320,12 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
 
     mVarTAColorPass->Execute( vk_cmd_buff );
     mBilFil0->Execute( vk_cmd_buff );
+}
+
+void RTReflectionRaysPass::UpdateUI()
+{
+    int samples = static_cast<int>( mParams.sample_count );
+    if ( ImGui::DragInt( "Reflection samples", &samples, 1, 1, 16 ) )
+        mParams.sample_count = static_cast<uint32_t>( ( std::max )( samples, 1 ) );
 }
 } // namespace rh::rw::engine

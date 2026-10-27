@@ -60,6 +60,8 @@ class RTReflectionRaysPass
         return mFilteredReflectionBufferView;
     }
 
+    void UpdateUI();
+
   private:
     rh::engine::IDeviceState &         Device;
     uint32_t                           mWidth;
@@ -113,6 +115,7 @@ class RTReflectionRaysPass
         float    max_distance  = 10.0f;
         float    max_draw_dist = 1000.0f;
         uint32_t time_stamp    = 0;
+        uint32_t sample_count  = 4;
     } mParams;
 };
 } // namespace rh::rw::engine

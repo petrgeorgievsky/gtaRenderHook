@@ -34,6 +34,9 @@ struct VATAColorPassParam
     rh::engine::IImageView *mPrevDepth;
     rh::engine::IImageView *mCurrentDepth;
     rh::engine::IImageView *mMotionVectors;
+    // Temporal accumulation cap: low for fast-reactings signals (shadows),
+    // high for slowly converging ones (reflections).
+    uint32_t                mMaxTspp = 16;
 };
 
 class VarAwareTempAccumColorFilterPipe;
@@ -62,8 +65,9 @@ class VATAColorFilterPass
     uint32_t                          mHeight{};
     struct TAParams
     {
-        float accumulation = 0.95f;
-        float pad[3];
+        float    accumulation = 0.95f;
+        uint32_t max_tspp     = 16;
+        float    pad[2];
     } mParams;
     SPtr<rh::engine::IBuffer> mParamsBuffer;
 
