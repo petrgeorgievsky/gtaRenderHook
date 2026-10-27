@@ -65,6 +65,10 @@ public:
     */
     void SetZWriteEnable( bool bEnable );
     /*!
+        Changes depth test comparison function.
+    */
+    void SetDepthFunc( D3D11_COMPARISON_FUNC func );
+    /*!
         Changes current fill mode.
     */
     void SetFillMode( D3D11_FILL_MODE mode );
