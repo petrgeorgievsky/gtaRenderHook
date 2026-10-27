@@ -385,9 +385,13 @@ void CSAIdleHook::RenderDeferred()
     //g_pRwCustomEngine->RenderStateSet(rwRENDERSTATECULLMODE, rwCULLMODECULLBACK);
     CRendererRH::RenderRoads();
     CRendererRH::RenderEverythingBarRoads();
+    CRendererRH::FadingPass = true;
     CVisibilityPlugins::RenderFadingUnderwaterEntities();
+    CRendererRH::FadingPass = false;
     BreakManager_c__Render( g_breakMan, 0 );
+    CRendererRH::FadingPass = true;
     CVisibilityPlugins::RenderFadingEntities();
+    CRendererRH::FadingPass = false;
     BreakManager_c__Render( g_breakMan, 1 );
     // CRenderer::RenderFadingInUnderwaterEntities
     CVisibilityPluginsRH::RenderWeaponPedsNoMuzzleFlash();
