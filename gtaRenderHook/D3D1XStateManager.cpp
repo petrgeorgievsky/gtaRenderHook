@@ -206,6 +206,15 @@ void CD3D1XStateManager::SetFillMode( D3D11_FILL_MODE mode )
     }
 }
 
+void CD3D1XStateManager::SetDepthClipEnable( bool enable )
+{
+    if ( ( m_rasterDesc.DepthClipEnable != FALSE ) != enable )
+    {
+        m_rasterDesc.DepthClipEnable = enable;
+        m_bRasterDescReqUpdate = true;
+    }
+}
+
 
 
 void CD3D1XStateManager::SetAlphaTestEnable( bool bEnable )
@@ -863,7 +872,8 @@ bool CD3D1XStateManager::IsDepthDescRequiresUpdate()
 bool CD3D1XStateManager::IsRasterDescRequiresUpdate()
 {
     return	m_rasterDescOld.CullMode != m_rasterDesc.CullMode ||
-        m_rasterDescOld.FillMode != m_rasterDesc.FillMode;
+        m_rasterDescOld.FillMode != m_rasterDesc.FillMode ||
+        m_rasterDescOld.DepthClipEnable != m_rasterDesc.DepthClipEnable;
 }
 bool CD3D1XStateManager::IsBlendDescRequiresUpdate()
 {

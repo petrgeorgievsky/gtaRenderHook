@@ -22,6 +22,7 @@
 #include "D3D1XStateManager.h"
 #include "SAIdleHook.h"
 #include "DebugBBox.h"
+#include <unordered_set>
 bool		&CRendererRH::ms_bRenderTunnels = *(bool*)0xB745C0;
 bool		&CRendererRH::ms_bRenderOutsideTunnels = *(bool*)0xB745C1;
 bool&		CRendererRH::ms_bInTheSky = *(bool*)0xB76851;
@@ -233,6 +234,17 @@ char CRendererRH::AddEntityToShadowCasterList( CEntity * entity, float renderDis
 {
     //if (ms_aVisibleShadowCasters[shadowCascade].size() > 1000)
     //	return true;
+    // Off screen the game deletes a building's instance; a caster without one isn't drawn, so recreate it while the
+    // model is loaded (buildings only: peds and vehicles manage their own).
+    if ( entity->m_pRwObject == nullptr )
+    {
+        if ( entity->m_nType != eEntityType::ENTITY_TYPE_BUILDING ||
+             CModelInfo::ms_modelInfoPtrs[entity->m_nModelIndex]->m_pRwObject == nullptr )
+            return false;
+        entity->CreateRwObject();
+        if ( entity->m_pRwObject == nullptr )
+            return false;
+    }
     ms_aVisibleShadowCasters[shadowCascade].push_back( entity );
     return true;
 }
@@ -930,6 +942,52 @@ void CRendererRH::ScanBigBuildingList( int x, int y )
 
 }
 
+// Big buildings (LODs) as shadow casters: a tall building towards a low sun shades the scene from hundreds of metres away,
+// but it was only a shadow caster while it was on screen (off screen the game drops the building's own instance too).
+// Scan the LOD sectors that reach into a cascade's light volume and add the LODs that aren't casting yet.
+void CRendererRH::ScanBigBuildingsForShadowCasters()
+{
+    // ScanBigBuildingList stamps every big building of the sectors it scans, also the ones it doesn't draw (off screen),
+    // so the scan code can't tell which ones already cast: look at the caster lists instead.
+    std::unordered_set<CEntity*> casters;
+    for ( int i = 0; i < 4; i++ )
+        casters.insert( ms_aVisibleShadowCasters[i].begin(), ms_aVisibleShadowCasters[i].end() );
+    // LODs of casters stand in for geometry that already casts: a LOD sits a little above or below its detailed
+    // version, so casting both shadows the detailed ground with the LOD (large straight-edged shadows around the camera)
+    std::unordered_set<CEntity*> replacedLods;
+    for ( CEntity *caster : casters )
+        for ( CEntity *lod = caster->m_pLod; lod != nullptr && replacedLods.insert( lod ).second; lod = lod->m_pLod )
+            ;
+
+    const int lodSectorRange = 3; // 200 m sectors: about 700 m around the camera
+    const int camSectorX = (int)floorf( ms_vecCameraPosition.x / 200.0f + 15.0f );
+    const int camSectorY = (int)floorf( ms_vecCameraPosition.y / 200.0f + 15.0f );
+    for ( int x = camSectorX - lodSectorRange; x <= camSectorX + lodSectorRange; x++ )
+    {
+        for ( int y = camSectorY - lodSectorRange; y <= camSectorY + lodSectorRange; y++ )
+        {
+            if ( x < 0 || y < 0 || x >= 30 || y >= 30 )
+                continue;
+            const float minX = ( x - 15 ) * 200.0f;
+            const float minY = ( y - 15 ) * 200.0f;
+            RW::BBox sectorBBox = { { minX, minY, -3000 }, { minX + 200.0f, minY + 200.0f, 3000 } };
+            bool isInsideLightBBox = false;
+            for ( int i = 0; i < gShadowSettings.ShadowCascadeCount && !isInsideLightBBox; i++ )
+                isInsideLightBBox = IsAABBInsideBoundingVolume( ms_aShadowCasterBoundingPlanes[i], 5, sectorBBox );
+            if ( !isInsideLightBBox )
+                continue;
+            for ( auto current = GetLodPtrList( x, y )->GetNode(); current != nullptr; current = current->pNext )
+            {
+                auto entity = (CEntity*)current->pItem;
+                if ( casters.count( entity ) != 0 || replacedLods.count( entity ) != 0 || !entity->m_bIsVisible ||
+                     ( entity->m_nAreaCode != CGame::currArea && entity->m_nAreaCode != 13 ) ) // 13: every area
+                    continue;
+                AddEntityToShadowCastersIfNeeded( entity, true );
+            }
+        }
+    }
+}
+
 void CRendererRH::ScanSectorListForReflections( int x, int y )
 {
     CSector*	  sector = GetSector( x, y );
@@ -1401,6 +1459,7 @@ void CRendererRH::ScanWorld()
 
         }
     }
+    ScanBigBuildingsForShadowCasters();
     /*for (size_t i = 0; i < gShadowSettings.MaxSectorsAroundPlayer * 2 - 1; i++)
     {
         tt[i].join();
