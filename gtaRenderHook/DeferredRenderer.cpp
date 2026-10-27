@@ -10,6 +10,7 @@
 #include "D3D1XStateManager.h"
 #include "D3D1XTexture.h"
 #include "D3DRenderer.h"
+#include "TemporalAA.h"
 #include "FullscreenQuad.h"
 #include "HDRTonemapping.h"
 #include "LightManager.h"
@@ -161,6 +162,11 @@ void CDeferredRenderer::RenderOutput()
         gDeferredSettings.GetFloat( "MaxShadowBlur" );
     m_pDeferredBuffer->data.MinShadowBlur =
         gDeferredSettings.GetFloat( "MinShadowBlur" );
+    // jitter is an NDC offset; uv = 0.5 + 0.5 * ndc.x, 0.5 - 0.5 * ndc.y
+    m_pDeferredBuffer->data.SSRPrevFrameOffsetX =
+        0.5f * CTemporalAA::GetJitterDeltaX();
+    m_pDeferredBuffer->data.SSRPrevFrameOffsetY =
+        -0.5f * CTemporalAA::GetJitterDeltaY();
     m_pDeferredBuffer->Update();
     g_pStateMgr->SetConstantBufferPS( m_pDeferredBuffer, 6 );
     CAmbientOcclusion::RenderAO( m_aDeferredRasters[1] );
