@@ -26,7 +26,8 @@ cbuffer RenderStateBuffer : register( b0 )
     float   fFogRange;
     float   fFarClip;
     float   fTimeStep;
-    float3 __pad;           // padding to align structure to 16 bytes, unaligned structures are way slower
+    float   fReversedZ;     // 1 while the bound depth buffer uses reversed Z (near = 1, far = 0)
+    float2 __pad;           // padding to align structure to 16 bytes, unaligned structures are way slower
 }
 /*!
     Matrices updated each frame

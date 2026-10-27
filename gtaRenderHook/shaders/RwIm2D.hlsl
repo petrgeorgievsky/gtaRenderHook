@@ -32,6 +32,9 @@ PS_IM2D_IN VS(VS_IM2D_IN i)
     o.vPosition = float4((i.vPosition.x) * 2 / fScreenWidth - 1.0f, 
                       1.0f - (i.vPosition.y) * 2 / fScreenHeight, 
                               i.vPosition.z, 1.0); // transform to screen space
+    // the game's screen z is standard depth, a reversed Z depth buffer stores 1 - z
+    if ( fReversedZ > 0 )
+        o.vPosition.z = 1.0f - o.vPosition.z;
     return o;
 }
 

@@ -98,6 +98,10 @@ private://Virtual methods.
     virtual void SetRenderTargets( RwRaster ** rasters, RwRaster *zBuffer, RwUInt32 rasterCount ) override;
 
 public:
+    /*!
+        Cameras rendered with reversed Z (near = 1, far = 0) into a float depth buffer.
+    */
+    static bool IsReversedZCamera( RwCamera *camera );
     void SetRenderTargetsAndUAVs( RwRaster ** rasters, RwRaster ** uavs, RwRaster *zBuffer, RwUInt32 rasterCount, RwUInt32 uavCount, RwUInt32 uavStart );
     void ReloadTextures();
     RwRaster * CreateD3D9Raster( RwInt32 width, RwInt32 height, D3DFORMAT format, RwInt32 flags );

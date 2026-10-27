@@ -9,6 +9,7 @@
 #include "D3D1XStateManager.h"
 #include "D3DSpecificHelpers.h"
 #include "CDebug.h"
+#include "RwD3D1XEngine.h"
 
 CD3DRenderer::CD3DRenderer( HWND& window )
 {
@@ -345,12 +346,14 @@ void CD3DRenderer::Clear( RwCamera *camera, RwRGBA& color, RwInt32 flags )
     if ( ( flags&rwCAMERACLEARZ || flags & rwCAMERACLEARSTENCIL ) && camera->zBuffer )
     {
         auto depthTex = dynamic_cast<CD3D1XDepthStencilTexture*>( pd3dDepthRaster->resourse );
+        // far plane depth
+        const float farDepth = CRwD3D1XEngine::IsReversedZCamera( camera ) ? 0.0f : 1.0f;
         if ( !( flags&rwCAMERACLEARZ ) )
-            m_pImmediateContext->ClearDepthStencilView( depthTex->GetDepthStencilView(), D3D11_CLEAR_STENCIL, 1.0f, 0 );
+            m_pImmediateContext->ClearDepthStencilView( depthTex->GetDepthStencilView(), D3D11_CLEAR_STENCIL, farDepth, 0 );
         else if ( !( flags&rwCAMERACLEARSTENCIL ) )
-            m_pImmediateContext->ClearDepthStencilView( depthTex->GetDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0 );
+            m_pImmediateContext->ClearDepthStencilView( depthTex->GetDepthStencilView(), D3D11_CLEAR_DEPTH, farDepth, 0 );
         else
-            m_pImmediateContext->ClearDepthStencilView( depthTex->GetDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0 );
+            m_pImmediateContext->ClearDepthStencilView( depthTex->GetDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, farDepth, 0 );
     }
 }
 
