@@ -57,7 +57,8 @@ cbuffer PerMaterialBuffer : register(b3)
     float fSpecularIntensity : packoffset(c1.y);
     float fGlossiness : packoffset(c1.z);
     float fMetallness : packoffset(c1.w);
-    float2 ___padding : packoffset( c2 );
+    float  fAlphaCutoff : packoffset( c2.x );    // dual-pass alpha objects: alpha test value, 0 = off
+    float  fAlphaBlendPass : packoffset( c2.y ); // 1 in the blended pass of a dual-pass mesh
     int    bHasNormalTex : packoffset( c2.z );
     int    bHasSpecTex : packoffset( c2.w );
 }
