@@ -90,19 +90,22 @@ vec3 LinDepthToViewDir(float  lin_z, vec2 tc)
 }
 
 #include "evaluate_pdf.glsl"
+#include "restir_sampling.glsl"
 #include "combine_reservoirs.glsl"
 
 
 void main()
 {
-    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 pos     = ivec2( gl_GlobalInvocationID.xy );
+    ivec2 tex_res = imageSize( tx_normal_depth );
+
+    if ( any( greaterThanEqual( pos, tex_res ) ) )
+        return;
 
     const vec3 ViewPos = viewInverse[3].xyz;
 
     vec4 normals_depth = imageLoad(tx_normal_depth, pos);
     vec3 Normals = normalize(normals_depth.xyz);
-
-    ivec2 tex_res = imageSize(tx_normal_depth);
 
     vec3 ViewDir = LinDepthToViewDir(normals_depth.w, vec2(pos.xy)/vec2(tex_res.xy));
     vec3 WorldPos = ViewPos + ViewDir * normals_depth.w;
@@ -125,6 +128,13 @@ void main()
         neighborPos.y = clamp(int(pos.y) + neighborOffset.y, 0, int(ScreenHeight) - 1);
 
         uint resIndex = neighborPos.x * ScreenHeight + neighborPos.y;
+
+        const vec4 neighbour_normal_depth =
+            imageLoad( tx_normal_depth, neighborPos );
+        if ( !ReservoirNeighbourIsCompatible(
+                 normals_depth.xyz, normals_depth.w,
+                 neighbour_normal_depth.xyz, neighbour_normal_depth.w ) )
+            continue;
 
         Reservoir nearReservoir = reservoirs[resIndex];
         reservoir = combineReservoirs(reservoir, nearReservoir, surface, randSeed);

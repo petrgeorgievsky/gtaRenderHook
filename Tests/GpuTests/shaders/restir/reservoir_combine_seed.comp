@@ -1,0 +1,54 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+#include "../../vulkan/engine/restir/evaluate_pdf.glsl"
+#include "../../vulkan/engine/restir/combine_reservoirs.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    vec4       sun_dir;
+    ivec4      counts;
+    PackedLight tri_lights[8];
+    mat4       tri_transforms[8];
+    Reservoir  a;
+    Reservoir  b;
+    uvec4      caller_seed;
+    vec4       surface_pos;
+    vec4       surface_normal;
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    uvec4 values; // x = selectedLightId, y = selectedLightSeed,
+                  // z = a.selectedLightSeed, w = b.selectedLightSeed
+} out_data;
+
+void main()
+{
+    SunDir         = in_data.sun_dir;
+    LightsCount    = in_data.counts.x;
+    TriLightsCount = in_data.counts.y;
+
+    for ( int i = 0; i < 8; ++i )
+    {
+        SceneTriLights[i]    = in_data.tri_lights[i];
+        scnDesc.i[i].transfo = in_data.tri_transforms[i];
+    }
+
+    SurfacePoint surface;
+    surface.worldPos = in_data.surface_pos.xyz;
+    surface.normal   = normalize( in_data.surface_normal.xyz );
+
+    uint seed = in_data.caller_seed.x;
+
+    const Reservoir combined =
+        combineReservoirs( in_data.a, in_data.b, surface, seed );
+
+    out_data.values =
+        uvec4( uint( combined.selectedLightId ), combined.selectedLightSeed,
+               in_data.a.selectedLightSeed, in_data.b.selectedLightSeed );
+}

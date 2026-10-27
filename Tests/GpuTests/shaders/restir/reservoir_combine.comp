@@ -1,0 +1,38 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+#include "../../vulkan/engine/restir/evaluate_pdf.glsl"
+#include "../../vulkan/engine/restir/combine_reservoirs.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    vec4      sun_dir;
+    ivec4     counts;
+    Reservoir a;
+    Reservoir b;
+    uint      seed;
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    Reservoir result;
+} out_data;
+
+void main()
+{
+    SunDir         = in_data.sun_dir;
+    LightsCount    = in_data.counts.x;
+    TriLightsCount = in_data.counts.y;
+
+    SurfacePoint surface;
+    surface.worldPos = vec3( 0.0f );
+    surface.normal   = vec3( 0.0f, 0.0f, 1.0f );
+
+    uint seed       = in_data.seed;
+    out_data.result =
+        combineReservoirs( in_data.a, in_data.b, surface, seed );
+}

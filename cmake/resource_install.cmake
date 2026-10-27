@@ -5,6 +5,9 @@ include_guard()
 # RESOURCE_DIR - path in which resources are located
 # DEST_PATH - path relative to runtime dir, in which we copy resources
 function(copy_resources_to_build_dir TARGET_NAME RESOURCE_DIR DEST_PATH)
+    # Normalize to forward slashes: CONFIGURE_DEPENDS writes the glob pattern
+    # into VerifyGlobs.cmake verbatim, and a backslash is parsed as an escape.
+    file(TO_CMAKE_PATH "${RESOURCE_DIR}" RESOURCE_DIR)
     string(TOUPPER "${CMAKE_BUILD_TYPE}" CONFIG_UPPER)
     get_target_property(TARGET_OUT_DIR ${TARGET_NAME} RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER})
     if (NOT TARGET_OUT_DIR)
@@ -14,7 +17,10 @@ function(copy_resources_to_build_dir TARGET_NAME RESOURCE_DIR DEST_PATH)
             return()
         endif ()
     endif ()
-    file(GLOB_RECURSE RESOURCE_FILES "${RESOURCE_DIR}/*")
+    # CONFIGURE_DEPENDS: adding a new resource (e.g. a shader include) has to
+    # re-run CMake, otherwise no copy rule is generated for it and the runtime
+    # tree silently keeps the old file set.
+    file(GLOB_RECURSE RESOURCE_FILES CONFIGURE_DEPENDS "${RESOURCE_DIR}/*")
     set(COPIED_RESOURCE_FILES "")
     foreach (RES_PATH ${RESOURCE_FILES})
         file(RELATIVE_PATH REL_PATH "${RESOURCE_DIR}" ${RES_PATH})

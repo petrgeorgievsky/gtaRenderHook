@@ -411,6 +411,13 @@ VulkanDeviceState::~VulkanDeviceState()
 bool VulkanDeviceState::Init()
 {
     using namespace rh::debug;
+    if ( m_aAdapters.empty() )
+    {
+        DebugLogger::Error(
+            "VulkanDeviceState initialization failed: no Vulkan adapters" );
+        return false;
+    }
+
     DebugLogger::LogFmt( "VulkanDeviceState initialization for GPU %u:",
                          LogLevel::Info, m_uiCurrentAdapter );
 

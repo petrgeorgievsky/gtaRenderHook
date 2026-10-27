@@ -1,8 +1,8 @@
 
 // Recalculates reservoir weight
-Reservoir updateReservoirWeight(Reservoir r, SurfacePoint s, inout uint seed)
+Reservoir updateReservoirWeight(Reservoir r, SurfacePoint s)
 {
-    float pdf = EvaluatePDF(r.selectedLightId, s, seed);
+    float pdf = EvaluatePDF(r.selectedLightId, s, r.selectedLightSeed);
 
     if(pdf > 0)
         r.selectedLightWeight = (1.0f / max(pdf, 0.0001f) ) *
@@ -14,22 +14,22 @@ Reservoir updateReservoirWeight(Reservoir r, SurfacePoint s, inout uint seed)
 
 // Combines 2 reservoirs and recalculates weight
 Reservoir combineReservoirs(Reservoir a, Reservoir b, SurfacePoint surface, inout uint seed){
-    float aPdf = max( EvaluatePDF(a.selectedLightId, surface, seed), 0.0001f );
-    float bPdf = max( EvaluatePDF(b.selectedLightId, surface, seed), 0.0001f );
+    float aPdf = max( EvaluatePDF(a.selectedLightId, surface, a.selectedLightSeed), 0.0001f );
+    float bPdf = max( EvaluatePDF(b.selectedLightId, surface, b.selectedLightSeed), 0.0001f );
 
     // Limit visited sample count
     b.visitedSampleCount = min(20 * a.visitedSampleCount, b.visitedSampleCount);
 
     Reservoir c=newReservoir();
 
-    c = updateReservoir(c, a.selectedLightId,
+    c = updateReservoir(c, a.selectedLightId, a.selectedLightSeed,
                             aPdf * a.selectedLightWeight * a.visitedSampleCount,
                              seed);
-    c = updateReservoir(c, b.selectedLightId,
+    c = updateReservoir(c, b.selectedLightId, b.selectedLightSeed,
                             bPdf * b.selectedLightWeight * b.visitedSampleCount,
                              seed);
 
     c.visitedSampleCount = a.visitedSampleCount + b.visitedSampleCount;
 
-    return updateReservoirWeight(c, surface, seed);
+    return updateReservoirWeight(c, surface);
 }

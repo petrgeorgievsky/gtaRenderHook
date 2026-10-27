@@ -46,6 +46,12 @@ class DeferredCompositionPass
     void                    Execute( rh::engine::ICommandBuffer *dest );
     rh::engine::IImageView *GetResultView() { return mOutputBuffer.View; }
 
+    // Rebinds the lighting input, so the denoiser can be toggled at runtime.
+    void SetLightingBuffer( rh::engine::IImageView *view );
+
+    // 0 = final image, 1 = lighting (shadows), 2 = AO, 3 = reflections.
+    void SetDebugView( uint32_t mode );
+
   private:
     DeferredCompositionPassParams                      mPassParams;
     RenderTextureBuffer                                mOutputBuffer;
@@ -55,5 +61,7 @@ class DeferredCompositionPass
     ScopedPointer<rh::engine::IDescriptorSetLayout>    mDescSetLayout;
     ScopedPointer<rh::engine::IDescriptorSetAllocator> mDescAllocator;
     ScopedPointer<rh::engine::IDescriptorSet>          mDescSet;
+    ScopedPointer<rh::engine::IBuffer>                 mDebugParamsBuffer;
+    uint32_t                                           mDebugView = 0;
 };
 } // namespace rh::rw::engine

@@ -115,6 +115,7 @@ class RayTracingRenderer : public IFrameRenderer
     ScopedPointer<RTReflectionRaysPass>    mRTReflectionPass;
     ScopedPointer<DeferredCompositionPass> mDeferredComposePass;
     ScopedPointer<TiledLightCulling>       mTiledLightCulling;
+    uint32_t                               mDebugView = 0;
     ScopedPointer<rh::engine::VulkanImGUI> mImGUI;
     ScopedPointer<ImGuiWin32DriverHandler> ImGuiDriver;
     float                                  mCPURecordTime    = 0;

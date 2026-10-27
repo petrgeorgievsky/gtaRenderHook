@@ -1,0 +1,56 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+#include "../../vulkan/engine/restir/evaluate_pdf.glsl"
+#include "../../vulkan/engine/restir/combine_reservoirs.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    vec4       sun_dir;
+    ivec4      counts;
+    PackedLight lights[8];
+    PackedLight tri_lights[8];
+    mat4       tri_transforms[8];
+    Reservoir  r;
+    uvec4      caller_seeds;
+    vec4       surface_pos;
+    vec4       surface_normal;
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    vec4 values; // x = p_hat at r.selectedLightSeed, y = W(caller seed A),
+                 // z = W(caller seed B)
+} out_data;
+
+void main()
+{
+    SunDir         = in_data.sun_dir;
+    LightsCount    = in_data.counts.x;
+    TriLightsCount = in_data.counts.y;
+
+    for ( int i = 0; i < 8; ++i )
+    {
+        SceneLights[i]       = in_data.lights[i];
+        SceneTriLights[i]    = in_data.tri_lights[i];
+        scnDesc.i[i].transfo = in_data.tri_transforms[i];
+    }
+
+    SurfacePoint surface;
+    surface.worldPos = in_data.surface_pos.xyz;
+    surface.normal   = normalize( in_data.surface_normal.xyz );
+
+    const float p_stored =
+        EvaluatePDF( in_data.r.selectedLightId, surface,
+                     in_data.r.selectedLightSeed );
+
+    Reservoir with_seed_a = updateReservoirWeight( in_data.r, surface );
+    Reservoir with_seed_b = updateReservoirWeight( in_data.r, surface );
+
+    out_data.values = vec4( p_stored, with_seed_a.selectedLightWeight,
+                            with_seed_b.selectedLightWeight, 0.0f );
+}

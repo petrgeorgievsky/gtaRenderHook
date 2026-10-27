@@ -1,0 +1,33 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+#include "../../vulkan/engine/restir/evaluate_pdf.glsl"
+#include "../../vulkan/engine/restir/restir_sampling.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+// Two vec4 per case: (center_normal.xyz, center_depth) and
+// (neighbour_normal.xyz, neighbour_depth).
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    vec4 pairs[];
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    int results[64];
+} out_data;
+
+void main()
+{
+    const int  index  = int( gl_GlobalInvocationID.x );
+    const vec4 center = in_data.pairs[index * 2];
+    const vec4 near   = in_data.pairs[index * 2 + 1];
+
+    out_data.results[index] = ReservoirNeighbourIsCompatible(
+                                  center.xyz, center.w, near.xyz, near.w )
+                                  ? 1
+                                  : 0;
+}

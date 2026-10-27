@@ -112,6 +112,10 @@ void main()
 
     uint _tspp = imageLoad(tx_old_tspp_cache, _pos).r;
 
+    // Large screen-space motion invalidates the accumulated history.
+    if ( length( velocity * vec2( tex_res ) ) > 4.0f )
+        _tspp = 0;
+
     // Reproject temporal sample per-pixel cache
     if(reject_sample)
     {

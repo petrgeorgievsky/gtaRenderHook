@@ -18,8 +18,7 @@ namespace rh::rw::engine
 {
 DeferredCompositionPass::DeferredCompositionPass(
     const DeferredCompositionPassParams &params )
-    : mPassParams( params )
-{
+    : mPassParams( params ){
     using namespace rh::engine;
     auto               &device = (VulkanDeviceState &)mPassParams.Device;
     DescriptorGenerator descriptorGenerator{ device };
@@ -40,6 +39,8 @@ DeferredCompositionPass::DeferredCompositionPass(
     descriptorGenerator.AddDescriptor( 0, 6, 6, DescriptorType::StorageTexture,
                                        1, ShaderStage::Compute );
     descriptorGenerator.AddDescriptor( 0, 7, 7, DescriptorType::ROBuffer, 1,
+                                       ShaderStage::Compute );
+    descriptorGenerator.AddDescriptor( 0, 8, 8, DescriptorType::ROBuffer, 1,
                                        ShaderStage::Compute );
 
     mDescSetLayout = descriptorGenerator.FinalizeDescriptorSet( 0, 4 );
@@ -71,6 +72,12 @@ DeferredCompositionPass::DeferredCompositionPass(
         { mOutputBuffer.Image, ImageBufferFormat::RGBA16,
           ImageViewUsage::RWTexture } );
 
+    mDebugParamsBuffer =
+        device.CreateBuffer( { .mSize        = sizeof( uint32_t ) * 4,
+                               .mUsage       = BufferUsage::ConstantBuffer,
+                               .mFlags       = BufferFlags::Dynamic,
+                               .mInitDataPtr = &mDebugView } );
+
     /// Generate descriptors
     DescSetUpdateBatch{ device }
         .Begin( mDescSet )
@@ -97,6 +104,8 @@ DeferredCompositionPass::DeferredCompositionPass(
             { { ImageLayout::General, mOutputBuffer.View, nullptr } } )
         .UpdateBuffer( 7, DescriptorType::ROBuffer,
                        { { 0, VK_WHOLE_SIZE, params.mSkyCfg } } )
+        .UpdateBuffer( 8, DescriptorType::ROBuffer,
+                       { { 0, VK_WHOLE_SIZE, mDebugParamsBuffer } } )
         .End();
 }
 void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
@@ -135,4 +144,22 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
                              .mDstStage = PipelineStage::PixelShader,
                              .mImageMemoryBarriers = { shader_ro_barrier } } );
 }
+
+void DeferredCompositionPass::SetLightingBuffer( rh::engine::IImageView *view )
+{
+    mPassParams.mLightingBuffer = view;
+
+    rh::rw::engine::DescSetUpdateBatch{ mPassParams.Device }
+        .Begin( mDescSet )
+        .UpdateImage( 3, rh::engine::DescriptorType::StorageTexture,
+                      { { rh::engine::ImageLayout::General, view, nullptr } } )
+        .End();
+}
+
+void DeferredCompositionPass::SetDebugView( uint32_t mode )
+{
+    mDebugView = mode;
+    mDebugParamsBuffer->Update( &mDebugView, sizeof( mDebugView ) );
+}
+
 } // namespace rh::rw::engine

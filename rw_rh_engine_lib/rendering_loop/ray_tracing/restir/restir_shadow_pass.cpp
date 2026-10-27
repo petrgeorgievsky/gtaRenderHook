@@ -7,7 +7,9 @@
 #include "restir_structs.hpp"
 #include "spatial_reuse_pass.h"
 #include "visibility_reuse_pass.h"
+#include <data_desc/light_system/point_light.h>
 #include <imgui.h>
+#include <algorithm>
 
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/sampler_filter.h>
@@ -53,8 +55,8 @@ ShadowsPass::ShadowsPass( const ShadowsInitParams &params )
 
     mLightPopulationPass = new LightSamplingPass( LightPopulationPassBase{
         Device, mScene, mCamera, params.mWidth, params.mHeight,
-        params.mNormalsView, params.mLightBuffer, params.mSkyCfg,
-        TriangleLights, params.mMotionVectorsView } );
+        params.mNormalsView, params.mPrevNormalsView, params.mLightBuffer,
+        params.mSkyCfg, TriangleLights, params.mMotionVectorsView } );
 
     TempReservoirBuffer = Device.CreateBuffer( BufferCreateInfo{
         .mSize =
@@ -283,15 +285,17 @@ void ShadowsPass::Execute( void *tlas, uint32_t light_count,
     TriangleLights->Unlock();
 
     mPassParams.Timestamp   = ( mPassParams.Timestamp + 1 ) % 100000;
-    mPassParams.LightsCount = light_count;
+    const uint32_t clamped_light_count =
+        ( std::min )( light_count, MaxPointLights );
+    mPassParams.LightsCount = clamped_light_count;
     mParamsBuffer->Update( &mPassParams, sizeof( ShadowsProperties ) );
 
-    mLightPopulationPass->Execute( light_count, cmd_buffer );
+    mLightPopulationPass->Execute( clamped_light_count, cmd_buffer );
     /*mVisibilityReusePass->Execute(
         tlas,
         { mPassParams.Timestamp, light_count, mPassParams.LightRadius, 0 },
         cmd_buffer );*/
-    mSpatialReusePass->Execute( light_count, cmd_buffer );
+    mSpatialReusePass->Execute( clamped_light_count, cmd_buffer );
     // mSpatialReusePass2->Execute( light_count, cmd_buffer );
     //
 

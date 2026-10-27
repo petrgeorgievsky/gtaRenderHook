@@ -4,7 +4,10 @@
 
 #include "light_sampling_pass.h"
 
+#include "dispatch_size.h"
 #include "restir_structs.hpp"
+
+#include <imgui.h>
 
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
@@ -26,6 +29,7 @@ struct LightPopulationPassBind
     constexpr static auto SkyCfg        = 5;
     constexpr static auto TriLights     = 6;
     constexpr static auto MotionVectors = 7;
+    constexpr static auto PrevNormalDepth = 8;
 };
 
 LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
@@ -62,6 +66,10 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
                         DescriptorType::RWBuffer, 1, ShaderStage::Compute )
         .AddDescriptor( 0, LightPopulationPassBind::MotionVectors,
                         LightPopulationPassBind::MotionVectors,
+                        DescriptorType::StorageTexture, 1,
+                        ShaderStage::Compute )
+        .AddDescriptor( 0, LightPopulationPassBind::PrevNormalDepth,
+                        LightPopulationPassBind::PrevNormalDepth,
                         DescriptorType::StorageTexture, 1,
                         ShaderStage::Compute );
 
@@ -111,6 +119,9 @@ LightSamplingPass::LightSamplingPass( LightPopulationPassBase &&base )
         .UpdateImage( LightPopulationPassBind::MotionVectors,
                       DescriptorType::StorageTexture,
                       { { ImageLayout::General, MotionVectors, nullptr } } )
+        .UpdateImage( LightPopulationPassBind::PrevNormalDepth,
+                      DescriptorType::StorageTexture,
+                      { { ImageLayout::General, PrevNormals, nullptr } } )
         .UpdateBuffer( LightPopulationPassBind::Lights,
                        DescriptorType::RWBuffer,
                        { BufferUpdateInfo{ 0, VK_WHOLE_SIZE, Lights } } )
@@ -140,6 +151,8 @@ void LightSamplingPass::Execute( uint32_t                    light_count,
     auto *vk_cmd_buff     = dynamic_cast<VulkanCommandBuffer *>( cmd_buffer );
     PassParams.LightCount = light_count;
     PassParams.Timestamp  = ( PassParams.Timestamp + 1 ) % 100000;
+    if ( mDisableTemporal )
+        PassParams.FirstTime = 1;
     ParamsBuffer->Update( &PassParams, sizeof( LightPopulationPassParams ) );
 
     vk_cmd_buff->BindComputePipeline( Pipeline );
@@ -150,8 +163,9 @@ void LightSamplingPass::Execute( uint32_t                    light_count,
           0,
           { DescSet, Camera->GetDescSet(), Scene->DescSet() } } );
 
+    const auto dispatch = ComputeDispatchSize( Width, Height, 8 );
     vk_cmd_buff->DispatchCompute(
-        { .mX = Width / 8, .mY = Height / 8, .mZ = 1 } );
+        { .mX = dispatch.x, .mY = dispatch.y, .mZ = dispatch.z } );
     PassParams.FirstTime = 0;
 }
 
@@ -167,5 +181,6 @@ void LightSamplingPass::UpdateUI()
     if ( !ImGui::CollapsingHeader( "Light sampling pass" ) )
         return;
     ImGui::DragInt( "Sample count", &PassParams.ReservoirSize, 1, 1, 1024 );
+    ImGui::Checkbox( "Disable temporal reuse", &mDisableTemporal );
 }
 } // namespace rh::rw::engine::restir

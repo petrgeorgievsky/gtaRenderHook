@@ -1,0 +1,34 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    uint  seed;
+    int   light_ids[8];
+    uint  sample_seeds[8];
+    float weights[8];
+    int   count;
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    Reservoir result;
+} out_data;
+
+void main()
+{
+    uint seed = in_data.seed;
+
+    Reservoir reservoir = newReservoir();
+    for ( int i = 0; i < in_data.count; ++i )
+        reservoir = updateReservoir( reservoir, in_data.light_ids[i],
+                                     in_data.sample_seeds[i],
+                                     in_data.weights[i], seed );
+
+    out_data.result = reservoir;
+}

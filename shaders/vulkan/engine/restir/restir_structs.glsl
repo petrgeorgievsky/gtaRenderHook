@@ -57,6 +57,10 @@ struct Reservoir
     float selectedLightWeight;
     int visitedSampleCount;
     int selectedLightId;
+    uint selectedLightSeed;
+    uint pad0;
+    uint pad1;
+    uint pad2;
 };
 
 // TODO: Move elsewhere

@@ -125,6 +125,16 @@ set(SOURCES
         )
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
+# ReSTIR passes are the hot spot during development: keep them out of unity
+# batches so editing one file recompiles exactly one translation unit.
+set(RESTIR_HOT_SOURCES
+        rendering_loop/ray_tracing/restir/restir_shadow_pass.cpp
+        rendering_loop/ray_tracing/restir/light_sampling_pass.cpp
+        rendering_loop/ray_tracing/restir/spatial_reuse_pass.cpp
+        rendering_loop/ray_tracing/restir/visibility_reuse_pass.cpp)
+set_source_files_properties(${RESTIR_HOT_SOURCES} PROPERTIES
+        SKIP_UNITY_BUILD_INCLUSION ON)
+
 target_include_directories(${PROJECT_NAME} PUBLIC ./)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

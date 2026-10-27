@@ -53,6 +53,7 @@ layout(binding = 6, set = 0) buffer TriangleLights
     PackedLight SceneTriLights[];
 };
 layout(binding = 7, set = 0, rg16f) uniform image2D tx_motion;
+layout(binding = 8, set = 0, rgba16f) uniform image2D tx_prev_normal_depth;
 
 layout(binding = 0, set = 1) uniform CameraProperties
 {
@@ -90,19 +91,19 @@ vec3 LinDepthToViewDir(float  lin_z, vec2 tc)
 }
 
 #include "evaluate_pdf.glsl"
+#include "restir_sampling.glsl"
 #include "combine_reservoirs.glsl"
 
 shared ivec2 tex_res;
-bool TexBoundsCheck(in ivec2 tc)
-{
-    return tc.x > tex_res.x || tc.y > tex_res.y || tc.x < 0 || tc.y < 0;
-}
 
 void main()
 {
     if(gl_LocalInvocationIndex == 0)
         tex_res = imageSize(tx_normal_depth);
     barrier();
+
+    if ( any( greaterThanEqual( ivec2( gl_GlobalInvocationID.xy ), tex_res ) ) )
+        return;
 
     uint resIndex = gl_GlobalInvocationID.x * tex_res.y + gl_GlobalInvocationID.y;
     //int tile[32];
@@ -125,22 +126,15 @@ void main()
 
     SurfacePoint surface = SurfacePoint(WorldPos,normals_depth.xyz);
 
-    Reservoir reservoir = Reservoir(0,0,0,0);
+    Reservoir reservoir = newReservoir();
 
     // Perform resampled importance sampling
-  for (int i = 0; i < min(lightCountFull, ReservoirSize); i++) {
-        // Select random light between -1...LightsCount, -1 is main directional light
-        int lightToSample =  min(int(nextRand(randSeed) * (lightCountFull)) - 1, lightCountFull - 1);
-        int sampleId = lightToSample;//tile[lightToSample];
-		float lightSampleP = 1.0f / (lightCountFull);
-
-        float p_hat = EvaluatePDF(sampleId, surface, randSeed);
-
-        reservoir = updateReservoir(reservoir, sampleId, p_hat/lightSampleP, randSeed);
-    }
+    for (int i = 0; i < min(lightCountFull, ReservoirSize); i++)
+        reservoir = SampleReservoirCandidate( reservoir, surface, lightCountFull,
+                                              uint( i ), randSeed );
 
     // Calculate resulting reservoir weight
-    reservoir = updateReservoirWeight(reservoir, surface, randSeed);
+    reservoir = updateReservoirWeight(reservoir, surface);
 
     const vec2 velocity = imageLoad(tx_motion, pos).rg;
     const vec2 pixelCenter = vec2(pos.xy) + vec2(0.5);
@@ -149,12 +143,27 @@ void main()
     vec2 _uv = uv - velocity;
 
     ivec2 _pos = ivec2(floor(_uv * tex_res - 0.5));
-    // Temporal reuse TODO: Add sample rejection for occluded reservoirs
 
-    if(FirstTime == 0 && TexBoundsCheck(_pos)){
-        Reservoir prevReservoir = prev_reservoirs[_pos.x * tex_res.y + _pos.y];
-        // Store resulting reservoir
-        reservoirs[resIndex] = combineReservoirs(reservoir, prevReservoir, surface, randSeed);
+    // Temporal reuse: only for a valid reprojection onto the same surface.
+    const bool reprojection_in_bounds = _pos.x >= 0 && _pos.y >= 0 &&
+                                        _pos.x < tex_res.x && _pos.y < tex_res.y;
+
+    if ( FirstTime == 0 && reprojection_in_bounds )
+    {
+        const vec4 prev_normal_depth = imageLoad( tx_prev_normal_depth, _pos );
+
+        if ( ReservoirNeighbourIsCompatible( normals_depth.xyz, normals_depth.w,
+                                             prev_normal_depth.xyz,
+                                             prev_normal_depth.w ) )
+        {
+            Reservoir prevReservoir =
+                prev_reservoirs[_pos.x * tex_res.y + _pos.y];
+            // Store resulting reservoir
+            reservoirs[resIndex] =
+                combineReservoirs( reservoir, prevReservoir, surface, randSeed );
+        }
+        else
+            reservoirs[resIndex] = reservoir;
     }
     else
         reservoirs[resIndex] = reservoir;

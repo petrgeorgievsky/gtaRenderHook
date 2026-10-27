@@ -1,0 +1,51 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+#include "../../vulkan/engine/restir/evaluate_pdf.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    vec4       sun_dir;
+    ivec4      counts; // x = LightsCount, y = TriLightsCount
+    PackedLight lights[8];
+    PackedLight tri_lights[8];
+    mat4       tri_transforms[8];
+    ivec4      test_case; // x = lightId, y = seedA, z = seedB
+    vec4       surface_pos;
+    vec4       surface_normal;
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    vec4 values; // x = p_hat(seedA), y = p_hat(seedB)
+} out_data;
+
+void main()
+{
+    SunDir         = in_data.sun_dir;
+    LightsCount    = in_data.counts.x;
+    TriLightsCount = in_data.counts.y;
+
+    for ( int i = 0; i < 8; ++i )
+    {
+        SceneLights[i]       = in_data.lights[i];
+        SceneTriLights[i]    = in_data.tri_lights[i];
+        scnDesc.i[i].transfo = in_data.tri_transforms[i];
+    }
+
+    SurfacePoint surface;
+    surface.worldPos = in_data.surface_pos.xyz;
+    surface.normal   = normalize( in_data.surface_normal.xyz );
+
+    uint seed_a = uint( in_data.test_case.y );
+    uint seed_b = uint( in_data.test_case.z );
+
+    float p_hat_a = EvaluatePDF( in_data.test_case.x, surface, seed_a );
+    float p_hat_b = EvaluatePDF( in_data.test_case.x, surface, seed_b );
+
+    out_data.values = vec4( p_hat_a, p_hat_b, 0.0f, 0.0f );
+}

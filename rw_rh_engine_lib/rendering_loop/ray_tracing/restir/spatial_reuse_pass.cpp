@@ -4,6 +4,8 @@
 
 #include "spatial_reuse_pass.h"
 
+#include "dispatch_size.h"
+
 #include <imgui.h>
 
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
@@ -124,8 +126,9 @@ void SpatialReusePass::Execute( uint32_t                    light_count,
           0,
           { mDescSet, mCamera->GetDescSet(), Scene->DescSet() } } );
 
+    const auto dispatch = ComputeDispatchSize( mWidth, mHeight, 8 );
     vk_cmd_buff->DispatchCompute(
-        { .mX = mWidth / 8, .mY = mHeight / 8, .mZ = 1 } );
+        { .mX = dispatch.x, .mY = dispatch.y, .mZ = dispatch.z } );
 }
 
 rh::engine::IBuffer *SpatialReusePass::GetResult()

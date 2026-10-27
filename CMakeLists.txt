@@ -45,6 +45,7 @@ add_subdirectory(rh_engine_lib)
 add_subdirectory(rw_rh_engine_lib)
 
 if (BUILD_TESTS)
+    enable_testing()
     add_subdirectory(Tests)
 endif ()
 if (BUILD_32BIT_LIBS)

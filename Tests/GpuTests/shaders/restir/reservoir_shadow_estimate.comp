@@ -1,0 +1,45 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+#include "../../vulkan/engine/restir/evaluate_pdf.glsl"
+#include "../../vulkan/engine/restir/restir_sampling.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    vec4       sun_dir;
+    ivec4      counts;
+    PackedLight lights[8];
+    vec4       light_color;
+    Reservoir  r;
+    vec4       surface_pos;
+    vec4       surface_normal;
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    vec4 estimate;
+    vec4 tint;
+} out_data;
+
+void main()
+{
+    SunDir         = in_data.sun_dir;
+    LightsCount    = in_data.counts.x;
+    TriLightsCount = in_data.counts.y;
+
+    for ( int i = 0; i < 8; ++i )
+        SceneLights[i] = in_data.lights[i];
+
+    SurfacePoint surface;
+    surface.worldPos = in_data.surface_pos.xyz;
+    surface.normal   = normalize( in_data.surface_normal.xyz );
+
+    const vec3 tint = ReservoirRadianceTint( in_data.light_color.xyz );
+    out_data.estimate =
+        vec4( ReservoirShadowEstimate( in_data.r, surface, tint, 1.0f ), 1.0f );
+    out_data.tint = vec4( tint, 1.0f );
+}

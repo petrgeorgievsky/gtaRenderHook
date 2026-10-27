@@ -32,7 +32,7 @@ float PointLightGeometryTerm(SurfacePoint surface, AnalyticLight pl)
 }
 
 /// Evaluates approximation of light PDF - p_hat in ReSTIR paper
-float EvaluatePDF(int light_id, SurfacePoint surface, inout uint randSeed)
+float EvaluatePDF(int light_id, SurfacePoint surface, uint randSeed)
 {
 	float p_hat = 0.0f;
     // Main directional light
@@ -69,9 +69,7 @@ float EvaluatePDF(int light_id, SurfacePoint surface, inout uint randSeed)
 
         TriangleLight triLight = UnpackTriLight(SceneTriLights[triangleId]);
 
-        vec2 attribs = vec2(nextRand(randSeed),nextRand(randSeed));
-
-        const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
+        const vec3 barycentrics = SampleTriangleBarycentrics( randSeed );
 
         vec3 obj_pos = triLight.v0.xyz * barycentrics.x +
                        triLight.v1.xyz * barycentrics.y +

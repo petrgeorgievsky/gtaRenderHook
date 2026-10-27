@@ -49,6 +49,7 @@ struct LightPopulationPassBase
     uint32_t                  Width;
     uint32_t                  Height;
     rh::engine::IImageView   *Normals;
+    rh::engine::IImageView   *PrevNormals;
     rh::engine::IBuffer      *Lights;
     rh::engine::IBuffer      *Sky;
     rh::engine::IBuffer      *TriLights;
@@ -71,6 +72,9 @@ class LightSamplingPass : public LightPopulationPassBase
 
   private:
     LightPopulationPassParams PassParams;
+
+    // Debug control: skips the temporal reservoir combine for A/B testing.
+    bool mDisableTemporal = false;
 
     // pipe stuff
     ScopedPointer<rh::engine::IDescriptorSetAllocator> DescSetAlloc;

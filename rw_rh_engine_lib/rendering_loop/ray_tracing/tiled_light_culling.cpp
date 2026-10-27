@@ -5,11 +5,13 @@
 #include "tiled_light_culling.h"
 #include "CameraDescription.h"
 #include "RTShadowsPass.h"
+#include "restir/dispatch_size.h"
 #include "rendering_loop/DescriptorUpdater.h"
 #include <Engine/Common/IDeviceState.h>
 #include <Engine/Common/types/shader_stage.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
 #include <Engine/VulkanImpl/VulkanDeviceState.h>
+#include <algorithm>
 #include <data_desc/light_system/lighting_state.h>
 #include <rendering_loop/DescriptorGenerator.h>
 namespace rh::rw::engine
@@ -69,12 +71,15 @@ TiledLightCulling::TiledLightCulling( const TiledLightCullingParams &params )
           { ShaderStage::Compute, mBuildTilesShader, "main" } } );
 
     // Buffers
-    uint32_t tile_size           = 8;
-    uint32_t max_lights_per_tile = 32;
-    //
-    uint32_t max_lights = 1024;
-    uint32_t tile_count =
-        ( params.mWidth * params.mHeight ) / ( tile_size * tile_size );
+    constexpr uint32_t tile_size           = 8;
+    constexpr uint32_t max_lights_per_tile = 32;
+
+    const auto tile_grid   = restir::ComputeDispatchSize(
+        params.mWidth, params.mHeight, tile_size );
+    uint32_t max_lights = MaxPointLights;
+    // ceil grid: a partial edge tile still exists and is dispatched, so the
+    // tile buffers have to cover it as well.
+    uint32_t tile_count = tile_grid.x * tile_grid.y;
 
     mTileConfigBuffer   = device.CreateBuffer( BufferCreateInfo{
         .mSize        = static_cast<uint32_t>( sizeof( TileConfig ) ),
@@ -126,11 +131,13 @@ void TiledLightCulling::Execute( rh::engine::ICommandBuffer *dest,
 {
     using namespace rh::engine;
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( dest );
-    if ( info.PointLights.Size() > 0 )
+    const auto light_count = static_cast<uint32_t>(
+        ( std::min )( info.PointLights.Size(),
+                      std::size_t{ MaxPointLights } ) );
+    if ( light_count > 0 )
         mLightBuffer->Update( info.PointLights.Data(),
-                              min( 1024u, info.PointLights.Size() ) *
-                                  sizeof( PointLight ) );
-    Config.max_light_count   = info.PointLights.Size();
+                              light_count * sizeof( PointLight ) );
+    Config.max_light_count   = light_count;
     Config.max_light_in_tile = 32;
     mTileConfigBuffer->Update( &Config, sizeof( TileConfig ) );
 
@@ -142,7 +149,9 @@ void TiledLightCulling::Execute( rh::engine::ICommandBuffer *dest,
           0,
           { mBuildTilesDescSet, mCameraDesc->GetDescSet() } } );
 
+    const auto dispatch =
+        restir::ComputeDispatchSize( mWidth, mHeight, 8 );
     vk_cmd_buff->DispatchCompute(
-        { .mX = mWidth / 8, .mY = mHeight / 8, .mZ = 1 } );
+        { .mX = dispatch.x, .mY = dispatch.y, .mZ = 1 } );
 }
 } // namespace rh::rw::engine

@@ -20,6 +20,11 @@ layout(binding = 7, set = 0) uniform SkyCfg
     vec4 skyColor;
     vec4 ambientColor;
 }sky_cfg;
+
+layout(binding = 8, set = 0) uniform DebugParams
+{
+    uint mode; // 0 = final, 1 = lighting, 2 = AO, 3 = reflections
+} debug_params;
 layout(binding = 0, set = 1) uniform CameraProperties
 {
     mat4 view;
@@ -63,6 +68,28 @@ float MicrofacetFresnel(in vec3 LightDir, in vec3 Normal, in float fRoughness) {
 void main()
 {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+    if ( debug_params.mode == 1 )
+    {
+        vec3 c = imageLoad( tx_lighting, pos ).rgb;
+        c      = c / ( 1.0f + c ); // Reinhard, keeps HDR readable
+        imageStore( output_image, pos, vec4( c, 1.0f ) );
+        return;
+    }
+    if ( debug_params.mode == 2 )
+    {
+        const float ao = imageLoad( tx_ao, pos ).r;
+        imageStore( output_image, pos, vec4( ao, ao, ao, 1.0f ) );
+        return;
+    }
+    if ( debug_params.mode == 3 )
+    {
+        vec3 c = imageLoad( tx_refl, pos ).rgb;
+        c      = c / ( 1.0f + c );
+        imageStore( output_image, pos, vec4( c, 1.0f ) );
+        return;
+    }
+
     vec4 OutLighting;
     const vec3 ViewPos = cam.viewInverse[3].xyz;
 

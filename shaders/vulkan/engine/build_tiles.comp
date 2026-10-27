@@ -125,15 +125,27 @@ void main()
 
     barrier();
 
-    // Calculate min & max depth inside a workgroup
-    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
-    vec4 normal_depth =  imageLoad(tx_normal_depth, pos);
+    // Calculate min & max depth inside a workgroup.
+    // The dispatch covers partial edge tiles, so an invocation may sit outside
+    // the image. It must not return early (the workgroup barriers below have to
+    // stay uniform) and must not feed depth 0 into the tile bounds.
+    ivec2 pos        = ivec2( gl_GlobalInvocationID.xy );
+    ivec2 image_size = imageSize( tx_normal_depth );
+    bool  in_bounds  = all( lessThan( pos, image_size ) );
+
+    vec4 normal_depth = vec4( 0.0f );
+    if ( in_bounds )
+        normal_depth = imageLoad( tx_normal_depth, pos );
+
     float depth = normal_depth.w;///1000.0f;
     //depth = 1.0 / (depth * cam.projInverse[2][3] + cam.projInverse[3][3]);
 
-    uint depth_int = floatBitsToUint(depth);
-    atomicMin(min_depth, depth_int);
-    atomicMax(max_depth, depth_int);
+    if ( in_bounds )
+    {
+        uint depth_int = floatBitsToUint( depth );
+        atomicMin( min_depth, depth_int );
+        atomicMax( max_depth, depth_int );
+    }
 
     barrier();
 

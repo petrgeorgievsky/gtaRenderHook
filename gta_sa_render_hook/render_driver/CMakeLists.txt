@@ -21,6 +21,12 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_VULKAN_API)
 target_link_libraries(${PROJECT_NAME} $ENV{VULKAN_SDK}/Lib/vulkan-1.lib rh_engine_lib rw_rh_engine_lib)
 target_compile_options(${PROJECT_NAME} PRIVATE)
 
+include("${CMAKE_SOURCE_DIR}/cmake/resource_install.cmake")
+
+# This process compiles shaders at runtime, so it installs the shader tree and
+# the validator next to itself instead of relying on the 32-bit hook build.
+copy_resources_to_build_dir(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/shaders" "shaders")
+
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         $ENV{VULKAN_SDK}\\Bin\\glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/)

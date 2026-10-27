@@ -148,16 +148,17 @@ void *DebugLogger::GetDebugFileHandle()
 void DebugLogger::SyncDebugFile()
 {
     DWORD dwRead;
-    CHAR  chBuf[4096];
-    BOOL  bSuccess = FALSE;
+    CHAR  chBuf[4097]{};
     CloseHandle( g_hDebugPipeHandle );
     g_hDebugPipeHandle = nullptr;
     for ( ;; )
     {
-        bSuccess =
-            ReadFile( g_hDebugPipeReadHandle, chBuf, 4096, &dwRead, nullptr );
-        if ( !bSuccess || dwRead == 0 )
+        if ( !ReadFile( g_hDebugPipeReadHandle, chBuf, 4096, &dwRead, nullptr ) ||
+             dwRead == 0 )
             break;
+        // ReadFile does not terminate the buffer; without this the tail of the
+        // chunk is uninitialized stack memory in the log.
+        chBuf[dwRead] = '\0';
         DebugLogger::Log( chBuf );
     }
     CloseHandle( g_hDebugPipeReadHandle );

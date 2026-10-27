@@ -1,0 +1,35 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "../../vulkan/engine/restir/restir_structs.glsl"
+#include "../../vulkan/engine/restir/restir_common.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer InputValues
+{
+    vec4 values[];
+} in_values;
+
+layout(std140, binding = 1) writeonly buffer OutputReservoirs
+{
+    Reservoir reservoirs[];
+} out_reservoirs;
+
+void main()
+{
+    for ( int i = 0; i < 2; ++i )
+    {
+        vec4 v = in_values.values[i];
+
+        Reservoir r = newReservoir();
+        r.totalWeight         = v.x;
+        r.selectedLightWeight = v.y;
+        r.visitedSampleCount  = int( v.z );
+        r.selectedLightId     = int( v.w );
+        r.selectedLightSeed   = uint( v.z ) * 1000u;
+
+        out_reservoirs.reservoirs[i] = r;
+    }
+}

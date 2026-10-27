@@ -7,7 +7,9 @@
 
 #include <array>
 #include <cstdint>
+#include <DirectXMath.h>
 #include <data_desc/light_system/packed_light.h>
+#include <vector>
 
 namespace rh::engine
 {

@@ -210,6 +210,11 @@ RayTracingRenderer::Render( const FrameState                 &state,
         // mRTShadowsPass->Execute( mTLAS, dest );
         mRestirShadowsPass->Execute( mTLAS, state.Lights.PointLights.Size(),
                                      dest );
+        // The denoiser toggle changes which shadow view has to be composed.
+        // Update every frame: a one-shot update can land while the previous
+        // frame still uses the descriptor set and never reach the GPU.
+        mDeferredComposePass->SetLightingBuffer(
+            mRestirShadowsPass->GetShadowsView() );
         mRTReflectionPass->Execute( mTLAS, dest );
         mDeferredComposePass->Execute( dest );
         mPrimaryRaysPass->ConvertNormalsToShaderRO( dest );
@@ -368,6 +373,17 @@ void RayTracingRenderer::DrawGUI( const FrameState &scene )
     ImGui::Text( "FPS:%.1f", 1000.0f / ( ms_from_lf + 0.0001f ) );
     mRTAOPass->UpdateUI();
     mRestirShadowsPass->UpdateUI();
+
+    if ( ImGui::CollapsingHeader( "Debug view" ) )
+    {
+        const char *items[] = { "Final", "Shadows", "AO", "Reflections" };
+        int         current = static_cast<int>( mDebugView );
+        if ( ImGui::Combo( "Channel", &current, items, 4 ) )
+        {
+            mDebugView = static_cast<uint32_t>( current );
+            mDeferredComposePass->SetDebugView( mDebugView );
+        }
+    }
     ImGui::EndGroup();
 
     if ( ImGui::CollapsingHeader( "Im2DCalls" ) )

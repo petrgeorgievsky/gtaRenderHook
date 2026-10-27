@@ -1,0 +1,68 @@
+#version 460
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_EXT_scalar_block_layout : require
+
+#include "test_bindings.glsl"
+#include "../../vulkan/engine/restir/evaluate_pdf.glsl"
+#include "../../vulkan/engine/restir/restir_sampling.glsl"
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer TestInput
+{
+    vec4       sun_dir;
+    ivec4      counts; // x = LightsCount, y = TriLightsCount,
+                       // z = lightCountFull, w = sample index
+    PackedLight tri_lights[8];
+    mat4       tri_transforms[8];
+    uvec4      seed;
+    vec4       surface_pos;
+    vec4       surface_normal;
+} in_data;
+
+layout(std430, binding = 1) writeonly buffer TestOutput
+{
+    uvec4 values; // x = stored sample seed, y = seed derived from the stream,
+                  // z = selection uniform, w = sample's first random value
+} out_data;
+
+void main()
+{
+    SunDir         = in_data.sun_dir;
+    LightsCount    = in_data.counts.x;
+    TriLightsCount = in_data.counts.y;
+
+    for ( int i = 0; i < 8; ++i )
+    {
+        SceneTriLights[i]    = in_data.tri_lights[i];
+        scnDesc.i[i].transfo = in_data.tri_transforms[i];
+    }
+
+    SurfacePoint surface;
+    surface.worldPos = in_data.surface_pos.xyz;
+    surface.normal   = normalize( in_data.surface_normal.xyz );
+
+    const uint initial_seed     = in_data.seed.x;
+    const uint sample_index     = uint( in_data.counts.w );
+    const int  light_count_full = in_data.counts.z;
+
+    Reservoir reservoir = newReservoir();
+    uint       rand_seed = initial_seed;
+    reservoir = SampleReservoirCandidate( reservoir, surface, light_count_full,
+                                          sample_index, rand_seed );
+
+    // Reconstruct the stream state the function starts the selection from.
+    uint after_light_id = initial_seed;
+    SampleLightId( after_light_id, light_count_full );
+
+    const uint expected_sample_seed = initRand( after_light_id, sample_index, 8 );
+
+    uint       selection_state   = after_light_id;
+    const uint selection_uniform = floatBitsToUint( nextRand( selection_state ) );
+
+    uint       sample_state      = reservoir.selectedLightSeed;
+    const uint sample_first_draw = floatBitsToUint( nextRand( sample_state ) );
+
+    out_data.values = uvec4( reservoir.selectedLightSeed, expected_sample_seed,
+                             selection_uniform, sample_first_draw );
+}

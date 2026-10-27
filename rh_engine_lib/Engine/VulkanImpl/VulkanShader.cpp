@@ -2,6 +2,7 @@
 #include "DebugUtils/DebugLogger.h"
 #include "VulkanCommon.h"
 #include <Engine/Definitions.h>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -143,9 +144,15 @@ bool rh::engine::TranslateHLSL_to_SPIRV( const std::string &path,
     // Close process and thread handles.
     CloseHandle( proc_info.hProcess );
     CloseHandle( proc_info.hThread );
-    if ( exit_code == S_OK )
-        debug::DebugLogger::ErrorFmt( "glslangValidator returned %i",
-                                      exit_code );
+    if ( exit_code != S_OK )
+    {
+        debug::DebugLogger::ErrorFmt(
+            "glslangValidator failed for %s (exit code %i)", path.c_str(),
+            static_cast<int>( exit_code ) );
+        std::fprintf( stderr,
+                      "glslangValidator failed for %s (exit code %i)\n",
+                      path.c_str(), static_cast<int>( exit_code ) );
+    }
     return exit_code == S_OK;
 }
 

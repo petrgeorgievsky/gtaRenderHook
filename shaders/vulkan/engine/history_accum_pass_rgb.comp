@@ -40,9 +40,9 @@ void main()
     float blur_strength = 10;
     float variance = 1.0f;
     const uint min_tspp_for_temp_var = 2;
-    const uint max_tspp = 64;
+    const uint max_tspp = 16;
     const uint max_tspp_for_blur = 32;
-    vec4 result = imageLoad(tx_reprojected_moments, pos);
+    vec4 result;
     vec2 result_moments = moments;
     if (tspp > 0)
     {
@@ -50,39 +50,32 @@ void main()
         // high velocity reduce sample count, to avoid overblurring of moving objects
         tspp = min(tspp + 1,  uint(float(max_tspp) * max(1 - velocity/2, 0)) + 1);
 
-        float max_value = min(_moments.x + _moments.y, 1.0f);
-        float min_value = max(_moments.x - _moments.y, 0.0f);
-
-        if(min_tspp_for_temp_var <= min_tspp_for_temp_var)
+        // Clamp the reprojected history to the current neighbourhood. Without
+        // it a stale shadow survives dozens of frames and smears behind
+        // moving objects.
+        const ivec2 tex_size = imageSize(tx_new_frame);
+        vec3 history_lo = value.rgb;
+        vec3 history_hi = value.rgb;
+        for (int x = -2; x <= 2; x++)
+        for (int y = -2; y <= 2; y++)
         {
-            vec2 spatial_moments = moments;
-            float spatial_weight = 1;
-            // compute spatial variance
-            for(int x =-2; x <=2; x++)
-            for(int y =-2; y <=2; y++)
-            {
-                if(x == 0 && y == 0)
-                    continue;
-                vec4 value_s = imageLoad(tx_new_frame, pos + ivec2(x,y));
-                float current_luma_s = dot(value.xyz,g_luma);
-                float sq_mean_luma_s = current_luma*current_luma;
+            if (x == 0 && y == 0)
+                continue;
 
-                spatial_moments += vec2(current_luma_s, sq_mean_luma_s);
-                spatial_weight += 1;
-            }
-            spatial_moments /= spatial_weight;
-            float spatial_variance = spatial_moments.y - spatial_moments.x*spatial_moments.x;
-            max_value = min(spatial_moments.x + spatial_variance, 1.0f);
-            min_value = max(spatial_moments.x - spatial_variance, 0.0f);
+            const ivec2 sample_pos =
+                clamp(pos + ivec2(x, y), ivec2(0), tex_size - 1);
+            const vec3 sample_color = imageLoad(tx_new_frame, sample_pos).rgb;
+            history_lo = min(history_lo, sample_color);
+            history_hi = max(history_hi, sample_color);
         }
-        // TODO: At the moment this generates random circles around light sources, for no reason
-        //if(current_luma > max_value || current_luma < min_value)
-        //    tspp = 1;
+
+        vec4 history = _value;
+        history.rgb = clamp(history.rgb, history_lo, history_hi);
 
         float inv_tspp = 1.0f/float(tspp);
 
         result_moments = (_moments * (float(tspp) - 1) + moments) / float(tspp);
-        result = (_value * (float(tspp) - 1) + value) / float(tspp);
+        result = (history * (float(tspp) - 1) + value) / float(tspp);
 
         float variance_temp = sq_mean_luma - result.x * result.x;
         variance_temp = max(0, variance_temp);
