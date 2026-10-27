@@ -142,29 +142,38 @@ void main()
 
     vec2 _uv = uv - velocity;
 
-    ivec2 _pos = ivec2(floor(_uv * tex_res - 0.5));
-
-    // Temporal reuse: only for a valid reprojection onto the same surface.
-    const bool reprojection_in_bounds = _pos.x >= 0 && _pos.y >= 0 &&
-                                        _pos.x < tex_res.x && _pos.y < tex_res.y;
-
-    if ( FirstTime == 0 && reprojection_in_bounds )
+    // Temporal reuse: sample a 2x2 neighbourhood of the reprojected history and
+    // fold every tap that belongs to the same surface. A single tap makes the
+    // history jump between pixels while the camera moves, which reads as
+    // boiling on the shadow edges.
+    if ( FirstTime == 0 )
     {
-        const vec4 prev_normal_depth = imageLoad( tx_prev_normal_depth, _pos );
+        const vec2  scaled = _uv * vec2( tex_res ) - 0.5;
+        const ivec2 base   = ivec2( floor( scaled ) );
+        const ivec2 offsets[4] = { ivec2( 0, 0 ), ivec2( 1, 0 ),
+                                   ivec2( 0, 1 ), ivec2( 1, 1 ) };
 
-        if ( ReservoirNeighbourIsCompatible( normals_depth.xyz, normals_depth.w,
-                                             prev_normal_depth.xyz,
-                                             prev_normal_depth.w ) )
+        for ( int i = 0; i < 4; ++i )
         {
-            Reservoir prevReservoir =
-                prev_reservoirs[_pos.x * tex_res.y + _pos.y];
-            // Store resulting reservoir
-            reservoirs[resIndex] =
-                combineReservoirs( reservoir, prevReservoir, surface, randSeed );
+            const ivec2 tap = base + offsets[i];
+            if ( tap.x < 0 || tap.y < 0 || tap.x >= tex_res.x ||
+                 tap.y >= tex_res.y )
+                continue;
+
+            const vec4 prev_normal_depth =
+                imageLoad( tx_prev_normal_depth, tap );
+            if ( !ReservoirNeighbourIsCompatible( normals_depth.xyz,
+                                                  normals_depth.w,
+                                                  prev_normal_depth.xyz,
+                                                  prev_normal_depth.w ) )
+                continue;
+
+            const Reservoir prev_reservoir =
+                prev_reservoirs[tap.x * tex_res.y + tap.y];
+            reservoir = combineReservoirs( reservoir, prev_reservoir, surface,
+                                           randSeed );
         }
-        else
-            reservoirs[resIndex] = reservoir;
     }
-    else
-        reservoirs[resIndex] = reservoir;
+
+    reservoirs[resIndex] = reservoir;
 }
