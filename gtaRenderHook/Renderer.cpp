@@ -1478,7 +1478,7 @@ sLodListEntry *CRendererRH::GetLodDontRenderListBase()
 void CRendererRH::CalculateShadowBoundingPlanes( int shadowCascade )
 {
     auto lightSpaceFrustum = g_pDeferredRenderer->m_pShadowRenderer->m_LightSpaceMatrix[0];
-    RW::V3d  LightAABBCenter = { g_pDeferredRenderer->m_pShadowRenderer->m_LightPos[0] };
+    RW::V3d  LightAABBCenter = { g_pDeferredRenderer->m_pShadowRenderer->m_LightPos[shadowCascade] };
     RW::BBox lightAABB = g_pDeferredRenderer->m_pShadowRenderer->m_LightBBox[shadowCascade];
     auto lightAABBX = lightAABB.getSizeX();
     auto lightAABBY = lightAABB.getSizeY();
