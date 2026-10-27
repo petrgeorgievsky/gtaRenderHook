@@ -4,6 +4,7 @@
 
 #include "VarAwareTempAccumFilterColor.h"
 #include "rendering_loop/DescriptorUpdater.h"
+#include "restir/dispatch_size.h"
 #include "utils.h"
 
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
@@ -248,6 +249,8 @@ void VATAColorFilterPass::Execute( rh::engine::ICommandBuffer *dest )
 {
     using namespace rh::engine;
     auto *vk_cmd_buff = dynamic_cast<VulkanCommandBuffer *>( dest );
+    const auto dispatch =
+        restir::ComputeDispatchSize( mWidth, mHeight, 8 );
     vk_cmd_buff->PipelineBarrier(
         { .mSrcStage            = PipelineStage::Host,
           .mDstStage            = PipelineStage::ComputeShader,
@@ -280,7 +283,7 @@ void VATAColorFilterPass::Execute( rh::engine::ICommandBuffer *dest )
                                        { mReprojDescSet } } );
 
     vk_cmd_buff->DispatchCompute(
-        { .mX = mWidth / 8, .mY = mHeight / 8, .mZ = 1 } );
+        { .mX = dispatch.x, .mY = dispatch.y, .mZ = dispatch.z } );
 
     vk_cmd_buff->PipelineBarrier(
         { .mSrcStage       = PipelineStage::ComputeShader,
@@ -295,6 +298,6 @@ void VATAColorFilterPass::Execute( rh::engine::ICommandBuffer *dest )
                                        { mAccumDescSet } } );
 
     vk_cmd_buff->DispatchCompute(
-        { .mX = mWidth / 8, .mY = mHeight / 8, .mZ = 1 } );
+        { .mX = dispatch.x, .mY = dispatch.y, .mZ = dispatch.z } );
 }
 } // namespace rh::rw::engine

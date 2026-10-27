@@ -24,6 +24,9 @@ void main()
 {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
+    if ( any( greaterThanEqual( pos, imageSize( tx_new_frame ) ) ) )
+        return;
+
     const vec3 g_luma = vec3(.299, .587, .114);
     vec4 value = imageLoad(tx_new_frame, pos);
 

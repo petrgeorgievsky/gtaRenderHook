@@ -22,6 +22,9 @@ void main()
 {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
+    if ( any( greaterThanEqual( pos, imageSize( tx_new_frame ) ) ) )
+        return;
+
     float current_value = imageLoad(tx_new_frame, pos).x;
     float velocity = imageLoad(tx_new_frame, pos).y;
     float sq_mean_value = current_value*current_value;

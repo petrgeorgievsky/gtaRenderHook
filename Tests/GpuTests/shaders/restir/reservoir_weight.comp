@@ -16,15 +16,13 @@ layout(std430, binding = 0) readonly buffer TestInput
     PackedLight tri_lights[8];
     mat4       tri_transforms[8];
     Reservoir  r;
-    uvec4      caller_seeds;
     vec4       surface_pos;
     vec4       surface_normal;
 } in_data;
 
 layout(std430, binding = 1) writeonly buffer TestOutput
 {
-    vec4 values; // x = p_hat at r.selectedLightSeed, y = W(caller seed A),
-                 // z = W(caller seed B)
+    vec4 values; // x = p_hat at r.selectedLightSeed, y = resulting weight
 } out_data;
 
 void main()
@@ -48,9 +46,8 @@ void main()
         EvaluatePDF( in_data.r.selectedLightId, surface,
                      in_data.r.selectedLightSeed );
 
-    Reservoir with_seed_a = updateReservoirWeight( in_data.r, surface );
-    Reservoir with_seed_b = updateReservoirWeight( in_data.r, surface );
+    const Reservoir weighted = updateReservoirWeight( in_data.r, surface );
 
-    out_data.values = vec4( p_stored, with_seed_a.selectedLightWeight,
-                            with_seed_b.selectedLightWeight, 0.0f );
+    out_data.values =
+        vec4( p_stored, weighted.selectedLightWeight, 0.0f, 0.0f );
 }

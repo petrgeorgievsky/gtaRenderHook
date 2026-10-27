@@ -12,6 +12,9 @@ void main()
 {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
+    if ( any( greaterThanEqual( pos, imageSize( tx_result ) ) ) )
+        return;
+
     float spec = imageLoad(tx_material_buffer, pos).g;
     vec4 res = vec4(1-spec*spec);
     imageStore(tx_result, pos, res);

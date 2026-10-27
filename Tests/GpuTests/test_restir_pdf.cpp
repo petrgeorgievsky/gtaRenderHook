@@ -77,7 +77,6 @@ struct WeightInput
     PackedLight tri_lights[8];
     float       tri_transforms[8][16];
     Reservoir   r;
-    uint32_t    caller_seeds[4];
     float       surface_pos[4];
     float       surface_normal[4];
 };
@@ -243,9 +242,6 @@ TEST_CASE( "restir/reservoir_weight_uses_stored_seed" )
     input.r.selectedLightId     = 0; // triangle light id (LightsCount + 0)
     input.r.selectedLightSeed   = 0x00C0FFEEu;
 
-    input.caller_seeds[0] = 1;
-    input.caller_seeds[1] = 424242;
-
     // Triangle with identity transform, instance id 0, intensity 1.
     // Winding is reversed so the geometric normal (0,0,-1) faces the surface
     // below it; otherwise the geometry term clamps to zero.
@@ -270,21 +266,18 @@ TEST_CASE( "restir/reservoir_weight_uses_stored_seed" )
     const auto output = RunWeight( runner, input );
 
     const float p_stored = output.values[0];
-    const float w_seed_a = output.values[1];
-    const float w_seed_b = output.values[2];
+    const float weight   = output.values[1];
     const float expected =
         ( 1.0f / p_stored ) *
         ( input.r.totalWeight /
           static_cast<float>( input.r.visitedSampleCount ) );
 
     CAPTURE( p_stored );
-    CAPTURE( w_seed_a );
-    CAPTURE( w_seed_b );
+    CAPTURE( weight );
     CAPTURE( expected );
 
     REQUIRE( p_stored > 0.0f );
-    CHECK( w_seed_a == doctest::Approx( w_seed_b ) );
-    CHECK( w_seed_a == doctest::Approx( expected ).epsilon( 1e-4 ) );
+    CHECK( weight == doctest::Approx( expected ).epsilon( 1e-4 ) );
 }
 
 // combineReservoirs must carry the sample seed of the candidate it selected.

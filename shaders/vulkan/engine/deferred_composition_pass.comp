@@ -69,6 +69,9 @@ void main()
 {
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
+    if ( any( greaterThanEqual( pos, imageSize( output_image ) ) ) )
+        return;
+
     if ( debug_params.mode == 1 )
     {
         vec3 c = imageLoad( tx_lighting, pos ).rgb;

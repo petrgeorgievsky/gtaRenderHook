@@ -6,6 +6,7 @@
 #include "rendering_loop/DescriptorGenerator.h"
 #include "rendering_loop/DescriptorUpdater.h"
 #include "rendering_loop/ray_tracing/CameraDescription.h"
+#include "restir/dispatch_size.h"
 #include "utils.h"
 
 #include <Engine/Common/IDeviceState.h>
@@ -73,7 +74,7 @@ DeferredCompositionPass::DeferredCompositionPass(
           ImageViewUsage::RWTexture } );
 
     mDebugParamsBuffer =
-        device.CreateBuffer( { .mSize        = sizeof( uint32_t ) * 4,
+        device.CreateBuffer( { .mSize        = sizeof( mDebugView ),
                                .mUsage       = BufferUsage::ConstantBuffer,
                                .mFlags       = BufferFlags::Dynamic,
                                .mInitDataPtr = &mDebugView } );
@@ -133,8 +134,10 @@ void DeferredCompositionPass::Execute( rh::engine::ICommandBuffer *dest )
           .mDescriptorSets    = { static_cast<IDescriptorSet *>( mDescSet ),
                                mPassParams.Camera->GetDescSet() } } );
 
+    const auto dispatch = restir::ComputeDispatchSize(
+        mPassParams.mWidth, mPassParams.mHeight, 8 );
     vk_cmd->DispatchCompute(
-        { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
+        { dispatch.x, dispatch.y, dispatch.z } );
 
     ImageMemoryBarrierInfo shader_ro_barrier =
         mOutputBuffer.SetLayout( ImageLayout::ShaderReadOnly );

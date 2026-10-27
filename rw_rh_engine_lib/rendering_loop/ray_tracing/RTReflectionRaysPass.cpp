@@ -8,6 +8,7 @@
 #include "VarAwareTempAccumFilter.h"
 #include "VarAwareTempAccumFilterColor.h"
 #include "rendering_loop/DescriptorUpdater.h"
+#include "restir/dispatch_size.h"
 #include "utils.h"
 #include <Engine/Common/types/sampler_filter.h>
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
@@ -309,7 +310,10 @@ void RTReflectionRaysPass::Execute( void *                      tlas,
           .mPipelineLayout    = mBlurStrPipeLayout,
           .mDescriptorSets    = { mBlurStrSet } } );
     vk_cmd_buff->BindComputePipeline( mBlurStrPipeline );
-    vk_cmd_buff->DispatchCompute( { mWidth / 8, mHeight / 8, 1 } );
+    const auto blur_dispatch =
+        restir::ComputeDispatchSize( mWidth, mHeight, 8 );
+    vk_cmd_buff->DispatchCompute(
+        { blur_dispatch.x, blur_dispatch.y, blur_dispatch.z } );
 
     mVarTAColorPass->Execute( vk_cmd_buff );
     mBilFil0->Execute( vk_cmd_buff );

@@ -54,6 +54,9 @@ void main()
     ivec2 tex_res = imageSize(tx_motion);
     ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
+    if ( any( greaterThanEqual( pos, tex_res ) ) )
+        return;
+
     const vec2 velocity = imageLoad(tx_motion, pos).rg;
     const vec2 pixelCenter = vec2(pos.xy) + vec2(0.5);
     const vec2 uv = pixelCenter/vec2(tex_res);

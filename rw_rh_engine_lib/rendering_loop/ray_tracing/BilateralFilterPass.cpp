@@ -5,6 +5,7 @@
 #include "BilateralFilterPass.h"
 #include "rendering_loop/DescriptorGenerator.h"
 #include "rendering_loop/DescriptorUpdater.h"
+#include "restir/dispatch_size.h"
 #include "utils.h"
 
 #include <Engine/VulkanImpl/VulkanCommandBuffer.h>
@@ -58,6 +59,8 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
 {
     using namespace rh::engine;
     auto *vk_cmd = dynamic_cast<VulkanCommandBuffer *>( dest );
+    const auto dispatch = restir::ComputeDispatchSize(
+        mPassParams.mWidth, mPassParams.mHeight, 8 );
 
     auto copy_output_to_temp = [&]() {
         vk_cmd->PipelineBarrier(
@@ -109,7 +112,7 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
           .mDescriptorSets    = { mDescSetH } } );
 
     vk_cmd->DispatchCompute(
-        { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
+        { dispatch.x, dispatch.y, dispatch.z } );
 
     copy_output_to_temp();
 
@@ -121,7 +124,7 @@ void BilateralFilterPass::Execute( rh::engine::ICommandBuffer *dest )
           .mDescriptorSets    = { mDescSetV } } );
 
     vk_cmd->DispatchCompute(
-        { mPassParams.mWidth / 8, mPassParams.mHeight / 8, 1 } );
+        { dispatch.x, dispatch.y, dispatch.z } );
 
     for ( int i = 0; i < 2; i++ )
     {
