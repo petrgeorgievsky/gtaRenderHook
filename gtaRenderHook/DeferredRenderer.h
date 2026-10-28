@@ -33,7 +33,9 @@ public:
     CHDRTonemapping* m_pTonemapping;
     bool	m_bRequiresReloading = false;
 private:
-    RwRaster*	m_aDeferredRasters[4];
+    // 0 colour, 1 normals and depth, 2 material parameters, 3 vertex lighting, 4 object motion vectors
+    static const int kGBufferTargets = 5;
+    RwRaster*	m_aDeferredRasters[kGBufferTargets];
     RwRaster*	m_pLightingRaster;
     RwRaster*	m_pFinalRasters[4];
     RwRaster*	m_pReflectionRaster;

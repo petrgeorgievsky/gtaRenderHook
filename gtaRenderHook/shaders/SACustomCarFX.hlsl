@@ -45,6 +45,8 @@ struct PS_DEFERRED_CF_IN
     float4 vInTangents : TEXCOORD1;
     float4 vInBiTangents : TEXCOORD2;
     float4 vWorldPos : TEXCOORD3;
+    float4 vCurClip : TEXCOORD4;  // object motion vectors: this frame without jitter
+    float4 vPrevClip : TEXCOORD5; // and last frame
 };
 
 //--------------------------------------------------------------------------------------
@@ -60,6 +62,8 @@ PS_DEFERRED_CF_IN VS(VS_CAR_INPUT i)
 	outPos = mul(outPos, mView);
 
 	Out.vPosition = mul(outPos, mProjection);
+    Out.vCurClip  = RemoveJitter(Out.vPosition);
+    Out.vPrevClip = mul(mul(float4(i.vPosition, 1.0), mWorldPrev), mPrevViewProjection);
 
     Out.vNormalDepth =
         float4( mul( (float3x3)mWorldInv, i.vNormal ), outPos.z );
@@ -158,7 +162,7 @@ void ShadowPS(PS_DEFERRED_IN i)
 #endif
 }
 
-PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
+PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_CF_IN i)
 {
     PS_DEFERRED_OUT Out;
     float4 baseColor = saturate(cDiffuseColor);
@@ -169,6 +173,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     //FillGBuffer(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness, fMetallness, 1));
     FillGBufferVertexRadiance(Out, baseColor, i.vNormalDepth.xyz, i.vNormalDepth.w, float4(fSpecularIntensity, fGlossiness, fMetallness, 1), 
                                 dot(cDiffuseColor, cDiffuseColor) > 4.0 ? cDiffuseColor.rgba : float4(lerp(vSkyLightCol.rgb, vHorizonCol.rgb, i.vNormalDepth.z)*0.5f, 1));
+	Out.vObjectMotion = ObjectMotion(i.vCurClip, i.vPrevClip);
 	return Out;
 }
 void VoxelPS(PS_VOXEL_INPUT i)

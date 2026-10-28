@@ -36,9 +36,21 @@ struct PS_SKIN_IN
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PS_DEFERRED_IN VS(VS_SKIN_IN i)
+// PS_DEFERRED_IN with the object motion vector positions after it
+struct PS_SKIN_DEFERRED_IN
 {
-    PS_DEFERRED_IN vsout;
+    float4 vPosition    : SV_POSITION;
+    float4 vColor       : COLOR;
+    float4 vNormalDepth : NORMAL;
+    float4 vTexCoord    : TEXCOORD0;
+    float4 vTangent     : TEXCOORD1;
+    float4 vBiTangent   : TEXCOORD2;
+    float4 vCurClip     : TEXCOORD3; // object motion vectors: this frame without jitter
+    float4 vPrevClip    : TEXCOORD4; // and last frame
+};
+PS_SKIN_DEFERRED_IN VS(VS_SKIN_IN i)
+{
+    PS_SKIN_DEFERRED_IN vsout;
 	uint magic0=3;
 	int magic1=0;
 	float4 vPos     = float4(i.vPosition.xyz,1.0f);
@@ -51,6 +63,7 @@ PS_DEFERRED_IN VS(VS_SKIN_IN i)
 
     OutPos.xyz = mul(vPos, BoneToLocal).xyz;
     OutPos.w = 1.0f;
+    float4 PositionLocal = OutPos;
 	//outPos = mul(outPos, World);
     float4 PositionWS = mul(OutPos, mWorld);
 	
@@ -60,6 +73,8 @@ PS_DEFERRED_IN VS(VS_SKIN_IN i)
 	vsout.vColor        = i.vInColor;
     OutPos = mul(OutPos, mProjection);
     vsout.vPosition = OutPos;
+    vsout.vCurClip  = RemoveJitter(OutPos);
+    vsout.vPrevClip = mul(mul(PositionLocal, mWorldPrev), mPrevViewProjection);
 	
 	return vsout;
 }
@@ -86,7 +101,7 @@ void VoxelEmmissivePS(PS_DEFERRED_IN i)
 {
 	
 }
-PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
+PS_DEFERRED_OUT DeferredPS(PS_SKIN_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
     float4 BaseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
@@ -95,5 +110,6 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     if (BaseColor.a < 0.3)
         discard;
     FillGBuffer(Out, BaseColor, (i.vNormalDepth.xyz), i.vNormalDepth.w, params);
+    Out.vObjectMotion = ObjectMotion(i.vCurClip, i.vPrevClip);
 	return Out;
 }

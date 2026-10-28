@@ -23,6 +23,8 @@ public:
     static void Render( RwRaster *input, RwRaster *output, RwRaster *gBuff1,
                         RwRaster *gBuff2 );
     static void QueueTextureReload();
+    // G-buffer target with object motion vectors (CDeferredRenderer), passed on to an external TAA handler
+    static RwRaster *m_pObjectMotionRaster;
 
   private:
     static CD3D1XShader * m_pTemporalAA;

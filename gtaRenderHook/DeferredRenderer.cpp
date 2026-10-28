@@ -45,6 +45,11 @@ CDeferredRenderer::CDeferredRenderer()
     m_aDeferredRasters[3] =
         RwRasterCreate( RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32,
                         rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555 );
+    // object motion vectors (RGBA16F): xy pixels to last frame's position, z = 1 where an object wrote them
+    m_aDeferredRasters[4] =
+        RwRasterCreate( RsGlobal.maximumWidth, RsGlobal.maximumHeight, 32,
+                        rwRASTERTYPECAMERATEXTURE | rwRASTERFORMAT1555 );
+    CTemporalAA::m_pObjectMotionRaster = m_aDeferredRasters[4];
     m_pReflectionRaster =
         RwRasterCreate( (int)( RsGlobal.maximumWidth *
                                gDeferredSettings.GetFloat( "SSRScale" ) ),
@@ -91,7 +96,7 @@ CDeferredRenderer::CDeferredRenderer()
     gDeferredSettings.m_aShaderPointers.push_back( m_pFinalPassPS );
     gDeferredSettings.m_aShaderPointers.push_back( m_pAtmospherePassPS );
     gDeferredSettings.m_aShaderPointers.push_back( m_pReflectionPassPS );
-    for ( int i = 0; i < 4; i++ )
+    for ( int i = 0; i < kGBufferTargets; i++ )
     {
         gDebugSettings.DebugRenderTargetList.push_back( m_aDeferredRasters[i] );
     }
@@ -124,6 +129,8 @@ CDeferredRenderer::~CDeferredRenderer()
     RwRasterDestroy( m_pFinalRasters[1] );
     RwRasterDestroy( m_pFinalRasters[0] );
     RwRasterDestroy( m_pLightingRaster );
+    CTemporalAA::m_pObjectMotionRaster = nullptr;
+    RwRasterDestroy( m_aDeferredRasters[4] );
     RwRasterDestroy( m_aDeferredRasters[3] );
     RwRasterDestroy( m_aDeferredRasters[2] );
     RwRasterDestroy( m_aDeferredRasters[1] );
@@ -140,8 +147,9 @@ void CDeferredRenderer::RenderToGBuffer( void ( *renderCB )() )
     m_uiDeferredStage = 1;
 
     renderer->BeginDebugEvent( L"GBuffer pass" );
+    // also clears the object motion target: z = 0, no motion of its own
     g_pRwCustomEngine->SetRenderTargets( m_aDeferredRasters,
-                                         Scene.m_pRwCamera->zBuffer, 4 );
+                                         Scene.m_pRwCamera->zBuffer, kGBufferTargets );
     renderCB();
     g_pRwCustomEngine->SetRenderTargets( &Scene.m_pRwCamera->frameBuffer,
                                          Scene.m_pRwCamera->zBuffer, 1 );
@@ -331,7 +339,7 @@ void CDeferredRenderer::QueueTextureReload()
 
     if ( dxEngine->m_bScreenSizeChanged )
     {
-        for ( int i = 0; i < 4; i++ )
+        for ( int i = 0; i < kGBufferTargets; i++ )
         {
             m_aDeferredRasters[i]->width  = RsGlobal.maximumWidth;
             m_aDeferredRasters[i]->height = RsGlobal.maximumHeight;

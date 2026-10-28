@@ -18,6 +18,10 @@ struct RHTemporalAAFrame
     float                     jitterY;
     float                     view[16];       // this frame's view matrix (row vectors, as RwD3D9D3D9ViewTransform)
     float                     projection[16]; // this frame's projection without the jitter (as RwD3D9D3D9ProjTransform)
+    // Added later; read only when size covers it. Object motion vectors (RGBA16F, nullptr if unavailable):
+    // xy = motion in pixels from this frame's position to last frame's, without jitter; z = 1 where an object that
+    // moves on its own (vehicle, ped) wrote it, 0 = no motion of its own (use camera motion from depth)
+    ID3D11ShaderResourceView *objectMotion;
 };
 
 /*!
