@@ -4,9 +4,11 @@
 #include "DeferredPipeline.h"
 #include "D3D1XConstantBuffer.h"
 #include "D3D1XVertexDeclaration.h"
+#include <unordered_map>
 struct PerSkinMatrixBuffer
 {
     RwMatrix4x3 mSkinToWorldMatrices[64];
+    RwMatrix4x3 mSkinToWorldMatricesPrev[64]; // the same atomic's bones in the previous frame (motion vectors)
 };
 /*! \class CD3D1XSkinPipeline
     \brief Default skinned mesh rendering pipeline.
@@ -41,6 +43,14 @@ private:
 
 private:
     CD3D1XConstantBuffer<PerSkinMatrixBuffer>*		m_pSkinningDataBuffer = nullptr;
+    // bone matrices of each skinned atomic drawn, for the previous frame's pose
+    struct BoneHistory
+    {
+        RwMatrix4x3  current[64];
+        RwMatrix4x3  previous[64];
+        unsigned int frame = 0;
+    };
+    std::unordered_map<RpAtomic *, BoneHistory> m_boneHistory;
     CD3D1XVertexDeclaration*						m_pVertexDeclaration = nullptr;
 };
 

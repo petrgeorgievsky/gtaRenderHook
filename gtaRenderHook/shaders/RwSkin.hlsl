@@ -12,6 +12,7 @@ SamplerState samLinear : register( s0 );
 cbuffer SkinningInfoBuffer : register( b3 )
 {
 	float4x3 maConstBoneWorld[64];
+	float4x3 maConstBoneWorldPrev[64]; // last frame (object motion vectors)
 };
 struct VS_SKIN_IN
 {
@@ -74,7 +75,12 @@ PS_SKIN_DEFERRED_IN VS(VS_SKIN_IN i)
     OutPos = mul(OutPos, mProjection);
     vsout.vPosition = OutPos;
     vsout.vCurClip  = RemoveJitter(OutPos);
-    vsout.vPrevClip = mul(mul(PositionLocal, mWorldPrev), mPrevViewProjection);
+    float4x3 BoneToLocalPrev = maConstBoneWorldPrev[i.aBones.x] * i.vWeights.x +
+                               maConstBoneWorldPrev[i.aBones.y] * i.vWeights.y +
+                               maConstBoneWorldPrev[i.aBones.z] * i.vWeights.z +
+                               maConstBoneWorldPrev[i.aBones.w] * i.vWeights.w;
+    float4 PositionLocalPrev = float4(mul(vPos, BoneToLocalPrev).xyz, 1.0f);
+    vsout.vPrevClip = mul(mul(PositionLocalPrev, mWorldPrev), mPrevViewProjection);
 	
 	return vsout;
 }

@@ -146,6 +146,26 @@ void CD3D1XSkinPipeline::Render( RwResEntry * repEntry, void * object, RwUInt8 t
     _rwD3D9VSSetActiveWorldMatrix( RwFrameGetLTM( (RwFrame*)atomic->object.object.parent ) );
     rpD3D9SkinVertexShaderMatrixUpdate( (RwMatrix*)&RpSkinGlobals.alignedMatrixCache[0], atomic, geomSkin );
     memcpy( &m_pSkinningDataBuffer->data.mSkinToWorldMatrices, &RpSkinGlobals.alignedMatrixCache[0], sizeof( m_pSkinningDataBuffer->data.mSkinToWorldMatrices ) );
+
+    // last frame's pose of this atomic, for the limbs' own motion; none for an atomic not drawn last frame
+    const unsigned int frame   = g_pRenderBuffersMgr->GetFrame();
+    auto &             history = m_boneHistory[atomic];
+    if ( history.frame != frame )
+    {
+        if ( history.frame + 1 == frame )
+            memcpy( history.previous, history.current, sizeof( history.previous ) );
+        else
+            memcpy( history.previous, m_pSkinningDataBuffer->data.mSkinToWorldMatrices, sizeof( history.previous ) );
+        memcpy( history.current, m_pSkinningDataBuffer->data.mSkinToWorldMatrices, sizeof( history.current ) );
+        history.frame = frame;
+        if ( ( frame & 255 ) == 0 )
+        {
+            for ( auto it = m_boneHistory.begin(); it != m_boneHistory.end(); )
+                it = frame - it->second.frame > 2 ? m_boneHistory.erase( it ) : std::next( it );
+        }
+    }
+    memcpy( m_pSkinningDataBuffer->data.mSkinToWorldMatricesPrev, history.previous,
+            sizeof( m_pSkinningDataBuffer->data.mSkinToWorldMatricesPrev ) );
     m_pSkinningDataBuffer->Update();
 
     g_pStateMgr->SetConstantBufferVS( m_pSkinningDataBuffer, 3 );

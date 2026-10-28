@@ -48,6 +48,8 @@ struct PS_DEFERRED_DN_IN
     float4 vWorldPos : TEXCOORD1;
     float4 vTangent : TEXCOORD2;
     float4 vBiTangent : TEXCOORD3;
+    float4 vCurClip : TEXCOORD4;  // object motion vectors: this frame without jitter
+    float4 vPrevClip : TEXCOORD5; // and last frame
 };
 //--------------------------------------------------------------------------------------
 // Vertex Shader
@@ -56,10 +58,13 @@ PS_DEFERRED_DN_IN VS(VS_INPUT i)
 {
     PS_DEFERRED_DN_IN o;
 	float4 	outPos 		= float4( i.vPosition,1.0);// transform to screen space
+    float4 MotionLocalPos = outPos; // object motion vectors
 			outPos 		= mul( outPos, mWorld );
     o.vWorldPos = outPos;
 			outPos		= mul( outPos, mView );
     o.vPosition         = mul( outPos, mProjection );
+    o.vCurClip  = RemoveJitter(o.vPosition);
+    o.vPrevClip = mul(mul(MotionLocalPos, mWorldPrev), mPrevViewProjection);
 
     o.vNormalDepth =
         float4( mul( (float3x3)mWorldInv, i.vInNormal ), outPos.z );
@@ -188,7 +193,7 @@ void ShadowPS(PS_DEFERRED_IN i)
 #endif
 }
 
-PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
+PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_DN_IN i)
 {
     PS_DEFERRED_OUT Out;
     float4 baseColor = cDiffuseColor;
@@ -224,6 +229,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 		discard;
     FillGBufferVertexRadiance( Out, baseColor, normal, i.vNormalDepth.w, params,
                                i.vColor * lerp( 0.25f, 1.0f, 1 - vSunLightDir.a ) );
+	Out.vObjectMotion = ObjectMotion(i.vCurClip, i.vPrevClip);
 	return Out;
 }
 

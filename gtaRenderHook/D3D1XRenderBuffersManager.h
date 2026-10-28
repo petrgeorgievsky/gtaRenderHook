@@ -74,6 +74,10 @@ public:
     */
     void NextFrame();
     /*!
+        Number of the rendered frame (see NextFrame), for other per-frame histories
+    */
+    unsigned int GetFrame() const { return m_nFrame; }
+    /*!
         Updates current world matrix
     */
     void UpdateWorldMatrix( RwMatrix *ltm );

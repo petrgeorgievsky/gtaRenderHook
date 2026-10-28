@@ -122,6 +122,13 @@ void CD3D1XRenderBuffersManager::UpdateWorldMatrix( RwMatrix *ltm )
         history.current  = world;
         history.frame    = m_nFrame;
     }
+    else if ( memcmp( &history.current, &m_pPerObjectMatrixBuffer->data.mWorld, sizeof( RwMatrix ) ) != 0 )
+    {
+        // moved again within this frame: one frame matrix drawn in several places (the grass renderer moves one
+        // atomic for every plant), so there is no previous position to speak of
+        m_pPerObjectMatrixBuffer->data.mWorldPrev = m_pPerObjectMatrixBuffer->data.mWorld;
+        return;
+    }
     m_pPerObjectMatrixBuffer->data.mWorldPrev = history.previous;
 }
 

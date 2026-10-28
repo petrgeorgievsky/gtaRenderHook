@@ -214,12 +214,14 @@ void CTemporalAA::Render( RwRaster * input, RwRaster* output, RwRaster* gBuff1, 
     g_pStateMgr->SetRaster( m_bFirstTimeRender ? input : m_pAccumRasters[1 - m_nCurrentAccRaster], 1 );
     g_pStateMgr->SetRaster( gBuff1, 2 );
     g_pStateMgr->SetRaster( gBuff2, 3 );
+    g_pStateMgr->SetRaster( m_pObjectMotionRaster, 4 );
     m_pTemporalAA->Set();
     CFullscreenQuad::Draw();
     g_pStateMgr->SetRaster( nullptr );
     g_pStateMgr->SetRaster( nullptr, 1 );
     g_pStateMgr->SetRaster( nullptr, 2 );
     g_pStateMgr->SetRaster( nullptr, 3 );
+    g_pStateMgr->SetRaster( nullptr, 4 );
     CFullscreenQuad::Copy( m_pAccumRasters[m_nCurrentAccRaster], nullptr, output );
 
 

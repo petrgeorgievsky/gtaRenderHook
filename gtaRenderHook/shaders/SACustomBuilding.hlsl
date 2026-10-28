@@ -48,6 +48,8 @@ struct PS_DEFERRED_CF_IN
     float4 vTangent : TEXCOORD1;
     float4 vBiTangent : TEXCOORD2;
     float4 vWorldPos : TEXCOORD3;
+    float4 vCurClip : TEXCOORD4;  // object motion vectors: this frame without jitter
+    float4 vPrevClip : TEXCOORD5; // and last frame
 };
 //--------------------------------------------------------------------------------------
 // Vertex Shader
@@ -56,10 +58,13 @@ PS_DEFERRED_CF_IN VS( VS_BUILDING_IN i )
 {
     PS_DEFERRED_CF_IN o;
 	float4 	OutPos 	= float4( i.vPosition,1.0);// transform to screen space
+    float4 MotionLocalPos = OutPos; // object motion vectors
     OutPos          = mul( OutPos, mWorld );
     o.vWorldPos          = OutPos;
 			OutPos	= mul( OutPos, mView );
     o.vPosition 	= mul( OutPos, mProjection );
+    o.vCurClip  = RemoveJitter(o.vPosition);
+    o.vPrevClip = mul(mul(MotionLocalPos, mWorldPrev), mPrevViewProjection);
 	o.vNormalDepth  = float4(mul( i.vNormal,(float3x3)mWorld), OutPos.z);
     o.vTangent   = float4( mul( (float3x3)mWorldInv, i.vInTangents ), 1.0 );
     o.vBiTangent = float4( mul( (float3x3)mWorldInv, i.vInBiTangents ), 1.0 );
@@ -183,7 +188,7 @@ void ShadowPS(PS_DEFERRED_IN i)
 	if (baseColor.a < 0.3)
 		discard;
 }
-PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
+PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_CF_IN i)
 {
     PS_DEFERRED_OUT Out;
 	float4 baseColor=txDiffuse.Sample( samLinear, i.vTexCoord.xy );
@@ -207,6 +212,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 	if (baseColor.a < 0.3)
 		discard;
 	
+	Out.vObjectMotion = ObjectMotion(i.vCurClip, i.vPrevClip);
 	return Out;
 }
 void VoxelEmmissivePS(PS_VOXEL_INPUT i)
