@@ -16,6 +16,7 @@
 #include "RwD3D1XEngine.h"
 #include "RwRenderEngine.h"
 #include "PluginDrawCallback.h"
+#include "TemporalAA.h"
 #include "stdafx.h"
 #include <game_sa\CWeather.h>
 extern int      drawCallCount;
@@ -104,7 +105,9 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
 
     BOOL oldBlendState = g_pStateMgr->GetAlphaBlendEnable();
 
-    const bool  dithering = gDeferredSettings.GetToggleField( "UseDitheringForAlphaObjects" );
+    // dithering needs RenderHook's TAA to average the pattern; under an external TAA (DLAA) use the dual pass
+    const bool  dithering = gDeferredSettings.GetToggleField( "UseDitheringForAlphaObjects" ) &&
+                           !CTemporalAA::ExternalTAAActive();
     const bool  dualPassEnabled =
         !dithering && gDeferredSettings.GetToggleField( "UseDualPassForAlphaObjects" );
     const float alphaCutoff = gDeferredSettings.GetFloat( "AlphaObjectsCutoff" );

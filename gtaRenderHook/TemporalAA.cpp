@@ -32,6 +32,8 @@ static bool g_hasPrevViewProj = false;
 // an external TAA handled the last frame (shaders cut transparency out instead of dithering it then)
 static bool g_externalTAAHandled = false;
 
+bool CTemporalAA::ExternalTAAActive() { return g_externalTAAHandled; }
+
 void __cdecl RHSetTemporalAAHandler( RHTemporalAAHandler handler )
 {
     g_externalTAA = handler;

@@ -25,6 +25,8 @@ public:
     static void QueueTextureReload();
     // G-buffer target with object motion vectors (CDeferredRenderer), passed on to an external TAA handler
     static RwRaster *m_pObjectMotionRaster;
+    // an external TAA (e.g. DLAA) replaced RenderHook's last frame: dithered transparency stays visible then
+    static bool ExternalTAAActive();
 
   private:
     static CD3D1XShader * m_pTemporalAA;
