@@ -103,6 +103,13 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
 
     BOOL oldBlendState = g_pStateMgr->GetAlphaBlendEnable();
 
+    const bool  dithering = gDeferredSettings.GetToggleField( "UseDitheringForAlphaObjects" );
+    const bool  dualPassEnabled =
+        !dithering && gDeferredSettings.GetToggleField( "UseDualPassForAlphaObjects" );
+    const float alphaCutoff = gDeferredSettings.GetFloat( "AlphaObjectsCutoff" );
+    const bool  blendEdges  = gDeferredSettings.GetToggleField( "AlphaObjectsBlendEdges" );
+    const float mipCoverage = blendEdges ? 0.0f : gDeferredSettings.GetFloat( "AlphaObjectsMipCoverage" );
+
     // set<RpMaterial*> materialSet{};
     // To improve preformance we try to reduce texture set calls, to do that we
     // need to sort every object by texture pointer.
@@ -161,17 +168,26 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
         }
         else
             g_pRwCustomEngine->SetTexture( nullptr, 0 );
+        // Dual pass: the transparency comes from the texture alone (material alpha 255, no vertex alpha), so the
+        // solid texels can go to the G-buffer and only the soft edges need blending.
+        const bool dualPass = dualPassEnabled && bAlphaEnable > 0 &&
+                              mesh.material->color.alpha == 255 && !mesh.vertexAlpha;
+        const bool gBufferPass = m_uiDeferredStage == 1 || m_uiDeferredStage == 2;
+        g_pRenderBuffersMgr->UpdateAlphaPass( dualPass && gBufferPass ? alphaCutoff : 0.0f, false,
+                                              dualPass && m_uiDeferredStage == 1 ? mipCoverage : 0.0f );
         if ( m_uiDeferredStage != 1 )
             g_pStateMgr->SetAlphaBlendEnable( bAlphaEnable > 0 );
         else
         {
-            if ( bAlphaEnable > 0 && !gDeferredSettings.GetToggleField("UseDitheringForAlphaObjects") )
-            { 
+            // without blended edges a dual-pass mesh is drawn only into the G-buffer
+            if ( bAlphaEnable > 0 && !dithering && !( dualPass && !blendEdges ) )
+            {
                 m_aAlphaMeshList.Push( {entryData,
                                         RwFrameGetLTM( static_cast<RwFrame *>(
                                             atomic->object.object.parent ) ),
-                                        (int)i} );
-                continue;
+                                        (int)i, dualPass ? ALPHA_MESH_DUAL_PASS : 0} );
+                if ( !dualPass )
+                    continue;
             }
             g_pStateMgr->SetAlphaBlendEnable( FALSE );
         }
@@ -189,6 +205,7 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
     if ( m_uiDeferredStage == 3 || m_uiDeferredStage == 4 )
         m_pVoxelGS->ReSet();
 
+    g_pRenderBuffersMgr->UpdateAlphaPass( 0.0f, false );
     g_pStateMgr->SetAlphaBlendEnable( oldBlendState );
 }
 
@@ -197,7 +214,8 @@ void CCustomBuildingDNPipeline::ResetAlphaList() { m_aAlphaMeshList.Clean(); }
 void CCustomBuildingDNPipeline::RenderAlphaList()
 {
     g_pStateMgr->SetAlphaBlendEnable( true );
-    m_aAlphaMeshList.ExecuteForEach( [this]( const AlphaMesh &mesh ) {
+    const float alphaCutoff = gDeferredSettings.GetFloat( "AlphaObjectsCutoff" );
+    m_aAlphaMeshList.ExecuteForEach( [this, alphaCutoff]( const AlphaMesh &mesh ) {
         UINT stride  = sizeof( SimpleVertex );
         UINT offset  = 0;
         auto curmesh = GetModelsData( mesh.entryptr )[mesh.meshID];
@@ -235,9 +253,12 @@ void CCustomBuildingDNPipeline::RenderAlphaList()
 
         g_pRwCustomEngine->SetTexture( curmesh.material->texture, 0 );
 
+        const bool dualPass = ( mesh.flags & ALPHA_MESH_DUAL_PASS ) != 0;
+        g_pRenderBuffersMgr->UpdateAlphaPass( dualPass ? alphaCutoff : 0.0f, dualPass );
         g_pRenderBuffersMgr->FlushMaterialBuffer();
         g_pStateMgr->FlushStates();
         GET_D3D_RENDERER->DrawIndexed( curmesh.numIndex, curmesh.startIndex,
                                        curmesh.minVert );
     } );
+    g_pRenderBuffersMgr->UpdateAlphaPass( 0.0f, false );
 }

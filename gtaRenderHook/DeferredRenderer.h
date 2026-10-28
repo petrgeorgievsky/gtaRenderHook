@@ -63,6 +63,18 @@ public:
             "BlurShadows", false, false, true, m_sName, true );
         m_aFields["UseDitheringForAlphaObjects"] = new ToggleSField(
             "UseDitheringForAlphaObjects", false, false, false, m_sName, false );
+        // Alpha objects with an opaque material (foliage, fences): texels at or above AlphaObjectsCutoff are
+        // alpha-tested into the G-buffer (lit and shadowed), only the rest is blended. Needs shader support.
+        m_aFields["UseDualPassForAlphaObjects"] = new ToggleSField(
+            "UseDualPassForAlphaObjects", false, false, false, m_sName, false );
+        m_aFields["AlphaObjectsCutoff"] = new FloatSField( "AlphaObjectsCutoff", false, false, false, m_sName, 0.5f, 0.05f, 0.99f, 0.05f );
+        // Off = dual-pass meshes are only alpha-tested into the G-buffer, no blended soft edges. For an external
+        // temporal AA such as DLAA: deferred-lit and forward-lit pixels of the same distant tree differ in brightness,
+        // a speckle RenderHook's TAA blurs but DLAA keeps. AlphaObjectsMipCoverage then boosts alpha per texture mip
+        // level, so distant foliage does not thin out.
+        m_aFields["AlphaObjectsBlendEdges"] = new ToggleSField(
+            "AlphaObjectsBlendEdges", false, false, false, m_sName, true );
+        m_aFields["AlphaObjectsMipCoverage"] = new FloatSField( "AlphaObjectsMipCoverage", false, false, false, m_sName, 0.25f, 0.0f, 1.0f, 0.05f );
         m_aFields["UsePCSS"] = new ToggleSField( "UsePCSS", false, false, true, m_sName, true );
         m_aFields["SampleShadows"] = new ToggleSField( "SampleShadows", false, false, true, m_sName, true );
         m_aFields["UseSSR"] = new ToggleSField( "UseSSR", false, false, true, m_sName, true );
