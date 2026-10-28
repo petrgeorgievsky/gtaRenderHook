@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D1XConstantBuffer.h"
+#include <unordered_map>
 /*!
     Matrix buffer structure, represents common transformation matrices used for rendering.
 */
@@ -10,11 +11,17 @@ struct PerFrameMatrixBuffer
     RwMatrix mViewProjection;
     RwMatrix mInvView;
     RwMatrix mInvViewProj;
+    // Object motion vectors (main camera only, see CTemporalAA::JitterProjMatrix): last frame's view-projection
+    // without jitter, and this frame's jitter (xy, NDC, as added to the projection _31/_32); z = 1 when valid; w = 1
+    // when an external TAA (e.g. DLAA) replaced RenderHook's last frame: shaders then cut out instead of dithering
+    RwMatrix mPrevViewProj;
+    float    vMotionJitter[4];
 };
 struct PerObjectMatrixBuffer
 {
     RwMatrix mWorld;
     RwMatrix mWorldInv;
+    RwMatrix mWorldPrev; // world matrix of the same frame (RwMatrix) in the previous rendered frame
 };
 /*!
 
@@ -26,7 +33,8 @@ struct MaterialBuffer
     float		specularIntensity;
     float		glossiness;
     float		metallness;
-    float       padd__[2];
+    float       alphaCutoff;    // dual-pass alpha objects: alpha test value, 0 = off
+    float       alphaBlendPass; // 1 in the blended pass of a dual-pass mesh
     int         hasNormalTex;
     int			hasSpecTex;
 };
@@ -57,6 +65,19 @@ public:
         Updates current view matrix
     */
     void UpdateViewMatrix( RwMatrix &view );
+    /*!
+        Sets the camera part of object motion vectors for the current camera: last frame's view-projection without
+        jitter and this frame's jitter. UpdateViewProjMatricles resets it (no motion for other cameras).
+    */
+    void SetMotionCamera( const RwMatrix &prevViewProj, float jitterX, float jitterY, bool externalTAA );
+    /*!
+        Starts a new rendered frame for the world matrix history (previous world matrices)
+    */
+    void NextFrame();
+    /*!
+        Number of the rendered frame (see NextFrame), for other per-frame histories
+    */
+    unsigned int GetFrame() const { return m_nFrame; }
     /*!
         Updates current world matrix
     */
@@ -113,6 +134,11 @@ public:
     */
     void UpdateHasNormalTex( const int &hastex );
     /*!
+        Updates dual-pass alpha parameters: alpha test value for the G-buffer and shadow passes (0 = off), and
+        whether this is the blended pass, which then draws only the pixels below the cutoff
+    */
+    void UpdateAlphaPass( float cutoff, bool blendPass );
+    /*!
         Flushes all material buffer changes if there was any
     */
     void FlushMaterialBuffer();
@@ -125,5 +151,15 @@ private:
     RwMatrix *		m_pOldWorldMatrix = nullptr;
     // world matrix as last uploaded, see SetMatrixBuffer
     RwMatrix		m_mUploadedWorld{};
+    RwMatrix		m_mUploadedWorldPrev{};
+    // previous world matrix of each frame matrix (RwFrame LTM) drawn, for object motion vectors
+    struct WorldHistory
+    {
+        RwMatrix current;
+        RwMatrix previous;
+        unsigned int frame;
+    };
+    std::unordered_map<RwMatrix *, WorldHistory> m_worldHistory;
+    unsigned int m_nFrame = 2; // new history entries have frame 0, which must not count as "last frame"
 };
 extern CD3D1XRenderBuffersManager* g_pRenderBuffersMgr;

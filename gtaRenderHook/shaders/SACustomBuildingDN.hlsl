@@ -48,6 +48,8 @@ struct PS_DEFERRED_DN_IN
     float4 vWorldPos : TEXCOORD1;
     float4 vTangent : TEXCOORD2;
     float4 vBiTangent : TEXCOORD3;
+    float4 vCurClip : TEXCOORD4;  // object motion vectors: this frame without jitter
+    float4 vPrevClip : TEXCOORD5; // and last frame
 };
 //--------------------------------------------------------------------------------------
 // Vertex Shader
@@ -56,10 +58,13 @@ PS_DEFERRED_DN_IN VS(VS_INPUT i)
 {
     PS_DEFERRED_DN_IN o;
 	float4 	outPos 		= float4( i.vPosition,1.0);// transform to screen space
+    float4 MotionLocalPos = outPos; // object motion vectors
 			outPos 		= mul( outPos, mWorld );
     o.vWorldPos = outPos;
 			outPos		= mul( outPos, mView );
     o.vPosition         = mul( outPos, mProjection );
+    o.vCurClip  = RemoveJitter(o.vPosition);
+    o.vPrevClip = mul(mul(MotionLocalPos, mWorldPrev), mPrevViewProjection);
 
     o.vNormalDepth =
         float4( mul( (float3x3)mWorldInv, i.vInNormal ), outPos.z );
@@ -128,6 +133,9 @@ float4 PS(PS_DEFERRED_DN_IN i) : SV_Target
         albedoSample *= txDiffuse.Sample( samLinear, i.vTexCoord.xy );
     if ( albedoSample.a < 0.3 )
         discard;
+    // dual pass: the G-buffer pass already drew the texels at or above the cutoff
+    if ( fAlphaBlendPass > 0.5f && albedoSample.a >= fAlphaCutoff )
+        discard;
     float4 outColor;
 #if SAMPLE_SHADOWS != 1
     float ShadowTerm =
@@ -172,13 +180,20 @@ void ShadowPS(PS_DEFERRED_IN i)
 {
 #if HAS_TEXTURE == 1
 	float4 outColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
+    if ( fAlphaCutoff > 0 )
+    {
+        // dual pass: plain alpha test, like the G-buffer pass (dithered shadows speckle lit foliage)
+        if ( outColor.a < fAlphaCutoff )
+            discard;
+        return;
+    }
     outColor.a = outColor.a > 0.95f ? outColor.a : InterleavedGradientNoise(i.vPosition.xy) * outColor.a;
 	if (outColor.a < 0.2f)
 		discard;
 #endif
 }
 
-PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
+PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_DN_IN i)
 {
     PS_DEFERRED_OUT Out;
     float4 baseColor = cDiffuseColor;
@@ -187,7 +202,18 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     
     float4 params = bHasSpecTex > 0 ? float4(txSpec.Sample(samLinear, i.vTexCoord.xy).xyz, 3) : float4(fSpecularIntensity, fGlossiness, 0, 3);
     params.w = baseColor.a > 0.95f ? 3 : 5;
-    baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
+    if ( fAlphaCutoff > 0 )
+    {
+        // dual pass: alpha test instead of dithering; the blended pass draws the texels below the cutoff
+        if ( baseColor.a < fAlphaCutoff )
+            discard;
+        baseColor.a = 1.0f;
+    }
+    else
+        // screen-door under RenderHook's TAA; cut out at 0.5 under an external TAA (DLAA keeps the pattern)
+        baseColor.a = baseColor.a > 0.95f ? baseColor.a
+                    : vMotionJitter.w > 0.5f ? ( baseColor.a >= 0.5f ? 1.0f : 0.0f )
+                    : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
     float3 normal = i.vNormalDepth.xyz;
     if ( bHasNormalTex > 0 && length( i.vTangent.xyz ) > 0 )
     {
@@ -206,6 +232,7 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
 		discard;
     FillGBufferVertexRadiance( Out, baseColor, normal, i.vNormalDepth.w, params,
                                i.vColor * lerp( 0.25f, 1.0f, 1 - vSunLightDir.a ) );
+	Out.vObjectMotion = ObjectMotion(i.vCurClip, i.vPrevClip);
 	return Out;
 }
 

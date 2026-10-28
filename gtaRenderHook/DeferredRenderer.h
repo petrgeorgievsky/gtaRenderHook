@@ -33,7 +33,9 @@ public:
     CHDRTonemapping* m_pTonemapping;
     bool	m_bRequiresReloading = false;
 private:
-    RwRaster*	m_aDeferredRasters[4];
+    // 0 colour, 1 normals and depth, 2 material parameters, 3 vertex lighting, 4 object motion vectors
+    static const int kGBufferTargets = 5;
+    RwRaster*	m_aDeferredRasters[kGBufferTargets];
     RwRaster*	m_pLightingRaster;
     RwRaster*	m_pFinalRasters[4];
     RwRaster*	m_pReflectionRaster;
@@ -63,6 +65,11 @@ public:
             "BlurShadows", false, false, true, m_sName, true );
         m_aFields["UseDitheringForAlphaObjects"] = new ToggleSField(
             "UseDitheringForAlphaObjects", false, false, false, m_sName, false );
+        // Alpha objects with an opaque material (foliage, fences): texels at or above AlphaObjectsCutoff are
+        // alpha-tested into the G-buffer (lit and shadowed), only the rest is blended. Needs shader support.
+        m_aFields["UseDualPassForAlphaObjects"] = new ToggleSField(
+            "UseDualPassForAlphaObjects", false, false, false, m_sName, false );
+        m_aFields["AlphaObjectsCutoff"] = new FloatSField( "AlphaObjectsCutoff", false, false, false, m_sName, 0.5f, 0.05f, 0.99f, 0.05f );
         m_aFields["UsePCSS"] = new ToggleSField( "UsePCSS", false, false, true, m_sName, true );
         m_aFields["SampleShadows"] = new ToggleSField( "SampleShadows", false, false, true, m_sName, true );
         m_aFields["UseSSR"] = new ToggleSField( "UseSSR", false, false, true, m_sName, true );

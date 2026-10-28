@@ -179,6 +179,8 @@ void CSAIdleHook::RenderInGame()
     CPerfTimer scanTimer( "Renderlist construction time" );
     CPerfTimer gameTimer( "Game Time" );
 
+    // previous world matrices for object motion vectors are per rendered frame
+    g_pRenderBuffersMgr->NextFrame();
     PrepareRenderStuff();
 
     DefinedState();

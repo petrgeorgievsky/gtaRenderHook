@@ -91,7 +91,26 @@ struct PS_DEFERRED_OUT
                                               // custom param for car - metallness or second layer glossiness ?
                                               // custom param for ped/skin - translucency
     float4 vLighting            : SV_Target3;
+    float4 vObjectMotion        : SV_Target4; // xy: pixels to last frame's position, z: 1 = object's own
 };
+/*!
+    Clip position without this frame's jitter (the jitter is added to the projection _31/_32).
+*/
+float4 RemoveJitter(float4 clip)
+{
+    clip.xy -= vMotionJitter.xy * clip.w;
+    return clip;
+}
+/*!
+    Object motion vector: pixels from this frame's position to last frame's, both without jitter.
+*/
+float4 ObjectMotion(float4 curClip, float4 prevClip)
+{
+    if (vMotionJitter.z < 0.5f || curClip.w <= 0.0f || prevClip.w <= 0.0f)
+        return 0.0f;
+    float2 toPixels = float2(0.5f, -0.5f) * float2(fScreenWidth, fScreenHeight);
+    return float4((prevClip.xy / prevClip.w - curClip.xy / curClip.w) * toPixels, 1.0f, 0.0f);
+}
 /*!
     Deferred input structure.
 */
@@ -118,6 +137,7 @@ void FillGBuffer(out PS_DEFERRED_OUT output, float4 Color, float3 Normals, float
     output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
     float3 AmbLighting = lerp(vSkyLightCol.rgb, vHorizonCol.rgb, saturate(Normals.z));
     output.vLighting     = float4( AmbLighting * 0.25f, 1 );
+    output.vObjectMotion = 0.0f; // no motion of its own, see ObjectMotion
 }
 
 /*!
@@ -133,6 +153,7 @@ void FillGBufferVertexRadiance(out PS_DEFERRED_OUT output, float4 Color, float3 
     output.vParameters = Params;
     output.vParameters.w = ConvertFromMatType(output.vParameters.w); // compress material id, to prevent information loss
     output.vLighting = float4(isnan(lighting.rgb) ? 0.0f.xxx : lighting.rgb, 1);
+    output.vObjectMotion = 0.0f; // no motion of its own, see ObjectMotion
 }
 /*!
     Returns view-space depth and world-space normals from GBuffer

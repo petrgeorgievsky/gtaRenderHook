@@ -12,6 +12,7 @@ SamplerState samLinear : register( s0 );
 cbuffer SkinningInfoBuffer : register( b3 )
 {
 	float4x3 maConstBoneWorld[64];
+	float4x3 maConstBoneWorldPrev[64]; // last frame (object motion vectors)
 };
 struct VS_SKIN_IN
 {
@@ -36,9 +37,21 @@ struct PS_SKIN_IN
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PS_DEFERRED_IN VS(VS_SKIN_IN i)
+// PS_DEFERRED_IN with the object motion vector positions after it
+struct PS_SKIN_DEFERRED_IN
 {
-    PS_DEFERRED_IN vsout;
+    float4 vPosition    : SV_POSITION;
+    float4 vColor       : COLOR;
+    float4 vNormalDepth : NORMAL;
+    float4 vTexCoord    : TEXCOORD0;
+    float4 vTangent     : TEXCOORD1;
+    float4 vBiTangent   : TEXCOORD2;
+    float4 vCurClip     : TEXCOORD3; // object motion vectors: this frame without jitter
+    float4 vPrevClip    : TEXCOORD4; // and last frame
+};
+PS_SKIN_DEFERRED_IN VS(VS_SKIN_IN i)
+{
+    PS_SKIN_DEFERRED_IN vsout;
 	uint magic0=3;
 	int magic1=0;
 	float4 vPos     = float4(i.vPosition.xyz,1.0f);
@@ -51,6 +64,7 @@ PS_DEFERRED_IN VS(VS_SKIN_IN i)
 
     OutPos.xyz = mul(vPos, BoneToLocal).xyz;
     OutPos.w = 1.0f;
+    float4 PositionLocal = OutPos;
 	//outPos = mul(outPos, World);
     float4 PositionWS = mul(OutPos, mWorld);
 	
@@ -60,6 +74,13 @@ PS_DEFERRED_IN VS(VS_SKIN_IN i)
 	vsout.vColor        = i.vInColor;
     OutPos = mul(OutPos, mProjection);
     vsout.vPosition = OutPos;
+    vsout.vCurClip  = RemoveJitter(OutPos);
+    float4x3 BoneToLocalPrev = maConstBoneWorldPrev[i.aBones.x] * i.vWeights.x +
+                               maConstBoneWorldPrev[i.aBones.y] * i.vWeights.y +
+                               maConstBoneWorldPrev[i.aBones.z] * i.vWeights.z +
+                               maConstBoneWorldPrev[i.aBones.w] * i.vWeights.w;
+    float4 PositionLocalPrev = float4(mul(vPos, BoneToLocalPrev).xyz, 1.0f);
+    vsout.vPrevClip = mul(mul(PositionLocalPrev, mWorldPrev), mPrevViewProjection);
 	
 	return vsout;
 }
@@ -86,14 +107,18 @@ void VoxelEmmissivePS(PS_DEFERRED_IN i)
 {
 	
 }
-PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
+PS_DEFERRED_OUT DeferredPS(PS_SKIN_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
     float4 BaseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
-    BaseColor.a = BaseColor.a > 0.9f ? BaseColor.a : InterleavedGradientNoise(i.vPosition.xy) * BaseColor.a;
+    // screen-door under RenderHook's TAA; cut out at 0.5 under an external TAA (DLAA keeps the pattern)
+    BaseColor.a = BaseColor.a > 0.9f ? BaseColor.a
+                : vMotionJitter.w > 0.5f ? ( BaseColor.a >= 0.5f ? 1.0f : 0.0f )
+                : InterleavedGradientNoise(i.vPosition.xy) * BaseColor.a;
     float4 params = bHasSpecTex != 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness, 0.2f, 2);
     if (BaseColor.a < 0.3)
         discard;
     FillGBuffer(Out, BaseColor, (i.vNormalDepth.xyz), i.vNormalDepth.w, params);
+    Out.vObjectMotion = ObjectMotion(i.vCurClip, i.vPrevClip);
 	return Out;
 }

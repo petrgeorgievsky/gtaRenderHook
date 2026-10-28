@@ -8,6 +8,8 @@ Texture2D txScreen : register(t0);
 Texture2D txAccumBuffer : register(t1);
 Texture2D txGB1 : register(t2);
 Texture2D txGB2 : register(t3);
+// object motion vectors (G-buffer 4): xy pixels to last frame's position, z = 1 where an object wrote them
+Texture2D txObjectMotion : register(t4);
 
 struct PS_QUAD_IN
 {
@@ -49,6 +51,9 @@ float4 TAA_PS(PS_QUAD_IN i) : SV_TARGET
     float4 ViewPos = mul(float4(WorldPos, 1), mPrevView);
     float4 PrevTC = mul(ViewPos, mProjection);
     float2 PrevTexCoords = float2(0.5f, 0.5f) + float2(0.5f, -0.5f) * (PrevTC.xy / max(PrevTC.w,0.001f));
+    float4 OwnMotion = txObjectMotion.Load(int3(i.vPosition.xy, 0));
+    if (OwnMotion.z > 0.5f) // vehicles, peds and other objects that move on their own
+        PrevTexCoords = i.vTexCoord.xy + OwnMotion.xy / float2(fScreenWidth, fScreenHeight);
     float2 MotionVec = PrevTexCoords - i.vTexCoord.xy;
 
     float coeff = (PrevTexCoords.x > 1.0 || PrevTexCoords.y > 1.0 

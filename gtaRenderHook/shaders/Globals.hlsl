@@ -38,6 +38,10 @@ cbuffer PerFrameMatrixBuffer : register(b1)
     row_major matrix mViewProjection;
     row_major matrix mViewInv;
     row_major matrix mViewProjectionInv;
+    // object motion vectors: last frame's view-projection without jitter, this frame's jitter (xy, NDC),
+    // z = 1 for the main camera (motion valid)
+    row_major matrix mPrevViewProjection;
+    float4 vMotionJitter;
 }
 /*!
     Matrices updated for each object
@@ -46,6 +50,7 @@ cbuffer PerObjectBuffer : register(b2)
 {
     row_major matrix mWorld;
     row_major matrix mWorldInv;
+    row_major matrix mWorldPrev; // world matrix of this object in the previous frame
 }
 /*!
     Matrices updated for each material
@@ -57,7 +62,8 @@ cbuffer PerMaterialBuffer : register(b3)
     float fSpecularIntensity : packoffset(c1.y);
     float fGlossiness : packoffset(c1.z);
     float fMetallness : packoffset(c1.w);
-    float2 ___padding : packoffset( c2 );
+    float  fAlphaCutoff : packoffset( c2.x );    // dual-pass alpha objects: alpha test value, 0 = off
+    float  fAlphaBlendPass : packoffset( c2.y ); // 1 in the blended pass of a dual-pass mesh
     int    bHasNormalTex : packoffset( c2.z );
     int    bHasSpecTex : packoffset( c2.w );
 }
