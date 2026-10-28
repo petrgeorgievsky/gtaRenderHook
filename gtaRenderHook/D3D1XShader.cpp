@@ -44,6 +44,48 @@ void CD3D1XShader::ReSet() {}
 
 void CD3D1XShader::Reload( CD3D1XShaderDefineList *localShaderDefineList ) {}
 
+// Compiled shaders are kept in shaders/cache, keyed by a hash of the preprocessed source (includes and defines
+// resolved), entry point, target and flags: a large shader takes fxc up to 20 s, every launch, and they rarely change.
+static uint64_t HashShaderKey( const char *data, size_t size, uint64_t hash = 14695981039346656037ull )
+{
+    for ( size_t i = 0; i < size; i++ )
+        hash = ( hash ^ (uint8_t)data[i] ) * 1099511628211ull;
+    return hash;
+}
+
+static HRESULT CompileShaderCached( const std::string &fileName, const D3D_SHADER_MACRO *defines, const std::string &entryPoint,
+                                    const std::string &shaderModel, DWORD flags, ID3DBlob **ppBlobOut )
+{
+    std::ifstream file( fileName, std::ios::binary );
+    if ( !file )
+        return E_FAIL;
+    std::string source( ( std::istreambuf_iterator<char>( file ) ), std::istreambuf_iterator<char>() );
+    ID3DBlob *preprocessed = nullptr;
+    if ( FAILED( D3DPreprocess( source.data(), source.size(), fileName.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                                &preprocessed, nullptr ) ) )
+        return E_FAIL;
+    uint64_t hash = HashShaderKey( (const char *)preprocessed->GetBufferPointer(), preprocessed->GetBufferSize() );
+    const std::string key = entryPoint + "|" + shaderModel + "|" + std::to_string( flags ) + "|" + std::to_string( D3D_COMPILER_VERSION );
+    hash = HashShaderKey( key.data(), key.size(), hash );
+    char name[32];
+    sprintf_s( name, "%016llx.cso", hash );
+    CreateDirectoryA( "shaders/cache", nullptr );
+    const std::string cachePath = std::string( "shaders/cache/" ) + name;
+    const std::wstring wideCachePath( cachePath.begin(), cachePath.end() );
+
+    HRESULT hr = D3DReadFileToBlob( wideCachePath.c_str(), ppBlobOut );
+    if ( FAILED( hr ) )
+    {
+        // includes are already resolved in the preprocessed source
+        hr = D3DCompile( preprocessed->GetBufferPointer(), preprocessed->GetBufferSize(), fileName.c_str(), nullptr, nullptr,
+                         entryPoint.c_str(), shaderModel.c_str(), flags, 0, ppBlobOut, nullptr );
+        if ( SUCCEEDED( hr ) )
+            D3DWriteBlobToFile( *ppBlobOut, wideCachePath.c_str(), TRUE );
+    }
+    preprocessed->Release();
+    return hr;
+}
+
 HRESULT CD3D1XShader::CompileShaderFromFile(
     std::string szFileName, std::string szEntryPoint, std::string szShaderModel,
     ID3DBlob **ppBlobOut, CD3D1XShaderDefineList *localShaderDefineList ) const
@@ -82,6 +124,9 @@ HRESULT CD3D1XShader::CompileShaderFromFile(
     defines.push_back( {} );
     ID3DBlob *pErrorBlob = nullptr;
 
+    if ( SUCCEEDED( CompileShaderCached( szFileName, defines.data(), szEntryPoint, szShaderModel, dwShaderFlags, ppBlobOut ) ) )
+        return S_OK;
+    // not cacheable or failed: compile the usual way, which also reports the errors
     auto stemp = std::wstring( szFileName.begin(), szFileName.end() );
     hr         = D3DCompileFromFile( stemp.c_str(), defines.data(),
                              D3D_COMPILE_STANDARD_FILE_INCLUDE,
