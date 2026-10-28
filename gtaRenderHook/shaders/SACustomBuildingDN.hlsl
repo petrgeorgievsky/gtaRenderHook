@@ -199,8 +199,12 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_IN i)
     params.w = baseColor.a > 0.95f ? 3 : 5;
     if ( fAlphaCutoff > 0 )
     {
-        // dual pass: alpha test instead of dithering; the blended pass draws the texels below the cutoff
-        if ( baseColor.a < fAlphaCutoff )
+        // dual pass: alpha test instead of dithering; the blended pass draws the texels below the cutoff. Without
+        // blended edges, alpha rises with the mip level: lower mips average the leaves away
+        float alpha = baseColor.a;
+        if ( fAlphaMipCoverage > 0 && bHasTexture != 0 )
+            alpha *= 1.0f + max( txDiffuse.CalculateLevelOfDetail( samLinear, i.vTexCoord.xy ), 0.0f ) * fAlphaMipCoverage;
+        if ( alpha < fAlphaCutoff )
             discard;
         baseColor.a = 1.0f;
     }

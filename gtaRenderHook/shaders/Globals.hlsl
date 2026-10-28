@@ -61,6 +61,7 @@ cbuffer PerMaterialBuffer : register(b3)
     float  fAlphaBlendPass : packoffset( c2.y ); // 1 in the blended pass of a dual-pass mesh
     int    bHasNormalTex : packoffset( c2.z );
     int    bHasSpecTex : packoffset( c2.w );
+    float  fAlphaMipCoverage : packoffset( c3.x ); // dual pass without blended edges: alpha boost per mip level
 }
 
 cbuffer VoxelViewMatrices : register(b4)

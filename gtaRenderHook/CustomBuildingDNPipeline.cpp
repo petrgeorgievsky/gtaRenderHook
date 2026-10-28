@@ -107,6 +107,8 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
     const bool  dualPassEnabled =
         !dithering && gDeferredSettings.GetToggleField( "UseDualPassForAlphaObjects" );
     const float alphaCutoff = gDeferredSettings.GetFloat( "AlphaObjectsCutoff" );
+    const bool  blendEdges  = gDeferredSettings.GetToggleField( "AlphaObjectsBlendEdges" );
+    const float mipCoverage = blendEdges ? 0.0f : gDeferredSettings.GetFloat( "AlphaObjectsMipCoverage" );
 
     // set<RpMaterial*> materialSet{};
     // To improve preformance we try to reduce texture set calls, to do that we
@@ -170,13 +172,15 @@ void CCustomBuildingDNPipeline::Render( RwResEntry *repEntry, void *object,
         // solid texels can go to the G-buffer and only the soft edges need blending.
         const bool dualPass = dualPassEnabled && bAlphaEnable > 0 &&
                               mesh.material->color.alpha == 255 && !mesh.vertexAlpha;
-        g_pRenderBuffersMgr->UpdateAlphaPass(
-            dualPass && ( m_uiDeferredStage == 1 || m_uiDeferredStage == 2 ) ? alphaCutoff : 0.0f, false );
+        const bool gBufferPass = m_uiDeferredStage == 1 || m_uiDeferredStage == 2;
+        g_pRenderBuffersMgr->UpdateAlphaPass( dualPass && gBufferPass ? alphaCutoff : 0.0f, false,
+                                              dualPass && m_uiDeferredStage == 1 ? mipCoverage : 0.0f );
         if ( m_uiDeferredStage != 1 )
             g_pStateMgr->SetAlphaBlendEnable( bAlphaEnable > 0 );
         else
         {
-            if ( bAlphaEnable > 0 && !dithering )
+            // without blended edges a dual-pass mesh is drawn only into the G-buffer
+            if ( bAlphaEnable > 0 && !dithering && !( dualPass && !blendEdges ) )
             {
                 m_aAlphaMeshList.Push( {entryData,
                                         RwFrameGetLTM( static_cast<RwFrame *>(

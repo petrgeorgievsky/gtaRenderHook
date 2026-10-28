@@ -30,6 +30,8 @@ struct MaterialBuffer
     float       alphaBlendPass; // 1 in the blended pass of a dual-pass mesh
     int         hasNormalTex;
     int			hasSpecTex;
+    float       alphaMipCoverage; // dual pass without blended edges: alpha boost per texture mip level
+    float       padd__[3];
 };
 struct RwGraphicsMatrix;
 class CD3DRenderer;
@@ -115,9 +117,10 @@ public:
     void UpdateHasNormalTex( const int &hastex );
     /*!
         Updates dual-pass alpha parameters: alpha test value for the G-buffer and shadow passes (0 = off), and
-        whether this is the blended pass, which then draws only the pixels below the cutoff
+        whether this is the blended pass, which then draws only the pixels below the cutoff; without a blended pass
+        the G-buffer pass boosts alpha by mipCoverage per mip level, so distant foliage keeps its coverage
     */
-    void UpdateAlphaPass( float cutoff, bool blendPass );
+    void UpdateAlphaPass( float cutoff, bool blendPass, float mipCoverage = 0.0f );
     /*!
         Flushes all material buffer changes if there was any
     */
