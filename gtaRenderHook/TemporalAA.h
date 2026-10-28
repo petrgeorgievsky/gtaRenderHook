@@ -33,6 +33,9 @@ public:
     static RwV3d m_vPrevCamPos;
     static RwGraphicsMatrix m_mPrevView;
     static CD3D1XConstantBuffer<CBTemporalAA>* m_pTAABuffer;
+    // this frame's projection offset (NDC), view and unjittered projection, for an external TAA handler
+    static float m_fJitterX, m_fJitterY;
+    static RwGraphicsMatrix m_mView, m_mProjection;
 };
 
 /*!
