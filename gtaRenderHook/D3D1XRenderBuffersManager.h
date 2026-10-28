@@ -12,7 +12,8 @@ struct PerFrameMatrixBuffer
     RwMatrix mInvView;
     RwMatrix mInvViewProj;
     // Object motion vectors (main camera only, see CTemporalAA::JitterProjMatrix): last frame's view-projection
-    // without jitter, and this frame's jitter (xy, NDC, as added to the projection _31/_32); z = 1 when valid
+    // without jitter, and this frame's jitter (xy, NDC, as added to the projection _31/_32); z = 1 when valid; w = 1
+    // when an external TAA (e.g. DLAA) replaced RenderHook's last frame: shaders then cut out instead of dithering
     RwMatrix mPrevViewProj;
     float    vMotionJitter[4];
 };
@@ -68,7 +69,7 @@ public:
         Sets the camera part of object motion vectors for the current camera: last frame's view-projection without
         jitter and this frame's jitter. UpdateViewProjMatricles resets it (no motion for other cameras).
     */
-    void SetMotionCamera( const RwMatrix &prevViewProj, float jitterX, float jitterY );
+    void SetMotionCamera( const RwMatrix &prevViewProj, float jitterX, float jitterY, bool externalTAA );
     /*!
         Starts a new rendered frame for the world matrix history (previous world matrices)
     */

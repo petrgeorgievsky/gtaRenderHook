@@ -111,7 +111,10 @@ PS_DEFERRED_OUT DeferredPS(PS_SKIN_DEFERRED_IN i)
 {
     PS_DEFERRED_OUT Out;
     float4 BaseColor = txDiffuse.Sample(samLinear, i.vTexCoord.xy);
-    BaseColor.a = BaseColor.a > 0.9f ? BaseColor.a : InterleavedGradientNoise(i.vPosition.xy) * BaseColor.a;
+    // screen-door under RenderHook's TAA; cut out at 0.5 under an external TAA (DLAA keeps the pattern)
+    BaseColor.a = BaseColor.a > 0.9f ? BaseColor.a
+                : vMotionJitter.w > 0.5f ? ( BaseColor.a >= 0.5f ? 1.0f : 0.0f )
+                : InterleavedGradientNoise(i.vPosition.xy) * BaseColor.a;
     float4 params = bHasSpecTex != 0 ? txSpec.Sample(samLinear, i.vTexCoord.xy) : float4(fSpecularIntensity, fGlossiness, 0.2f, 2);
     if (BaseColor.a < 0.3)
         discard;

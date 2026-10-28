@@ -29,6 +29,8 @@ static RHTemporalAAHandler g_externalTAA = nullptr;
 // main camera view-projection without jitter, last frame (object motion vectors)
 static RwGraphicsMatrix g_prevViewProj{};
 static bool g_hasPrevViewProj = false;
+// an external TAA handled the last frame (shaders cut transparency out instead of dithering it then)
+static bool g_externalTAAHandled = false;
 
 void __cdecl RHSetTemporalAAHandler( RHTemporalAAHandler handler )
 {
@@ -167,7 +169,7 @@ void CTemporalAA::JitterProjMatrix()
     g_pRenderBuffersMgr->Multipy4x4Matrices( &viewProj, &m_mView, &m_mProjection );
     if ( !g_hasPrevViewProj )
         g_prevViewProj = viewProj;
-    g_pRenderBuffersMgr->SetMotionCamera( *(RwMatrix *)&g_prevViewProj, m_fJitterX, m_fJitterY );
+    g_pRenderBuffersMgr->SetMotionCamera( *(RwMatrix *)&g_prevViewProj, m_fJitterX, m_fJitterY, g_externalTAAHandled );
     g_prevViewProj    = viewProj;
     g_hasPrevViewProj = true;
 }
@@ -190,7 +192,8 @@ void CTemporalAA::SaveViewMatrix()
 void CTemporalAA::Render( RwRaster * input, RwRaster* output, RwRaster* gBuff1, RwRaster* gBuff2 )
 {
     RwV3d* curCamPos = RwMatrixGetPos( &Scene.m_pRwCamera->viewMatrix );
-    if ( RunExternalTAA( input, output, gBuff1, m_fJitterX, m_fJitterY, m_mView, m_mProjection ) )
+    g_externalTAAHandled = RunExternalTAA( input, output, gBuff1, m_fJitterX, m_fJitterY, m_mView, m_mProjection );
+    if ( g_externalTAAHandled )
     {
         // our history is stale now; start it fresh if the external TAA hands the frames back
         m_bFirstTimeRender = true;

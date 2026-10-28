@@ -210,7 +210,10 @@ PS_DEFERRED_OUT DeferredPS(PS_DEFERRED_DN_IN i)
         baseColor.a = 1.0f;
     }
     else
-        baseColor.a = baseColor.a > 0.95f ? baseColor.a : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
+        // screen-door under RenderHook's TAA; cut out at 0.5 under an external TAA (DLAA keeps the pattern)
+        baseColor.a = baseColor.a > 0.95f ? baseColor.a
+                    : vMotionJitter.w > 0.5f ? ( baseColor.a >= 0.5f ? 1.0f : 0.0f )
+                    : InterleavedGradientNoise(i.vPosition.xy) * baseColor.a;
     float3 normal = i.vNormalDepth.xyz;
     if ( bHasNormalTex > 0 && length( i.vTangent.xyz ) > 0 )
     {

@@ -53,13 +53,14 @@ void CD3D1XRenderBuffersManager::UpdateViewProjMatricles( RwMatrix &view,
     m_pPerFrameMatrixBuffer->Update();
 }
 
-void CD3D1XRenderBuffersManager::SetMotionCamera( const RwMatrix &prevViewProj, float jitterX, float jitterY )
+void CD3D1XRenderBuffersManager::SetMotionCamera( const RwMatrix &prevViewProj, float jitterX, float jitterY,
+                                                  bool externalTAA )
 {
     m_pPerFrameMatrixBuffer->data.mPrevViewProj    = prevViewProj;
     m_pPerFrameMatrixBuffer->data.vMotionJitter[0] = jitterX;
     m_pPerFrameMatrixBuffer->data.vMotionJitter[1] = jitterY;
     m_pPerFrameMatrixBuffer->data.vMotionJitter[2] = 1.0f;
-    m_pPerFrameMatrixBuffer->data.vMotionJitter[3] = 0.0f;
+    m_pPerFrameMatrixBuffer->data.vMotionJitter[3] = externalTAA ? 1.0f : 0.0f;
     m_pPerFrameMatrixBuffer->Update();
 }
 
